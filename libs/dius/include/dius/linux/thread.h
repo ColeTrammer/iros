@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/function/container/function.h>
 #include <dius/error.h>
 #include <dius/memory_region.h>
 #include <dius/runtime/tls.h>

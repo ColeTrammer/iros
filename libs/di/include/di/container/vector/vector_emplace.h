@@ -4,6 +4,7 @@
 #include <di/container/algorithm/uninitialized_relocate_backwards.h>
 #include <di/container/vector/mutable_vector.h>
 #include <di/container/vector/vector_data.h>
+#include <di/container/vector/vector_iterator.h>
 #include <di/container/vector/vector_reserve.h>
 #include <di/container/vector/vector_size.h>
 #include <di/meta/operations.h>

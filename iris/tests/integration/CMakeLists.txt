@@ -1,4 +1,5 @@
-add_executable(test_iris test_syscall.cpp)
+file(GLOB sources CONFIGURE_DEPENDS "*.cpp")
+add_executable(test_iris ${sources})
 
 find_package(Dius REQUIRED)
 

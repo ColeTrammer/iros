@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/meta/algorithm.h>
 #include <di/meta/core.h>
 #include <di/vocab/variant/variant_forward_declaration.h>
 

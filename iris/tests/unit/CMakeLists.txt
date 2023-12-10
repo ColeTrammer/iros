@@ -1,4 +1,5 @@
-target_sources(iris PRIVATE tests/unit/allocation.cpp)
+file(GLOB unit_sources CONFIGURE_DEPENDS "tests/unit/*.cpp")
+target_sources(iris PRIVATE ${unit_sources})
 
 file(RELATIVE_PATH BUILD_BASE "${CMAKE_SOURCE_DIR}/build" "${CMAKE_BINARY_DIR}")
 

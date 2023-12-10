@@ -2,7 +2,9 @@
 
 #include <di/container/concepts/prelude.h>
 #include <di/container/interface/prelude.h>
+#include <di/container/iterator/next.h>
 #include <di/container/meta/prelude.h>
+#include <di/function/equal.h>
 
 namespace di::container {
 namespace detail {

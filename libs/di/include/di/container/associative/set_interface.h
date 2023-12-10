@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/container/action/sequence.h>
 #include <di/container/concepts/prelude.h>
 #include <di/container/interface/prelude.h>
 #include <di/container/iterator/prelude.h>

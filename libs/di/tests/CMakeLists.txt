@@ -1,56 +1,5 @@
-add_executable(
-    test_di
-    test_any.cpp
-    test_bit_bitset.cpp
-    test_bit_bitstruct.cpp
-    test_chrono_duration.cpp
-    test_cli.cpp
-    test_concepts.cpp
-    test_container_algorithm.cpp
-    test_container_concepts.cpp
-    test_container_hash.cpp
-    test_container_intrusive.cpp
-    test_container_linked_list.cpp
-    test_container_node_hash_map.cpp
-    test_container_node_hash_set.cpp
-    test_container_path.cpp
-    test_container_queue.cpp
-    test_container_ring.cpp
-    test_container_string.cpp
-    test_container_tree_map.cpp
-    test_container_tree_set.cpp
-    test_container_vector.cpp
-    test_container_view.cpp
-    test_deserialization.cpp
-    test_execution.cpp
-    test_execution_sequence.cpp
-    test_format.cpp
-    test_function_bind.cpp
-    test_function_container.cpp
-    test_function_generator.cpp
-    test_function_invoke.cpp
-    test_ipc_binary.cpp
-    test_math_checked.cpp
-    test_math_fixed_bigint.cpp
-    test_math_integer.cpp
-    test_math_rational.cpp
-    test_meta.cpp
-    test_parser.cpp
-    test_reflect.cpp
-    test_serialization.cpp
-    test_sync_in_place_stop_source.cpp
-    test_util.cpp
-    test_util_swap.cpp
-    test_vocab_array.cpp
-    test_vocab_error.cpp
-    test_vocab_expected.cpp
-    test_vocab_md.cpp
-    test_vocab_optional.cpp
-    test_vocab_pointer.cpp
-    test_vocab_span.cpp
-    test_vocab_tuple.cpp
-    test_vocab_variant.cpp
-)
+file(GLOB sources CONFIGURE_DEPENDS *.cpp)
+add_executable(test_di ${sources})
 
 find_package(Dius REQUIRED)
 

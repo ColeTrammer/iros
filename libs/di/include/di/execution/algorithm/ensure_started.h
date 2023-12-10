@@ -38,7 +38,6 @@
 #include <di/util/immovable.h>
 #include <di/vocab/optional/optional_forward_declaration.h>
 #include <di/vocab/tuple/tuple.h>
-#include <dius/platform.h>
 
 namespace di::execution {
 namespace ensure_started_ns {
@@ -124,8 +123,8 @@ namespace ensure_started_ns {
                     container::deallocate_one<Type>(allocator, pointer);
                 })
                 , sender_attr(get_env(sender))
-                , operation(connect(util::forward<Send>(sender), SharedReceiver<Type>(this)))
-                , allocator(util::forward<A>(allocator_)) {
+                , allocator(util::forward<A>(allocator_))
+                , operation(connect(util::forward<Send>(sender), SharedReceiver<Type>(this))) {
                 start(operation);
             }
 

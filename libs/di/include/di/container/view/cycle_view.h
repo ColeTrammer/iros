@@ -1,6 +1,9 @@
 #pragma once
 
 #include <di/container/concepts/prelude.h>
+#include <di/container/iterator/distance.h>
+#include <di/container/iterator/next.h>
+#include <di/container/iterator/reverse_iterator.h>
 #include <di/container/iterator/unreachable_sentinel.h>
 #include <di/container/meta/prelude.h>
 #include <di/container/view/view_interface.h>

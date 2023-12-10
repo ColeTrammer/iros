@@ -2,11 +2,62 @@ cmake_minimum_required(VERSION 3.25.2)
 
 project(Iris CXX)
 
+set(to_filter amd64 tests)
+if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+    list(REMOVE_ITEM to_filter amd64)
+endif()
+
+function(filter input exclude_list output)
+    foreach(exclude ${exclude_list})
+        string(TOLOWER ${exclude} exclude)
+        list(FILTER input EXCLUDE REGEX ${exclude})
+    endforeach()
+
+    set(${output}
+        ${input}
+        PARENT_SCOPE
+    )
+endfunction()
+
+file(
+    GLOB_RECURSE sources CONFIGURE_DEPENDS
+    RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+    "*.cpp"
+)
+file(
+    GLOB_RECURSE headers CONFIGURE_DEPENDS
+    RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+    "include/*.h"
+)
+file(
+    GLOB_RECURSE uapi_headers CONFIGURE_DEPENDS
+    RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+    "include/iris/uapi/*.h"
+)
+
+list(REMOVE_ITEM sources test_create_task.cpp test_read.cpp test_userspace.cpp)
+
+filter("${sources}" "${to_filter}" sources)
+list(APPEND to_filter "uapi")
+filter("${headers}" "${to_filter}" headers)
+
 add_library(iris_headers INTERFACE)
 add_library(Iris::iris_headers ALIAS iris_headers)
 
 target_include_directories(
     iris_headers SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
+)
+
+target_sources(
+    iris_headers
+    INTERFACE FILE_SET
+              HEADERS
+              TYPE
+              HEADERS
+              BASE_DIRS
+              include
+              FILES
+              ${uapi_headers}
 )
 
 find_package(Di REQUIRED)
@@ -21,18 +72,13 @@ install(
     RUNTIME DESTINATION bin
     INCLUDES
     DESTINATION include
+    FILE_SET HEADERS
 )
 install(
     EXPORT IrisHeadersConfig
     FILE IrisHeadersConfig.cmake
     NAMESPACE Iris::
     DESTINATION lib/cmake/IrisHeaders
-)
-install(
-    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
-    DESTINATION "include"
-    FILES_MATCHING
-    PATTERN "*.h"
 )
 
 if(IROS_BuildIris)
@@ -59,36 +105,27 @@ if(IROS_BuildIris)
     )
     set(LIMINE_DIR "${CMAKE_SOURCE_DIR}/build/host/tools/limine/src")
 
-    add_executable(
-        iris
-        boot/init.cpp
-        core/cxx.cpp
-        core/global_state.cpp
-        core/interruptible_spinlock.cpp
-        core/preemption.cpp
-        core/print.cpp
-        core/scheduler.cpp
-        core/spinlock.cpp
-        core/task.cpp
-        core/task_namespace.cpp
-        core/task_status.cpp
-        core/unit_test.cpp
-        core/wait_queue.cpp
-        fs/debug_file.cpp
-        fs/initrd.cpp
-        fs/inode.cpp
-        fs/path.cpp
-        fs/super_block.cpp
-        fs/tmpfs.cpp
-        hw/acpi/acpi.cpp
-        hw/irq.cpp
-        hw/timer.cpp
-        mm/address_space.cpp
-        mm/backing_object.cpp
-        mm/heap.cpp
-        mm/page_frame_allocator.cpp
-        uapi/syscall.cpp
+    add_library(iris_internal_headers INTERFACE)
+    add_library(Iris::iris_internal_headers ALIAS iris_internal_headers)
+
+    target_include_directories(
+        iris_internal_headers SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+                                               $<INSTALL_INTERFACE:include>
     )
+
+    target_sources(
+        iris_internal_headers
+        INTERFACE FILE_SET
+                  HEADERS
+                  TYPE
+                  HEADERS
+                  BASE_DIRS
+                  include
+                  FILES
+                  ${headers}
+    )
+
+    add_executable(iris ${sources})
 
     if(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "x86_64")
         include(arch/x86/amd64/CMakeLists.txt)
@@ -116,7 +153,7 @@ if(IROS_BuildIris)
         -static
         -nostartfiles
     )
-    target_link_libraries(iris PRIVATE di iris_headers)
+    target_link_libraries(iris PRIVATE di iris_headers iris_internal_headers)
     target_include_directories(iris SYSTEM PRIVATE "${LIMINE_DIR}")
     target_compile_definitions(
         iris PRIVATE "DI_CUSTOM_ASSERT_HANDLER" "DI_NO_ASSERT_ALLOCATION" "DI_NO_USE_STD"

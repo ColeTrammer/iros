@@ -27,7 +27,7 @@ void binary_assert_fail(char const* message, T&& a, U&& b, util::SourceLocation 
     auto a_context = TargetContext {};
     auto const* a_data_pointer = static_cast<char const*>(nullptr);
     if constexpr (concepts::Formattable<T>) {
-        di::format::vpresent_encoded_context<Enc>(
+        (void) di::format::vpresent_encoded_context<Enc>(
             di::container::string::StringViewImpl<Enc>(encoding::assume_valid, u8"{}", 2),
             di::format::make_format_args<TargetContext>(a), a_context);
         a_data_pointer = reinterpret_cast<char const*>(a_context.output().span().data());
@@ -35,7 +35,7 @@ void binary_assert_fail(char const* message, T&& a, U&& b, util::SourceLocation 
     auto b_context = TargetContext {};
     auto const* b_data_pointer = static_cast<char const*>(nullptr);
     if constexpr (concepts::Formattable<U>) {
-        di::format::vpresent_encoded_context<Enc>(
+        (void) di::format::vpresent_encoded_context<Enc>(
             di::container::string::StringViewImpl<Enc>(encoding::assume_valid, u8"{}", 2),
             di::format::make_format_args<TargetContext>(b), b_context);
         b_data_pointer = reinterpret_cast<char const*>(b_context.output().span().data());

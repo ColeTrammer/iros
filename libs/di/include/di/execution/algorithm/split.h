@@ -114,8 +114,8 @@ namespace split_ns {
             template<typename A>
             explicit Type(Send&& sender, A&& allocator_)
                 : sender_attr(get_env(sender))
-                , operation(connect(util::forward<Send>(sender), SharedReceiver<Type>(this)))
-                , allocator(util::forward<A>(allocator_)) {}
+                , allocator(util::forward<A>(allocator_))
+                , operation(connect(util::forward<Send>(sender), SharedReceiver<Type>(this))) {}
 
             template<typename... Args>
             void complete_with(Args&&... args) {

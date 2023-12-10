@@ -180,7 +180,8 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
             "cacheVariables": {
                 "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
                 "CMAKE_INSTALL_MESSAGE": "NEVER",
-                "IROS_WarningFlags": "-Wall -Wextra -Wpedantic"
+                "IROS_WarningFlags": "-Wall -Wextra -Wpedantic",
+                "CMAKE_VERIFY_INTERFACE_HEADER_SETS": "ON"
             }
         },
         {
@@ -194,7 +195,7 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
             "name": "clang_base",
             "hidden": true,
             "cacheVariables": {
-                "IROS_DiagnosticFlags": "-fcolor-diagnostics -fconstexpr-steps=10000000 -fsized-deallocation",
+                "IROS_DiagnosticFlags": "-fcolor-diagnostics -fconstexpr-steps=10000000",
                 "IROS_WarningFlags": "-Wall -Wextra -Wpedantic",
                 "CMAKE_CXX_COMPILER": "clang++-16"
             }
@@ -245,7 +246,8 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
             "hidden": true,
             "cacheVariables": {
                 "IROS_UseDiusRuntime": "ON",
-                "IROS_BuildCcpp": "ON"
+                "IROS_BuildCcpp": "ON",
+                "IROS_BuildTests": "ON"
             }
         },
         {
@@ -253,7 +255,8 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
             "hidden": true,
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
-                "IROS_SanitizerFlags": "-fsanitize=thread -DDI_SANITIZER"
+                "IROS_SanitizerFlags": "-fsanitize=thread -DDI_SANITIZER",
+                "IROS_BuildTests": "ON"
             }
         },
         {
@@ -261,7 +264,8 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
             "hidden": true,
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
-                "IROS_SanitizerFlags": "-fsanitize=address -DDI_SANITIZER"
+                "IROS_SanitizerFlags": "-fsanitize=address -DDI_SANITIZER",
+                "IROS_BuildTests": "ON"
             }
         },
         {
@@ -269,7 +273,8 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
             "hidden": true,
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
-                "IROS_SanitizerFlags": "-fsanitize=undefined -DDI_SANITIZER"
+                "IROS_SanitizerFlags": "-fsanitize=undefined -DDI_SANITIZER",
+                "IROS_BuildTests": "ON"
             }
         },
         {
@@ -277,7 +282,8 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
             "hidden": true,
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
-                "IROS_SanitizerFlags": "-fsanitize=memory -DDI_SANITIZER"
+                "IROS_SanitizerFlags": "-fsanitize=memory -DDI_SANITIZER",
+                "IROS_BuildTests": "ON"
             }
         },
         {
@@ -285,7 +291,8 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
             "hidden": true,
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
-                "IROS_SanitizerFlags": "-fsanitize=address,undefined -DDI_SANITIZER"
+                "IROS_SanitizerFlags": "-fsanitize=address,undefined -DDI_SANITIZER",
+                "IROS_BuildTests": "ON"
             }
         },
         {
@@ -293,7 +300,8 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
             "hidden": true,
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
-                "IROS_ExtraFlags": "--coverage"
+                "IROS_ExtraFlags": "--coverage",
+                "IROS_BuildTests": "ON"
             }
         },
         {
@@ -475,6 +483,11 @@ di::Vector<CMakeBuildPreset> make_build_presets(di::Span<di::String const> prese
             "hidden": true
         },
         {
+            "name": "ci_base",
+            "hidden": true,
+            "targets": ["all", "all_verify_interface_header_sets"]
+        },
+        {
             "name": "docs_base",
             "hidden": true,
             "targets": ["docs"]
@@ -482,9 +495,10 @@ di::Vector<CMakeBuildPreset> make_build_presets(di::Span<di::String const> prese
     ])"_sv);
     presets.append_container(base_presets | di::as_rvalue);
 
-    auto build_types = di::Array { "default"_sv, "docs"_sv };
-    auto display_names = di::Array { "Build All"_sv, "Build Docs"_sv };
-    auto descriptions = di::Array { "Build all targets"_sv, "Build documentation"_sv };
+    auto build_types = di::Array { "default"_sv, "ci"_sv, "docs"_sv };
+    auto display_names = di::Array { "Build All"_sv, "Build for CI"_sv, "Build Docs"_sv };
+    auto descriptions =
+        di::Array { "Build all targets"_sv, "Build all targets and verify headers"_sv, "Build documentation"_sv };
     for (auto const& configure_name : preset_names) {
         for (auto [display_name, description, type] : di::zip(display_names, descriptions, build_types)) {
             auto name = [&] {

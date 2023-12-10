@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/meta/constexpr.h>
 #include <di/meta/core.h>
 #include <di/meta/function.h>
 #include <di/types/integers.h>

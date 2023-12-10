@@ -1,4 +1,6 @@
-add_executable(test_dius test_filesystem.cpp test_process.cpp test_tls.cpp)
+file(GLOB sources CONFIGURE_DEPENDS *.cpp)
+list(REMOVE_ITEM sources ${CMAKE_CURRENT_SOURCE_DIR}/test_process_arg_passing_fixture.cpp)
+add_executable(test_dius ${sources})
 
 find_package(Dius REQUIRED)
 

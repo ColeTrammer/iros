@@ -42,8 +42,8 @@ jobs:
         uses: lukka/run-cmake@v10
         with:
           configurePreset: ${{ matrix.preset }}
-          configurePresetAdditionalArgs: "['-DCMAKE_COMPILE_WARNING_AS_ERROR=ON']"
-          buildPreset: ${{ matrix.preset }}
+          configurePresetAdditionalArgs: "['-DCMAKE_COMPILE_WARNING_AS_ERROR=ON', '-DCMAKE_VERIFY_INTERFACE_HEADER_SETS=ON']"
+          buildPreset: ${{ matrix.preset }}_ci
           testPreset: ${{ matrix.preset }}
       - name: Collect code coverage information
         run: |

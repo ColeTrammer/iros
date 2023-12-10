@@ -3,6 +3,7 @@
 #include <di/function/tag_invoke.h>
 #include <di/meta/language.h>
 #include <di/meta/operations.h>
+#include <di/platform/compiler.h>
 #include <di/types/in_place_type.h>
 
 namespace di::concepts {

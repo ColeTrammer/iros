@@ -185,8 +185,6 @@ namespace detail {
 
                 auto sent = container::end(digits);
                 for (auto it = container::begin(digits); it != sent; ++it) {
-                    auto prev_result = result;
-
                     result *= inferred_radix;
                     result += to_digit(*it);
                 }

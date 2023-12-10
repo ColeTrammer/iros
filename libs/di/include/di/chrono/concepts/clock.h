@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/meta/bool_constant.h>
 #include <di/meta/constexpr.h>
 #include <di/meta/core.h>
 
@@ -12,7 +11,7 @@ concept Clock = requires {
     typename T::Duration;
     typename T::TimePoint;
     T::is_steady;
-    typename Constexpr<T::is_steady>;
+    typename meta::Constexpr<T::is_steady>;
     { T::now() } -> SameAs<typename T::TimePoint>;
 };
 }

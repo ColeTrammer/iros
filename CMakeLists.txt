@@ -3,9 +3,10 @@ cmake_minimum_required(VERSION 3.25.2)
 project(Iros CXX)
 
 option(IROS_BuildIris "Build the iris kernel." OFF)
-option(IROS_BuildUserspace "Build userspace libaries and programs." ON)
-option(IROS_BuildTests "Build test programs." ON)
-option(IROS_BuildTools "Build tools required native tools." ON)
+option(IROS_BuildLibraries "Build libraries." ON)
+option(IROS_BuildUserspace "Build userspace libaries and programs." OFF)
+option(IROS_BuildTests "Build test programs." OFF)
+option(IROS_BuildTools "Build tools required native tools." OFF)
 option(IROS_BuildCcpp "Build the c++ libc." OFF)
 option(IROS_UseDiusRuntime "Use dius provided runtime instead of system libc." OFF)
 option(IROS_NeverBuildDocs "Never enable documentation build target." OFF)
@@ -92,6 +93,7 @@ add_subdirectory(libs/di)
 if(IROS_BuildUserspace
    OR IROS_BuildTools
    OR IROS_BuildCcpp
+   OR IROS_BuildLibraries
 )
     add_subdirectory(libs/dius)
 endif()

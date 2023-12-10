@@ -2,6 +2,7 @@
 
 #include <di/container/string/mutable_string.h>
 #include <di/container/vector/vector_append_container.h>
+#include <di/container/vector/vector_pop_back.h>
 #include <di/function/into_void.h>
 
 namespace di::container::string {

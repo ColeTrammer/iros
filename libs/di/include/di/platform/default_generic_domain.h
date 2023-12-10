@@ -12,6 +12,8 @@ inline namespace generic_error {
         NotEnoughMemory,
         ResultOutOfRange,
         InvalidArgument,
+        ValueTooLarge,
+        OperationCanceled,
         Cancelled,
     };
 }

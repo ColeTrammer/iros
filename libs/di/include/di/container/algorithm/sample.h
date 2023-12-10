@@ -26,11 +26,11 @@ namespace detail {
 
                 auto count = container::distance(first, last);
                 for (auto to_sample = container::min(count, n); to_sample != 0; --first) {
-                    // Generate a random number between [0, size).
+                    // Generate a random number between [0, count).
                     // Only keep the current element if the random number
                     // chosen is less than the number of samples which have
                     // not yet been generated.
-                    if (distribution(generator, Param(0, --size)) < to_sample) {
+                    if (distribution(generator, Param(0, --count)) < to_sample) {
                         *out = *first;
                         ++out;
                         --to_sample;

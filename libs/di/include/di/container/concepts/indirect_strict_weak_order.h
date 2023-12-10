@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/container/concepts/indirectly_readable.h>
+#include <di/container/meta/iterator_common_reference.h>
 #include <di/container/meta/iterator_reference.h>
 #include <di/container/meta/iterator_value.h>
 #include <di/meta/operations.h>

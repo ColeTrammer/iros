@@ -4,7 +4,8 @@ project(Shell CXX)
 
 find_package(Dius REQUIRED)
 
-add_executable(sh sh.cpp)
+file(GLOB sources CONFIGURE_DEPENDS "*.cpp")
+add_executable(sh ${sources})
 
 target_link_libraries(sh PRIVATE Dius::dius)
 

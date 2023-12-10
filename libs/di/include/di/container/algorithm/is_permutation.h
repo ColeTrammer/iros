@@ -2,6 +2,7 @@
 
 #include <di/container/algorithm/contains.h>
 #include <di/container/algorithm/count_if.h>
+#include <di/container/algorithm/find_if.h>
 #include <di/container/algorithm/mismatch.h>
 #include <di/container/concepts/prelude.h>
 #include <di/container/iterator/prelude.h>

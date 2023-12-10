@@ -1,7 +1,10 @@
 #pragma once
 
+#ifndef DI_CUSTOM_PLATFORM
+#define DI_CUSTOM_PLATFORM <iris/core/platform.h>
+#endif
+
 #include <di/container/algorithm/max.h>
-#include <di/vocab/error/prelude.h>
 #include <di/vocab/error/status_code.h>
 #include <iris/uapi/error.h>
 

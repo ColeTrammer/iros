@@ -1,6 +1,8 @@
 #pragma once
 
 #include <di/assert/assert_bool.h>
+#include <di/container/algorithm/compare.h>
+#include <di/container/algorithm/equal.h>
 #include <di/container/concepts/prelude.h>
 #include <di/container/iterator/distance.h>
 #include <di/container/iterator/next.h>

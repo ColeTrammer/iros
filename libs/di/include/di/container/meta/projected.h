@@ -5,6 +5,7 @@
 #include <di/container/iterator/iterator_ssize_type.h>
 #include <di/container/iterator/iterator_value.h>
 #include <di/container/meta/indirect_result.h>
+#include <di/container/meta/iterator_ssize_type.h>
 #include <di/meta/core.h>
 #include <di/platform/compiler.h>
 #include <di/types/prelude.h>

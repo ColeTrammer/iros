@@ -2,8 +2,63 @@ cmake_minimum_required(VERSION 3.25.2)
 
 project(Dius CXX)
 
-add_library(dius di_assert_impl.cpp sync_file.cpp test/test_manager.cpp)
+set(to_filter x86_64 posix linux iros runtime tests)
+list(REMOVE_ITEM to_filter ${CMAKE_HOST_SYSTEM_PROCESSOR})
+
+if(UNIX AND NOT IROS_UseDiusRuntime)
+    list(REMOVE_ITEM to_filter posix)
+endif()
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    list(REMOVE_ITEM to_filter linux)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Iros")
+    list(REMOVE_ITEM to_filter iros)
+endif()
+if(IROS_UseDiusRuntime)
+    list(REMOVE_ITEM to_filter runtime)
+endif()
+
+function(filter input exclude_list output)
+    foreach(exclude ${exclude_list})
+        string(TOLOWER ${exclude} exclude)
+        list(FILTER input EXCLUDE REGEX ${exclude})
+    endforeach()
+
+    set(${output}
+        ${input}
+        PARENT_SCOPE
+    )
+endfunction()
+
+file(
+    GLOB_RECURSE sources CONFIGURE_DEPENDS
+    RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+    "*.cpp"
+)
+file(
+    GLOB_RECURSE headers CONFIGURE_DEPENDS
+    RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+    "include/*.h"
+)
+
+filter("${sources}" "${to_filter}" sources)
+filter("${headers}" "${to_filter}" headers)
+
+list(REMOVE_ITEM sources "test/test_main.cpp")
+
+add_library(dius ${sources})
 add_library(Dius::dius ALIAS dius)
+
+target_sources(
+    dius
+    INTERFACE FILE_SET
+              HEADERS
+              TYPE
+              HEADERS
+              BASE_DIRS
+              include
+              FILES
+              ${headers}
+)
 
 target_include_directories(
     dius SYSTEM PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
@@ -14,26 +69,12 @@ find_package(Di REQUIRED)
 target_link_libraries(dius PUBLIC Di::di)
 target_compile_definitions(dius PUBLIC DI_CUSTOM_ASSERT_HANDLER DI_CUSTOM_PLATFORM=<dius/platform.h>)
 
-if(UNIX AND NOT IROS_UseDiusRuntime)
-    target_sources(dius PRIVATE posix/thread.cpp posix/system/process.cpp)
-endif()
-
-if(LINUX)
-    target_sources(
-        dius PRIVATE linux/filesystem/directory_iterator.cpp linux/filesystem/operations.cpp linux/filesystem/query.cpp
-                     linux/io_uring.cpp linux/sync_file.cpp memory_region.cpp
-    )
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Iros")
+if(CMAKE_SYSTEM_NAME STREQUAL "Iros")
     if(CMAKE_CROSSCOMPILING)
         find_package(Iris REQUIRED)
 
         target_link_libraries(dius PUBLIC Iris::iris_headers)
     endif()
-
-    target_sources(
-        dius PRIVATE iros/system/process.cpp iros/filesystem/directory_iterator.cpp iros/filesystem/operations.cpp
-                     iros/filesystem/query.cpp iros/sync_file.cpp
-    )
 endif()
 
 install(
@@ -44,18 +85,13 @@ install(
     RUNTIME DESTINATION bin
     INCLUDES
     DESTINATION include
+    FILE_SET HEADERS
 )
 install(
     EXPORT DiusConfig
     FILE DiusConfig.cmake
     NAMESPACE Dius::
     DESTINATION lib/cmake/Dius
-)
-install(
-    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
-    DESTINATION "include"
-    FILES_MATCHING
-    PATTERN "*.h"
 )
 
 if(IROS_UseDiusRuntime)
@@ -64,25 +100,6 @@ if(IROS_UseDiusRuntime)
     install(FILES "${CMAKE_CURRENT_BINARY_DIR}/crt0.o" DESTINATION lib)
 
     target_compile_definitions(dius PUBLIC DIUS_USE_RUNTIME DI_NO_USE_STD)
-
-    target_sources(
-        dius PRIVATE runtime/compilerabi.cpp runtime/cxxabi.cpp runtime/cxxheap.cpp runtime/entry.cpp
-                     runtime/gccints.cpp runtime/stack_smash_protector.cpp
-    )
-
-    if(LINUX)
-        target_sources(dius PRIVATE linux/thread.cpp linux/system/process.cpp)
-
-        if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
-            target_sources(dius PRIVATE linux/arch/x86_64/thread.cpp)
-        endif()
-    elseif(CMAKE_SYSTEM_NAME STREQUAL "Iros")
-        target_sources(dius PRIVATE iros/thread.cpp)
-    endif()
-
-    if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
-        target_sources(dius PRIVATE arch/x86_64/thread.cpp)
-    endif()
 
     target_compile_options(
         dius

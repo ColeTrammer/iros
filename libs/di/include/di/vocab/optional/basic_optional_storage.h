@@ -3,6 +3,7 @@
 #include <di/meta/core.h>
 #include <di/meta/operations.h>
 #include <di/meta/util.h>
+#include <di/types/byte.h>
 #include <di/util/construct_at.h>
 #include <di/util/destroy_at.h>
 #include <di/util/forward.h>

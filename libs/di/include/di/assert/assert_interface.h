@@ -22,6 +22,7 @@ namespace di::assert::detail {
     }
     std::abort();
 }
+}
 #else
 #include <di/util/source_location.h>
 

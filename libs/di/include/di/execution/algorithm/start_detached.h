@@ -26,7 +26,6 @@
 #include <di/util/immovable.h>
 #include <di/vocab/expected/as_fallible.h>
 #include <di/vocab/expected/try_infallible.h>
-#include <dius/platform.h>
 
 namespace di::execution {
 namespace start_detached_ns {
