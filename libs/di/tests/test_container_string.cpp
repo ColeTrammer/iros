@@ -1,4 +1,6 @@
+#include <di/container/string/encoding.h>
 #include <di/container/string/prelude.h>
+#include <di/container/string/string.h>
 #include <dius/test/prelude.h>
 
 namespace container_string {
@@ -41,8 +43,17 @@ constexpr void to() {
     auto x = u8"abc"_sv | di::to<di::String>();
     ASSERT_EQ(x, u8"abc"_sv);
 
-    auto y = "abc"_sv | di::to<di::String>(di::encoding::assume_valid);
+    auto y = di::Array { u8'a', u8'b', u8'c' } | di::to<di::String>(di::encoding::assume_valid);
     ASSERT_EQ(y, "abc"_sv);
+
+    auto z = di::Array { u8'a', u8'b', u8'c' } | di::to<di::String>();
+    ASSERT_EQ(z, "abc"_sv);
+
+    auto a = "abc"_tsv | di::to<di::TransparentString>();
+    ASSERT_EQ(a, "abc"_tsv);
+
+    auto b = di::Array { 'a', 'b', 'c' } | di::to<di::TransparentString>();
+    ASSERT_EQ(b, "abc"_tsv);
 }
 
 constexpr void erased() {

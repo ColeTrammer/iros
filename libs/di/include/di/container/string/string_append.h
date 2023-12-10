@@ -10,7 +10,6 @@
 namespace di::container::string {
 template<concepts::detail::MutableString Str, typename Enc = meta::Encoding<Str>,
          typename P = meta::EncodingCodePoint<Enc>, concepts::ContainerCompatible<P> Con>
-requires(concepts::SameAs<Enc, meta::Encoding<Con>>)
 constexpr auto append(Str& string, Con&& container) {
     if constexpr (encoding::NullTerminated<Enc>) {
         return invoke_as_fallible([&] {

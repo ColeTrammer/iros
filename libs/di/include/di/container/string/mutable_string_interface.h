@@ -7,10 +7,18 @@
 #include <di/container/string/string_push_back.h>
 #include <di/container/vector/vector_clear.h>
 #include <di/container/view/concat.h>
+#include <di/meta/core.h>
+#include <di/platform/custom.h>
 #include <di/util/create_in_place.h>
+#include <di/util/reference_wrapper.h>
+#include <di/vocab/error/meta/common_error.h>
+#include <di/vocab/error/status_code_forward_declaration.h>
+#include <di/vocab/expected/expected_forward_declaration.h>
+#include <di/vocab/expected/invoke_as_fallible.h>
 
 namespace di::container::string {
 namespace detail {
+    // NOLINTNEXTLINE(modernize-avoid-c-arrays)
     template<typename U, typename R = U[1]>
     constexpr inline R empty_null_terminated_array = { U(0) };
 }
@@ -27,7 +35,7 @@ private:
     constexpr Self const& self() const { return static_cast<Self const&>(*this); }
 
     template<concepts::InputContainer Con, typename... Args>
-    requires(concepts::ContainerCompatible<Con, CodeUnit> && concepts::ConstructibleFrom<Self, Args...>)
+    requires(concepts::ContainerOf<Con, CodeUnit> && concepts::ConstructibleFrom<Self, Args...>)
     constexpr friend auto tag_invoke(types::Tag<util::create_in_place>, InPlaceType<Self>, Con&& container,
                                      encoding::AssumeValid, Args&&... args) {
         auto result = Self(util::forward<Args>(args)...);
@@ -46,7 +54,42 @@ private:
     }
 
     template<concepts::InputContainer Con, typename... Args>
-    requires(concepts::ContainerCompatible<Con, CodePoint> && concepts::ConstructibleFrom<Self, Args...>)
+    requires(!SameAs<CodeUnit, CodePoint> && concepts::ContainerOf<Con, CodeUnit> &&
+             concepts::ConstructibleFrom<Self, Args...>)
+    constexpr friend auto tag_invoke(types::Tag<util::create_in_place>, InPlaceType<Self>, Con&& container,
+                                     Args&&... args) {
+        auto result = Self(util::forward<Args>(args)...);
+        auto view = [&] {
+            if constexpr (encoding::NullTerminated<Enc>) {
+                return view::concat(util::forward<Con>(container), view::single(CodeUnit(0)));
+            } else {
+                return view::all(util::forward<Con>(container));
+            }
+        }();
+        if constexpr (encoding::Universal<Enc>) {
+            return invoke_as_fallible([&] {
+                       return vector::append_container(result, util::move(view));
+                   }) % [&](auto&&...) {
+                return util::move(result);
+            } | try_infallible;
+        } else {
+            return (invoke_as_fallible([&] {
+                        return vector::append_container(result, util::move(view));
+                    }) >>
+                        [&] -> Expected<void, GenericCode> {
+                       auto is_valid = encoding::validate(Enc {}, result.span());
+                       if (!is_valid) {
+                           return Unexpected(BasicError::InvalidArgument);
+                       }
+                       return {};
+                   }) % [&] {
+                return util::move(result);
+            } | try_infallible;
+        }
+    }
+
+    template<concepts::InputContainer Con, typename... Args>
+    requires(concepts::ContainerOf<Con, CodePoint> && concepts::ConstructibleFrom<Self, Args...>)
     constexpr friend auto tag_invoke(types::Tag<util::create_in_place>, InPlaceType<Self>, Con&& container,
                                      Args&&... args) {
         auto result = Self(util::forward<Args>(args)...);
@@ -65,20 +108,21 @@ public:
     {
         if (self().capacity() == 0) {
             return detail::empty_null_terminated_array<CodeUnit>;
-        } else {
-            DI_ASSERT(self().size() < self().capacity());
-            DI_ASSERT(string::data(self())[self().size()] == CodeUnit(0));
-            return string::data(self());
         }
+        DI_ASSERT(self().size() < self().capacity());
+        DI_ASSERT(string::data(self())[self().size()] == CodeUnit(0));
+        return string::data(self());
     }
 
     constexpr auto push_back(CodePoint code_point) { return string::push_back(self(), code_point); }
 
     template<concepts::ContainerCompatible<CodePoint> Con>
-    requires(concepts::SameAs<meta::Encoding<Con>, Encoding>)
-    constexpr Self& append(Con&& container) {
-        string::append(self(), util::forward<Con>(container));
-        return self();
+    constexpr auto append(Con&& container) -> decltype(auto) {
+        return invoke_as_fallible([&] {
+                   return string::append(self(), util::forward<Con>(container));
+               }) % [&] {
+            return ref(self());
+        } | try_infallible;
     }
 };
 }
