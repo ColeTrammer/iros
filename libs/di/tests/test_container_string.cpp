@@ -39,6 +39,27 @@ constexpr void push_back() {
     ASSERT_EQ(y, "a"_sv);
 }
 
+constexpr void mutation() {
+    auto s = "Hello, 世界, Hello 友達!"_s;
+
+    ASSERT_EQ(s.erase(s.rfind(U',').begin()), s.iterator_at_offset(13));
+    ASSERT_EQ(s, "Hello, 世界 Hello 友達!"_sv);
+
+    ASSERT_EQ(s.erase(s.find(U'世').begin(), s.find(U'界').end()), s.iterator_at_offset(7));
+    ASSERT_EQ(s, "Hello,  Hello 友達!"_sv);
+
+    auto t = "Hello, World!"_ts;
+    t[5] = '!';
+
+    ASSERT_EQ(t, "Hello! World!"_tsv);
+
+    t.erase(5);
+    ASSERT_EQ(t, "Hello"_tsv);
+
+    t.erase(1, 2);
+    ASSERT_EQ(t, "Hlo"_tsv);
+}
+
 constexpr void to() {
     auto x = u8"abc"_sv | di::to<di::String>();
     ASSERT_EQ(x, u8"abc"_sv);
@@ -147,6 +168,7 @@ constexpr void readonly_api() {
     ASSERT_EQ(t.at(0), 'A');
     ASSERT_EQ(t.at(4), di::nullopt);
     ASSERT_EQ(t.substr(1, 2), "sd"_tsv);
+    ASSERT_EQ(t.substr(4, 2), ""_tsv);
 }
 
 constexpr void null_terminated() {
@@ -161,6 +183,7 @@ constexpr void null_terminated() {
 
 TESTC(container_string, basic)
 TESTC(container_string, push_back)
+TESTC(container_string, mutation)
 TESTC(container_string, to)
 TESTC(container_string, erased)
 TESTC(container_string, utf8)

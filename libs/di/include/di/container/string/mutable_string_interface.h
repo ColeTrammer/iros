@@ -1,11 +1,16 @@
 #pragma once
 
+#include <di/assert/assert_bool.h>
+#include <di/container/iterator/next.h>
 #include <di/container/string/constant_string_interface.h>
 #include <di/container/string/encoding.h>
 #include <di/container/string/string_append.h>
 #include <di/container/string/string_clear.h>
 #include <di/container/string/string_push_back.h>
+#include <di/container/string/string_to_vector_iterator.h>
+#include <di/container/vector/vector_begin.h>
 #include <di/container/vector/vector_clear.h>
+#include <di/container/vector/vector_erase.h>
 #include <di/container/view/concat.h>
 #include <di/meta/core.h>
 #include <di/platform/custom.h>
@@ -15,6 +20,7 @@
 #include <di/vocab/error/status_code_forward_declaration.h>
 #include <di/vocab/expected/expected_forward_declaration.h>
 #include <di/vocab/expected/invoke_as_fallible.h>
+#include <di/vocab/optional/lift_bool.h>
 
 namespace di::container::string {
 namespace detail {
@@ -103,10 +109,23 @@ private:
 public:
     constexpr void clear() { return string::clear(self()); }
 
+    constexpr CodePoint& operator[](usize index)
+    requires(encoding::Contiguous<Enc>)
+    {
+        DI_ASSERT(index < self().size());
+        return vector::data(self())[index];
+    }
+
+    constexpr auto at(usize index) {
+        return lift_bool(index < self().size()) % [&] {
+            return self()[index];
+        };
+    }
+
     constexpr auto c_str() const
     requires(encoding::NullTerminated<Enc>)
     {
-        if (self().capacity() == 0) {
+        if (self().empty()) {
             return detail::empty_null_terminated_array<CodeUnit>;
         }
         DI_ASSERT(self().size() < self().capacity());
@@ -115,6 +134,32 @@ public:
     }
 
     constexpr auto push_back(CodePoint code_point) { return string::push_back(self(), code_point); }
+
+    constexpr auto erase(Iterator first) {
+        DI_ASSERT(first != this->end());
+        return this->erase(first, next(first));
+    }
+    constexpr auto erase(Iterator first, Iterator last) {
+        return encoding::make_iterator(self().encoding(), as_const(self()).span(),
+                                       vector::erase(self(), string::string_to_vector_iterator(self(), first),
+                                                     string::string_to_vector_iterator(self(), last)) -
+                                           vector::begin(self()));
+    }
+    constexpr auto erase(usize offset, Optional<usize> count = {})
+    requires(encoding::Contiguous<Enc>)
+    {
+        auto first = this->iterator_at_offset(offset);
+        auto last = [&] -> Iterator {
+            if (count) {
+                return this->iterator_at_offset(offset + *count).value_or(this->end());
+            }
+            return this->end();
+        }();
+        if (!first.has_value()) {
+            return this->end();
+        }
+        return erase(*first, last);
+    }
 
     template<concepts::ContainerCompatible<CodePoint> Con>
     constexpr auto append(Con&& container) -> decltype(auto) {

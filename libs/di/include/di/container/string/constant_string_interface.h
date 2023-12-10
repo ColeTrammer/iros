@@ -103,16 +103,16 @@ public:
     requires(encoding::Contiguous<Enc>)
     {
         auto first = iterator_at_offset(offset);
-        auto last = [&] -> Optional<Iterator> {
+        auto last = [&] -> Iterator {
             if (count) {
-                return iterator_at_offset(offset + *count);
+                return iterator_at_offset(offset + *count).value_or(end());
             }
             return end();
         }();
-        if (!first.has_value() || !last.has_value()) {
+        if (!first.has_value()) {
             return StringViewImpl<Enc> {};
         }
-        return substr(*first, *last);
+        return substr(*first, last);
     }
 
     constexpr auto find(CodePoint code_point) const { return string::find(self(), code_point); }
