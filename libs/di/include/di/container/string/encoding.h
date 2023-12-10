@@ -148,8 +148,6 @@ namespace detail {
         constexpr CodePointView<P> auto operator()(T const& encoding, Span<U const> code_units) const {
             if constexpr (concepts::TagInvocable<CodePointViewFunction, T const&, Span<U const>>) {
                 return function::tag_invoke(*this, encoding, code_units);
-            } else if constexpr (concepts::SameAs<U, P>) {
-                return container::View(code_units);
             } else {
                 return container::View(make_iterator(encoding, code_units, 0),
                                        make_iterator(encoding, code_units, code_units.size()));

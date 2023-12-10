@@ -141,6 +141,12 @@ constexpr void readonly_api() {
 
     ASSERT_EQ(*s.find_first_not_of(u8"o達!"_sv), U'H');
     ASSERT_EQ(*s.find_last_not_of(u8"o達!"_sv), U'友');
+
+    auto t = "Asdf"_tsv;
+    ASSERT_EQ(t[0], 'A');
+    ASSERT_EQ(t.at(0), 'A');
+    ASSERT_EQ(t.at(4), di::nullopt);
+    ASSERT_EQ(t.substr(1, 2), "sd"_tsv);
 }
 
 constexpr void null_terminated() {

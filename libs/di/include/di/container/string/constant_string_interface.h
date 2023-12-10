@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/container/algorithm/min.h>
 #include <di/container/interface/reconstruct.h>
 #include <di/container/string/constant_string.h>
 #include <di/container/string/encoding.h>
@@ -38,20 +39,29 @@ private:
     constexpr Self const& self() const { return static_cast<Self const&>(*this); }
 
 public:
-    constexpr size_t size() const
+    constexpr usize size() const
     requires(encoding::Contiguous<Enc>)
     {
         return string::size(self());
     }
 
-    constexpr CodePoint operator[](size_t index) const
+    constexpr CodePoint operator[](usize index) const
     requires(encoding::Contiguous<Enc>)
     {
         return begin()[index];
     }
 
-    constexpr size_t size_bytes() const { return size_code_units() * sizeof(CodeUnit); }
-    constexpr size_t size_code_units() const { return string::size_code_units(self()); }
+    constexpr Optional<CodePoint> at(usize index) const
+    requires(encoding::Contiguous<Enc>)
+    {
+        if (index >= size()) {
+            return {};
+        }
+        return begin()[index];
+    }
+
+    constexpr usize size_bytes() const { return size_code_units() * sizeof(CodeUnit); }
+    constexpr usize size_code_units() const { return string::size_code_units(self()); }
     constexpr bool empty() const { return string::empty(self()); }
 
     constexpr auto data() const { return string::data(self()); }
@@ -88,6 +98,21 @@ public:
 
     constexpr auto substr(Iterator first, Optional<Iterator> last = {}) const {
         return string::substr(self(), first, last);
+    }
+    constexpr auto substr(usize offset, Optional<usize> count) const
+    requires(encoding::Contiguous<Enc>)
+    {
+        auto first = iterator_at_offset(offset);
+        auto last = [&] -> Optional<Iterator> {
+            if (count) {
+                return iterator_at_offset(offset + *count);
+            }
+            return end();
+        }();
+        if (!first.has_value() || !last.has_value()) {
+            return StringViewImpl<Enc> {};
+        }
+        return substr(*first, *last);
     }
 
     constexpr auto find(CodePoint code_point) const { return string::find(self(), code_point); }
@@ -142,7 +167,7 @@ public:
 
     constexpr auto view() const { return StringViewImpl<Enc>(self()); }
 
-    constexpr auto iterator_at_offset(size_t index) const { return string::iterator_at_offset(self(), index); }
+    constexpr auto iterator_at_offset(usize index) const { return string::iterator_at_offset(self(), index); }
 
     constexpr auto unicode_code_points() const { return string::unicode_code_points(self()); }
 
