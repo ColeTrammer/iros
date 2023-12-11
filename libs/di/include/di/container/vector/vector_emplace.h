@@ -7,6 +7,7 @@
 #include <di/container/vector/vector_iterator.h>
 #include <di/container/vector/vector_reserve.h>
 #include <di/container/vector/vector_size.h>
+#include <di/meta/language.h>
 #include <di/meta/operations.h>
 #include <di/meta/util.h>
 #include <di/meta/vocab.h>
@@ -20,10 +21,11 @@ template<concepts::detail::MutableVector Vec, typename... Args, typename CIter =
          typename R = meta::detail::VectorIterator<Vec>,
          typename G = meta::LikeExpected<meta::detail::VectorAllocResult<Vec>, R>>
 requires(concepts::ConstructibleFrom<meta::detail::VectorValue<Vec>, Args...>)
-constexpr G emplace(Vec& vector, CIter position, Args&&... args) {
+constexpr G emplace(Vec& vector, CIter cposition, Args&&... args) {
     auto size = vector::size(vector);
     auto new_size = size + 1;
     auto end = vector::end(vector);
+    auto position = vector::begin(vector) + (cposition - vector::begin(vector));
 
     if (size >= vector.capacity()) {
         auto new_vector = Vec();
@@ -36,7 +38,8 @@ constexpr G emplace(Vec& vector, CIter position, Args&&... args) {
                 container::uninitialized_relocate(vector::begin(vector), position, new_data, new_data_end);
             container::uninitialized_relocate(next_in, end, next_out + 1, new_data_end);
             util::construct_at(next_out, util::forward<Args>(args)...);
-            new_vector.assume_size(0);
+            new_vector.assume_size(new_size);
+            vector.assume_size(0);
             util::swap(vector, new_vector);
             return next_in;
         } | try_infallible;
