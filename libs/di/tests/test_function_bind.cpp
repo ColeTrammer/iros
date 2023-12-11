@@ -1,6 +1,7 @@
 
 #include <di/function/make_deferred.h>
 #include <di/function/prelude.h>
+#include <di/function/proj.h>
 #include <di/util/prelude.h>
 #include <dius/test/prelude.h>
 
@@ -112,6 +113,20 @@ constexpr void make_deferred() {
     ASSERT_EQ(g().x, 42);
 }
 
+constexpr void proj() {
+    auto f = [](int x, int y) {
+        return x + y;
+    };
+    auto g = [](int x) {
+        return x * x;
+    };
+    auto h = di::proj(g, f);
+    ASSERT_EQ(h(2, 3), 13);
+
+    auto i = f | di::proj(g);
+    ASSERT_EQ(i(2, 3), 13);
+}
+
 TESTC(util_bind, front)
 TESTC(util_bind, back)
 TESTC(util_bind, compose)
@@ -119,4 +134,5 @@ TESTC(util_bind, pipeline)
 TESTC(util_bind, curry)
 TESTC(util_bind, curry_back)
 TESTC(util_bind, make_deferred)
+TESTC(util_bind, proj)
 }
