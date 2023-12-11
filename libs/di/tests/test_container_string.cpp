@@ -32,6 +32,9 @@ constexpr void push_back() {
     x.append(u8"def"_sv);
     ASSERT_EQ(x, u8"abcdef"_sv);
 
+    x += "ghj"_sv;
+    ASSERT_EQ(x, u8"abcdefghj"_sv);
+
     auto y = di::container::string::StringImpl<di::container::string::Utf8Encoding,
                                                di::StaticVector<c8, di::Constexpr<64zu>>> {};
     (void) y.push_back(U'a');
@@ -40,13 +43,25 @@ constexpr void push_back() {
 }
 
 constexpr void mutation() {
-    auto s = "Hello, 世界, Hello 友達!"_s;
+    auto s = u8"Hello, 世界, Hello 友達!"_s;
 
     ASSERT_EQ(s.erase(s.rfind(U',').begin()), s.iterator_at_offset(13));
-    ASSERT_EQ(s, "Hello, 世界 Hello 友達!"_sv);
+    ASSERT_EQ(s, u8"Hello, 世界 Hello 友達!"_sv);
 
     ASSERT_EQ(s.erase(s.find(U'世').begin(), s.find(U'界').end()), s.iterator_at_offset(7));
-    ASSERT_EQ(s, "Hello,  Hello 友達!"_sv);
+    ASSERT_EQ(s, u8"Hello,  Hello 友達!"_sv);
+
+    ASSERT_EQ(s.pop_back(), U'!');
+    ASSERT_EQ(s, u8"Hello,  Hello 友達"_sv);
+
+    ASSERT_EQ(s.insert(s.find(U' ').begin(), U'!').begin(), *s.iterator_at_offset(6));
+    ASSERT_EQ(s, u8"Hello,!  Hello 友達"_sv);
+
+    ASSERT_EQ(s.insert(s.find(U' ').end(), "!!!"_sv).begin(), *s.iterator_at_offset(8));
+    ASSERT_EQ(s, u8"Hello,! !!! Hello 友達"_sv);
+
+    ASSERT_EQ(s.replace(s.find(U' ').begin(), s.find(U' ').end(), "World"_sv).begin(), *s.iterator_at_offset(7));
+    ASSERT_EQ(s, u8"Hello,!World!!! Hello 友達"_sv);
 
     auto t = "Hello, World!"_ts;
     t[5] = '!';
@@ -58,6 +73,18 @@ constexpr void mutation() {
 
     t.erase(1, 2);
     ASSERT_EQ(t, "Hlo"_tsv);
+
+    ASSERT_EQ(t.pop_back(), 'o');
+    ASSERT_EQ(t, "Hl"_tsv);
+
+    t.insert(1, 'e');
+    ASSERT_EQ(t, "Hel"_tsv);
+
+    t.insert(3, "lo"_tsv);
+    ASSERT_EQ(t, "Hello"_tsv);
+
+    t.replace(1, 2, "i"_tsv);
+    ASSERT_EQ(t, "Hilo"_tsv);
 }
 
 constexpr void to() {

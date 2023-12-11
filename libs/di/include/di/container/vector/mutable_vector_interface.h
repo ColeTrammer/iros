@@ -88,6 +88,12 @@ public:
         return vector::emplace(self(), position, util::move(value));
     }
 
+    template<concepts::InputContainer Con>
+    requires(concepts::ContainerCompatible<Con, Value>)
+    constexpr auto insert_container(ConstIterator position, Con&& container) {
+        return vector::insert_container(self(), position, util::forward<Con>(container));
+    }
+
     template<typename... Args>
     requires(concepts::ConstructibleFrom<Value, Args...>)
     constexpr auto emplace(ConstIterator position, Args&&... args) {
