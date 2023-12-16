@@ -127,6 +127,16 @@ constexpr void proj() {
     ASSERT_EQ(i(2, 3), 13);
 }
 
+constexpr void uncurry() {
+    auto f = [](int x, int y, int z) {
+        return x + y + z;
+    };
+    auto g = di::uncurry(f);
+    ASSERT_EQ(g(1, 2, 3), 6);
+    ASSERT_EQ(g(di::make_tuple(1, 2, 3)), 6);
+    ASSERT_EQ(g(di::make_tuple(1, 2), 3), 6);
+}
+
 TESTC(util_bind, front)
 TESTC(util_bind, back)
 TESTC(util_bind, compose)
@@ -135,4 +145,5 @@ TESTC(util_bind, curry)
 TESTC(util_bind, curry_back)
 TESTC(util_bind, make_deferred)
 TESTC(util_bind, proj)
+TESTC(util_bind, uncurry)
 }
