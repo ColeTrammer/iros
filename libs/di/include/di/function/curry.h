@@ -1,107 +1,146 @@
 #pragma once
 
 #include <di/function/bind_front.h>
+#include <di/function/invoke.h>
 #include <di/function/pipeable.h>
 #include <di/math/numeric_limits.h>
-#include <di/meta/constexpr.h>
+#include <di/meta/callable.h>
 #include <di/meta/operations.h>
 #include <di/meta/util.h>
-#include <di/util/forward.h>
-#include <di/util/move.h>
+#include <di/types/integers.h>
+
+namespace di::function::curry_ns {
+template<typename Self>
+struct Curry;
+
+template<typename F, usize max_arity_in = NumericLimits<usize>::max>
+struct CurryImpl : Curry<CurryImpl<F, max_arity_in>> {
+    using Base = Curry<CurryImpl<F, max_arity_in>>;
+
+public:
+    constexpr static auto max_arity = max_arity_in;
+
+    CurryImpl() = default;
+
+    template<typename... Args>
+    requires(concepts::ConstructibleFrom<F, Args...>)
+    constexpr CurryImpl(InPlace, Args&&... args) : m_f(di::forward<Args>(args)...) {}
+
+    CurryImpl(CurryImpl const&) = default;
+    CurryImpl(CurryImpl&&) = default;
+
+    CurryImpl& operator=(CurryImpl const&) = delete;
+    CurryImpl& operator=(CurryImpl&&) = delete;
+
+    template<typename... Args>
+    requires(concepts::Invocable<F&, Args...> || concepts::Callable<Base&, Args...>)
+    constexpr auto operator()(Args&&... args) & -> decltype(auto) {
+        if constexpr (concepts::Invocable<F&, Args...>) {
+            return di::invoke(m_f, di::forward<Args>(args)...);
+        } else {
+            return this->Base::operator()(di::forward<Args>(args)...);
+        }
+    }
+
+    template<typename... Args>
+    requires(concepts::Invocable<F const&, Args...> || concepts::Callable<Base const&, Args...>)
+    constexpr auto operator()(Args&&... args) const& -> decltype(auto) {
+        if constexpr (concepts::Invocable<F const&, Args...>) {
+            return di::invoke(m_f, di::forward<Args>(args)...);
+        } else {
+            return this->Base::operator()(di::forward<Args>(args)...);
+        }
+    }
+
+    template<typename... Args>
+    requires(concepts::Invocable<F, Args...> || concepts::Callable<Base &&, Args...>)
+    constexpr auto operator()(Args&&... args) && -> decltype(auto) {
+        if constexpr (concepts::Invocable<F, Args...>) {
+            return di::invoke(di::move(m_f), di::forward<Args>(args)...);
+        } else {
+            return di::move(*this).Base::operator()(di::forward<Args>(args)...);
+        }
+    }
+
+    template<typename... Args>
+    requires(concepts::Invocable<F const &&, Args...> || concepts::Callable<Base const &&, Args...>)
+    constexpr auto operator()(Args&&... args) const&& -> decltype(auto) {
+        if constexpr (concepts::Invocable<F const&&, Args...>) {
+            return di::invoke(di::move(m_f), di::forward<Args>(args)...);
+        } else {
+            return di::move(*this).Base::operator()(di::forward<Args>(args)...);
+        }
+    }
+
+private:
+    F m_f {};
+};
+
+template<typename F>
+constexpr auto deduce_max_arity() {
+    if constexpr (requires { F::max_arity; }) {
+        return F::max_arity;
+    } else {
+        return NumericLimits<usize>::max;
+    }
+}
+
+template<typename Self>
+struct Curry : pipeline::EnablePipeline {
+    constexpr static auto max_arity = deduce_max_arity<Self>();
+
+    Curry() = default;
+
+    Curry(Curry const&) = default;
+    Curry(Curry&&) = default;
+
+    Curry& operator=(Curry const&) = delete;
+    Curry& operator=(Curry&&) = delete;
+
+    template<concepts::DecayConstructible... Args>
+    requires(concepts::ConstructibleFrom<Self, Self&> && sizeof...(Args) < max_arity)
+    constexpr auto operator()(Args&&... args) & {
+        return di::bind_front(static_cast<Self&>(*this), di::forward<Args>(args)...);
+    }
+
+    template<concepts::DecayConstructible... Args>
+    requires(concepts::ConstructibleFrom<Self, Self const&> && sizeof...(Args) < max_arity)
+    constexpr auto operator()(Args&&... args) const& {
+        return di::bind_front(static_cast<Self const&>(*this), di::forward<Args>(args)...);
+    }
+
+    template<concepts::DecayConstructible... Args>
+    requires(concepts::ConstructibleFrom<Self, Self &&> && sizeof...(Args) < max_arity)
+    constexpr auto operator()(Args&&... args) && {
+        return di::bind_front(static_cast<Self&&>(*this), di::forward<Args>(args)...);
+    }
+
+    template<concepts::DecayConstructible... Args>
+    requires(concepts::ConstructibleFrom<Self, Self const &&> && sizeof...(Args) < max_arity)
+    constexpr auto operator()(Args&&... args) const&& {
+        return di::bind_front(static_cast<Self const&&>(*this), di::forward<Args>(args)...);
+    }
+};
+
+struct CurryFunction {
+    template<concepts::DecayConstructible F>
+    constexpr auto operator()(F&& function) const {
+        return CurryImpl<F> { in_place, di::forward<F>(function) };
+    }
+
+    template<concepts::DecayConstructible F, usize max_arity>
+    constexpr auto operator()(F&& function, Constexpr<max_arity>) const {
+        return CurryImpl<F, max_arity> { in_place, di::forward<F>(function) };
+    }
+};
+}
 
 namespace di::function {
-namespace detail {
-    template<typename F, size_t max_arity>
-    class CurryFunction;
-}
-
-template<typename F, size_t max_arity = math::NumericLimits<size_t>::max>
-requires(concepts::ConstructibleFrom<meta::Decay<F>, F>)
-constexpr auto curry(F&& function, Constexpr<max_arity> = {}) {
-    return detail::CurryFunction<meta::Decay<F>, max_arity>(types::in_place, util::forward<F>(function));
-}
-
-namespace detail {
-    template<typename F, size_t max_arity>
-    class CurryFunction : public function::pipeline::EnablePipeline {
-    private:
-        template<size_t arity>
-        constexpr static size_t new_arity = max_arity == math::NumericLimits<size_t>::max ? max_arity : arity;
-
-    public:
-        CurryFunction() = default;
-
-        template<typename Fn>
-        constexpr CurryFunction(types::InPlace, Fn&& function) : m_function(util::forward<Fn>(function)) {}
-
-        constexpr CurryFunction(CurryFunction const&) = default;
-        constexpr CurryFunction(CurryFunction&&) = default;
-
-        constexpr CurryFunction& operator=(CurryFunction const&) = delete;
-        constexpr CurryFunction& operator=(CurryFunction&&) = delete;
-
-        template<typename... Args>
-        requires(concepts::Invocable<F&, Args...>)
-        constexpr decltype(auto) operator()(Args&&... args) & {
-            return function::invoke(m_function, util::forward<Args>(args)...);
-        }
-
-        template<typename... Args>
-        requires(concepts::Invocable<F const&, Args...>)
-        constexpr decltype(auto) operator()(Args&&... args) const& {
-            return function::invoke(m_function, util::forward<Args>(args)...);
-        }
-
-        template<typename... Args>
-        requires(concepts::Invocable<F &&, Args...>)
-        constexpr decltype(auto) operator()(Args&&... args) && {
-            return function::invoke(util::move(m_function), util::forward<Args>(args)...);
-        }
-
-        template<typename... Args>
-        requires(concepts::Invocable<F const &&, Args...>)
-        constexpr decltype(auto) operator()(Args&&... args) const&& {
-            return function::invoke(util::move(m_function), util::forward<Args>(args)...);
-        }
-
-        template<typename... Args>
-        requires(!concepts::Invocable<F&, Args...> && concepts::ConstructibleFrom<F, F&> &&
-                 (concepts::ConstructibleFrom<meta::Decay<Args>, Args> && ...) && sizeof...(Args) < max_arity)
-        constexpr auto operator()(Args&&... args) & {
-            return curry(bind_front(static_cast<F&>(m_function), util::forward<Args>(args)...),
-                         c_<new_arity<max_arity - sizeof...(Args)>>);
-        }
-
-        template<typename... Args>
-        requires(!concepts::Invocable<F const&, Args...> && concepts::ConstructibleFrom<F, F const&> &&
-                 (concepts::ConstructibleFrom<meta::Decay<Args>, Args> && ...) && sizeof...(Args) < max_arity)
-        constexpr auto operator()(Args&&... args) const& {
-            return curry(bind_front(static_cast<F const&>(m_function), util::forward<Args>(args)...),
-                         c_<new_arity<max_arity - sizeof...(Args)>>);
-        }
-
-        template<typename... Args>
-        requires(!concepts::Invocable<F &&, Args...> && concepts::ConstructibleFrom<F, F &&> &&
-                 (concepts::ConstructibleFrom<meta::Decay<Args>, Args> && ...) && sizeof...(Args) < max_arity)
-        constexpr auto operator()(Args&&... args) && {
-            return curry(bind_front(static_cast<F&&>(m_function), util::forward<Args>(args)...),
-                         c_<new_arity<max_arity - sizeof...(Args)>>);
-        }
-
-        template<typename... Args>
-        requires(!concepts::Invocable<F const &&, Args...> && concepts::ConstructibleFrom<F, F const &&> &&
-                 (concepts::ConstructibleFrom<meta::Decay<Args>, Args> && ...) && sizeof...(Args) < max_arity)
-        constexpr auto operator()(Args&&... args) const&& {
-            return curry(bind_front(static_cast<F const&&>(m_function), util::forward<Args>(args)...),
-                         c_<new_arity<max_arity - sizeof...(Args)>>);
-        }
-
-    private:
-        F m_function;
-    };
-}
+using curry_ns::Curry;
+constexpr inline auto curry = curry_ns::CurryFunction {};
 }
 
 namespace di {
 using function::curry;
+using function::Curry;
 }

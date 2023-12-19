@@ -16,7 +16,7 @@ concept MemberEraseIf = requires(Con& container, F&& function) {
     { container.erase_if(di::forward<F>(function)) } -> SameAs<usize>;
 };
 
-struct EraseIfFunction {
+struct EraseIfFunction : CurryBack<EraseIfFunction> {
     template<typename Con, typename F>
     requires(CustomEraseIf<Con, F> || MemberEraseIf<Con, F>)
     constexpr auto operator()(Con& container, F&& function) const -> usize {
@@ -28,6 +28,9 @@ struct EraseIfFunction {
             return container.erase_if(di::forward<F>(function));
         }
     }
+
+    using CurryBack<EraseIfFunction>::operator();
+    constexpr static auto max_arity = 2zu;
 };
 
 template<typename Con, typename T>
@@ -41,13 +44,13 @@ concept MemberErase = requires(Con& container, T const& value) {
 template<typename Con, typename T>
 concept EraseIfErase = requires(Con& container) {
     {
-        EraseIfFunction {}(container, [](auto const& element) {
-            return element == di::declval<T const&>();
+        EraseIfFunction {}(container, [](auto const&) {
+            return true;
         })
     } -> SameAs<usize>;
 };
 
-struct EraseFunction {
+struct EraseFunction : CurryBack<EraseFunction> {
     template<typename Con, typename T>
     requires(CustomErase<Con, T> || MemberErase<Con, T> || EraseIfErase<Con, T>)
     constexpr auto operator()(Con& container, T const& value) const -> usize {
@@ -63,12 +66,15 @@ struct EraseFunction {
             });
         }
     }
+
+    using CurryBack<EraseFunction>::operator();
+    constexpr static auto max_arity = 2zu;
 };
 }
 
 namespace di::container {
-constexpr inline auto erase = di::curry_back(erase_ns::EraseFunction {}, c_<2zu>);
-constexpr inline auto erase_if = di::curry_back(erase_ns::EraseIfFunction {}, c_<2zu>);
+constexpr inline auto erase = erase_ns::EraseFunction {};
+constexpr inline auto erase_if = erase_ns::EraseIfFunction {};
 }
 
 namespace di {
