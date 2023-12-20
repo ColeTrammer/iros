@@ -1,3 +1,4 @@
+#include <di/container/interface/erase.h>
 #include <di/container/string/encoding.h>
 #include <di/container/string/prelude.h>
 #include <di/container/string/string.h>
@@ -85,6 +86,14 @@ constexpr void mutation() {
 
     t.replace(1, 2, "i"_tsv);
     ASSERT_EQ(t, "Hilo"_tsv);
+
+    auto w = u8"Hello, 世界, Hello 友達!"_s;
+    ASSERT_EQ(di::erase_if(w,
+                           [](auto c) {
+                               return c == U'世' || c == U'界';
+                           }),
+              2zu);
+    ASSERT_EQ(w, u8"Hello, , Hello 友達!"_sv);
 }
 
 constexpr void to() {

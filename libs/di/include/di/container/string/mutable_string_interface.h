@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/assert/assert_bool.h>
+#include <di/container/algorithm/copy.h>
 #include <di/container/concepts/container_of.h>
 #include <di/container/iterator/next.h>
 #include <di/container/iterator/prev.h>
@@ -287,6 +288,33 @@ public:
         }();
         DI_ASSERT(first.has_value());
         return this->replace(*first, last, di::forward<Con>(container));
+    }
+
+private:
+    template<typename F, SameAs<Tag<erase_if>> T = Tag<erase_if>>
+    requires(concepts::Predicate<F, CodePoint const&>)
+    constexpr friend auto tag_invoke(T, Self& self, F&& function) {
+        auto last = self.end();
+        auto fast = di::find_if(self.begin(), last, di::ref(function));
+        if (fast == last) {
+            return usize(0);
+        }
+
+        auto count = usize(1);
+        auto slow = string::string_to_vector_iterator(self, fast++);
+        while (fast != last) {
+            if (invoke(function, *fast)) {
+                ++count;
+                ++fast;
+            } else {
+                auto fast_start = string::string_to_vector_iterator(self, fast);
+                auto fast_end = string::string_to_vector_iterator(self, ++fast);
+                slow = copy(fast_start, fast_end, slow).out;
+            }
+        }
+
+        self.assume_size(vector::size(self) - (string::string_to_vector_iterator(self, last) - slow));
+        return count;
     }
 };
 }
