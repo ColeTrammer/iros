@@ -1,3 +1,4 @@
+#include <di/container/interface/erase.h>
 #include <di/container/vector/prelude.h>
 #include <dius/test/prelude.h>
 
@@ -191,6 +192,27 @@ constexpr void static_() {
     ASSERT_EQ(w.size(), 2u);
 }
 
+constexpr void erase() {
+    auto v = di::create<di::Vector>(di::range(6));
+    ASSERT_EQ(v.size(), 6u);
+
+    auto n = v | di::erase(2);
+    ASSERT_EQ(v.size(), 5u);
+    ASSERT_EQ(n, 1u);
+    ASSERT_EQ(v[0], 0);
+    ASSERT_EQ(v[1], 1);
+    ASSERT_EQ(v[2], 3);
+
+    auto m = v | di::erase_if([](auto const& x) {
+                 return x == 3;
+             });
+    ASSERT_EQ(v.size(), 4u);
+    ASSERT_EQ(m, 1u);
+    ASSERT_EQ(v[0], 0);
+    ASSERT_EQ(v[1], 1);
+    ASSERT_EQ(v[2], 4);
+}
+
 TESTC(container_vector, basic)
 TESTC(container_vector, reserve)
 TESTC(container_vector, move_only)
@@ -198,4 +220,5 @@ TESTC(container_vector, to)
 TESTC(container_vector, clone)
 TESTC(container_vector, compare)
 TESTC(container_vector, static_)
+TESTC(container_vector, erase)
 }

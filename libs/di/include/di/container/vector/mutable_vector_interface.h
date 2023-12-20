@@ -1,6 +1,8 @@
 #pragma once
 
+#include <di/container/algorithm/remove_if.h>
 #include <di/container/concepts/prelude.h>
+#include <di/container/interface/erase.h>
 #include <di/container/meta/prelude.h>
 #include <di/container/vector/constant_vector_interface.h>
 #include <di/container/vector/vector_append_container.h>
@@ -13,7 +15,9 @@
 #include <di/container/vector/vector_reserve.h>
 #include <di/container/vector/vector_resize.h>
 #include <di/container/view/clone.h>
+#include <di/function/tag_invoke.h>
 #include <di/meta/operations.h>
+#include <di/meta/relation.h>
 #include <di/util/clone.h>
 #include <di/util/create.h>
 #include <di/util/create_in_place.h>
@@ -123,5 +127,16 @@ public:
     constexpr auto iterator(ConstIterator iter) { return vector::iterator(self(), iter); }
 
     constexpr auto reserve(size_t n) { return vector::reserve(self(), n); }
+
+private:
+    template<typename F, SameAs<Tag<erase_if>> T = Tag<erase_if>>
+    requires(concepts::Predicate<F, Value const&>)
+    constexpr friend auto tag_invoke(T, Self& self, F&& function) {
+        auto [first, last] = remove_if(self, di::forward<F>(function));
+        auto const count = usize(last - first);
+
+        vector::erase(self, first, last);
+        return count;
+    }
 };
 }
