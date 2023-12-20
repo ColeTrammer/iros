@@ -1,4 +1,5 @@
 #include <di/container/algorithm/prelude.h>
+#include <di/container/interface/erase.h>
 #include <di/container/tree/prelude.h>
 #include <di/container/view/prelude.h>
 #include <di/math/prelude.h>
@@ -54,6 +55,14 @@ constexpr void erase() {
     ASSERT_EQ(*x.erase(x.find(3), x.find(5)), 5);
     ASSERT_EQ(x.erase(1), 1u);
     ASSERT_EQ(x.erase(6), 0u);
+
+    auto y = di::to<di::TreeSet>(di::range(1, 10));
+    ASSERT_EQ(di::erase_if(y,
+                           [](auto x) {
+                               return x % 2 == 0;
+                           }),
+              4u);
+    ASSERT_EQ(di::distance(y), 5);
 }
 
 constexpr void property() {

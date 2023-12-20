@@ -1,5 +1,6 @@
 #include <di/container/algorithm/prelude.h>
 #include <di/container/hash/node/prelude.h>
+#include <di/container/interface/erase.h>
 #include <di/util/prelude.h>
 #include <dius/test/prelude.h>
 
@@ -44,6 +45,13 @@ constexpr void basic() {
 
     x[6] = 1;
     ASSERT_EQ(x[6], 1);
+
+    ASSERT_EQ(di::erase_if(x,
+                           [](auto x) {
+                               return di::get<0>(x) == 3;
+                           }),
+              1u);
+    ASSERT_EQ(x.size(), 3);
 }
 
 constexpr void multi() {

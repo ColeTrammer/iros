@@ -1,3 +1,4 @@
+#include <di/container/interface/erase.h>
 #include <di/container/tree/prelude.h>
 #include <di/container/view/prelude.h>
 #include <dius/test/prelude.h>
@@ -28,6 +29,14 @@ constexpr void basic() {
     auto z = di::Array { di::Tuple { 1, 1 }, di::Tuple { 2, 2 } } | di::to<di::TreeMap>();
     ASSERT_EQ(z.at(1), 1);
     ASSERT_EQ(z.at(2), 2);
+
+    ASSERT_EQ(di::erase_if(z,
+                           [](auto x) {
+                               return di::get<0>(x) == 1;
+                           }),
+              1u);
+    ASSERT_EQ(z.at(2), 2);
+    ASSERT_EQ(z.size(), 1u);
 }
 
 TESTC(container_tree_map, basic)

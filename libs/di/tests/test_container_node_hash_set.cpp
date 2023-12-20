@@ -1,5 +1,6 @@
 #include <di/container/algorithm/prelude.h>
 #include <di/container/hash/node/prelude.h>
+#include <di/container/interface/erase.h>
 #include <dius/test/prelude.h>
 
 namespace container_node_hash_set {
@@ -36,6 +37,13 @@ constexpr void basic() {
     auto r2 = x | di::to<di::Vector>();
     di::sort(r2);
     ASSERT_EQ(r2, ex2);
+
+    ASSERT_EQ(di::erase_if(x,
+                           [](auto x) {
+                               return x == 3;
+                           }),
+              1u);
+    ASSERT_EQ(x.size(), 2);
 }
 
 constexpr void multi() {

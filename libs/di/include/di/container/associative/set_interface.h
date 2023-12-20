@@ -2,11 +2,13 @@
 
 #include <di/container/action/sequence.h>
 #include <di/container/concepts/prelude.h>
+#include <di/container/interface/erase.h>
 #include <di/container/interface/prelude.h>
 #include <di/container/iterator/prelude.h>
 #include <di/container/meta/prelude.h>
 #include <di/container/types/prelude.h>
 #include <di/math/to_unsigned.h>
+#include <di/meta/core.h>
 #include <di/util/clone.h>
 #include <di/vocab/optional/prelude.h>
 
@@ -460,6 +462,22 @@ private:
     {
         a.subtract(b);
         return a;
+    }
+
+    template<typename F, SameAs<Tag<erase_if>> T = Tag<erase_if>>
+    requires(concepts::Predicate<F&, Value const&>)
+    constexpr friend usize tag_invoke(T, Self& self, F&& function) {
+        auto it = self.begin();
+        auto result = 0zu;
+        while (it != self.end()) {
+            if (function(*it)) {
+                it = self.erase(it);
+                ++result;
+            } else {
+                ++it;
+            }
+        }
+        return result;
     }
 };
 }
