@@ -1,8 +1,10 @@
 #pragma once
 
+#include <di/container/interface/erase.h>
 #include <di/container/intrusive/forward_list_forward_declaration.h>
 #include <di/container/intrusive/forward_list_node.h>
 #include <di/container/iterator/const_iterator_impl.h>
+#include <di/container/iterator/next.h>
 #include <di/container/iterator/prelude.h>
 #include <di/util/addressof.h>
 #include <di/util/exchange.h>
@@ -21,6 +23,7 @@ class IntrusiveForwardList {
 private:
     using Node = IntrusiveForwardListNode<Tag>;
     using ConcreteNode = decltype(Tag::node_type(in_place_type<T>));
+    using ConcreteSelf = meta::Conditional<SameAs<Void, Self>, IntrusiveForwardList, Self>;
 
     constexpr static bool is_sized = Tag::is_sized(in_place_type<T>);
     constexpr static bool store_tail = Tag::always_store_tail(in_place_type<T>);
@@ -220,6 +223,25 @@ public:
     }
 
 private:
+    template<typename F>
+    requires(concepts::Predicate<F&, T const&>)
+    constexpr friend usize tag_invoke(di::Tag<erase_if>, ConcreteSelf& self, F&& function) {
+        auto it = self.before_begin();
+        auto jt = next(it);
+
+        auto result = 0zu;
+        while (jt != self.end()) {
+            if (function(*jt)) {
+                jt = self.erase_after(it);
+                ++result;
+            } else {
+                ++it;
+                ++jt;
+            }
+        }
+        return result;
+    }
+
     constexpr Node* head() const { return m_head.value().next; }
     constexpr void set_head(Node* head) { m_head.value().next = head; }
 

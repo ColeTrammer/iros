@@ -2,9 +2,12 @@
 
 #include <di/container/algorithm/compare.h>
 #include <di/container/algorithm/equal.h>
+#include <di/container/interface/erase.h>
 #include <di/container/intrusive/list_node.h>
 #include <di/container/iterator/const_iterator_impl.h>
 #include <di/container/iterator/prelude.h>
+#include <di/meta/core.h>
+#include <di/types/void.h>
 #include <di/util/addressof.h>
 #include <di/util/exchange.h>
 #include <di/util/movable_box.h>
@@ -21,6 +24,7 @@ class IntrusiveList {
 private:
     using Node = IntrusiveListNode<Tag>;
     using ConcreteNode = decltype(Tag::node_type(in_place_type<T>));
+    using ConcreteSelf = meta::Conditional<SameAs<Void, Self>, IntrusiveList, Self>;
 
     constexpr static bool is_sized = Tag::is_sized(in_place_type<T>);
 
@@ -251,6 +255,22 @@ private:
     requires(concepts::ThreeWayComparable<T>)
     {
         return container::compare(a, b);
+    }
+
+    template<typename F>
+    requires(concepts::Predicate<F&, T const&>)
+    constexpr friend usize tag_invoke(di::Tag<erase_if>, ConcreteSelf& self, F&& function) {
+        auto it = self.begin();
+        auto result = 0zu;
+        while (it != self.end()) {
+            if (function(*it)) {
+                it = self.erase(it);
+                ++result;
+            } else {
+                ++it;
+            }
+        }
+        return result;
     }
 
     constexpr Node* head() const { return m_head.value().next; }

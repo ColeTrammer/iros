@@ -125,5 +125,16 @@ public:
     {
         return ring::resize(self(), count, value);
     }
+
+private:
+    template<typename F, SameAs<Tag<erase_if>> T = Tag<erase_if>>
+    requires(concepts::Predicate<F, Value const&>)
+    constexpr friend auto tag_invoke(T, Self& self, F&& function) {
+        auto [first, last] = remove_if(self, di::forward<F>(function));
+        auto const count = usize(last - first);
+
+        ring::erase(self, first, last);
+        return count;
+    }
 };
 }

@@ -13,6 +13,7 @@ constexpr void forward_list() {
     auto a = Node(4);
     auto b = Node(6);
     auto c = Node(8);
+    auto d = Node(9);
 
     auto list = di::IntrusiveForwardList<Node> {};
 
@@ -34,6 +35,20 @@ constexpr void forward_list() {
     ASSERT_EQ(list.pop_front().transform(&Node::value), 6);
     ASSERT_EQ(list.pop_front().transform(&Node::value), 8);
     ASSERT_EQ(list.pop_front().transform(&Node::value), di::nullopt);
+
+    list.push_back(a);
+    list.push_back(b);
+    list.push_back(d);
+    list.push_back(c);
+
+    ASSERT_EQ(di::erase_if(list,
+                           [](Node const& node) {
+                               return node.value % 2 == 0;
+                           }),
+              3u);
+
+    ASSERT_EQ(list.pop_front().transform(&Node::value), 9);
+    ASSERT_EQ(list.pop_front().transform(&Node::value), di::nullopt);
 }
 
 constexpr void list() {
@@ -46,6 +61,7 @@ constexpr void list() {
     auto a = Node(4);
     auto b = Node(6);
     auto c = Node(8);
+    auto d = Node(9);
 
     auto list = di::IntrusiveList<Node> {};
 
@@ -70,6 +86,20 @@ constexpr void list() {
     ASSERT_EQ(di::distance(list), 1);
     ASSERT_EQ(list.pop_front().transform(&Node::value), 8);
     ASSERT_EQ(di::distance(list), 0);
+    ASSERT_EQ(list.pop_front().transform(&Node::value), di::nullopt);
+
+    list.push_back(a);
+    list.push_back(b);
+    list.push_back(d);
+    list.push_back(c);
+
+    ASSERT_EQ(di::erase_if(list,
+                           [](Node const& node) {
+                               return node.value % 2 == 0;
+                           }),
+              3u);
+
+    ASSERT_EQ(list.pop_front().transform(&Node::value), 9);
     ASSERT_EQ(list.pop_front().transform(&Node::value), di::nullopt);
 }
 
