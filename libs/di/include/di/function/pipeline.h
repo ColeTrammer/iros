@@ -17,4 +17,9 @@ requires(!concepts::Invocable<G, F>)
 constexpr auto operator|(F&& f, G&& g) {
     return function::compose(util::forward<G>(g), util::forward<F>(f));
 }
+
+template<Pipeable F, Pipeable G>
+constexpr auto operator*(F&& f, G&& g) {
+    return function::compose(util::forward<G>(g), util::forward<F>(f));
+}
 }

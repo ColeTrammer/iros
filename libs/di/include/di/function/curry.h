@@ -87,7 +87,7 @@ constexpr auto deduce_max_arity() {
 
 template<typename Self>
 struct Curry : pipeline::EnablePipeline {
-    constexpr static auto max_arity = deduce_max_arity<Self>();
+    constexpr static auto max_arity() { return deduce_max_arity<Self>(); }
 
     Curry() = default;
 
@@ -98,25 +98,25 @@ struct Curry : pipeline::EnablePipeline {
     Curry& operator=(Curry&&) = delete;
 
     template<concepts::DecayConstructible... Args>
-    requires(concepts::ConstructibleFrom<Self, Self&> && sizeof...(Args) < max_arity)
+    requires(concepts::ConstructibleFrom<Self, Self&> && sizeof...(Args) < max_arity())
     constexpr auto operator()(Args&&... args) & {
         return di::bind_front(static_cast<Self&>(*this), di::forward<Args>(args)...);
     }
 
     template<concepts::DecayConstructible... Args>
-    requires(concepts::ConstructibleFrom<Self, Self const&> && sizeof...(Args) < max_arity)
+    requires(concepts::ConstructibleFrom<Self, Self const&> && sizeof...(Args) < max_arity())
     constexpr auto operator()(Args&&... args) const& {
         return di::bind_front(static_cast<Self const&>(*this), di::forward<Args>(args)...);
     }
 
     template<concepts::DecayConstructible... Args>
-    requires(concepts::ConstructibleFrom<Self, Self &&> && sizeof...(Args) < max_arity)
+    requires(concepts::ConstructibleFrom<Self, Self &&> && sizeof...(Args) < max_arity())
     constexpr auto operator()(Args&&... args) && {
         return di::bind_front(static_cast<Self&&>(*this), di::forward<Args>(args)...);
     }
 
     template<concepts::DecayConstructible... Args>
-    requires(concepts::ConstructibleFrom<Self, Self const &&> && sizeof...(Args) < max_arity)
+    requires(concepts::ConstructibleFrom<Self, Self const &&> && sizeof...(Args) < max_arity())
     constexpr auto operator()(Args&&... args) const&& {
         return di::bind_front(static_cast<Self const&&>(*this), di::forward<Args>(args)...);
     }
