@@ -57,6 +57,7 @@
                 "IROS_BuildCcpp": "ON",
                 "IROS_BuildIris": "ON",
                 "IROS_BuildTests": "ON",
+                "IROS_BuildTools": "ON",
                 "IROS_BuildUserspace": "ON",
                 "IROS_ExtraFlags": "-D__iros__=1 -U__linux__",
                 "IROS_UseDiusRuntime": "ON"

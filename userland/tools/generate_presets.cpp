@@ -224,6 +224,7 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
                 "IROS_BuildUserspace": "ON",
                 "IROS_BuildTests": "ON",
                 "IROS_BuildCcpp": "ON",
+                "IROS_BuildTools": "ON",
                 "IROS_UseDiusRuntime": "ON",
                 "IROS_ExtraFlags": "-D__iros__=1 -U__linux__",
                 "CMAKE_CXX_COMPILER_WORKS": "ON"

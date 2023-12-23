@@ -1,5 +1,6 @@
 #include <di/math/prelude.h>
 #include <dius/print.h>
+#include <dius/runtime/allocate.h>
 #include <dius/system/prelude.h>
 
 [[gnu::weak]] void* operator new(std::size_t size) {
@@ -57,37 +58,12 @@
     return ::operator delete(pointer, alignment, std::nothrow);
 }
 
-#ifdef DIUS_PLATFORM_LINUX
-static uptr heap_end;
-#endif
-
 [[gnu::weak]] void* operator new(std::size_t size, std::align_val_t align, std::nothrow_t const&) noexcept {
-#ifdef DIUS_PLATFORM_LINUX
-    if (!heap_end) {
-        heap_end = *dius::system::system_call<uptr>(dius::system::Number::brk, nullptr);
-    }
-
-    auto object_start = di::align_up(heap_end, di::to_underlying(align));
-    ASSERT(object_start % di::to_underlying(align) == 0);
-
-    auto new_heap_end = object_start + size;
-    if (dius::system::system_call<uptr>(dius::system::Number::brk, new_heap_end) != new_heap_end) {
-        dius::println("Failed to allocate memory of size {} with align {}"_sv, size, di::to_underlying(align));
-        return nullptr;
-    }
-
-    heap_end = new_heap_end;
-    return reinterpret_cast<void*>(object_start);
-#else
-    ASSERT_LT_EQ(di::to_underlying(align), 4096);
-
-    auto result = dius::system::system_call<uptr>(dius::system::Number::allocate_memory, di::align_up(size, 4096));
+    auto result = dius::runtime::Heap::the().allocate(size, usize(align));
     if (!result) {
-        dius::println("Failed to allocate memory of size {} with align {}"_sv, size, di::to_underlying(align));
         return nullptr;
     }
-    return reinterpret_cast<void*>(*result);
-#endif
+    return result.value().data;
 }
 
 // Deallocating delete.

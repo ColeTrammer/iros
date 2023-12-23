@@ -13,3 +13,13 @@ extern "C" [[gnu::weak]] raw_u128 __umodti3(raw_u128 a, raw_u128 b) {
 extern "C" [[gnu::weak]] raw_i128 __divti3(raw_i128 a, raw_i128 b) {
     return di::bit_cast<raw_i128>(di::bit_cast<di::i128_fallback>(a) / di::bit_cast<di::i128_fallback>(b));
 }
+
+extern "C" [[gnu::weak]] i32 __popcountdi2(i64 value) {
+    auto c = 0;
+    for (auto i = 0_i64; i < 64; ++i) {
+        if (value & (1_i64 << i)) {
+            ++c;
+        }
+    }
+    return c;
+}
