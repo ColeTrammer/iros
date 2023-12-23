@@ -50,6 +50,14 @@
             "inherits": ["base"]
         },
         {
+            "name": "default_base",
+            "hidden": true,
+            "cacheVariables": {
+                "IROS_BuildTests": "ON"
+            },
+            "inherits": ["base"]
+        },
+        {
             "name": "iros_base",
             "hidden": true,
             "cacheVariables": {
@@ -161,7 +169,7 @@
                 "CMAKE_UNITY_BUILD": "ON",
                 "IROS_NonUnityBuildPreset": "gcc_iros_x86_64_release_default_non_unity"
             },
-            "inherits": ["gcc_base", "release_base", "iros_x86_64_base"]
+            "inherits": ["gcc_base", "release_base", "iros_x86_64_base", "default_base"]
         },
         {
             "name": "gcc_iros_x86_64_release_iris_debug",
@@ -191,7 +199,7 @@
                 "CMAKE_UNITY_BUILD": "ON",
                 "IROS_NonUnityBuildPreset": "gcc_iros_x86_64_debug_default_non_unity"
             },
-            "inherits": ["gcc_base", "debug_base", "iros_x86_64_base"]
+            "inherits": ["gcc_base", "debug_base", "iros_x86_64_base", "default_base"]
         },
         {
             "name": "clang_iros_x86_64_release_default",
@@ -206,7 +214,7 @@
                 "CMAKE_UNITY_BUILD": "ON",
                 "IROS_NonUnityBuildPreset": "clang_iros_x86_64_release_default_non_unity"
             },
-            "inherits": ["clang_base", "release_base", "iros_x86_64_base"]
+            "inherits": ["clang_base", "release_base", "iros_x86_64_base", "default_base"]
         },
         {
             "name": "clang_iros_x86_64_release_iris_debug",
@@ -236,7 +244,7 @@
                 "CMAKE_UNITY_BUILD": "ON",
                 "IROS_NonUnityBuildPreset": "clang_iros_x86_64_debug_default_non_unity"
             },
-            "inherits": ["clang_base", "debug_base", "iros_x86_64_base"]
+            "inherits": ["clang_base", "debug_base", "iros_x86_64_base", "default_base"]
         },
         {
             "name": "clang_release_dius_runtime",
@@ -726,7 +734,7 @@
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
                 "CMAKE_UNITY_BUILD": "OFF"
             },
-            "inherits": ["gcc_base", "release_base", "iros_x86_64_base"]
+            "inherits": ["gcc_base", "release_base", "iros_x86_64_base", "default_base"]
         },
         {
             "name": "gcc_iros_x86_64_release_iris_debug_non_unity",
@@ -754,7 +762,7 @@
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
                 "CMAKE_UNITY_BUILD": "OFF"
             },
-            "inherits": ["gcc_base", "debug_base", "iros_x86_64_base"]
+            "inherits": ["gcc_base", "debug_base", "iros_x86_64_base", "default_base"]
         },
         {
             "name": "clang_iros_x86_64_release_default_non_unity",
@@ -768,7 +776,7 @@
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
                 "CMAKE_UNITY_BUILD": "OFF"
             },
-            "inherits": ["clang_base", "release_base", "iros_x86_64_base"]
+            "inherits": ["clang_base", "release_base", "iros_x86_64_base", "default_base"]
         },
         {
             "name": "clang_iros_x86_64_release_iris_debug_non_unity",
@@ -796,7 +804,7 @@
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
                 "CMAKE_UNITY_BUILD": "OFF"
             },
-            "inherits": ["clang_base", "debug_base", "iros_x86_64_base"]
+            "inherits": ["clang_base", "debug_base", "iros_x86_64_base", "default_base"]
         },
         {
             "name": "clang_release_dius_runtime_non_unity",

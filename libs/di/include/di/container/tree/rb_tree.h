@@ -463,7 +463,9 @@ protected:
                     }
                     w->color = x->parent->color;
                     x->parent->color = Node::Color::Black;
-                    w->right->color = Node::Color::Black;
+                    if (w->right) {
+                        w->right->color = Node::Color::Black;
+                    }
                     rotate_left(*x->parent);
                     break;
                 }
@@ -491,7 +493,9 @@ protected:
                     }
                     w->color = x->parent->color;
                     x->parent->color = Node::Color::Black;
-                    w->left->color = Node::Color::Black;
+                    if (w->left) {
+                        w->left->color = Node::Color::Black;
+                    }
                     rotate_right(*x->parent);
                     break;
                 }

@@ -217,6 +217,14 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
             "inherits": ["base"]
         },
         {
+            "name": "default_base",
+            "hidden": true,
+            "cacheVariables": {
+                "IROS_BuildTests": "ON"
+            },
+            "inherits": ["base"]
+        },
+        {
             "name": "iros_base",
             "hidden": true,
             "cacheVariables": {
@@ -368,9 +376,7 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
         inherits.push_back(*di::present("{}_base"_sv, compiler));
         inherits.push_back(*di::present("{}_base"_sv, build_type));
         inherits.push_back(*di::present("iros_{}_base"_sv, arch));
-        if (build_feature != "default"_sv) {
-            inherits.push_back(*di::present("{}_base"_sv, build_feature));
-        }
+        inherits.push_back(*di::present("{}_base"_sv, build_feature));
 
         auto cache_variables = di::TreeMap<di::String, di::String> {};
         cache_variables.insert_or_assign("CMAKE_UNITY_BUILD"_sv, unity ? "ON"_sv.to_owned() : "OFF"_sv.to_owned());

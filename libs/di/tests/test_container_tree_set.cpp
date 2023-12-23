@@ -133,9 +133,49 @@ constexpr void property2() {
     }
 }
 
+constexpr void property3() {
+    auto do_test = [](di::UniformRandomBitGenerator auto rng) {
+        auto x = di::TreeSet<unsigned int> {};
+
+        auto iterations = di::is_constant_evaluated() ? 99 : 345;
+        auto vector = di::range(0, iterations) | di::to<di::Vector>();
+
+        for (auto i : vector) {
+            x.insert(i);
+        }
+        ASSERT_EQ(di::size(x), di::to_unsigned(iterations));
+
+        rng.discard(1);
+        di::shuffle(vector, rng);
+
+        for (auto [i, value] : di::enumerate(vector)) {
+            x.erase(value);
+            x.insert(value);
+            ASSERT(di::is_sorted(x));
+            ASSERT(di::is_sorted(di::reverse(x), di::compare_backwards));
+            ASSERT_EQ(di::size(x), di::to_unsigned(iterations));
+        }
+    };
+
+    do_test(di::MinstdRand(1));
+
+    if (!di::is_constant_evaluated()) {
+        do_test(di::MinstdRand(2));
+        do_test(di::MinstdRand(3));
+        do_test(di::MinstdRand(4));
+        do_test(di::MinstdRand(5));
+        do_test(di::MinstdRand(6));
+        do_test(di::MinstdRand(7));
+        do_test(di::MinstdRand(8));
+        do_test(di::MinstdRand(9));
+        do_test(di::MinstdRand(10));
+    }
+}
+
 TESTC(container_tree_set, basic)
 TESTC(container_tree_set, accessors)
 TESTC(container_tree_set, erase)
 TESTC(container_tree_set, property)
 TESTC(container_tree_set, property2)
+TESTC(container_tree_set, property3)
 }
