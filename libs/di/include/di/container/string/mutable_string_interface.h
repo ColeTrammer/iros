@@ -29,6 +29,7 @@
 #include <di/vocab/expected/invoke_as_fallible.h>
 #include <di/vocab/expected/try_infallible.h>
 #include <di/vocab/optional/lift_bool.h>
+#include <di/vocab/tuple/tuple_forward_declaration.h>
 
 namespace di::container::string {
 namespace detail {
@@ -213,15 +214,19 @@ public:
     template<concepts::ContainerOf<CodePoint> Con>
     constexpr auto insert(Iterator it, Con&& container) {
         if constexpr (encoding::NullTerminated<Enc>) {
-            return (invoke_as_fallible([&] {
-                        return vector::insert_container(self(), string::string_to_vector_iterator(self(), it),
-                                                        di::forward<Con>(container) |
-                                                            view::transform(function::bind_front(
-                                                                encoding::convert_to_code_units, self().encoding())) |
-                                                            view::join);
-                    }) >>
+            return ((invoke_as_fallible([&] {
+                         return vector::insert_container(self(), string::string_to_vector_iterator(self(), it),
+                                                         di::forward<Con>(container) |
+                                                             view::transform(function::bind_front(
+                                                                 encoding::convert_to_code_units, self().encoding())) |
+                                                             view::join);
+                     }) %
+                     [&](auto result) {
+                         auto [first, last] = result;
+                         return Tuple { first - vector::begin(self()), last - vector::begin(self()) };
+                     }) >>
                     [&](auto result) {
-                        return as_fallible(vector::emplace_back(self())) % [&](auto&) {
+                        return as_fallible(vector::emplace_back(self())) % [&](auto&&) {
                             vector::pop_back(self());
                             return result;
                         };
@@ -229,10 +234,8 @@ public:
                        [&](auto result) {
                            auto [first, last] = result;
                            return View {
-                               encoding::make_iterator(self().encoding(), as_const(self()).span(),
-                                                       first - vector::begin(self())),
-                               encoding::make_iterator(self().encoding(), as_const(self()).span(),
-                                                       last - vector::begin(self())),
+                               encoding::make_iterator(self().encoding(), as_const(self()).span(), first),
+                               encoding::make_iterator(self().encoding(), as_const(self()).span(), last),
                            };
                        } |
                    try_infallible;

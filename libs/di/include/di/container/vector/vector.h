@@ -34,15 +34,11 @@ public:
         , m_capacity(util::exchange(other.m_capacity, 0))
         , m_allocator(util::move(other.m_allocator)) {}
 
-    constexpr ~Vector() {
-        this->clear();
-        if (m_data) {
-            di::deallocate_many<T>(m_allocator, m_data, m_capacity);
-        }
-    }
+    constexpr ~Vector() { deallocate(); }
 
     constexpr Vector& operator=(Vector const&) = delete;
     constexpr Vector& operator=(Vector&& other) {
+        deallocate();
         this->m_data = util::exchange(other.m_data, nullptr);
         this->m_size = util::exchange(other.m_size, 0);
         this->m_capacity = util::exchange(other.m_capacity, 0);
@@ -68,6 +64,13 @@ public:
     constexpr void assume_size(usize size) { m_size = size; }
 
 private:
+    constexpr void deallocate() {
+        this->clear();
+        if (m_data) {
+            di::deallocate_many<T>(m_allocator, m_data, m_capacity);
+        }
+    }
+
     T* m_data { nullptr };
     usize m_size { 0 };
     usize m_capacity { 0 };
