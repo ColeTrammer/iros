@@ -54,8 +54,7 @@
             "hidden": true,
             "cacheVariables": {
                 "IROS_BuildTests": "ON"
-            },
-            "inherits": ["base"]
+            }
         },
         {
             "name": "iros_base",

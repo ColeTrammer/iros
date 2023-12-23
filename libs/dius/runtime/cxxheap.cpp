@@ -1,4 +1,6 @@
+#include <di/assert/assert_bool.h>
 #include <di/math/prelude.h>
+#include <di/util/unreachable.h>
 #include <dius/print.h>
 #include <dius/runtime/allocate.h>
 #include <dius/system/prelude.h>
@@ -67,7 +69,15 @@
 }
 
 // Deallocating delete.
-[[gnu::weak]] void operator delete(void*) noexcept {}
-[[gnu::weak]] void operator delete(void*, std::size_t) noexcept {}
-[[gnu::weak]] void operator delete(void*, std::align_val_t) noexcept {}
-[[gnu::weak]] void operator delete(void*, std::size_t, std::align_val_t) noexcept {}
+[[gnu::weak]] void operator delete(void*) noexcept {
+    // FIXME: Assert that this is never called, once coroutines have customer allocators which use sized deallocation.
+}
+[[gnu::weak]] void operator delete(void* pointer, std::size_t size) noexcept {
+    ::operator delete(pointer, size, std::align_val_t { alignof(void*) });
+}
+[[gnu::weak]] void operator delete(void*, std::align_val_t) noexcept {
+    // FIXME: Assert that this is never called, once coroutines have customer allocators which use sized deallocation.
+}
+[[gnu::weak]] void operator delete(void* pointer, std::size_t size, std::align_val_t align) noexcept {
+    dius::runtime::Heap::the().deallocate(pointer, size, usize(align));
+}

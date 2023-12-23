@@ -221,8 +221,7 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
             "hidden": true,
             "cacheVariables": {
                 "IROS_BuildTests": "ON"
-            },
-            "inherits": ["base"]
+            }
         },
         {
             "name": "iros_base",
