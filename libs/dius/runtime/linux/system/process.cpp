@@ -18,7 +18,7 @@ di::Result<ProcessResult> Process::spawn_and_wait() && {
         di::concat(m_arguments | di::transform(di::cdata), di::single(nullptr)) | di::to<di::Vector>();
 
     auto args = ::clone_args {
-        .flags = CLONE_VM | CLONE_FILES | CLONE_SIGHAND,
+        .flags = 0,
         .pidfd = 0,
         .child_tid = 0,
         .parent_tid = 0,
