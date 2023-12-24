@@ -99,7 +99,7 @@ public:
     constexpr auto substr(Iterator first, Optional<Iterator> last = {}) const {
         return string::substr(self(), first, last);
     }
-    constexpr auto substr(usize offset, Optional<usize> count) const
+    constexpr auto substr(usize offset, Optional<usize> count = {}) const
     requires(encoding::Contiguous<Enc>)
     {
         auto first = iterator_at_offset(offset);
