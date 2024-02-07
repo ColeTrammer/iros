@@ -50,9 +50,12 @@ jobs:
           gcovr -j ${{env.nproc}} --delete --root . --print-summary --xml-pretty --xml coverage.xml build/host/gcc/debug/coverage
         if: matrix.preset == 'gcc_debug_coverage'
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           flags: ${{ runner.os }}
           name: ${{ runner.os }}-coverage
           files: ./coverage.xml
+          fail_ci_if_error: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         if: matrix.preset == 'gcc_debug_coverage'
