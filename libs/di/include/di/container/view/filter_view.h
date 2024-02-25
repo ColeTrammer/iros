@@ -82,7 +82,13 @@ private:
         Iter m_base;
     };
 
-    class Sentinel : public SentinelExtension<Sentinel, Sent, Iterator, Iter> {};
+    class Sentinel : public SentinelExtension<Sentinel, Sent, Iterator, Iter> {
+    private:
+        using Base = SentinelExtension<Sentinel, Sent, Iterator, Iter>;
+
+    public:
+        using Base::Base;
+    };
 
 public:
     FilterView()
@@ -116,7 +122,7 @@ public:
         if constexpr (concepts::CommonContainer<View>) {
             return Iterator(*this, container::end(m_base));
         } else {
-            return Sentinel(container::end(*this));
+            return Sentinel(container::end(m_base));
         }
     }
 

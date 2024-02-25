@@ -1,5 +1,6 @@
 
 #include <di/container/algorithm/prelude.h>
+#include <di/container/view/cache_last.h>
 #include <di/container/view/prelude.h>
 #include <di/math/prelude.h>
 #include <dius/test/prelude.h>
@@ -78,6 +79,7 @@ constexpr void all() {
 
     {
         auto sum = 0;
+        // NOLINTNEXTLINE(misc-redundant-expression)
         for (auto z : arr | (di::view::all | di::view::all)) {
             sum += z;
         }
@@ -545,7 +547,7 @@ constexpr void common() {
     auto in1 = di::range(1, 4) | di::cycle | di::take(9) | di::common;
     static_assert(di::concepts::CommonContainer<decltype(in1)>);
 
-    auto r3 = di::move(in1) | di::chunk(3) | di::transform(di::sum) | di::to<di::Vector>();
+    auto r3 = in1 | di::chunk(3) | di::transform(di::sum) | di::to<di::Vector>();
     auto ex3 = di::Array { 6, 6, 6 } | di::to<di::Vector>();
     ASSERT_EQ(r3, ex3);
 }
@@ -591,6 +593,20 @@ constexpr void concat() {
     ASSERT_EQ(r2, ex2);
 }
 
+constexpr void cache_last() {
+    auto count = 0;
+    auto square = [&](int x) {
+        count++;
+        return x * x;
+    };
+
+    auto even_squares = di::range(10) | di::transform(square) | di::cache_last | di::filter([](auto x) {
+                            return x % 2 == 0;
+                        });
+    ASSERT(di::container::equal(even_squares, di::Array { 0, 4, 16, 36, 64 }));
+    ASSERT_EQ(count, 10);
+}
+
 TESTC(container_view, basic)
 TESTC(container_view, all)
 TESTC(container_view, empty)
@@ -625,4 +641,5 @@ TESTC(container_view, chunk_by)
 TESTC(container_view, cartesian_product)
 TESTC(container_view, common)
 TESTC(container_view, concat)
+TESTC(container_view, cache_last)
 }
