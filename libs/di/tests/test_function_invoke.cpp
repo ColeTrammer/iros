@@ -64,14 +64,14 @@ constexpr void member_function() {
     static_assert(di::concepts::SameAs<int, di::meta::InvokeResult<decltype(f), X, int>>);
 
     auto x = X { 42 };
-    ASSERT_EQ(di::invoke(f, x, 5), 47);
-    ASSERT_EQ(di::invoke(f, di::ref(x), 5), 47);
-    ASSERT_EQ(di::invoke(f, &x, 5), 47);
+    ASSERT_EQ(di::invoke(&X::z, x, 5), 47);
+    ASSERT_EQ(di::invoke(&X::z, di::ref(x), 5), 47);
+    ASSERT_EQ(di::invoke(&X::z, &x, 5), 47);
 
     auto y = Y { 13 };
-    ASSERT_EQ(di::invoke(f, y, 3), 16);
-    ASSERT_EQ(di::invoke(f, di::cref(y), 3), 16);
-    ASSERT_EQ(di::invoke(f, &y, 3), 16);
+    ASSERT_EQ(di::invoke(&X::z, y, 3), 16);
+    ASSERT_EQ(di::invoke(&X::z, di::cref(y), 3), 16);
+    ASSERT_EQ(di::invoke(&X::z, &y, 3), 16);
 }
 
 constexpr void invoke_r_void() {

@@ -20,36 +20,12 @@ jobs:
     if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     steps:
-      - name: Set enviornment if pull request
-        run: |
-          echo "BASE_SHA=${{ github.event.pull_request.base.sha }}" >> $GITHUB_ENV
-        if: github.event_name == 'pull_request'
-      - name: Set enviornment if push to main branch
-        run: |
-          echo "BASE_SHA=${{ github.event.before }}" >> $GITHUB_ENV
-        if: github.event_name == 'push'
-      - name: Install prettier
-        run: sudo npm install -g prettier
-      - name: Install cmake-format
-        run: sudo pip install cmake-format
-      - name: Install clang-format-16
-        run: |
-          wget https://apt.llvm.org/llvm.sh
-          chmod +x llvm.sh
-          sudo ./llvm.sh 16 all
       - name: Checkout source code
         uses: actions/checkout@v4
-      - name: Determine the list of changed files
-        id: file_changes
-        uses: tj-actions/changed-files@v42
+      - name: Install nix
+        uses: cachix/install-nix-action@v25
         with:
-          base_sha: ${{ env.BASE_SHA }}
-      - name: Check clang format
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check formatting and linting
         run: |
-          echo '${{ steps.file_changes.outputs.all_changed_files }}' | tr ' ' '\n' | grep -E '${{ env.CLANG_FORMAT_MATCH }}' | xargs -I {} clang-format-16 -Werror {}
-      - name: Check prettier
-        run: |
-          echo '${{ steps.file_changes.outputs.all_changed_files }}' | tr ' ' '\n' | grep -E '${{ env.PRETTIER_MATCH }}' | xargs -I {} prettier --check {}
-      - name: Check cmake format
-        run: |
-          echo '${{ steps.file_changes.outputs.all_changed_files }}' | tr ' ' '\n' | grep -E '${{ env.CMAKE_FORMAT_MATCH }}' | xargs -I {} cmake-format --check {}
+          nix flake check

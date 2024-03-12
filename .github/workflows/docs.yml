@@ -18,30 +18,18 @@ jobs:
     if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     steps:
-      - name: Install graphviz and correct GCC
-        run: |
-          sudo apt-get -y update && sudo apt-get -y install graphviz
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 100 --slave /usr/bin/g++ g++ /usr/bin/g++-12 --slave /usr/bin/gcov gcov /usr/bin/gcov-12
-          sudo update-alternatives --set gcc /usr/bin/gcc-12
-      - name: Install latest doxygen
-        run: |
-          wget https://www.doxygen.nl/files/doxygen-${{ env.DOXYGEN_VERSION }}.linux.bin.tar.gz
-          tar -xzf doxygen-${{ env.DOXYGEN_VERSION }}.linux.bin.tar.gz
-          cp doxygen-${{ env.DOXYGEN_VERSION }}/bin/* --target /usr/local/bin
-          rm -f doxygen-${{ env.DOXYGEN_VERSION }}.linux.bin.tar.gz
-          rm -rf doxygen-${{ env.DOXYGEN_VERSION }}
       - name: Checkout source code
         uses: actions/checkout@v4
-      - name: Get latest CMake and Ninja
-        uses: lukka/get-cmake@latest
+      - name: Install nix
+        uses: cachix/install-nix-action@v25
         with:
-          cmakeVersion: latest
-          ninjaVersion: latest
-      - name: Build and test
-        uses: lukka/run-cmake@v10
-        with:
-          configurePreset: gcc_release_default
-          buildPreset: gcc_release_default_docs
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Configure build
+        run: |
+          nix develop --command cmake --preset gcc_release_default -DCMAKE_COMPILE_WARNING_AS_ERROR=On -DCMAKE_VERIFY_INTERFACE_HEADER_SETS=On
+      - name: Run build
+        run: |
+          nix develop --command cmake --build --preset gcc_release_default_docs
       - name: Deploy docs
         uses: JamesIves/github-pages-deploy-action@v4
         with:

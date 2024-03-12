@@ -122,8 +122,9 @@ static void strtol_() {
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
     // Radix 2
-    ASSERT_EQ(do_strtol("0b101010", &end, 2), 0);
-    ASSERT_EQ(cstring_to_tsv(end), "b101010"_tsv);
+    // NOTE: older versions of glibc parsed this as 0.
+    ASSERT_EQ(do_strtol("0b101010", &end, 2), 42);
+    ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
     ASSERT_EQ(do_strtol("101010", &end, 2), 42);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
@@ -144,8 +145,8 @@ static void strtol_() {
     ASSERT_EQ(do_strtol("0x2A", &end, 0), 42);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
-    ASSERT_EQ(do_strtol("0b101010", &end, 0), 0);
-    ASSERT_EQ(cstring_to_tsv(end), "b101010"_tsv);
+    ASSERT_EQ(do_strtol("0b101010", &end, 0), 42);
+    ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
     ASSERT_EQ(do_strtol("0666", &end, 0), 0666);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
@@ -198,8 +199,8 @@ static void strtoll_() {
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
     // Radix 2
-    ASSERT_EQ(do_strtoll("0b101010", &end, 2), 0);
-    ASSERT_EQ(cstring_to_tsv(end), "b101010"_tsv);
+    ASSERT_EQ(do_strtoll("0b101010", &end, 2), 42);
+    ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
     ASSERT_EQ(do_strtoll("101010", &end, 2), 42);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
@@ -220,8 +221,8 @@ static void strtoll_() {
     ASSERT_EQ(do_strtoll("0x2A", &end, 0), 42);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
-    ASSERT_EQ(do_strtoll("0b101010", &end, 0), 0);
-    ASSERT_EQ(cstring_to_tsv(end), "b101010"_tsv);
+    ASSERT_EQ(do_strtoll("0b101010", &end, 0), 42);
+    ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
     ASSERT_EQ(do_strtoll("0666", &end, 0), 0666);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
@@ -270,8 +271,8 @@ static void strtoul_() {
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
     // Radix 2
-    ASSERT_EQ(do_strtoul("0b101010", &end, 2), 0);
-    ASSERT_EQ(cstring_to_tsv(end), "b101010"_tsv);
+    ASSERT_EQ(do_strtoul("0b101010", &end, 2), 42);
+    ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
     ASSERT_EQ(do_strtoul("101010", &end, 2), 42);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
@@ -292,8 +293,8 @@ static void strtoul_() {
     ASSERT_EQ(do_strtoul("0x2A", &end, 0), 42);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
-    ASSERT_EQ(do_strtoul("0b101010", &end, 0), 0);
-    ASSERT_EQ(cstring_to_tsv(end), "b101010"_tsv);
+    ASSERT_EQ(do_strtoul("0b101010", &end, 0), 42);
+    ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
     ASSERT_EQ(do_strtoul("0666", &end, 0), 0666);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
@@ -342,8 +343,8 @@ static void strtoull_() {
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
     // Radix 2
-    ASSERT_EQ(do_strtoull("0b101010", &end, 2), 0);
-    ASSERT_EQ(cstring_to_tsv(end), "b101010"_tsv);
+    ASSERT_EQ(do_strtoull("0b101010", &end, 2), 42);
+    ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
     ASSERT_EQ(do_strtoull("101010", &end, 2), 42);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
@@ -364,8 +365,8 @@ static void strtoull_() {
     ASSERT_EQ(do_strtoull("0x2A", &end, 0), 42);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
-    ASSERT_EQ(do_strtoull("0b101010", &end, 0), 0);
-    ASSERT_EQ(cstring_to_tsv(end), "b101010"_tsv);
+    ASSERT_EQ(do_strtoull("0b101010", &end, 0), 42);
+    ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
     ASSERT_EQ(do_strtoull("0666", &end, 0), 0666);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);

@@ -76,7 +76,7 @@ namespace detail {
             };
 
             // Only octal and hexadecimal numbers can have a prefix.
-            if (m_radix != 0 && m_radix != 8 && m_radix != 16 && (mode == IntegerMode::CStandard || m_radix != 2)) {
+            if (m_radix != 0 && m_radix != 8 && m_radix != 16 && m_radix != 2) {
                 return parse_digits(m_radix);
             }
 
@@ -111,11 +111,11 @@ namespace detail {
                 context.advance(++it);
                 return parse_digits(16);
             }
+            if (ch == U'b' || ch == U'B') {
+                context.advance(++it);
+                return parse_digits(2);
+            }
             if constexpr (mode == IntegerMode::Improved) {
-                if (ch == U'b' || ch == U'B') {
-                    context.advance(++it);
-                    return parse_digits(2);
-                }
                 if (ch == U'o' || ch == U'O') {
                     context.advance(++it);
                     return parse_digits(8);

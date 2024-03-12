@@ -18,36 +18,28 @@ jobs:
       matrix:
         preset: [gcc_debug_ubasan, gcc_release_dius_runtime, gcc_debug_coverage, clang_release_dius_runtime]
     steps:
-      - run: |
-          sudo apt-get -y update && sudo apt-get -y install gcc-12 g++-12 gcovr
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 100 --slave /usr/bin/g++ g++ /usr/bin/g++-12 --slave /usr/bin/gcov gcov /usr/bin/gcov-12
-          sudo update-alternatives --set gcc /usr/bin/gcc-12
-      - run: |
-          wget https://apt.llvm.org/llvm.sh
-          chmod +x llvm.sh
-          sudo ./llvm.sh 16
-        if: matrix.preset == 'clang_release_dius_runtime'
       - name: Checkout source code
         uses: actions/checkout@v4
-      - name: Get latest CMake and Ninja
-        uses: lukka/get-cmake@latest
+      - name: Install nix
+        uses: cachix/install-nix-action@v25
         with:
-          cmakeVersion: latest
-          ninjaVersion: latest
-      - name: Get and cache ccache
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Store ccache cache in the GitHub actions cache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: ${{ github.job }}-${{ matrix.preset }}
-      - name: Build and test
-        uses: lukka/run-cmake@v10
-        with:
-          configurePreset: ${{ matrix.preset }}
-          configurePresetAdditionalArgs: "['-DCMAKE_COMPILE_WARNING_AS_ERROR=ON', '-DCMAKE_VERIFY_INTERFACE_HEADER_SETS=ON']"
-          buildPreset: ${{ matrix.preset }}_ci
-          testPreset: ${{ matrix.preset }}
+      - name: Configure build
+        run: |
+          nix develop --command cmake --preset ${{ matrix.preset }} -DCMAKE_COMPILE_WARNING_AS_ERROR=On -DCMAKE_VERIFY_INTERFACE_HEADER_SETS=On
+      - name: Run build
+        run: |
+          nix develop --command cmake --build --preset ${{ matrix.preset }}_ci
+      - name: Run tests
+        run: |
+          nix develop --command ctest --preset ${{ matrix.preset }}
       - name: Collect code coverage information
         run: |
-          gcovr -j ${{env.nproc}} --delete --root . --print-summary --xml-pretty --xml coverage.xml build/host/gcc/debug/coverage
+          nix develop --command gcovr -j ${{env.nproc}} --delete --root . --print-summary --xml-pretty --xml coverage.xml build/host/gcc/debug/coverage
         if: matrix.preset == 'gcc_debug_coverage'
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
@@ -56,6 +48,5 @@ jobs:
           name: ${{ runner.os }}-coverage
           files: ./coverage.xml
           fail_ci_if_error: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ secrets.CODECOV_TOKEN }}
         if: matrix.preset == 'gcc_debug_coverage'

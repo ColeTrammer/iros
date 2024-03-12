@@ -14,9 +14,10 @@ constexpr auto temp_directory_path = "/tmp/test_dius"_pv;
 static auto remove_temp_directory() {
     // For now, only linux supports removing directories.
 #ifdef DIUS_PLATFORM_LINUX
-    auto args =
-        di::Array { "/usr/bin/rm"_tsv.to_owned(), "-rf"_tsv.to_owned(), temp_directory_path.data().to_owned() } |
-        di::to<di::Vector>();
+    // FIXME: add PATH support to the dius runtime process implementation, so we don't need an absolute path.
+    auto args = di::Array { "/usr/bin/env"_tsv.to_owned(), "rm"_tsv.to_owned(), "-rf"_tsv.to_owned(),
+                            temp_directory_path.data().to_owned() } |
+                di::to<di::Vector>();
     ASSERT(dius::system::Process(di::move(args)).spawn_and_wait());
 #endif
 }

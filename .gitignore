@@ -2,3 +2,4 @@ build/
 cross/
 legacy/
 .cache/
+.direnv/

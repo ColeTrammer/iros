@@ -197,7 +197,7 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
             "cacheVariables": {
                 "IROS_DiagnosticFlags": "-fcolor-diagnostics -fconstexpr-steps=10000000",
                 "IROS_WarningFlags": "-Wall -Wextra -Wpedantic",
-                "CMAKE_CXX_COMPILER": "clang++-16"
+                "CMAKE_CXX_COMPILER": "clang++"
             }
         },
         {
