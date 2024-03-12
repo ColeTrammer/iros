@@ -9,9 +9,9 @@
 namespace std {
 class weak_ordering {
 public:
-    static const weak_ordering less;
-    static const weak_ordering equivalent;
-    static const weak_ordering greater;
+    static weak_ordering const less;
+    static weak_ordering const equivalent;
+    static weak_ordering const greater;
 
     constexpr friend bool operator==(weak_ordering v, weak_ordering w) { return v.m_value == w.m_value; }
     constexpr friend bool operator==(weak_ordering v, int) { return v.m_value == 0; }

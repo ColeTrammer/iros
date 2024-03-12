@@ -147,7 +147,7 @@ public:
     }
 
     constexpr View base() &&
-        requires(concepts::CopyConstructible<View>)
+    requires(concepts::CopyConstructible<View>)
     {
         return util::move(m_base);
     }

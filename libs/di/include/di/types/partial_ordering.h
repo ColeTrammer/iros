@@ -8,10 +8,10 @@
 namespace std {
 class partial_ordering {
 public:
-    static const partial_ordering less;
-    static const partial_ordering equivalent;
-    static const partial_ordering greater;
-    static const partial_ordering unordered;
+    static partial_ordering const less;
+    static partial_ordering const equivalent;
+    static partial_ordering const greater;
+    static partial_ordering const unordered;
 
     constexpr friend bool operator==(partial_ordering v, partial_ordering w) = default;
     constexpr friend bool operator==(partial_ordering v, int) { return v.m_value == 0; }

@@ -24,19 +24,19 @@ static void do_unit_tests() {
 }
 
 extern "C" {
-static volatile limine_memmap_request memmap_request = {
+static limine_memmap_request volatile memmap_request = {
     .id = LIMINE_MEMMAP_REQUEST,
     .revision = 0,
     .response = nullptr,
 };
 
-static volatile limine_kernel_address_request kernel_address_request = {
+static limine_kernel_address_request volatile kernel_address_request = {
     .id = LIMINE_KERNEL_ADDRESS_REQUEST,
     .revision = 0,
     .response = nullptr,
 };
 
-static volatile limine_module_request module_request = {
+static limine_module_request volatile module_request = {
     .id = LIMINE_MODULE_REQUEST,
     .revision = 0,
     .response = nullptr,
@@ -44,7 +44,7 @@ static volatile limine_module_request module_request = {
     .internal_modules = nullptr,
 };
 
-static volatile limine_kernel_file_request kernel_file_request = {
+static limine_kernel_file_request volatile kernel_file_request = {
     .id = LIMINE_KERNEL_FILE_REQUEST,
     .revision = 0,
     .response = nullptr,

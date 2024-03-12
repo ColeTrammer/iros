@@ -52,9 +52,8 @@ fi
     "$IROS_ROOT"/build/host/gcc/release/tools/install/bin/initrd
 )
 
-
 export IROS_LIMINE_CFG="$IROS_BUILD_DIR/initrd-run/limine.cfg"
-cat >"$IROS_LIMINE_CFG" << __EOF__
+cat >"$IROS_LIMINE_CFG" <<__EOF__
 TIMEOUT=0
 
 :Iros
@@ -68,8 +67,8 @@ __EOF__
 
 # Desperately try up to 5 times to make the image.
 FAILED='true'
-for i in `seq 5`; do
-    if [ "$FAILED" = 'true'  ]; then
+for i in $(seq 5); do
+    if [ "$FAILED" = 'true' ]; then
         if sudo -E "$PARENT_DIR"/make-iris-limine-image.sh; then
             FAILED='false'
         fi

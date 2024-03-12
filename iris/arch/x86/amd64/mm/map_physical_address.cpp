@@ -6,7 +6,7 @@ extern "C" {
 // HHDM refers to "higher-half direct map", which provides
 // a complete mapping of all physical memory at a fixed virtual
 // offset.
-static volatile limine_hhdm_request hhdm_request = {
+static limine_hhdm_request volatile hhdm_request = {
     .id = LIMINE_HHDM_REQUEST,
     .revision = 0,
     .response = nullptr,

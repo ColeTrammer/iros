@@ -214,7 +214,7 @@ public:
     }
 
     constexpr Optional<T> optional_value() &&
-        requires(concepts::MoveConstructible<T>)
+    requires(concepts::MoveConstructible<T>)
     {
         return has_value() ? Optional<T> { in_place, *util::move(*this) } : nullopt;
     }

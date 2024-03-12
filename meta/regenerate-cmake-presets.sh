@@ -10,4 +10,3 @@ cd "$IROS_ROOT"
 cmake --preset gcc_release_tools
 cmake --build --preset gcc_release_tools --target install
 "$IROS_ROOT/build/host/gcc/release/tools/install/bin/generate_presets" --prettier --output "$IROS_ROOT/CMakePresets.json"
-

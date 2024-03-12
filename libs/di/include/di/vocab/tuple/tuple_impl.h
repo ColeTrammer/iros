@@ -78,9 +78,9 @@ protected:
 
     template<concepts::DecaySameAs<TupleImpl> Self, concepts::TupleLike Tup>
     requires(sizeof...(Rest) + 1 == meta::TupleSize<Tup> &&
-             (concepts::ConstLValueReference<Tup> || concepts::MutableRValueReference<Tup&&>) &&
+             (concepts::ConstLValueReference<Tup> || concepts::MutableRValueReference<Tup &&>) &&
              concepts::AssignableFrom<meta::Like<Self, T>, meta::TupleValue<Tup, index> &&> &&
-             (concepts::AssignableFrom<meta::Like<Self, Rest>, meta::TupleValue<Tup, indices>&&> && ...))
+             (concepts::AssignableFrom<meta::Like<Self, Rest>, meta::TupleValue<Tup, indices> &&> && ...))
     constexpr static void static_assign(Self&& self, Tup&& other) {
         self.m_value = util::get<index>(util::forward<Tup>(other));
         Base::static_assign_unchecked(util::forward_as_base<Self, Base>(self), util::forward<Tup>(other));
@@ -117,7 +117,7 @@ public:
 protected:
     template<concepts::DecaySameAs<TupleImpl> Self, concepts::TupleLike Tup>
     requires(meta::TupleSize<Tup> == 0 &&
-             (concepts::ConstLValueReference<Tup> || concepts::MutableRValueReference<Tup&&>) )
+             (concepts::ConstLValueReference<Tup> || concepts::MutableRValueReference<Tup &&>) )
     constexpr static void static_assign(Self&&, Tup&&) {}
 
     template<typename Self, typename Tup>

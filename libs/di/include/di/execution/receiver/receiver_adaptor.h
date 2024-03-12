@@ -61,7 +61,7 @@ namespace receiver_interface_ns {
             }
 
             Base& base() &
-                requires(has_base)
+            requires(has_base)
             {
                 return this->m_base.value;
             }
@@ -71,7 +71,7 @@ namespace receiver_interface_ns {
                 return this->m_base.value;
             }
             Base&& base() &&
-                requires(has_base)
+            requires(has_base)
             {
                 return util::move(this->m_base).value;
             }

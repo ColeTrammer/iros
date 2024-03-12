@@ -2,14 +2,12 @@
 
 set -e
 
-if [ "$(id -u)" != 0 ];
-then
+if [ "$(id -u)" != 0 ]; then
     echo "This script must be ran as root."
     exit 1
 fi
 
-if [ ! "$IROS_BUILD_DIR" ] || [ ! "$IROS_ROOT" ] || [ ! "$IROS_LIMINE_DIR" ];
-then
+if [ ! "$IROS_BUILD_DIR" ] || [ ! "$IROS_ROOT" ] || [ ! "$IROS_LIMINE_DIR" ]; then
     echo "IROS_BUILD_DIR, IROS_ROOT, IROS_LIMINE_DIR all must be set."
     exit 1
 fi
@@ -51,8 +49,8 @@ if [ "$REMOTE_CONTAINERS" = 'true' ]; then
     # This could be because the dev container has an older version of losetup than required, but
     # I haven't investigated this yet.
     if ! [ -e "/dev/loop0" ]; then
-        mknod /dev/loop0 b 7 0;
-        export HACK_CREATED_LOOP0=true;
+        mknod /dev/loop0 b 7 0
+        export HACK_CREATED_LOOP0=true
     fi
 fi
 
@@ -60,7 +58,7 @@ if [ "$GITHUB_RUN_ID" ]; then
     echo "Attempting HACK, running on GitHub actions."
     for file in /dev/loop*; do
         if ! [ "$file" = "/dev/loop-control" ]; then
-        echo "Trying to unlink: $file"
+            echo "Trying to unlink: $file"
             losetup -d "$file" || true
             rm -f "file"
         fi

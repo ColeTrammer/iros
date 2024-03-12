@@ -25,7 +25,7 @@ namespace detail {
         MakeDeferredFunctor& operator=(MakeDeferredFunctor&&) = delete;
 
         constexpr T operator()() &
-            requires concepts::ConstructibleFrom<T, Args&...>
+        requires concepts::ConstructibleFrom<T, Args&...>
         {
             return vocab::make_from_tuple<T>(m_args);
         }
@@ -37,7 +37,7 @@ namespace detail {
         }
 
         constexpr T operator()() &&
-            requires concepts::ConstructibleFrom<T, Args&&...>
+        requires concepts::ConstructibleFrom<T, Args&&...>
         {
             return vocab::make_from_tuple<T>(util::move(m_args));
         }

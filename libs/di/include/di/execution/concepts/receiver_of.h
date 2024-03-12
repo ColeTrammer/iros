@@ -8,10 +8,9 @@ namespace di::concepts {
 namespace detail {
     template<typename Signature, typename T>
     concept ValidCompletionFor = requires(Signature* signature) {
-        []<typename Ret, typename... Args>(Ret(*)(Args...))
+        []<typename Ret, typename... Args>(Ret (*)(Args...))
         requires concepts::TagInvocable<Ret, meta::RemoveCVRef<T>, Args...>
-        {}
-        (signature);
+        {}(signature);
     };
 
     template<typename T, typename L>

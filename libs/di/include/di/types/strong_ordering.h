@@ -10,10 +10,10 @@
 namespace std {
 class strong_ordering {
 public:
-    static const strong_ordering less;
-    static const strong_ordering equivalent;
-    static const strong_ordering equal;
-    static const strong_ordering greater;
+    static strong_ordering const less;
+    static strong_ordering const equivalent;
+    static strong_ordering const equal;
+    static strong_ordering const greater;
 
     constexpr friend bool operator==(strong_ordering v, strong_ordering w) { return v.m_value == w.m_value; }
     constexpr friend bool operator==(strong_ordering v, int) { return v.m_value == 0; }

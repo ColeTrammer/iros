@@ -13,13 +13,13 @@ __CCPP_BEGIN_DECLARATIONS
 #define S_IFLNK  0120000
 #define S_IFSOCK 0140000
 
-#define S_ISBLK(mode)  (((mode) &S_IFMT) == S_IFBLK)
-#define S_ISCHR(mode)  (((mode) &S_IFMT) == S_IFCHR)
-#define S_ISFIFO(mode) (((mode) &S_IFMT) == S_IFIFO)
-#define S_ISREG(mode)  (((mode) &S_IFMT) == S_IFREG)
-#define S_ISDIR(mode)  (((mode) &S_IFMT) == S_IFDIR)
-#define S_ISLNK(mode)  (((mode) &S_IFMT) == S_IFLNK)
-#define S_ISSOCK(mode) (((mode) &S_IFMT) == S_IFSOCK)
+#define S_ISBLK(mode)  (((mode) & S_IFMT) == S_IFBLK)
+#define S_ISCHR(mode)  (((mode) & S_IFMT) == S_IFCHR)
+#define S_ISFIFO(mode) (((mode) & S_IFMT) == S_IFIFO)
+#define S_ISREG(mode)  (((mode) & S_IFMT) == S_IFREG)
+#define S_ISDIR(mode)  (((mode) & S_IFMT) == S_IFDIR)
+#define S_ISLNK(mode)  (((mode) & S_IFMT) == S_IFLNK)
+#define S_ISSOCK(mode) (((mode) & S_IFMT) == S_IFSOCK)
 
 #define S_IRWXU 0700
 #define S_IRUSR 0400

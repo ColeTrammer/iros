@@ -1,7 +1,6 @@
 #!/bin/sh
 
-if [ ! "$IROS_ARCH" ] || [ ! "$IROS_IMAGE" ];
-then
+if [ ! "$IROS_ARCH" ] || [ ! "$IROS_IMAGE" ]; then
     echo "IROS_ARCH, and IROS_IMAGE all must be set."
     exit 1
 fi
@@ -28,10 +27,10 @@ fi
 SERIAL="-serial mon:stdio"
 
 if [ ! "$IROS_NO_SMP" ]; then
-    if [ `nproc` -gt 4 ]; then
+    if [ $(nproc) -gt 4 ]; then
         SMP='-smp 4'
     else
-        SMP="-smp `nproc`"
+        SMP="-smp $(nproc)"
     fi
 fi
 

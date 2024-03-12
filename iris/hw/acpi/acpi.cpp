@@ -9,7 +9,7 @@
 
 namespace iris::acpi {
 extern "C" {
-static volatile limine_rsdp_request rsdp_request = {
+static limine_rsdp_request volatile rsdp_request = {
     .id = LIMINE_RSDP_REQUEST,
     .revision = 0,
     .response = nullptr,
