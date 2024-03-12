@@ -7,3 +7,5 @@ e8912370f57b397e43ada5678023664500579fa7
 850a63208f337edaa4b2ae93ac8d8f8921e147eb
 # Autoformatted all JSON files with prettier
 e85f4af4525470a544993fc2f79d95a8a177f0c9
+# Autoformatted code with clang-format-17 and shfmt
+4862ed566c817cb0389ebacf699af0549d439149
