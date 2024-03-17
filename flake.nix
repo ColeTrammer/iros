@@ -68,6 +68,8 @@
               pkgs.graphviz
               pkgs.ccache
               pkgs.gcovr
+              pkgs.wayland-scanner
+              pkgs.wayland
             ];
         };
       };

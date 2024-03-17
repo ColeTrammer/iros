@@ -83,6 +83,12 @@ Live Preview or by pointing a web browser at this directory.
 cmake --build --preset gcc_iros_x86_64_release_default --target docs
 ```
 
+### Building For Linux
+
+To get the required Linux dependencies, it is recommended to use the `nix` flake provided in the repository root.
+Once the `nix` package manager is installed, you can simply run `nix develop` to be placed into a shell which includes
+all packages need to build and run the userspace programs on Linux.
+
 ### Linux Presets
 
 Additionally, presets are defined for compiling the userland libraries and their unit tests on a Linux system. A list of

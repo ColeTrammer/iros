@@ -220,7 +220,8 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
             "name": "default_base",
             "hidden": true,
             "cacheVariables": {
-                "IROS_BuildTests": "ON"
+                "IROS_BuildTests": "ON",
+                "IROS_BuildUserspace": "ON"
             }
         },
         {
@@ -255,7 +256,8 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
             "cacheVariables": {
                 "IROS_UseDiusRuntime": "ON",
                 "IROS_BuildCcpp": "ON",
-                "IROS_BuildTests": "ON"
+                "IROS_BuildTests": "ON",
+                "IROS_BuildUserspace": "ON"
             }
         },
         {
@@ -264,7 +266,8 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
                 "IROS_SanitizerFlags": "-fsanitize=thread -DDI_SANITIZER",
-                "IROS_BuildTests": "ON"
+                "IROS_BuildTests": "ON",
+                "IROS_BuildUserspace": "ON"
             }
         },
         {
@@ -273,7 +276,8 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
                 "IROS_SanitizerFlags": "-fsanitize=address -DDI_SANITIZER",
-                "IROS_BuildTests": "ON"
+                "IROS_BuildTests": "ON",
+                "IROS_BuildUserspace": "ON"
             }
         },
         {
@@ -282,7 +286,8 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
                 "IROS_SanitizerFlags": "-fsanitize=undefined -DDI_SANITIZER",
-                "IROS_BuildTests": "ON"
+                "IROS_BuildTests": "ON",
+                "IROS_BuildUserspace": "ON"
             }
         },
         {
@@ -291,7 +296,8 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
                 "IROS_SanitizerFlags": "-fsanitize=memory -DDI_SANITIZER",
-                "IROS_BuildTests": "ON"
+                "IROS_BuildTests": "ON",
+                "IROS_BuildUserspace": "ON"
             }
         },
         {
@@ -300,7 +306,8 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
                 "IROS_SanitizerFlags": "-fsanitize=address,undefined -DDI_SANITIZER",
-                "IROS_BuildTests": "ON"
+                "IROS_BuildTests": "ON",
+                "IROS_BuildUserspace": "ON"
             }
         },
         {
@@ -309,7 +316,8 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
                 "IROS_ExtraFlags": "--coverage",
-                "IROS_BuildTests": "ON"
+                "IROS_BuildTests": "ON",
+                "IROS_BuildUserspace": "ON"
             }
         },
         {

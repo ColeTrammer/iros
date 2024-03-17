@@ -53,7 +53,8 @@
             "name": "default_base",
             "hidden": true,
             "cacheVariables": {
-                "IROS_BuildTests": "ON"
+                "IROS_BuildTests": "ON",
+                "IROS_BuildUserspace": "ON"
             }
         },
         {
@@ -88,6 +89,7 @@
             "cacheVariables": {
                 "IROS_BuildCcpp": "ON",
                 "IROS_BuildTests": "ON",
+                "IROS_BuildUserspace": "ON",
                 "IROS_UseDiusRuntime": "ON"
             }
         },
@@ -97,6 +99,7 @@
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
                 "IROS_BuildTests": "ON",
+                "IROS_BuildUserspace": "ON",
                 "IROS_SanitizerFlags": "-fsanitize=thread -DDI_SANITIZER"
             }
         },
@@ -106,6 +109,7 @@
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
                 "IROS_BuildTests": "ON",
+                "IROS_BuildUserspace": "ON",
                 "IROS_SanitizerFlags": "-fsanitize=address -DDI_SANITIZER"
             }
         },
@@ -115,6 +119,7 @@
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
                 "IROS_BuildTests": "ON",
+                "IROS_BuildUserspace": "ON",
                 "IROS_SanitizerFlags": "-fsanitize=undefined -DDI_SANITIZER"
             }
         },
@@ -124,6 +129,7 @@
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
                 "IROS_BuildTests": "ON",
+                "IROS_BuildUserspace": "ON",
                 "IROS_SanitizerFlags": "-fsanitize=memory -DDI_SANITIZER"
             }
         },
@@ -133,6 +139,7 @@
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
                 "IROS_BuildTests": "ON",
+                "IROS_BuildUserspace": "ON",
                 "IROS_SanitizerFlags": "-fsanitize=address,undefined -DDI_SANITIZER"
             }
         },
@@ -142,6 +149,7 @@
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
                 "IROS_BuildTests": "ON",
+                "IROS_BuildUserspace": "ON",
                 "IROS_ExtraFlags": "--coverage"
             }
         },

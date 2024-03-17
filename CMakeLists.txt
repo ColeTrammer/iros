@@ -101,6 +101,9 @@ endif()
 if(IROS_BuildUserspace)
     add_subdirectory(userland/core)
     add_subdirectory(userland/shell)
+    if(NOT IROS_UseDiusRuntime)
+        add_subdirectory(userland/gfxtest)
+    endif()
 endif()
 
 if(IROS_BuildTools)
@@ -130,3 +133,7 @@ if(IROS_NonUnityBuildPreset)
     )
     file(COPY "${CMAKE_BINARY_DIR}/non_unity/compile_commands.json" DESTINATION "${CMAKE_BINARY_DIR}")
 endif()
+
+# Link the active compile_commands.json to the project directory.
+execute_process(COMMAND rm -f "${CMAKE_SOURCE_DIR}/compile_commands.json")
+execute_process(COMMAND ln -s "${CMAKE_BINARY_DIR}/compile_commands.json" "${CMAKE_SOURCE_DIR}/compile_commands.json")
