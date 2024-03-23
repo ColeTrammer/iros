@@ -32,8 +32,7 @@ fi
 
 function_exists() {
     TYPE_RESULT="$(type $1 | head -n 1)"
-    TYPE_TARGET="$1 is a function"
-    [ "$TYPE_TARGET" = "$TYPE_RESULT" ]
+    echo "$TYPE_RESULT" | grep -q function
 }
 
 builtin_exists() {
