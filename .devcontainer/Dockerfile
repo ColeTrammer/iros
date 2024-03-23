@@ -1,4 +1,4 @@
-FROM ghcr.io/coletrammer/iros_toolchain:latest
+FROM iros_toolchain:latest
 
 ARG USERNAME=iris
 ARG USER_UID=1000

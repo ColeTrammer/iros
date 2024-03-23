@@ -101,7 +101,7 @@ index 0000000..553402c
 +        renderer.draw_bitmap(*bitmap, { 0, 0, DOOMGENERIC_RESX, DOOMGENERIC_RESY }, sized_rect());
 +    }
 +
-+    Maybe<App::KeyEvent> next_key_event() {
++    Option<App::KeyEvent> next_key_event() {
 +        if (m_key_events.empty()) {
 +            return {};
 +        }
