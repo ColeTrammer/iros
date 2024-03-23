@@ -67,6 +67,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-old": {
+      "locked": {
+        "lastModified": 1601788249,
+        "narHash": "sha256-B0a0PZsw8hGjd2KH9LMIvPbERVI6GOkETCASBY3j3Gs=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "fa6cdb63ab06a47c793510748470309b87ad2010",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "fa6cdb63ab06a47c793510748470309b87ad2010",
+        "type": "github"
+      }
+    },
     "nixpkgs_2": {
       "locked": {
         "lastModified": 1708475490,
@@ -88,6 +104,7 @@
         "flake-parts": "flake-parts",
         "flake-root": "flake-root",
         "nixpkgs": "nixpkgs",
+        "nixpkgs-old": "nixpkgs-old",
         "treefmt-nix": "treefmt-nix"
       }
     },

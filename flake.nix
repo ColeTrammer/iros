@@ -6,9 +6,10 @@
     flake-root.url = "github:srid/flake-root";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs-old.url = "github:NixOS/nixpkgs/fa6cdb63ab06a47c793510748470309b87ad2010";
   };
 
-  outputs = inputs @ {flake-parts, ...}:
+  outputs = inputs @ {flake-parts, nixpkgs-old, ...}:
     flake-parts.lib.mkFlake {inherit inputs;} {
       imports = [
         inputs.treefmt-nix.flakeModule
@@ -18,6 +19,7 @@
       perSystem = {
         config,
         pkgs,
+        system,
         ...
       }: {
         treefmt = {
@@ -72,12 +74,12 @@
               pkgs.mpfr
               pkgs.gmp
               pkgs.libmpc
-              pkgs.qemu
+              inputs.nixpkgs-old.legacyPackages.${system}.qemu
               pkgs.gcc12
               pkgs.nodejs
               pkgs.grub2
               pkgs.xorriso
-              pkgs.parted
+              inputs.nixpkgs-old.legacyPackages.${system}.parted
             ];
 
             hardeningDisable = [ "format" "fortify" ];
