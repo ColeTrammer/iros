@@ -84,6 +84,7 @@ if [ "$IROS_NETWORK_CAPTURE" ]; then
     NETWORK="$NETWORK -object filter-dump,id=f1,netdev=netw,file=$IROS_NETWORK_CAPTURE"
 fi
 
+set -x
 qemu-system-$ARCH \
     $KERNEL_ARG \
     $CDROM \

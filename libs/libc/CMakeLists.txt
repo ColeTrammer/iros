@@ -27,7 +27,7 @@ set(REGEX_LIB_SOURCES
 
 add_custom_command(
     OUTPUT ${REGEX_GENERATED_FILES}
-    COMMAND /bin/mkdir -p regex
+    COMMAND /usr/bin/env mkdir -p regex
     COMMAND ${NATIVE_PARSER} -p regex ${CMAKE_CURRENT_SOURCE_DIR}/regex/regex.y 2> regex/regex.info
     VERBATIM
     DEPENDS ${NATIVE_PARSER}

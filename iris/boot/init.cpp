@@ -256,6 +256,8 @@ static volatile limine_module_request module_request = {
     .id = LIMINE_MODULE_REQUEST,
     .revision = 0,
     .response = nullptr,
+    .internal_module_count = 0,
+    .internal_modules = nullptr,
 };
 
 static char __temp_stack[4 * 4096] alignas(4096);

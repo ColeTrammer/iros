@@ -18,6 +18,9 @@ initrd/files
 *.img
 *.pcap
 *.lock
+.cache/
+.direnv/
+compile_commands.json
 
 # Javascript
 **/node_modules/**

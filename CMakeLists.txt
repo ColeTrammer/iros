@@ -85,7 +85,7 @@ if (NOT ${NATIVE_BUILD})
     add_custom_target(
         generate-initrd
         BYPRODUCTS ${SYSROOT}/boot/initrd.bin
-        COMMAND /bin/mkdir -p ${SYSROOT}/boot
+        COMMAND /usr/bin/env mkdir -p ${SYSROOT}/boot
         COMMAND ${NATIVE_INITRD} -e cmake_install.cmake initrd ${SYSROOT}/boot/initrd.bin > /dev/null
         DEPENDS ${INITRD_TARGETS}
     )
@@ -99,20 +99,20 @@ if (NOT ${NATIVE_BUILD})
     add_custom_target(
         iso
         BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/iros.iso
-        COMMAND /bin/mkdir -p ${ISODIR}/boot/grub
-        COMMAND /bin/mkdir -p ${ISODIR}/modules
+        COMMAND /usr/bin/env mkdir -p ${ISODIR}/boot/grub
+        COMMAND /usr/bin/env mkdir -p ${ISODIR}/modules
         COMMAND objcopy -S ${SYSROOT}/boot/kernel ${ISODIR}/boot/kernel
-        COMMAND /bin/cp --preserve=timestamps ${SYSROOT}/boot/initrd.bin ${ISODIR}/modules/initrd.bin
-        COMMAND /bin/echo "set menu_color_normal=white/black" >| ${ISODIR}/boot/grub/grub.cfg
-        COMMAND /bin/echo "set menu_color_highlight=black/light-gray" >> ${ISODIR}/boot/grub/grub.cfg
-        COMMAND /bin/echo >> ${ISODIR}/boot/grub/grub.cfg
-        COMMAND /bin/echo "menuentry \"Iros\" {" >> ${ISODIR}/boot/grub/grub.cfg
-        COMMAND /bin/echo "    multiboot2 /boot/kernel $$IROS_CMDLINE" >> ${ISODIR}/boot/grub/grub.cfg
-        COMMAND /bin/echo "    module2 /modules/initrd.bin initrd" >> ${ISODIR}/boot/grub/grub.cfg
-        COMMAND /bin/echo "}" >> ${ISODIR}/boot/grub/grub.cfg
-        COMMAND /bin/echo >> ${ISODIR}/boot/grub/grub.cfg
-        COMMAND /bin/echo "set timeout_style=menu" >> ${ISODIR}/boot/grub/grub.cfg
-        COMMAND /bin/echo "set timeout=0" >> ${ISODIR}/boot/grub/grub.cfg
+        COMMAND /usr/bin/env cp --preserve=timestamps ${SYSROOT}/boot/initrd.bin ${ISODIR}/modules/initrd.bin
+        COMMAND /usr/bin/env echo "set menu_color_normal=white/black" >| ${ISODIR}/boot/grub/grub.cfg
+        COMMAND /usr/bin/env echo "set menu_color_highlight=black/light-gray" >> ${ISODIR}/boot/grub/grub.cfg
+        COMMAND /usr/bin/env echo >> ${ISODIR}/boot/grub/grub.cfg
+        COMMAND /usr/bin/env echo "menuentry \"Iros\" {" >> ${ISODIR}/boot/grub/grub.cfg
+        COMMAND /usr/bin/env echo "    multiboot2 /boot/kernel $$IROS_CMDLINE" >> ${ISODIR}/boot/grub/grub.cfg
+        COMMAND /usr/bin/env echo "    module2 /modules/initrd.bin initrd" >> ${ISODIR}/boot/grub/grub.cfg
+        COMMAND /usr/bin/env echo "}" >> ${ISODIR}/boot/grub/grub.cfg
+        COMMAND /usr/bin/env echo >> ${ISODIR}/boot/grub/grub.cfg
+        COMMAND /usr/bin/env echo "set timeout_style=menu" >> ${ISODIR}/boot/grub/grub.cfg
+        COMMAND /usr/bin/env echo "set timeout=0" >> ${ISODIR}/boot/grub/grub.cfg
         COMMAND grub-file --is-x86-multiboot2 ${ISODIR}/boot/kernel
         COMMAND grub-mkrescue -o ${CMAKE_CURRENT_BINARY_DIR}/iros.iso ${ISODIR}
         DEPENDS generate-initrd kernel install-all

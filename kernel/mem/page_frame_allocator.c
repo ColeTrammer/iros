@@ -141,7 +141,10 @@ static void init_from_xen_map(struct boot_info *boot_info) {
     const struct xen_memory_map_entry *memory_map = boot_info->memory_map;
     for (uint32_t i = 0; i < boot_info->memory_map_count; i++) {
         const struct xen_memory_map_entry *entry = &memory_map[i];
-        process_memory_map_region(entry->base_address, entry->length, entry->type);
+        // HACK: ignore this memory address to allow booting with modern QEMU.
+        if (entry->base_address != 0x000000FD00000000) {
+            process_memory_map_region(entry->base_address, entry->length, entry->type);
+        }
     }
 }
 
