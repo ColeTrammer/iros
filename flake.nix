@@ -9,7 +9,11 @@
     nixpkgs-old.url = "github:NixOS/nixpkgs/fa6cdb63ab06a47c793510748470309b87ad2010";
   };
 
-  outputs = inputs @ {flake-parts, nixpkgs-old, ...}:
+  outputs = inputs @ {
+    flake-parts,
+    nixpkgs-old,
+    ...
+  }:
     flake-parts.lib.mkFlake {inherit inputs;} {
       imports = [
         inputs.treefmt-nix.flakeModule
@@ -82,7 +86,7 @@
               inputs.nixpkgs-old.legacyPackages.${system}.parted
             ];
 
-            hardeningDisable = [ "format" "fortify" ];
+          hardeningDisable = ["format" "fortify"];
         };
       };
     };

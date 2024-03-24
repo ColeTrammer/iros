@@ -3,6 +3,7 @@
 #include <gui/table_view.h>
 #include <gui/window.h>
 #include <liim/utilities.h>
+#include <sys/wait.h>
 
 namespace GUI {
 TableView::~TableView() {}
@@ -101,7 +102,26 @@ void TableView::render() {
     renderer.draw_rect(sized_rect(), outline_color());
 }
 
-App::ModelItem* TableView::item_at_position(const Point&) {
+App::ModelItem* TableView::item_at_position(const Point& point) {
+    if (!model()) {
+        return nullptr;
+    }
+
+    auto root_item = this->root_item();
+    if (!root_item) {
+        return nullptr;
+    }
+
+    auto item_count = root_item->item_count();
+    auto ry = 1;
+    for (auto r = 0; r < item_count; r++) {
+        ry += 21;
+
+        if (point.y() < ry + 21 && point.y() >= ry) {
+            return root_item->model_item_at(r);
+        }
+    }
+
     return nullptr;
 }
 }

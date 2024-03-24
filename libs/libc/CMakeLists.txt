@@ -70,7 +70,7 @@ else()
         stdlib/malloc.c
         stdlib/mbstowcs.c
         stdlib/mbtowc.c
-        stdlib/qsort.cpp
+        stdlib/qsort.c
         stdlib/stdlib.c
         stdlib/wcstombs.c
         stdlib/wctomb.c
