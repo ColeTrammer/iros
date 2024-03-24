@@ -1,0 +1,5 @@
+<map id="iris::acpi::MADT" name="iris::acpi::MADT">
+<area shape="rect" id="Node000001" title="Multiple APIC Description Table." alt="" coords="22,81,146,109"/>
+<area shape="rect" id="Node000002" href="$structiris_1_1acpi_1_1SDTHeader.html" title="System Description Table Header." alt="" coords="5,5,163,33"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="87,49,87,81,81,81,81,49"/>
+</map>

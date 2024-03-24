@@ -1,0 +1,31 @@
+<map id="libs/di/include/di/vocab/variant" name="libs/di/include/di/vocab/variant">
+<area shape="rect" id="node1" href="dir_bf9e2a3d6b93982a82bbe9d883f4fbeb.html" title="md" alt="" coords="27,130,69,158"/>
+<area shape="rect" id="node2" href="dir_f2746db212e1651cb9c1857c0d141a99.html" title="array" alt="" coords="94,130,149,158"/>
+<area shape="rect" id="node3" href="dir_fb93aeb8b3e9feea147f4ddef093a0f6.html" title="optional" alt="" coords="174,130,248,158"/>
+<area shape="rect" id="node4" href="dir_df2174af3210b9b7833edb75ef66180a.html" title="variant" alt="" coords="181,54,248,82"/>
+<area shape="poly" id="edge6" href="dir_000190_000122.html" alt="" coords="186,85,84,130,82,125,184,80"/>
+<area shape="rect" id="edge6-headlabel" href="dir_000190_000122.html" title="1" alt="" coords="86,125,94,142"/>
+<area shape="poly" id="edge7" href="dir_000190_000017.html" alt="" coords="200,85,151,122,148,118,196,80"/>
+<area shape="rect" id="edge7-headlabel" href="dir_000190_000017.html" title="1" alt="" coords="153,117,161,134"/>
+<area shape="poly" id="edge9" href="dir_000190_000135.html" alt="" coords="217,83,215,114,210,114,211,82"/>
+<area shape="rect" id="edge9-headlabel" href="dir_000190_000135.html" title="1" alt="" coords="217,103,225,120"/>
+<area shape="rect" id="node5" href="dir_0669efae56692bb73da75efb5ebbccdf.html" title="function" alt="" coords="272,130,347,158"/>
+<area shape="poly" id="edge1" href="dir_000190_000083.html" alt="" coords="233,80,282,118,279,122,230,85"/>
+<area shape="rect" id="edge1-headlabel" href="dir_000190_000083.html" title="7" alt="" coords="279,103,287,120"/>
+<area shape="rect" id="node6" href="dir_30ecaf38acae77be14fb9173f98f8612.html" title="types" alt="" coords="370,130,427,158"/>
+<area shape="poly" id="edge2" href="dir_000190_000184.html" alt="" coords="249,80,356,123,354,128,247,85"/>
+<area shape="rect" id="edge2-headlabel" href="dir_000190_000184.html" title="6" alt="" coords="352,108,360,125"/>
+<area shape="rect" id="node7" href="dir_4535887b2cdca47e625f259d07db0112.html" title="util" alt="" coords="451,130,493,158"/>
+<area shape="poly" id="edge3" href="dir_000190_000189.html" alt="" coords="250,75,332,96,437,126,435,132,330,101,248,80"/>
+<area shape="rect" id="edge3-headlabel" href="dir_000190_000189.html" title="14" alt="" coords="428,112,444,129"/>
+<area shape="rect" id="node8" href="dir_60d1624911c2c9f7b6f38e44ec895aaa.html" title="math" alt="" coords="518,130,573,158"/>
+<area shape="poly" id="edge4" href="dir_000190_000121.html" alt="" coords="249,73,359,94,503,127,502,132,357,99,248,78"/>
+<area shape="rect" id="edge4-headlabel" href="dir_000190_000121.html" title="1" alt="" coords="498,112,506,129"/>
+<area shape="rect" id="node9" href="dir_aaf67126bd5deefc4d96704f76f22cc2.html" title="platform" alt="" coords="597,130,675,158"/>
+<area shape="poly" id="edge5" href="dir_000190_000139.html" alt="" coords="249,71,390,93,583,127,582,132,390,98,248,77"/>
+<area shape="rect" id="edge5-headlabel" href="dir_000190_000139.html" title="1" alt="" coords="577,112,585,129"/>
+<area shape="rect" id="node10" href="dir_f555f996eeee1ebe901dc71e0c5de8ff.html" title="meta" alt="" coords="699,130,754,158"/>
+<area shape="poly" id="edge8" href="dir_000190_000126.html" alt="" coords="249,69,431,87,555,104,684,127,683,132,554,109,431,92,249,74"/>
+<area shape="rect" id="edge8-headlabel" href="dir_000190_000126.html" title="20" alt="" coords="675,112,691,129"/>
+<area shape="rect" id="clust1" href="dir_942cfae36a92b6b1c4b510e99e852d40.html" title="vocab" alt="" coords="16,16,259,168"/>
+</map>

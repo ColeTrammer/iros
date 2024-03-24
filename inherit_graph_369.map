@@ -1,0 +1,37 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$structdi_1_1container_1_1IntrusiveTagBase.html" title=" " alt="" coords="5,354,175,399"/>
+<area shape="rect" id="Node000001" href="$structdi_1_1container_1_1IntrusiveForwardListTag.html" title=" " alt="" coords="235,5,473,67"/>
+<area shape="poly" id="edge178_Node000000_Node000001" title=" " alt="" coords="95,338,109,281,133,211,170,139,193,106,221,77,236,65,239,70,224,81,197,109,174,142,138,213,114,282,100,339"/>
+<area shape="rect" id="Node000003" href="$structdi_1_1container_1_1IntrusiveForwardListTag.html" title=" " alt="" coords="235,91,473,152"/>
+<area shape="poly" id="edge180_Node000000_Node000003" title=" " alt="" coords="102,338,121,297,146,250,180,203,221,162,238,151,241,155,224,166,184,206,151,253,125,300,107,340"/>
+<area shape="rect" id="Node000004" href="$structdi_1_1container_1_1IntrusiveForwardListTag.html" title=" " alt="" coords="223,177,485,221"/>
+<area shape="poly" id="edge181_Node000000_Node000004" title=" " alt="" coords="113,339,159,284,188,255,221,231,245,219,247,224,224,236,192,259,162,287,117,343"/>
+<area shape="rect" id="Node000005" href="$structdi_1_1container_1_1IntrusiveListTag.html" title=" " alt="" coords="231,246,477,291"/>
+<area shape="poly" id="edge182_Node000000_Node000005" title=" " alt="" coords="138,343,178,321,222,300,255,289,257,294,224,305,180,326,140,348"/>
+<area shape="rect" id="Node000007" href="$structdi_1_1container_1_1IntrusiveListTag.html" title=" " alt="" coords="270,315,438,360"/>
+<area shape="poly" id="edge184_Node000000_Node000007" title=" " alt="" coords="190,359,269,347,270,352,191,364"/>
+<area shape="rect" id="Node000008" href="$structdi_1_1container_1_1IntrusiveTreeSetTag.html" title=" " alt="" coords="248,384,460,446"/>
+<area shape="poly" id="edge185_Node000000_Node000008" title=" " alt="" coords="190,388,248,397,247,402,190,393"/>
+<area shape="rect" id="Node000010" href="$structdi_1_1container_1_1OwningHashNodeTag.html" title=" " alt="" coords="249,470,459,549"/>
+<area shape="poly" id="edge187_Node000000_Node000010" title=" " alt="" coords="138,405,224,455,250,467,248,472,221,460,136,410"/>
+<area shape="rect" id="Node000012" href="$structdi_1_1container_1_1OwningHashNodeTag.html" title=" " alt="" coords="253,573,455,635"/>
+<area shape="poly" id="edge189_Node000000_Node000012" title=" " alt="" coords="111,411,156,485,187,524,224,558,253,575,251,580,221,562,184,528,151,489,106,414"/>
+<area shape="rect" id="Node000014" href="$structdi_1_1container_1_1OwningRBTreeTag.html" title=" " alt="" coords="245,659,463,720"/>
+<area shape="poly" id="edge191_Node000000_Node000014" title=" " alt="" coords="102,413,117,465,142,527,177,590,199,619,224,645,246,660,243,664,221,649,195,623,173,593,137,530,112,467,97,414"/>
+<area shape="rect" id="Node000016" href="$structdi_1_1container_1_1OwningRBTreeTag.html" title=" " alt="" coords="252,744,456,806"/>
+<area shape="poly" id="edge193_Node000000_Node000016" title=" " alt="" coords="97,414,108,481,130,566,147,611,168,654,193,695,224,730,253,750,250,754,221,734,189,698,163,657,142,613,125,568,103,482,92,415"/>
+<area shape="rect" id="Node000002" href="$structdi_1_1container_1_1DefaultIntrusiveForwardListTag.html" title=" " alt="" coords="533,14,748,59"/>
+<area shape="poly" id="edge179_Node000001_Node000002" title=" " alt="" coords="489,34,532,34,532,39,489,39"/>
+<area shape="rect" id="Node000006" href="$structdi_1_1container_1_1DefaultIntrusiveListTag.html" title=" " alt="" coords="533,246,748,291"/>
+<area shape="poly" id="edge183_Node000005_Node000006" title=" " alt="" coords="492,266,532,266,532,271,492,271"/>
+<area shape="rect" id="Node000009" href="$structdi_1_1container_1_1DefaultIntrusiveTreeSetTag.html" title=" " alt="" coords="533,393,748,437"/>
+<area shape="poly" id="edge186_Node000008_Node000009" title=" " alt="" coords="475,412,533,412,533,418,475,418"/>
+<area shape="rect" id="Node000011" href="$structdi_1_1container_1_1detail_1_1NodeHashMapTag.html" title=" " alt="" coords="546,479,735,540"/>
+<area shape="poly" id="edge188_Node000010_Node000011" title=" " alt="" coords="474,507,546,507,546,512,474,512"/>
+<area shape="rect" id="Node000013" href="$structdi_1_1container_1_1detail_1_1NodeHashSetTag.html" title=" " alt="" coords="538,582,743,627"/>
+<area shape="poly" id="edge190_Node000012_Node000013" title=" " alt="" coords="471,602,538,602,538,607,471,607"/>
+<area shape="rect" id="Node000015" href="$structdi_1_1container_1_1detail_1_1TreeMapTag.html" title=" " alt="" coords="539,667,743,712"/>
+<area shape="poly" id="edge192_Node000014_Node000015" title=" " alt="" coords="478,687,538,687,538,692,478,692"/>
+<area shape="rect" id="Node000017" href="$structdi_1_1container_1_1detail_1_1TreeSetTag.html" title=" " alt="" coords="558,753,723,797"/>
+<area shape="poly" id="edge194_Node000016_Node000017" title=" " alt="" coords="472,772,558,772,558,778,472,778"/>
+</map>

@@ -1,0 +1,26 @@
+var namespacedi_1_1math_1_1detail =
+[
+    [ "AbsDiffFunction", "structdi_1_1math_1_1detail_1_1AbsDiffFunction.html", "structdi_1_1math_1_1detail_1_1AbsDiffFunction" ],
+    [ "AbsFunction", "structdi_1_1math_1_1detail_1_1AbsFunction.html", "structdi_1_1math_1_1detail_1_1AbsFunction" ],
+    [ "AbsUnsignedFunction", "structdi_1_1math_1_1detail_1_1AbsUnsignedFunction.html", "structdi_1_1math_1_1detail_1_1AbsUnsignedFunction" ],
+    [ "AlignDownFunction", "structdi_1_1math_1_1detail_1_1AlignDownFunction.html", "structdi_1_1math_1_1detail_1_1AlignDownFunction" ],
+    [ "AlignUpFunction", "structdi_1_1math_1_1detail_1_1AlignUpFunction.html", "structdi_1_1math_1_1detail_1_1AlignUpFunction" ],
+    [ "CmpEqualFunction", "structdi_1_1math_1_1detail_1_1CmpEqualFunction.html", "structdi_1_1math_1_1detail_1_1CmpEqualFunction" ],
+    [ "CmpGreaterEqualFunction", "structdi_1_1math_1_1detail_1_1CmpGreaterEqualFunction.html", "structdi_1_1math_1_1detail_1_1CmpGreaterEqualFunction" ],
+    [ "CmpGreaterFunction", "structdi_1_1math_1_1detail_1_1CmpGreaterFunction.html", "structdi_1_1math_1_1detail_1_1CmpGreaterFunction" ],
+    [ "CmpLessEqualFunction", "structdi_1_1math_1_1detail_1_1CmpLessEqualFunction.html", "structdi_1_1math_1_1detail_1_1CmpLessEqualFunction" ],
+    [ "CmpLessFunction", "structdi_1_1math_1_1detail_1_1CmpLessFunction.html", "structdi_1_1math_1_1detail_1_1CmpLessFunction" ],
+    [ "CmpNotEqualFunction", "structdi_1_1math_1_1detail_1_1CmpNotEqualFunction.html", "structdi_1_1math_1_1detail_1_1CmpNotEqualFunction" ],
+    [ "CmpThreeWayFunction", "structdi_1_1math_1_1detail_1_1CmpThreeWayFunction.html", "structdi_1_1math_1_1detail_1_1CmpThreeWayFunction" ],
+    [ "DivideRoundUpFunction", "structdi_1_1math_1_1detail_1_1DivideRoundUpFunction.html", "structdi_1_1math_1_1detail_1_1DivideRoundUpFunction" ],
+    [ "GcdFunction", "structdi_1_1math_1_1detail_1_1GcdFunction.html", "structdi_1_1math_1_1detail_1_1GcdFunction" ],
+    [ "LcmFunction", "structdi_1_1math_1_1detail_1_1LcmFunction.html", "structdi_1_1math_1_1detail_1_1LcmFunction" ],
+    [ "MidpointFunction", "structdi_1_1math_1_1detail_1_1MidpointFunction.html", "structdi_1_1math_1_1detail_1_1MidpointFunction" ],
+    [ "RepresentableAsFunction", "structdi_1_1math_1_1detail_1_1RepresentableAsFunction.html", "structdi_1_1math_1_1detail_1_1RepresentableAsFunction" ],
+    [ "ToSignedFunction", "structdi_1_1math_1_1detail_1_1ToSignedFunction.html", "structdi_1_1math_1_1detail_1_1ToSignedFunction" ],
+    [ "ToUnsignedFunction", "structdi_1_1math_1_1detail_1_1ToUnsignedFunction.html", "structdi_1_1math_1_1detail_1_1ToUnsignedFunction" ],
+    [ "IsRatio", "conceptdi_1_1math_1_1detail_1_1IsRatio.html", null ],
+    [ "smallest_unsigned_type_helper", "namespacedi_1_1math_1_1detail.html#a38dbe1a21fba43561bda5b2146e050e8", null ],
+    [ "is_ratio", "namespacedi_1_1math_1_1detail.html#a785c9dea2ec57b39b76a58c8a2ebb190", null ],
+    [ "is_ratio< Ratio< x, y > >", "namespacedi_1_1math_1_1detail.html#a903e53cb843d4d90dc0c7e6cbb46dd68", null ]
+];

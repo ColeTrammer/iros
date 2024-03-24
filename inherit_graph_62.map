@@ -1,0 +1,25 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$structdi_1_1bit_1_1BitField.html" title=" " alt="" coords="5,352,150,397"/>
+<area shape="rect" id="Node000001" href="$structiris_1_1x86_1_1amd64_1_1ApicExtendedFeatureExtendedLvtCount.html" title=" " alt="" coords="205,5,429,50"/>
+<area shape="poly" id="edge46_Node000000_Node000001" title=" " alt="" coords="80,336,90,276,111,202,126,164,145,126,168,91,196,60,212,48,215,53,199,64,172,94,149,129,131,166,116,204,95,277,85,337"/>
+<area shape="rect" id="Node000002" href="$structiris_1_1x86_1_1amd64_1_1ApicInterruptCommandDestination.html" title=" " alt="" coords="208,75,426,119"/>
+<area shape="poly" id="edge47_Node000000_Node000002" title=" " alt="" coords="85,336,99,289,121,233,153,178,173,152,196,130,214,118,217,122,199,134,177,156,157,181,126,236,104,291,90,337"/>
+<area shape="rect" id="Node000003" href="$structiris_1_1x86_1_1amd64_1_1ApicInterruptCommandRemoteReadStatus.html" title=" " alt="" coords="208,144,426,189"/>
+<area shape="poly" id="edge48_Node000000_Node000003" title=" " alt="" coords="92,336,133,266,162,230,196,199,216,187,219,191,199,203,166,234,137,269,97,339"/>
+<area shape="rect" id="Node000004" href="$structiris_1_1x86_1_1amd64_1_1ApicInterruptCommandVector.html" title=" " alt="" coords="208,213,426,258"/>
+<area shape="poly" id="edge49_Node000000_Node000004" title=" " alt="" coords="107,339,148,302,196,268,222,256,224,261,199,273,151,306,111,343"/>
+<area shape="rect" id="Node000005" href="$structiris_1_1x86_1_1amd64_1_1ApicLvtEntryVector.html" title=" " alt="" coords="226,283,408,327"/>
+<area shape="poly" id="edge50_Node000000_Node000005" title=" " alt="" coords="164,347,236,325,238,331,165,352"/>
+<area shape="rect" id="Node000006" href="$structiris_1_1x86_1_1amd64_1_1ApicMaxLvtEntry.html" title=" " alt="" coords="222,352,412,397"/>
+<area shape="poly" id="edge51_Node000000_Node000006" title=" " alt="" coords="165,372,221,372,221,377,165,377"/>
+<area shape="rect" id="Node000007" href="$structiris_1_1x86_1_1amd64_1_1ApicVersion.html" title=" " alt="" coords="212,421,422,448"/>
+<area shape="poly" id="edge52_Node000000_Node000007" title=" " alt="" coords="165,398,198,406,245,417,244,422,197,412,164,403"/>
+<area shape="rect" id="Node000008" href="$structiris_1_1x86_1_1amd64_1_1IoApicMaxRedirectionEntry.html" title=" " alt="" coords="230,472,404,517"/>
+<area shape="poly" id="edge53_Node000000_Node000008" title=" " alt="" coords="118,404,156,432,199,457,230,470,228,475,196,462,153,437,115,409"/>
+<area shape="rect" id="Node000009" href="$structiris_1_1x86_1_1amd64_1_1IoApicRedirectionTableEntryDestination.html" title=" " alt="" coords="198,541,436,586"/>
+<area shape="poly" id="edge54_Node000000_Node000009" title=" " alt="" coords="100,408,140,470,168,500,199,527,220,538,217,543,196,531,164,504,136,473,95,411"/>
+<area shape="rect" id="Node000010" href="$structiris_1_1x86_1_1amd64_1_1IoApicRedirectionTableEntryVector.html" title="IO APIC Redirection Table Entry." alt="" coords="215,611,419,655"/>
+<area shape="poly" id="edge55_Node000000_Node000010" title=" " alt="" coords="91,410,106,454,129,504,159,554,199,596,217,608,214,612,196,600,155,557,124,506,101,456,86,412"/>
+<area shape="rect" id="Node000011" href="$structiris_1_1x86_1_1amd64_1_1IoApicVersion.html" title="IO APIC Version Register." alt="" coords="230,680,404,725"/>
+<area shape="poly" id="edge56_Node000000_Node000011" title=" " alt="" coords="86,412,97,468,118,537,152,606,173,638,199,666,231,685,228,689,196,670,169,641,147,609,113,539,92,470,81,413"/>
+</map>

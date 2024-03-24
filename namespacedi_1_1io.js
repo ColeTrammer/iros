@@ -1,0 +1,26 @@
+var namespacedi_1_1io =
+[
+    [ "detail", "namespacedi_1_1io_1_1detail.html", "namespacedi_1_1io_1_1detail" ],
+    [ "Flush", "structdi_1_1io_1_1Flush.html", null ],
+    [ "ReadSome", "structdi_1_1io_1_1ReadSome.html", null ],
+    [ "SizeWriter", "classdi_1_1io_1_1SizeWriter.html", "classdi_1_1io_1_1SizeWriter" ],
+    [ "StringReader", "classdi_1_1io_1_1StringReader.html", "classdi_1_1io_1_1StringReader" ],
+    [ "StringWriter", "classdi_1_1io_1_1StringWriter.html", "classdi_1_1io_1_1StringWriter" ],
+    [ "VectorReader", "classdi_1_1io_1_1VectorReader.html", "classdi_1_1io_1_1VectorReader" ],
+    [ "VectorWriter", "classdi_1_1io_1_1VectorWriter.html", "classdi_1_1io_1_1VectorWriter" ],
+    [ "WriterFormatContext", "classdi_1_1io_1_1WriterFormatContext.html", "classdi_1_1io_1_1WriterFormatContext" ],
+    [ "WriteSome", "structdi_1_1io_1_1WriteSome.html", null ],
+    [ "Reader", "namespacedi_1_1io.html#a7ebef42b4a27362ffb1102fd3cf6c7b1", null ],
+    [ "Writer", "namespacedi_1_1io.html#aa4f3d9d81f17446d93626c64e78a7ecd", null ],
+    [ "StringReader", "namespacedi_1_1io.html#a0afdb63fa333366c350f9895d3439823", null ],
+    [ "VectorReader", "namespacedi_1_1io.html#a0003cb6605df6bd281b6ff1d16f51782", null ],
+    [ "flush", "namespacedi_1_1io.html#a01ac8ccd4c7d5e5e9002aacad8136b73", null ],
+    [ "read_all", "namespacedi_1_1io.html#a28e62f63f31d0d03270f46c854a6242c", null ],
+    [ "read_exactly", "namespacedi_1_1io.html#a57147ea2eb49caf013000643bd8c9ab8", null ],
+    [ "read_some", "namespacedi_1_1io.html#a59bfe4e9f3c073e1a4759a176bc6cb83", null ],
+    [ "read_to_string", "namespacedi_1_1io.html#a8de158ca0276d9453c2ec80f53da5a79", null ],
+    [ "write_exactly", "namespacedi_1_1io.html#a324e14d0f9cd1ec969df6988fc048d1b", null ],
+    [ "write_some", "namespacedi_1_1io.html#ae46cea841989d93acb8bba4b4fb6d0cc", null ],
+    [ "writer_print", "namespacedi_1_1io.html#a67ca1c8bcc33e23c01bfdc254ebeac24", null ],
+    [ "writer_println", "namespacedi_1_1io.html#ab89bd02a07af5f7a14604152e743e9e8", null ]
+];

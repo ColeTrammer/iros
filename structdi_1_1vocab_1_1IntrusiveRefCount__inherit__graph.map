@@ -1,0 +1,21 @@
+<map id="di::vocab::IntrusiveRefCount&lt; T &gt;" name="di::vocab::IntrusiveRefCount&lt; T &gt;">
+<area shape="rect" id="Node000001" title=" " alt="" coords="198,204,441,232"/>
+<area shape="rect" id="Node000003" href="$classiris_1_1Inode.html" title=" " alt="" coords="523,5,674,33"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="337,190,398,117,440,77,488,43,521,29,523,34,490,48,443,81,402,120,341,193"/>
+<area shape="rect" id="Node000004" href="$classiris_1_1TNode.html" title=" " alt="" coords="517,57,680,85"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="346,192,408,143,447,117,488,95,522,83,524,88,490,100,450,122,411,147,349,196"/>
+<area shape="rect" id="Node000005" href="$classiris_1_1Task.html" title=" " alt="" coords="530,109,667,137"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="364,195,422,170,488,146,529,135,531,140,490,151,424,175,366,200"/>
+<area shape="rect" id="Node000006" href="$classiris_1_1TaskArguments.html" title=" " alt="" coords="523,161,674,206"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="451,199,522,190,523,195,451,204"/>
+<area shape="rect" id="Node000007" href="$classiris_1_1TaskNamespace.html" title=" " alt="" coords="520,230,677,275"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="451,232,520,240,519,245,451,237"/>
+<area shape="rect" id="Node000008" href="$classiris_1_1TaskStatus.html" title=" " alt="" coords="489,299,708,326"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="366,236,424,261,490,285,529,295,527,301,488,290,422,266,364,241"/>
+<area shape="rect" id="Node000009" href="$classiris_1_1mm_1_1AddressSpace.html" title=" " alt="" coords="512,350,686,395"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="350,239,412,287,490,335,517,347,515,352,488,340,409,292,347,244"/>
+<area shape="rect" id="Node000010" href="$classiris_1_1mm_1_1BackingObject.html" title=" " alt="" coords="510,420,687,464"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="340,243,400,323,443,367,490,405,512,417,510,421,488,409,439,371,396,327,336,246"/>
+<area shape="rect" id="Node000002" href="$structdi_1_1util_1_1Immovable.html" title=" " alt="" coords="5,204,150,232"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="165,215,197,215,197,221,165,221"/>
+</map>

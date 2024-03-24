@@ -1,0 +1,5 @@
+<map id="iris::acpi::IoApicStructure" name="iris::acpi::IoApicStructure">
+<area shape="rect" id="Node000001" title="I/O APIC Structure." alt="" coords="16,98,199,126"/>
+<area shape="rect" id="Node000002" href="$structiris_1_1acpi_1_1InterruptControllerStructureHeader.html" title="Interrupt Controller Structure Header." alt="" coords="5,5,210,50"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="110,66,110,97,105,97,105,66"/>
+</map>

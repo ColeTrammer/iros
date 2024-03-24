@@ -1,0 +1,9 @@
+<map id="di::container::SlideView&lt; View &gt;" name="di::container::SlideView&lt; View &gt;">
+<area shape="rect" id="Node000001" title=" " alt="" coords="551,48,725,93"/>
+<area shape="rect" id="Node000002" href="$classdi_1_1container_1_1ViewInterface.html" title=" " alt="" coords="267,5,468,50"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="483,43,551,54,550,59,483,48"/>
+<area shape="rect" id="Node000003" href="$classdi_1_1meta_1_1EnableView.html" title=" " alt="" coords="5,5,184,50"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="199,25,267,25,267,30,199,30"/>
+<area shape="rect" id="Node000004" href="$classdi_1_1meta_1_1EnableBorrowedContainer.html" title=" " alt="" coords="232,74,503,152"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="518,87,550,81,551,87,519,92"/>
+</map>

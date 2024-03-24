@@ -1,0 +1,15 @@
+<map id="di::util::NamedArgument&lt; Tag_, T &gt;" name="di::util::NamedArgument&lt; Tag_, T &gt;">
+<area shape="rect" id="Node000001" title="A helper class to simulate a single named argument." alt="" coords="5,179,187,223"/>
+<area shape="rect" id="Node000002" href="$structdi_1_1execution_1_1ipc_1_1Allocator.html" title=" " alt="" coords="266,5,416,50"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="122,165,170,111,200,84,233,60,265,45,267,49,236,65,204,88,174,115,126,168"/>
+<area shape="rect" id="Node000003" href="$structdi_1_1execution_1_1ipc_1_1Receive.html" title=" " alt="" coords="275,75,407,119"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="151,169,234,129,274,114,276,119,236,134,153,174"/>
+<area shape="rect" id="Node000004" href="$structdi_1_1execution_1_1ipc_1_1Receiver.html" title=" " alt="" coords="260,144,422,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="202,183,259,175,259,180,203,189"/>
+<area shape="rect" id="Node000005" href="$structdi_1_1execution_1_1ipc_1_1ReceiverTransmitter.html" title=" " alt="" coords="235,213,447,258"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="202,213,235,218,234,223,202,219"/>
+<area shape="rect" id="Node000006" href="$structdi_1_1execution_1_1ipc_1_1Transmit.html" title=" " alt="" coords="275,283,407,327"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="153,228,236,268,276,283,274,288,234,273,151,233"/>
+<area shape="rect" id="Node000007" href="$structdi_1_1execution_1_1ipc_1_1Transmitter.html" title=" " alt="" coords="254,352,428,397"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="126,234,174,287,204,314,236,337,259,349,256,354,233,342,200,318,170,291,122,237"/>
+</map>

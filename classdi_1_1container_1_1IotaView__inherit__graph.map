@@ -1,0 +1,9 @@
+<map id="di::container::IotaView&lt; T, Bound &gt;" name="di::container::IotaView&lt; T, Bound &gt;">
+<area shape="rect" id="Node000001" title=" " alt="" coords="480,44,647,89"/>
+<area shape="rect" id="Node000002" href="$classdi_1_1container_1_1ViewInterface.html" title=" " alt="" coords="232,5,432,50"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="448,44,480,50,479,55,447,50"/>
+<area shape="rect" id="Node000003" href="$classdi_1_1meta_1_1EnableView.html" title=" " alt="" coords="5,5,184,50"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="199,25,231,25,231,30,199,30"/>
+<area shape="rect" id="Node000004" href="$classdi_1_1meta_1_1EnableBorrowedContainer.html" title=" " alt="" coords="237,74,427,136"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="441,84,479,78,480,83,442,89"/>
+</map>

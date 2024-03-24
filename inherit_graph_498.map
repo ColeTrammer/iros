@@ -1,0 +1,51 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" title=" " alt="" coords="5,620,117,648"/>
+<area shape="rect" id="Node000001" href="$structiris_1_1FileHACKRawDataFunction.html" title=" " alt="" coords="171,5,395,33"/>
+<area shape="poly" id="edge246_Node000000_Node000001" title=" " alt="" coords="61,605,67,484,84,316,97,230,114,152,136,88,148,63,163,44,179,32,182,36,167,48,153,66,141,90,119,153,102,231,89,316,73,484,66,605"/>
+<area shape="rect" id="Node000002" href="$structiris_1_1FileMetadataFunction.html" title=" " alt="" coords="188,57,378,85"/>
+<area shape="poly" id="edge247_Node000000_Node000002" title=" " alt="" coords="61,605,69,493,87,341,100,264,117,193,138,135,163,96,187,79,190,84,167,100,143,138,122,195,106,265,92,342,75,494,66,605"/>
+<area shape="rect" id="Node000003" href="$structiris_1_1FileTruncateFunction.html" title=" " alt="" coords="192,109,374,137"/>
+<area shape="poly" id="edge248_Node000000_Node000003" title=" " alt="" coords="62,604,72,503,91,366,104,297,120,234,140,183,163,148,190,130,193,135,167,152,145,186,125,236,109,298,96,367,77,503,67,605"/>
+<area shape="rect" id="Node000004" href="$structiris_1_1InodeCreateNodeFunction.html" title=" " alt="" coords="174,161,392,189"/>
+<area shape="poly" id="edge249_Node000000_Node000004" title=" " alt="" coords="63,604,74,512,94,391,108,331,124,276,142,231,163,200,179,187,183,192,167,204,147,233,129,277,113,332,99,392,79,513,68,605"/>
+<area shape="rect" id="Node000005" href="$structiris_1_1InodeHACKRawDataFunction.html" title=" " alt="" coords="165,213,401,241"/>
+<area shape="poly" id="edge250_Node000000_Node000005" title=" " alt="" coords="64,604,77,523,98,417,127,317,144,278,163,252,180,239,183,244,167,256,148,281,132,319,103,418,82,524,69,605"/>
+<area shape="rect" id="Node000006" href="$structiris_1_1InodeLookupFunction.html" title=" " alt="" coords="190,265,376,293"/>
+<area shape="poly" id="edge251_Node000000_Node000006" title=" " alt="" coords="60,604,64,542,79,461,92,418,110,376,133,338,163,304,188,288,191,292,166,308,137,341,114,379,97,420,84,462,69,542,65,605"/>
+<area shape="rect" id="Node000007" href="$structiris_1_1InodeMetadataFunction.html" title=" " alt="" coords="182,317,384,345"/>
+<area shape="poly" id="edge252_Node000000_Node000007" title=" " alt="" coords="62,604,69,551,86,483,99,448,116,414,137,382,163,354,180,343,183,348,166,359,141,385,120,416,104,450,91,485,74,552,67,605"/>
+<area shape="rect" id="Node000008" href="$structiris_1_1InodeReadDirectoryFunction.html" title=" " alt="" coords="194,369,372,414"/>
+<area shape="poly" id="edge253_Node000000_Node000008" title=" " alt="" coords="66,605,78,564,97,516,125,466,163,424,192,406,195,411,166,428,129,469,102,518,83,566,71,606"/>
+<area shape="rect" id="Node000009" href="$structiris_1_1InodeReadFunction.html" title=" " alt="" coords="196,437,370,465"/>
+<area shape="poly" id="edge254_Node000000_Node000009" title=" " alt="" coords="71,604,105,539,131,505,163,476,195,460,197,465,166,480,135,508,109,542,75,607"/>
+<area shape="rect" id="Node000010" href="$structiris_1_1InodeTruncateFunction.html" title=" " alt="" coords="185,489,381,517"/>
+<area shape="poly" id="edge255_Node000000_Node000010" title=" " alt="" coords="79,606,115,565,138,545,163,527,192,515,194,520,166,532,141,549,119,569,83,609"/>
+<area shape="rect" id="Node000011" href="$structiris_1_1ReadDirectoryFunction.html" title=" " alt="" coords="184,541,382,569"/>
+<area shape="poly" id="edge256_Node000000_Node000011" title=" " alt="" coords="98,610,164,579,205,567,207,572,166,584,100,615"/>
+<area shape="rect" id="Node000012" href="$structiris_1_1ReadFileFunction.html" title=" " alt="" coords="203,593,363,621"/>
+<area shape="poly" id="edge257_Node000000_Node000012" title=" " alt="" coords="132,623,202,614,203,619,132,628"/>
+<area shape="rect" id="Node000013" href="$structiris_1_1SeekFileFunction.html" title=" " alt="" coords="203,645,363,673"/>
+<area shape="poly" id="edge258_Node000000_Node000013" title=" " alt="" coords="132,639,203,647,202,653,132,645"/>
+<area shape="rect" id="Node000014" href="$structiris_1_1TimerCalibrateFunction.html" title=" " alt="" coords="182,697,384,725"/>
+<area shape="poly" id="edge259_Node000000_Node000014" title=" " alt="" coords="102,653,166,682,207,694,205,699,164,687,100,658"/>
+<area shape="rect" id="Node000015" href="$structiris_1_1TimerCapabilitiesFunction.html" title=" " alt="" coords="173,749,393,777"/>
+<area shape="poly" id="edge260_Node000000_Node000015" title=" " alt="" coords="84,658,119,698,141,718,166,734,194,746,192,751,163,739,138,722,115,702,80,662"/>
+<area shape="rect" id="Node000016" href="$structiris_1_1TimerName.html" title=" " alt="" coords="220,801,346,829"/>
+<area shape="poly" id="edge261_Node000000_Node000016" title=" " alt="" coords="75,661,110,725,135,758,166,786,192,799,220,807,218,812,190,804,163,791,131,762,105,728,71,663"/>
+<area shape="rect" id="Node000017" href="$structiris_1_1TimerResolutionFunction.html" title=" " alt="" coords="177,853,389,881"/>
+<area shape="poly" id="edge262_Node000000_Node000017" title=" " alt="" coords="71,662,82,702,101,750,129,798,146,820,166,838,186,850,184,855,163,843,142,823,124,801,96,752,77,704,66,663"/>
+<area shape="rect" id="Node000018" href="$structiris_1_1TimerSetIntervalFunction.html" title=" " alt="" coords="176,905,390,933"/>
+<area shape="poly" id="edge263_Node000000_Node000018" title=" " alt="" coords="68,663,76,713,94,775,123,837,143,866,166,890,185,903,182,907,163,895,138,869,118,840,89,776,71,714,63,664"/>
+<area shape="rect" id="Node000019" href="$structiris_1_1TimerSetSingleShotFunction.html" title=" " alt="" coords="194,957,372,1002"/>
+<area shape="poly" id="edge264_Node000000_Node000019" title=" " alt="" coords="66,663,72,722,88,797,101,837,118,875,140,911,166,942,195,961,193,966,163,947,135,914,113,878,96,838,83,798,67,723,61,664"/>
+<area shape="rect" id="Node000020" href="$structiris_1_1WriteFileFunction.html" title=" " alt="" coords="202,1025,364,1053"/>
+<area shape="poly" id="edge265_Node000000_Node000020" title=" " alt="" coords="69,663,82,744,103,849,132,949,148,987,167,1012,183,1024,203,1032,201,1036,181,1028,163,1016,144,989,127,950,98,851,77,745,64,663"/>
+<area shape="rect" id="Node000021" href="$structiris_1_1detail_1_1DisableIrqLine.html" title=" " alt="" coords="189,1077,377,1105"/>
+<area shape="poly" id="edge266_Node000000_Node000021" title=" " alt="" coords="68,663,79,755,100,875,113,935,129,989,147,1033,167,1063,190,1078,187,1083,163,1066,142,1036,124,991,108,936,94,876,74,755,63,664"/>
+<area shape="rect" id="Node000022" href="$structiris_1_1detail_1_1EnableIrqLine.html" title=" " alt="" coords="192,1129,374,1157"/>
+<area shape="poly" id="edge267_Node000000_Node000022" title=" " alt="" coords="67,663,77,764,96,900,109,969,125,1031,145,1081,167,1115,193,1132,190,1136,163,1118,140,1083,120,1032,104,970,91,901,72,765,62,663"/>
+<area shape="rect" id="Node000023" href="$structiris_1_1detail_1_1ResponsibleIrqLineRange.html" title=" " alt="" coords="196,1181,370,1226"/>
+<area shape="poly" id="edge268_Node000000_Node000023" title=" " alt="" coords="67,663,75,774,94,925,107,1001,123,1071,143,1128,167,1167,181,1179,197,1188,195,1192,178,1183,163,1170,139,1130,118,1073,102,1003,88,926,70,774,61,664"/>
+<area shape="rect" id="Node000024" href="$structiris_1_1detail_1_1SendEoiFunction.html" title=" " alt="" coords="182,1249,384,1277"/>
+<area shape="poly" id="edge269_Node000000_Node000024" title=" " alt="" coords="66,663,72,787,88,960,101,1047,118,1127,140,1192,153,1217,167,1236,183,1249,180,1253,163,1240,148,1220,135,1194,113,1129,95,1048,82,960,66,787,60,663"/>
+</map>

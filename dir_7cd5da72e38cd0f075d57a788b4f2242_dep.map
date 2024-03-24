@@ -1,0 +1,13 @@
+<map id="iris/include/iris/hw" name="iris/include/iris/hw">
+<area shape="rect" id="node1" href="dir_be381e3b7aa79a91c125f50d5abcc4e9.html" title="core" alt="" coords="33,141,82,168"/>
+<area shape="poly" id="edge2" href="dir_000091_000052.html" alt="" coords="60,92,60,125,55,125,55,92"/>
+<area shape="rect" id="edge2-headlabel" href="dir_000091_000052.html" title="2" alt="" coords="62,114,70,131"/>
+<area shape="rect" id="node4" href="dir_6719ab1f1f7655efc2fa43f7eb574fd1.html" title="libs" alt="" coords="182,141,226,168"/>
+<area shape="poly" id="edge1" href="dir_000091_000112.html" alt="" coords="74,90,91,101,129,120,169,135,167,140,127,125,88,106,71,94"/>
+<area shape="rect" id="edge1-headlabel" href="dir_000091_000112.html" title="9" alt="" coords="164,120,172,137"/>
+<area shape="rect" id="node3" href="dir_6934733eeb0ac549ecc4f3d6db8654db.html" title="acpi" alt="" coords="101,65,150,93"/>
+<area shape="poly" id="edge3" href="dir_000001_000112.html" alt="" coords="141,91,181,128,177,132,138,95"/>
+<area shape="rect" id="edge3-headlabel" href="dir_000001_000112.html" title="4" alt="" coords="179,113,187,130"/>
+<area shape="rect" id="clust2" href="dir_7cd5da72e38cd0f075d57a788b4f2242.html" alt="" coords="27,54,160,103"/>
+<area shape="rect" id="clust1" href="dir_ffe5edf85fa540270b5bdba28be40ae5.html" title="iris" alt="" coords="16,16,171,179"/>
+</map>

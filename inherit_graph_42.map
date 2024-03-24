@@ -1,0 +1,13 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$structdi_1_1bit_1_1BitEnum.html" title=" " alt="" coords="5,144,154,189"/>
+<area shape="rect" id="Node000001" href="$structiris_1_1x86_1_1amd64_1_1ApicInterruptCommandDeliveryMode.html" title=" " alt="" coords="230,5,448,50"/>
+<area shape="poly" id="edge14_Node000000_Node000001" title=" " alt="" coords="110,131,151,94,200,60,228,48,230,53,203,65,154,98,113,135"/>
+<area shape="rect" id="Node000002" href="$structiris_1_1x86_1_1amd64_1_1ApicInterruptCommandDestinationShorthand.html" title=" " alt="" coords="224,75,454,119"/>
+<area shape="poly" id="edge15_Node000000_Node000002" title=" " alt="" coords="168,138,201,129,245,117,247,123,202,134,169,143"/>
+<area shape="rect" id="Node000003" href="$structiris_1_1x86_1_1amd64_1_1ApicLvtEntryMessageType.html" title=" " alt="" coords="248,144,430,189"/>
+<area shape="poly" id="edge16_Node000000_Node000003" title=" " alt="" coords="169,164,247,164,247,169,169,169"/>
+<area shape="rect" id="Node000004" href="$structiris_1_1x86_1_1amd64_1_1IoApicRedirectionTableEntryDeliveryMode.html" title=" " alt="" coords="212,213,466,258"/>
+<area shape="poly" id="edge17_Node000000_Node000004" title=" " alt="" coords="169,189,202,198,247,210,245,215,201,204,168,194"/>
+<area shape="rect" id="Node000005" href="$structiris_1_1x86_1_1amd64_1_1IoApicRedirectionTableEntryDestinationMode.html" title=" " alt="" coords="202,283,476,327"/>
+<area shape="poly" id="edge18_Node000000_Node000005" title=" " alt="" coords="113,198,154,235,203,268,230,280,228,285,200,273,151,239,110,202"/>
+</map>

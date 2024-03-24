@@ -1,0 +1,9 @@
+<map id="di::container::DropView&lt; View &gt;" name="di::container::DropView&lt; View &gt;">
+<area shape="rect" id="Node000001" title=" " alt="" coords="515,48,688,93"/>
+<area shape="rect" id="Node000002" href="$classdi_1_1container_1_1ViewInterface.html" title=" " alt="" coords="249,5,450,50"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="465,45,515,53,514,58,464,50"/>
+<area shape="rect" id="Node000003" href="$classdi_1_1meta_1_1EnableView.html" title=" " alt="" coords="5,5,184,50"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="199,25,249,25,249,30,199,30"/>
+<area shape="rect" id="Node000004" href="$classdi_1_1meta_1_1EnableBorrowedContainer.html" title=" " alt="" coords="232,74,467,152"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="482,88,514,82,515,88,483,93"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="di::container::MutableRingInterface&lt; Self, Value &gt;" name="di::container::MutableRingInterface&lt; Self, Value &gt;">
+<area shape="rect" id="Node000001" title=" " alt="" coords="60,98,253,143"/>
+<area shape="rect" id="Node000003" href="$classdi_1_1container_1_1Ring.html" title=" " alt="" coords="5,191,145,235"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="129,156,96,192,92,189,125,152"/>
+<area shape="rect" id="Node000004" href="$classdi_1_1container_1_1Ring.html" title=" " alt="" coords="169,191,309,235"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="188,152,222,189,218,192,184,156"/>
+<area shape="rect" id="Node000002" href="$classdi_1_1container_1_1ConstantRingInterface.html" title=" " alt="" coords="58,5,255,50"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="159,66,159,98,154,98,154,66"/>
+</map>

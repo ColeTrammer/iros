@@ -1,0 +1,28 @@
+var classdi_1_1util_1_1StrongInt =
+[
+    [ "SSizeType", "classdi_1_1util_1_1StrongInt.html#a4599f6ef97f0f10efb77e3dcdf6a9c2b", null ],
+    [ "Type", "classdi_1_1util_1_1StrongInt.html#a1c3926162c3f0a76886b5bf5b6c9a719", null ],
+    [ "StrongInt", "classdi_1_1util_1_1StrongInt.html#a3d8b959e1eca3b43faea4be710669a4b", null ],
+    [ "StrongInt", "classdi_1_1util_1_1StrongInt.html#a86741b6364ac6e56e94f688e36a2755e", null ],
+    [ "operator++", "classdi_1_1util_1_1StrongInt.html#a6968766cda0fb0265c684eec95a9e699", null ],
+    [ "operator++", "classdi_1_1util_1_1StrongInt.html#a9cb65a4b0b7d3a56d24994e748ef287b", null ],
+    [ "operator+=", "classdi_1_1util_1_1StrongInt.html#a06c3df7ea666724d41ffb7e7001d659c", null ],
+    [ "operator+=", "classdi_1_1util_1_1StrongInt.html#afadf17d52b22c4481267570b036fda03", null ],
+    [ "operator--", "classdi_1_1util_1_1StrongInt.html#a6a874a6ad95e48aedc492c5eaa9c02a5", null ],
+    [ "operator--", "classdi_1_1util_1_1StrongInt.html#a6db26f30f1fc537ae66d35312fee3fe7", null ],
+    [ "operator-=", "classdi_1_1util_1_1StrongInt.html#ae8fa949f5eeccd9eec951c2a5074bed3", null ],
+    [ "operator-=", "classdi_1_1util_1_1StrongInt.html#a60751109fa472e4a89294d9244437df0", null ],
+    [ "raw_value", "classdi_1_1util_1_1StrongInt.html#afbfee318a75c84c7fc503aef51653f60", null ],
+    [ "operator+", "classdi_1_1util_1_1StrongInt.html#a4edf694fa500bdc25a447ac656447566", null ],
+    [ "operator+", "classdi_1_1util_1_1StrongInt.html#ac139eeabc0f7d1ad94d19966b5b4c2ab", null ],
+    [ "operator+", "classdi_1_1util_1_1StrongInt.html#ae1c91d652c15b751b8ae53bf9fd733f2", null ],
+    [ "operator+", "classdi_1_1util_1_1StrongInt.html#ac152013ce94bccdf287d457058fd7b30", null ],
+    [ "operator-", "classdi_1_1util_1_1StrongInt.html#aea47d45fe56ce4a6b5ed38b8b48bffdf", null ],
+    [ "operator-", "classdi_1_1util_1_1StrongInt.html#a014b3ebbcd8bd544f598d04a54c2ee54", null ],
+    [ "operator-", "classdi_1_1util_1_1StrongInt.html#a66749f3e52cfb87d1ca77cbf5ccd8167", null ],
+    [ "operator-", "classdi_1_1util_1_1StrongInt.html#a93779d9a4a28a8d9414d6ebaf0203b01", null ],
+    [ "operator-", "classdi_1_1util_1_1StrongInt.html#a399b56226538fd834c7d024dcbe002ec", null ],
+    [ "operator<=>", "classdi_1_1util_1_1StrongInt.html#a72875462bbaa056d28bdec5b064ecf72", null ],
+    [ "operator==", "classdi_1_1util_1_1StrongInt.html#a3fdd8e138a3e49128c55bc714a2fa452", null ],
+    [ "tag_invoke", "classdi_1_1util_1_1StrongInt.html#a43ca6c19518d8f931147fbfa924d1b56", null ]
+];

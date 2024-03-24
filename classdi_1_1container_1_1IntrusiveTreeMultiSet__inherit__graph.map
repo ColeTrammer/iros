@@ -1,0 +1,7 @@
+<map id="di::container::IntrusiveTreeMultiSet&lt; T, Tag, Comp &gt;" name="di::container::IntrusiveTreeMultiSet&lt; T, Tag, Comp &gt;">
+<area shape="rect" id="Node000001" title=" " alt="" coords="31,191,198,252"/>
+<area shape="rect" id="Node000002" href="$classdi_1_1container_1_1RBTree.html" title="General implementation of the Red&#45;Black self&#45;balancing binary tree." alt="" coords="5,81,224,143"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="117,158,117,190,112,190,112,158"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="75,5,154,33"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="117,49,117,81,112,81,112,49"/>
+</map>

@@ -1,0 +1,19 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$structdi_1_1execution_1_1ForwardingQuery.html" title=" " alt="" coords="5,248,190,293"/>
+<area shape="rect" id="Node000001" href="$structdi_1_1execution_1_1GetCompletionScheduler.html" title=" " alt="" coords="252,5,462,50"/>
+<area shape="poly" id="edge270_Node000000_Node000001" title=" " alt="" coords="111,233,131,192,158,146,194,100,236,60,256,48,259,53,239,64,197,103,163,149,136,195,116,235"/>
+<area shape="rect" id="Node000002" href="$structdi_1_1execution_1_1detail_1_1GetAllocatorFunction.html" title=" " alt="" coords="274,75,440,119"/>
+<area shape="poly" id="edge271_Node000000_Node000002" title=" " alt="" coords="123,234,172,180,203,153,236,129,273,113,275,118,239,134,206,157,175,184,127,238"/>
+<area shape="rect" id="Node000003" href="$structdi_1_1execution_1_1detail_1_1GetDelegateeSchedulerFunction.html" title=" " alt="" coords="238,144,476,189"/>
+<area shape="poly" id="edge272_Node000000_Node000003" title=" " alt="" coords="152,238,237,199,270,187,272,192,239,203,154,243"/>
+<area shape="rect" id="Node000004" href="$structdi_1_1execution_1_1detail_1_1GetSchedulerFunction.html" title=" " alt="" coords="271,213,443,258"/>
+<area shape="poly" id="edge273_Node000000_Node000004" title=" " alt="" coords="205,253,270,244,271,250,205,259"/>
+<area shape="rect" id="Node000005" href="$structdi_1_1execution_1_1detail_1_1GetStopTokenFunction.html" title=" " alt="" coords="270,283,444,327"/>
+<area shape="poly" id="edge274_Node000000_Node000005" title=" " alt="" coords="205,282,270,291,269,296,204,287"/>
+<area shape="rect" id="Node000006" href="$structdi_1_1execution_1_1get__sequence__cardinality__ns_1_1Function.html" title=" " alt="" coords="274,352,440,413"/>
+<area shape="poly" id="edge275_Node000000_Node000006" title=" " alt="" coords="156,298,239,337,274,351,272,356,237,342,154,303"/>
+<area shape="rect" id="Node000007" href="$structdi_1_1execution_1_1is__always__lockstop__sequence__ns_1_1Function.html" title=" " alt="" coords="266,437,448,499"/>
+<area shape="poly" id="edge276_Node000000_Node000007" title=" " alt="" coords="124,304,173,364,205,396,239,423,266,438,264,443,236,427,201,400,169,368,120,307"/>
+<area shape="rect" id="Node000008" href="$structdi_1_1execution_1_1is__debug__env__ns_1_1Function.html" title=" " alt="" coords="272,523,442,567"/>
+<area shape="poly" id="edge277_Node000000_Node000008" title=" " alt="" coords="113,306,131,353,158,407,194,462,215,487,239,508,272,526,270,531,236,513,212,490,190,465,153,410,126,355,108,308"/>
+</map>

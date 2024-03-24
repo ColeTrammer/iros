@@ -1,0 +1,7 @@
+var structdi_1_1execution_1_1zip__ns_1_1NextSenderT_3_01Rec_00_01meta_1_1ListV_3_01indices_8_8_8_01_7aa1a467ca5bc826b02a93ed6439aa6e =
+[
+    [ "CompletionSignatures", "structdi_1_1execution_1_1zip__ns_1_1NextSenderT_3_01Rec_00_01meta_1_1ListV_3_01indices_8_8_8_01_7aa1a467ca5bc826b02a93ed6439aa6e.html#aeaa847840ade3f3da02300234efb868d", null ],
+    [ "is_sender", "structdi_1_1execution_1_1zip__ns_1_1NextSenderT_3_01Rec_00_01meta_1_1ListV_3_01indices_8_8_8_01_7aa1a467ca5bc826b02a93ed6439aa6e.html#a501a9af4bb9a1fbb5668ae47fc014872", null ],
+    [ "tag_invoke", "structdi_1_1execution_1_1zip__ns_1_1NextSenderT_3_01Rec_00_01meta_1_1ListV_3_01indices_8_8_8_01_7aa1a467ca5bc826b02a93ed6439aa6e.html#a67753e7111bbad72b7dfd004b79df73d", null ],
+    [ "data", "structdi_1_1execution_1_1zip__ns_1_1NextSenderT_3_01Rec_00_01meta_1_1ListV_3_01indices_8_8_8_01_7aa1a467ca5bc826b02a93ed6439aa6e.html#a8ce9a70ce9452499ef1d18c68518ed61", null ]
+];

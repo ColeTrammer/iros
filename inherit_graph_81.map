@@ -1,0 +1,9 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$structdi_1_1bit_1_1BitFlag.html" title=" " alt="" coords="5,83,164,111"/>
+<area shape="rect" id="Node000001" href="$structiris_1_1x86_1_1amd64_1_1idt_1_1Present.html" title=" " alt="" coords="214,5,366,50"/>
+<area shape="poly" id="edge69_Node000000_Node000001" title=" " alt="" coords="141,75,221,48,222,53,143,80"/>
+<area shape="rect" id="Node000002" href="$structiris_1_1x86_1_1amd64_1_1sd_1_1Present.html" title=" " alt="" coords="215,75,365,119"/>
+<area shape="poly" id="edge70_Node000000_Node000002" title=" " alt="" coords="179,94,215,94,215,100,179,100"/>
+<area shape="rect" id="Node000003" href="$structiris_1_1x86_1_1amd64_1_1ssd_1_1Present.html" title=" " alt="" coords="212,144,368,189"/>
+<area shape="poly" id="edge71_Node000000_Node000003" title=" " alt="" coords="143,114,222,141,221,146,141,119"/>
+</map>

@@ -1,0 +1,45 @@
+<map id="di::bit::BitFlag&lt; index &gt;" name="di::bit::BitFlag&lt; index &gt;">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,707,184,735"/>
+<area shape="rect" id="Node000002" href="$structiris_1_1x86_1_1amd64_1_1ApicExtendedControlExtendId.html" title=" " alt="" coords="257,5,481,50"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="95,692,107,558,132,368,150,271,172,183,198,110,213,82,230,60,255,42,258,46,234,64,218,85,203,112,177,185,155,273,137,369,112,558,100,692"/>
+<area shape="rect" id="Node000003" href="$structiris_1_1x86_1_1amd64_1_1ApicExtendedControlInterruptEnable.html" title=" " alt="" coords="257,75,481,119"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="96,691,110,570,136,402,155,316,176,238,201,174,215,149,230,130,256,111,259,116,234,134,219,152,206,176,181,240,160,317,142,403,115,571,101,692"/>
+<area shape="rect" id="Node000004" href="$structiris_1_1x86_1_1amd64_1_1ApicExtendedControlSpecificEoi.html" title=" " alt="" coords="257,144,481,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="97,692,113,583,141,436,159,361,180,293,204,237,230,199,255,181,258,186,234,203,208,240,185,295,164,362,146,437,118,584,102,692"/>
+<area shape="rect" id="Node000005" href="$structiris_1_1x86_1_1amd64_1_1ApicExtendedFeatureExtendedId.html" title=" " alt="" coords="257,213,481,258"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="93,691,97,608,104,554,115,494,132,433,156,373,188,317,230,268,255,251,258,255,233,272,193,320,161,376,137,435,120,496,109,554,102,609,98,692"/>
+<area shape="rect" id="Node000006" href="$structiris_1_1x86_1_1amd64_1_1ApicExtendedFeatureInterruptEnable.html" title=" " alt="" coords="257,283,481,327"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="95,691,103,620,124,524,142,474,164,424,194,378,230,338,255,321,258,325,233,342,198,381,169,427,147,476,129,526,108,621,100,692"/>
+<area shape="rect" id="Node000007" href="$structiris_1_1x86_1_1amd64_1_1ApicExtendedFeatureSpecificEoi.html" title=" " alt="" coords="257,352,481,397"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="97,691,110,631,134,555,151,514,173,475,199,439,230,407,255,391,258,395,233,411,203,442,177,478,156,517,139,556,115,633,103,692"/>
+<area shape="rect" id="Node000008" href="$structiris_1_1x86_1_1amd64_1_1ApicExtendedRegisterPresent.html" title=" " alt="" coords="257,421,481,466"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="101,692,117,644,144,586,181,527,204,500,230,476,255,461,258,466,233,480,208,503,185,530,148,588,122,646,106,693"/>
+<area shape="rect" id="Node000009" href="$structiris_1_1x86_1_1amd64_1_1ApicInterruptCommandDeliveryStatus.html" title=" " alt="" coords="254,491,484,535"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="107,692,127,658,155,619,190,579,230,545,252,534,255,538,233,550,193,583,159,622,132,661,112,695"/>
+<area shape="rect" id="Node000010" href="$structiris_1_1x86_1_1amd64_1_1ApicInterruptCommandDestinationMode.html" title=" " alt="" coords="246,560,492,605"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="120,694,169,653,230,615,259,603,261,608,233,619,172,658,123,698"/>
+<area shape="rect" id="Node000011" href="$structiris_1_1x86_1_1amd64_1_1ApicInterruptCommandLevel.html" title=" " alt="" coords="260,629,478,674"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="166,700,277,672,278,677,167,706"/>
+<area shape="rect" id="Node000012" href="$structiris_1_1x86_1_1amd64_1_1ApicInterruptCommandTriggerMode.html" title=" " alt="" coords="260,699,478,743"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="199,718,259,718,259,724,199,724"/>
+<area shape="rect" id="Node000013" href="$structiris_1_1x86_1_1amd64_1_1ApicLvtEntryDeliveryStatus.html" title=" " alt="" coords="270,768,468,813"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="167,736,278,765,277,770,166,742"/>
+<area shape="rect" id="Node000014" href="$structiris_1_1x86_1_1amd64_1_1ApicLvtEntryMask.html" title=" " alt="" coords="278,837,460,882"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="123,744,172,784,233,823,278,840,276,845,230,827,169,789,120,748"/>
+<area shape="rect" id="Node000015" href="$structiris_1_1x86_1_1amd64_1_1ApicLvtEntryRemoteIrr.html" title=" " alt="" coords="278,907,460,951"/>
+<area shape="poly" id="edge14_Node000001_Node000015" title=" " alt="" coords="112,747,132,781,159,820,193,859,233,892,278,912,276,917,230,897,190,863,155,823,127,784,107,750"/>
+<area shape="rect" id="Node000016" href="$structiris_1_1x86_1_1amd64_1_1ApicLvtEntryTimerMode.html" title=" " alt="" coords="278,976,460,1021"/>
+<area shape="poly" id="edge15_Node000001_Node000016" title=" " alt="" coords="106,749,122,796,148,854,185,912,208,939,233,962,255,974,278,984,276,989,252,979,230,966,204,942,181,915,144,856,117,798,101,750"/>
+<area shape="rect" id="Node000017" href="$structiris_1_1x86_1_1amd64_1_1ApicLvtEntryTriggerMode.html" title=" " alt="" coords="278,1045,460,1090"/>
+<area shape="poly" id="edge16_Node000001_Node000017" title=" " alt="" coords="103,750,115,809,139,886,156,925,177,964,203,1000,233,1031,254,1045,278,1054,276,1059,252,1049,230,1035,199,1003,173,967,151,928,134,887,110,811,97,751"/>
+<area shape="rect" id="Node000018" href="$structiris_1_1x86_1_1amd64_1_1IoApicRedirectionTableEntryDeliveryStatus.html" title=" " alt="" coords="260,1114,478,1176"/>
+<area shape="poly" id="edge17_Node000001_Node000018" title=" " alt="" coords="100,750,109,821,131,915,148,965,171,1014,199,1060,233,1100,261,1119,258,1124,230,1104,194,1063,166,1017,143,967,126,916,104,822,95,751"/>
+<area shape="rect" id="Node000019" href="$structiris_1_1x86_1_1amd64_1_1IoApicRedirectionTableEntryMask.html" title=" " alt="" coords="247,1200,491,1245"/>
+<area shape="poly" id="edge18_Node000001_Node000019" title=" " alt="" coords="98,750,101,836,107,892,118,953,135,1016,159,1078,192,1136,234,1186,249,1198,246,1202,230,1190,187,1139,154,1080,130,1018,113,954,102,893,96,836,92,751"/>
+<area shape="rect" id="Node000020" href="$structiris_1_1x86_1_1amd64_1_1IoApicRedirectionTableEntryPolarity.html" title=" " alt="" coords="239,1269,499,1314"/>
+<area shape="poly" id="edge19_Node000001_Node000020" title=" " alt="" coords="102,750,118,861,145,1013,163,1090,184,1160,208,1217,234,1255,248,1267,245,1271,230,1259,203,1220,179,1162,158,1092,140,1014,112,862,97,750"/>
+<area shape="rect" id="Node000021" href="$structiris_1_1x86_1_1amd64_1_1IoApicRedirectionTableEntryRemoteIrr.html" title=" " alt="" coords="232,1339,506,1383"/>
+<area shape="poly" id="edge20_Node000001_Node000021" title=" " alt="" coords="101,750,115,874,141,1047,159,1135,180,1215,205,1281,219,1306,234,1324,248,1336,245,1340,230,1328,215,1309,200,1283,175,1217,154,1136,135,1048,109,875,96,751"/>
+<area shape="rect" id="Node000022" href="$structiris_1_1x86_1_1amd64_1_1IoApicRedirectionTableEntryTriggerMode.html" title=" " alt="" coords="265,1408,473,1469"/>
+<area shape="poly" id="edge21_Node000001_Node000022" title=" " alt="" coords="100,750,113,886,137,1079,155,1178,177,1269,203,1343,218,1372,234,1394,248,1407,266,1417,263,1422,245,1411,230,1397,213,1375,198,1346,172,1271,150,1180,132,1080,107,887,95,750"/>
+</map>

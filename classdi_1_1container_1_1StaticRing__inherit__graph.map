@@ -1,0 +1,7 @@
+<map id="di::container::StaticRing&lt; T, SizeConstant &gt;" name="di::container::StaticRing&lt; T, SizeConstant &gt;">
+<area shape="rect" id="Node000001" title=" " alt="" coords="16,208,192,252"/>
+<area shape="rect" id="Node000002" href="$classdi_1_1container_1_1MutableRingInterface.html" title=" " alt="" coords="8,98,200,160"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="107,175,107,207,101,207,101,175"/>
+<area shape="rect" id="Node000003" href="$classdi_1_1container_1_1ConstantRingInterface.html" title=" " alt="" coords="5,5,203,50"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="107,65,107,98,101,98,101,65"/>
+</map>

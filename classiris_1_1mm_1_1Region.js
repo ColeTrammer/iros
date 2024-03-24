@@ -1,0 +1,27 @@
+var classiris_1_1mm_1_1Region =
+[
+    [ "Region", "classiris_1_1mm_1_1Region.html#a1be04dfbd6ed24d256eddd12e06cddf9", null ],
+    [ "Region", "classiris_1_1mm_1_1Region.html#a1aef38481fc7fb0b70cbce8cd442fc35", null ],
+    [ "backing_object", "classiris_1_1mm_1_1Region.html#a6e4dae812916680c4c93e33cc5d0033e", null ],
+    [ "base", "classiris_1_1mm_1_1Region.html#a2f87803195286f5d650e72ac30f61c37", null ],
+    [ "compare_with_address", "classiris_1_1mm_1_1Region.html#a6310ee3248219944d01faee2ccf103df", null ],
+    [ "contains", "classiris_1_1mm_1_1Region.html#a36e43fa4143b9836307f10fba2a00745", null ],
+    [ "each_page", "classiris_1_1mm_1_1Region.html#a4dceb9da70c5aca629a706492e4711f9", null ],
+    [ "end", "classiris_1_1mm_1_1Region.html#a87a77d2a93d5ce56dfdcfc7aab8a52f7", null ],
+    [ "executable", "classiris_1_1mm_1_1Region.html#a6d250dda849a15bc2a7acac5f1536e93", null ],
+    [ "flags", "classiris_1_1mm_1_1Region.html#ada06aab8016352045bc91ec379afb71d", null ],
+    [ "length", "classiris_1_1mm_1_1Region.html#a8c40ed568b599f102bdab02ca52b4cb2", null ],
+    [ "pages", "classiris_1_1mm_1_1Region.html#a9a0b1da85c870e2114c4715c73609de1", null ],
+    [ "readable", "classiris_1_1mm_1_1Region.html#a575e603ce302e6d3bf3aa6841bee868e", null ],
+    [ "set_backing_object", "classiris_1_1mm_1_1Region.html#a3f0694ac26cddf84ad687565387ced02", null ],
+    [ "set_base", "classiris_1_1mm_1_1Region.html#a11d81356271e82fac4d13e4f8e17b0eb", null ],
+    [ "set_end", "classiris_1_1mm_1_1Region.html#a65bf0b31b1c92f902f8b0c9cfeedbb3d", null ],
+    [ "set_flags", "classiris_1_1mm_1_1Region.html#ade3ad299115e7d077f5eb2438fb2f1e3", null ],
+    [ "set_length", "classiris_1_1mm_1_1Region.html#afc023bef09f678c0b97dbdee4bbda4bd", null ],
+    [ "user", "classiris_1_1mm_1_1Region.html#a4fcdcfdace72f31c8690e59bd79895e7", null ],
+    [ "writable", "classiris_1_1mm_1_1Region.html#addcbcdd5a73b0b23b0b8c612c48ffeb5", null ],
+    [ "operator<=>", "classiris_1_1mm_1_1Region.html#a660f39bc14ebdebc913ac724d1036e87", null ],
+    [ "operator<=>", "classiris_1_1mm_1_1Region.html#a0b12140a2d11849adadaed3d4c1a6835", null ],
+    [ "operator==", "classiris_1_1mm_1_1Region.html#ae96af8e57d7fe289de3386d426b50451", null ],
+    [ "operator==", "classiris_1_1mm_1_1Region.html#a948950ffad94850c694d8ae5389ee152", null ]
+];

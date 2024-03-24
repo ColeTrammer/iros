@@ -1,0 +1,9 @@
+<map id="di::vocab::Optional&lt; T &gt;" name="di::vocab::Optional&lt; T &gt;">
+<area shape="rect" id="Node000001" title=" " alt="" coords="325,91,506,119"/>
+<area shape="rect" id="Node000002" href="$classdi_1_1meta_1_1EnableView.html" title=" " alt="" coords="61,5,221,50"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="236,49,277,60,370,88,369,93,276,65,235,54"/>
+<area shape="rect" id="Node000003" href="$classdi_1_1meta_1_1EnableBorrowedContainer.html" title=" " alt="" coords="5,74,277,136"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="292,102,324,102,324,108,292,108"/>
+<area shape="rect" id="Node000004" href="$classdi_1_1function_1_1monad_1_1MonadInterface.html" title=" " alt="" coords="40,160,242,221"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="255,152,367,117,369,122,257,157"/>
+</map>

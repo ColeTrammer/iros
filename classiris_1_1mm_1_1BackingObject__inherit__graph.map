@@ -1,0 +1,9 @@
+<map id="iris::mm::BackingObject" name="iris::mm::BackingObject">
+<area shape="rect" id="Node000001" title=" " alt="" coords="153,174,330,201"/>
+<area shape="rect" id="Node000002" href="$structdi_1_1vocab_1_1IntrusiveRefCount.html" title=" " alt="" coords="5,90,249,117"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="159,124,225,171,222,175,156,129"/>
+<area shape="rect" id="Node000003" href="$structdi_1_1util_1_1Immovable.html" title=" " alt="" coords="55,5,199,33"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="130,49,130,89,124,89,124,49"/>
+<area shape="rect" id="Node000004" href="$classdi_1_1sync_1_1Synchronized.html" title=" " alt="" coords="273,81,440,126"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="315,137,262,175,259,171,312,133"/>
+</map>

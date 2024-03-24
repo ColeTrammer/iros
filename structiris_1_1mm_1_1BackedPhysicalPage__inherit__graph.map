@@ -1,0 +1,5 @@
+<map id="iris::mm::BackedPhysicalPage" name="iris::mm::BackedPhysicalPage">
+<area shape="rect" id="Node000001" title="A physical page of memory tracked by a backing object." alt="" coords="14,98,229,126"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,5,238,50"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="124,66,124,97,119,97,119,66"/>
+</map>
