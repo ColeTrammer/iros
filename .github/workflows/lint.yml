@@ -23,7 +23,7 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
       - name: Install nix
-        uses: cachix/install-nix-action@v26
+        uses: cachix/install-nix-action@V27
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Check formatting and linting
