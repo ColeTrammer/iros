@@ -144,6 +144,7 @@ alias it := iros_test
 alias itonly := iros_test_only
 alias ibt := iros_build_test
 alias ibtonly := iros_build_test_only
+alias ibd := iros_build_debug
 
 # Configure the build system for Iros
 iros_configure:
@@ -182,6 +183,11 @@ iros_build_test:
 iros_build_test_only name=default_iros_test:
     @just iros_preset={{ iros_preset }} ib
     @just iros_preset={{ iros_preset }} itonly {{ name }}
+
+# Run Iris kernel in debug mode
+iros_build_debug iros_preset="gcc_iros_x86_64_release_iris_debug":
+    @just iros_preset={{ iros_preset }} ibimg
+    IROS_DEBUG=1 IROS_DISABLE_KVM=1 cmake --build --preset {{ iros_preset }} -t run
 
 # Build Iros cross compiler
 build_toolchain:
@@ -235,7 +241,7 @@ ensure_configured preset=preset:
     fi
 
     build_directory="$(realpath $build_directory)"
-    if [ `readlink build/compile_commands.json` != "$build_directory"/compile_commands.json ]; then
+    if [ "`readlink build/compile_commands.json`" != "$build_directory"/compile_commands.json ]; then
         rm -f build/compile_commands.json
         ln -s "$build_directory"/compile_commands.json build/compile_commands.json
     fi

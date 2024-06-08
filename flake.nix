@@ -57,46 +57,52 @@
               ]
               ++ builtins.attrValues config.treefmt.build.programs
               ++ [
-                pkgs.nil
+                # Clang
                 pkgs."clang-tools_${llvmVersion}"
-                pkgs.neocmakelsp
-                pkgs.marksman
-                pkgs.markdownlint-cli
-                pkgs.dockerfile-language-server-nodejs
-                pkgs.yaml-language-server
-                pkgs.hadolint
+                pkgs."clang_${llvmVersion}"
+
+                # Debug
+                pkgs.gdb
+                pkgs.valgrind
+                pkgs."lldb_${llvmVersion}"
+
+                # justfile build commands
+                pkgs.fzf
                 pkgs.jq
                 pkgs.just
-                (pkgs.writeShellScriptBin
-                  "vscode-json-language-server"
-                  ''${pkgs.nodePackages_latest.vscode-json-languageserver}/bin/vscode-json-languageserver "$@"'')
-              ]
-              ++ [
-                pkgs."clang_${llvmVersion}"
+
+                # Linux build
                 pkgs.cmake
                 pkgs.ninja
-                pkgs.bison
-                pkgs.flex
+                pkgs.ccache
+
+                # Docs
                 pkgs.doxygen
                 pkgs.graphviz
+
+                # Cross compiler deps
+                pkgs.bison
+                pkgs.flex
                 pkgs.mpfr
                 pkgs.gmp
                 pkgs.libmpc
                 pkgs.autoconf269
                 pkgs.automake115x
+
+                # Build and run Iros images
                 pkgs.qemu
-                pkgs.gdb
-                pkgs.fzf
-                pkgs."lldb_${llvmVersion}"
-                pkgs.ccache
                 pkgs.parted
+
+                # Coverage
                 pkgs.gcovr
+
+                # Linux deps
                 pkgs.pipewire
                 pkgs.wayland-scanner
                 pkgs.wayland
-                pkgs.valgrind
               ];
 
+            # Needed to build the cross compilr
             hardeningDisable = ["format"];
           };
       };

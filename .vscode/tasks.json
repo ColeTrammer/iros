@@ -23,18 +23,12 @@
             "label": "Debug and Build Iris",
             "type": "shell",
             "isBackground": true,
-            "command": "cmake --build --preset ${command:cmake.activeBuildPresetName} --target run",
-            "options": {
-                "env": {
-                    "IROS_DEBUG": "1",
-                    "IROS_DISABLE_KVM": "1"
-                }
-            },
+            "command": "just iros_build_debug",
             "problemMatcher": [
                 {
                     "pattern": [
                         {
-                            "regexp": ".",
+                            "regexp": "error: .*",
                             "file": 1,
                             "location": 2,
                             "message": 3
@@ -42,12 +36,11 @@
                     ],
                     "background": {
                         "activeOnStart": true,
-                        "beginsPattern": ".",
-                        "endsPattern": "."
+                        "beginsPattern": "ALWAYS FALSE",
+                        "endsPattern": "qemu-system-x86_64"
                     }
                 }
-            ],
-            "dependsOn": "Build Iris"
+            ]
         }
     ]
 }

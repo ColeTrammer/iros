@@ -24,7 +24,7 @@
         ".clangd": "yaml",
         "CMakeToolchain*.txt": "cmake"
     },
-    "cmake.exportCompileCommandsFile": true,
+    "cmake.exportCompileCommandsFile": false,
     "cmake.copyCompileCommands": "${workspaceRoot}/build/compile_commands.json",
     "cmake.configureOnOpen": true,
     "cmake.languageSupport.enableFileAPI": true,

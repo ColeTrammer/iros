@@ -142,10 +142,10 @@ if(IROS_NonUnityBuildPreset)
     file(COPY "${CMAKE_BINARY_DIR}/non_unity/compile_commands.json" DESTINATION "${CMAKE_BINARY_DIR}")
 endif()
 
-# Link the active compile_commands.json to the project directory.
+# Link the active compile_commands.json to the project directory, and the build directory.
 if(NOT IROS_NeverLinkCompileCommands)
     execute_process(COMMAND rm -f "${CMAKE_SOURCE_DIR}/build/compile_commands.json")
     execute_process(
-        COMMAND ln -s "${CMAKE_BINARY_DIR}/compile_commands.json" "${CMAKE_SOURCE_DIR}/build/compile_commands.json"
+        COMMAND cp "${CMAKE_BINARY_DIR}/compile_commands.json" "${CMAKE_SOURCE_DIR}/build/compile_commands.json"
     )
 endif()

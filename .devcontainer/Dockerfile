@@ -37,7 +37,7 @@ RUN sudo apt-get -y install libwayland-dev
 
 # Install jq
 RUN sudo apt-get -y install jq
-qqqqqq
+
 # Install doxygen
 RUN apt-get update -y \
     && wget https://www.doxygen.nl/files/doxygen-${doxygen_version}.linux.bin.tar.gz \
