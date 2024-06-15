@@ -20,7 +20,19 @@
         pkgs,
         system,
         ...
-      }: {
+      }: let
+        gccVersion = "14";
+        llvmVersion = "18";
+
+        clang = pkgs."llvmPackages_${llvmVersion}".libcxxClang;
+        clangTools = pkgs."clang-tools_${llvmVersion}".override {
+          enableLibcxx = true;
+        };
+
+        lldb = pkgs."lldb_${llvmVersion}";
+
+        stdenv = pkgs."gcc${gccVersion}Stdenv";
+      in {
         treefmt = {
           inherit (config.flake-root) projectRootFile;
 
@@ -28,7 +40,7 @@
             alejandra.enable = true;
             clang-format = {
               enable = true;
-              package = pkgs.clang-tools_18;
+              package = clangTools;
             };
             prettier.enable = true;
             shfmt = {
@@ -45,66 +57,62 @@
           };
         };
 
-        devShells.default = let
-          gccVersion = "14";
-          llvmVersion = "18";
-        in
-          pkgs.mkShell.override {stdenv = pkgs."gcc${gccVersion}Stdenv";} {
-            packages =
-              [
-                config.treefmt.build.wrapper
-                pkgs.cmake-format
-              ]
-              ++ builtins.attrValues config.treefmt.build.programs
-              ++ [
-                # Clang
-                pkgs."clang-tools_${llvmVersion}"
-                pkgs."clang_${llvmVersion}"
+        devShells.default = pkgs.mkShell.override {inherit stdenv;} {
+          packages =
+            [
+              config.treefmt.build.wrapper
+              pkgs.cmake-format
+            ]
+            ++ builtins.attrValues config.treefmt.build.programs
+            ++ [
+              # Clang
+              clangTools
+              clang
 
-                # Debug
-                pkgs.gdb
-                pkgs.valgrind
-                pkgs."lldb_${llvmVersion}"
+              # Debug
+              pkgs.gdb
+              pkgs.valgrind
+              lldb
 
-                # justfile build commands
-                pkgs.fzf
-                pkgs.jq
-                pkgs.just
+              # justfile build commands
+              pkgs.fzf
+              pkgs.jq
+              pkgs.just
 
-                # Linux build
-                pkgs.cmake
-                pkgs.ninja
-                pkgs.ccache
+              # Linux build
+              pkgs.cmake
+              pkgs.ninja
+              pkgs.ccache
 
-                # Docs
-                pkgs.doxygen
-                pkgs.graphviz
+              # Docs
+              pkgs.doxygen
+              pkgs.graphviz
 
-                # Cross compiler deps
-                pkgs.bison
-                pkgs.flex
-                pkgs.mpfr
-                pkgs.gmp
-                pkgs.libmpc
-                pkgs.autoconf269
-                pkgs.automake115x
+              # Cross compiler deps
+              pkgs.bison
+              pkgs.flex
+              pkgs.mpfr
+              pkgs.gmp
+              pkgs.libmpc
+              pkgs.autoconf269
+              pkgs.automake115x
 
-                # Build and run Iros images
-                pkgs.qemu
-                pkgs.parted
+              # Build and run Iros images
+              pkgs.qemu
+              pkgs.parted
 
-                # Coverage
-                pkgs.gcovr
+              # Coverage
+              pkgs.gcovr
 
-                # Linux deps
-                pkgs.pipewire
-                pkgs.wayland-scanner
-                pkgs.wayland
-              ];
+              # Linux deps
+              pkgs.pipewire
+              pkgs.wayland-scanner
+              pkgs.wayland
+            ];
 
-            # Needed to build the cross compilr
-            hardeningDisable = ["format"];
-          };
+          # Needed to build the cross compilr
+          hardeningDisable = ["format"];
+        };
       };
     };
 }

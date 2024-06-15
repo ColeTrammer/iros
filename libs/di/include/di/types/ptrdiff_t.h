@@ -1,7 +1,7 @@
 #pragma once
 
 #ifndef DI_NO_USE_STD
-#include <cstdint>
+#include <cstddef>
 #else
 namespace std {
 using ptrdiff_t = decltype(0z);
