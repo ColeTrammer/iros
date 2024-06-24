@@ -46,7 +46,7 @@ jobs:
             meta/docker/**
             meta/toolchain/**
       - name: Build toolchain image if needed
-        uses: docker/build-push-action@v5.3.0
+        uses: docker/build-push-action@v6.1.0
         with:
           context: .
           file: meta/docker/Dockerfile
