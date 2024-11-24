@@ -17,12 +17,7 @@
       ];
       systems = [ "x86_64-linux" ];
       perSystem =
-        {
-          config,
-          pkgs,
-          system,
-          ...
-        }:
+        { config, pkgs, ... }:
         let
           gccVersion = "14";
           llvmVersion = "18";
@@ -50,17 +45,42 @@
                 indent_size = 4;
               };
               just.enable = true;
+              cmake-format.enable = true;
             };
 
-            settings.formatter.cmake-format = {
-              command = "${pkgs.cmake-format}/bin/cmake-format";
-              options = [ "-i" ];
-              includes = [
-                "CMakeLists.txt"
-                "CMakeToolchain.*.txt"
-                "*.cmake"
-              ];
-            };
+            settings.formatter.cmake-format.includes = [
+              "**/CMakeLists.txt"
+              "**/CMakeToolchain_*.txt"
+              "*.cmake"
+            ];
+
+            settings.formatter.prettier.includes = [
+              "**/.clang-tidy"
+              "**/snippets.code-snippets"
+              ".clang-format"
+              ".clang-tidy"
+              ".clangd"
+              ".prettierrc"
+              "flake.lock"
+            ];
+
+            settings.excludes = [
+              "**/*.dockerignore"
+              "**/Dockerfile"
+              "**/limine.cfg"
+              "*.ld"
+              "*.patch"
+              "*.png"
+              "*.svg"
+              "*.txt"
+              "*.xml"
+              ".editorconfig"
+              ".git-blame-ignore-revs"
+              ".github/CODEOWNERS"
+              ".gitignore"
+              ".prettierignore"
+              "LICENSE"
+            ];
           };
 
           devShells.default = pkgs.mkShell.override { inherit stdenv; } {

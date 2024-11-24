@@ -5,7 +5,8 @@
         {
             "files": ["*.json", "*.code-snippets", ".prettierrc"],
             "options": {
-                "tabWidth": 4
+                "tabWidth": 4,
+                "parser": "json"
             }
         },
         {
