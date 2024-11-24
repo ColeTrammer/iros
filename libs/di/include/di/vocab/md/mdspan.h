@@ -183,13 +183,13 @@ template<typename ElementType, typename SizeType, size_t... extents>
 MDSpan(ElementType*, Extents<SizeType, extents...> const&) -> MDSpan<ElementType, Extents<SizeType, extents...>>;
 
 template<class ElementType, class MappingType>
-MDSpan(ElementType*,
-       MappingType const&) -> MDSpan<ElementType, typename MappingType::ExtentsType, typename MappingType::LayoutType>;
+MDSpan(ElementType*, MappingType const&)
+    -> MDSpan<ElementType, typename MappingType::ExtentsType, typename MappingType::LayoutType>;
 
 template<class MappingType, class AccessorType>
-MDSpan(typename AccessorType::DataHandle const&, MappingType const&,
-       AccessorType const&) -> MDSpan<typename AccessorType::ElementType, typename MappingType::ExtentsType,
-                                      typename MappingType::LayoutType, AccessorType>;
+MDSpan(typename AccessorType::DataHandle const&, MappingType const&, AccessorType const&)
+    -> MDSpan<typename AccessorType::ElementType, typename MappingType::ExtentsType, typename MappingType::LayoutType,
+              AccessorType>;
 }
 
 namespace di {

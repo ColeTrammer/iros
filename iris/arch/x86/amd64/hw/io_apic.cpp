@@ -1,4 +1,5 @@
 #include <iris/arch/x86/amd64/hw/io_apic.h>
+
 #include <iris/arch/x86/amd64/hw/local_apic.h>
 #include <iris/arch/x86/amd64/msr.h>
 #include <iris/core/global_state.h>

@@ -40,13 +40,9 @@ public:
         return m_view;
     }
 
-    constexpr View base() &&
-    requires(concepts::CopyConstructible<View>)
-    {
-        return util::move(m_view);
-    }
+    constexpr View base() && requires(concepts::CopyConstructible<View>) { return util::move(m_view); }
 
-    constexpr ReverseIterator<Iter> begin() {
+        constexpr ReverseIterator<Iter> begin() {
         if (m_begin_cache.value.has_value()) {
             return *m_begin_cache.value;
         } else {

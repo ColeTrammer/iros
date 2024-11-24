@@ -1,4 +1,5 @@
 #include <ccpp/bits/scanf_implementation.h>
+
 #include <ctype.h>
 #include <di/assert/prelude.h>
 #include <di/math/prelude.h>

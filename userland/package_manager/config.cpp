@@ -26,18 +26,18 @@ auto Config::package_json_for_package(di::TransparentStringView name) const -> d
     return package_json_directory().to_owned() / name / "port.json"_tsv;
 }
 
-auto Config::base_directory_for_package(di::TransparentStringView name,
-                                        di::TransparentStringView version) const -> di::Path {
+auto Config::base_directory_for_package(di::TransparentStringView name, di::TransparentStringView version) const
+    -> di::Path {
     return package_build_directory().to_owned() / name / version;
 }
 
-auto Config::source_directory_for_package(di::TransparentStringView name,
-                                          di::TransparentStringView version) const -> di::Path {
+auto Config::source_directory_for_package(di::TransparentStringView name, di::TransparentStringView version) const
+    -> di::Path {
     return base_directory_for_package(name, version) / "src"_tsv;
 }
 
-auto Config::build_directory_for_package(di::TransparentStringView name,
-                                         di::TransparentStringView version) const -> di::Path {
+auto Config::build_directory_for_package(di::TransparentStringView name, di::TransparentStringView version) const
+    -> di::Path {
     return base_directory_for_package(name, version) / "build"_tsv;
 }
 }

@@ -218,8 +218,8 @@ public:
         return end();
     }
 
-    constexpr auto
-    reserve(usize new_capacity) -> decltype(util::declval<Buckets&>().reserve_from_nothing(new_capacity)) {
+    constexpr auto reserve(usize new_capacity)
+        -> decltype(util::declval<Buckets&>().reserve_from_nothing(new_capacity)) {
         if (vector::empty(m_buckets)) {
             if constexpr (concepts::LanguageVoid<decltype(util::declval<Buckets&>().reserve_from_nothing(
                               new_capacity))>) {

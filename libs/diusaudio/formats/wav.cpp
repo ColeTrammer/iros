@@ -1,3 +1,5 @@
+#include <diusaudio/formats/wav.h>
+
 #include <di/bit/endian/little_endian.h>
 #include <di/function/monad/monad_try.h>
 #include <di/io/read_all.h>
@@ -10,7 +12,6 @@
 #include <dius/filesystem/query/file_size.h>
 #include <dius/print.h>
 #include <dius/sync_file.h>
-#include <diusaudio/formats/wav.h>
 #include <diusaudio/frame_info.h>
 
 namespace audio::formats {

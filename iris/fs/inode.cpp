@@ -1,3 +1,5 @@
+#include <iris/fs/inode.h>
+
 #include <di/container/algorithm/prelude.h>
 #include <di/execution/algorithm/sync_wait.h>
 #include <di/execution/any/any_sender.h>
@@ -5,7 +7,6 @@
 #include <di/util/prelude.h>
 #include <di/vocab/expected/prelude.h>
 #include <iris/core/print.h>
-#include <iris/fs/inode.h>
 #include <iris/fs/tnode.h>
 #include <iris/mm/map_physical_address.h>
 #include <iris/mm/physical_address.h>

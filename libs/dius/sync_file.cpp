@@ -1,5 +1,6 @@
-#include <di/io/prelude.h>
 #include <dius/sync_file.h>
+
+#include <di/io/prelude.h>
 
 namespace dius {
 di::Expected<void, di::GenericCode> SyncFile::read_exactly(u64 offset, di::Span<byte> data) const {

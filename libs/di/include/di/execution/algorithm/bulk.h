@@ -133,8 +133,8 @@ namespace bulk_ns {
 
             template<concepts::RemoveCVRefSameAs<Type> Self, typename Env>
             requires(concepts::DecayConstructible<meta::Like<Self, Function>>)
-            friend auto tag_invoke(Tag<get_completion_signatures>, Self&&,
-                                   Env&&) -> Sigs<meta::Like<Self, Send>, Env, Shape, Function> {
+            friend auto tag_invoke(Tag<get_completion_signatures>, Self&&, Env&&)
+                -> Sigs<meta::Like<Self, Send>, Env, Shape, Function> {
                 return {};
             }
 

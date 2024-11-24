@@ -205,8 +205,8 @@ namespace ignore_all_ns {
             }
 
             template<concepts::RemoveCVRefSameAs<Type> Self, typename Env>
-            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&,
-                                   Env&&) -> NextSignatures<meta::Like<Self, Next>, Env> {
+            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env&&)
+                -> NextSignatures<meta::Like<Self, Next>, Env> {
                 return {};
             }
 
@@ -292,8 +292,8 @@ namespace ignore_all_ns {
             }
 
             template<concepts::RemoveCVRefSameAs<Type> Self, typename Env>
-            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&,
-                                   Env&&) -> Completions<meta::Like<Self, Seq>, MakeEnv<Env>> {
+            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env&&)
+                -> Completions<meta::Like<Self, Seq>, MakeEnv<Env>> {
                 return {};
             }
 

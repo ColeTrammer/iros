@@ -1,3 +1,5 @@
+#include <iris/fs/tmpfs.h>
+
 #include <di/container/string/prelude.h>
 #include <di/container/tree/prelude.h>
 #include <di/execution/algorithm/sync_wait.h>
@@ -8,7 +10,6 @@
 #include <iris/core/global_state.h>
 #include <iris/fs/inode.h>
 #include <iris/fs/path.h>
-#include <iris/fs/tmpfs.h>
 #include <iris/fs/tnode.h>
 #include <iris/mm/backing_object.h>
 #include <iris/mm/page_frame_allocator.h>

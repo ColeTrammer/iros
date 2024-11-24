@@ -139,8 +139,8 @@ public:
 
     template<concepts::Impl<meta::List<AsWritableByteSpan>> T>
     requires(!concepts::DerivedFrom<T, ExclusiveByteBufferImpl> && concepts::FallibleAllocator<Alloc>)
-    constexpr static auto
-    create(T&& value) -> meta::LikeExpected<meta::AllocatorResult<Alloc>, ExclusiveByteBufferImpl> {
+    constexpr static auto create(T&& value)
+        -> meta::LikeExpected<meta::AllocatorResult<Alloc>, ExclusiveByteBufferImpl> {
         auto data = as_writable_byte_span(value);
         auto store = DI_TRY(Store::create(di::forward<T>(value)));
         return ExclusiveByteBufferImpl(data, di::move(store));

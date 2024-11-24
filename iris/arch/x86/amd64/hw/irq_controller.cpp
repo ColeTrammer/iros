@@ -1,5 +1,6 @@
-#include <iris/core/global_state.h>
 #include <iris/hw/irq_controller.h>
+
+#include <iris/core/global_state.h>
 
 namespace iris {
 Expected<di::Synchronized<IrqController>&> irq_controller_for_interrupt_number(GlobalIrqNumber irq_number) {

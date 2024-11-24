@@ -7,7 +7,6 @@
 #include <di/platform/default_generic_domain.h>
 #include <di/vocab/error/result.h>
 #include <di/vocab/expected/expected_forward_declaration.h>
-
 #include <mutex>
 #include <thread>
 

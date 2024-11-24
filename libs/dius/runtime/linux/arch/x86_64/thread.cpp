@@ -1,6 +1,7 @@
+#include <dius/thread.h>
+
 #include <dius/system/process.h>
 #include <dius/system/system_call.h>
-#include <dius/thread.h>
 #include <linux/sched.h>
 
 namespace dius {

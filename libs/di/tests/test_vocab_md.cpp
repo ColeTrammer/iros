@@ -1,4 +1,3 @@
-
 #include <di/vocab/md/prelude.h>
 #include <dius/test/prelude.h>
 

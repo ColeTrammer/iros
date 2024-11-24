@@ -1,4 +1,3 @@
-
 #include <di/function/container/prelude.h>
 #include <di/util/is_constant_evaluated.h>
 #include <dius/test/prelude.h>

@@ -18,10 +18,8 @@ namespace detail {
         constexpr explicit MatchZeroOrMoreParser(InPlace, P&& predicate) : m_predicate(util::forward<P>(predicate)) {}
 
         template<concepts::ParserContext Context>
-        constexpr auto parse(Context& context) const
-            -> meta::ParserContextResult<
-                meta::Reconstructed<Context, meta::ContainerIterator<Context>, meta::ContainerIterator<Context>>,
-                Context> {
+        constexpr auto parse(Context& context) const -> meta::ParserContextResult<
+            meta::Reconstructed<Context, meta::ContainerIterator<Context>, meta::ContainerIterator<Context>>, Context> {
             auto start = container::begin(context);
             auto sent = container::end(context);
 

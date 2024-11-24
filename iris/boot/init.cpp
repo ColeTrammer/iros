@@ -1,8 +1,9 @@
+#include <iris/boot/init.h>
+
 #include <di/math/prelude.h>
 #include <di/meta/constexpr.h>
 #include <iris/arch/x86/amd64/hw/serial.h>
 #include <iris/boot/cxx_init.h>
-#include <iris/boot/init.h>
 #include <iris/core/global_state.h>
 #include <iris/core/interruptible_spinlock.h>
 #include <iris/core/print.h>

@@ -29,7 +29,7 @@ Operating System focused on asynchronicity, minimalism, and performance.
 
 ### Serial Console Shell
 
-![Figlet Demo](/docs/assets/figlet-demo.png)
+![Figlet Demo](docs/assets/figlet-demo.png)
 
 This is Iros running the [Figlet](https://github.com/cmatsuoka/figlet) program, which generates ASCII art from text.
 

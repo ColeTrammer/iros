@@ -123,13 +123,11 @@ namespace schedule_from_ns {
                 return m_data->phase2(SetError {}, util::forward<Error>(error));
             }
 
-            void set_stopped() &&
-            requires(requires { util::declval<Data<Rec, Sched, Completions>&>().phase2(SetStopped {}); })
-            {
-                return m_data->phase2(SetStopped {});
-            }
+            void set_stopped() && requires(requires {
+                util::declval<Data<Rec, Sched, Completions>&>().phase2(SetStopped {});
+            }) { return m_data->phase2(SetStopped {}); }
 
-            Data<Rec, Sched, Completions>* m_data;
+                Data<Rec, Sched, Completions>* m_data;
         };
     };
 
@@ -206,8 +204,8 @@ namespace schedule_from_ns {
                 template<concepts::ForwardingQuery Tag, typename... Args>
                 requires(!concepts::OneOf<Tag, GetCompletionScheduler<SetValue>, GetCompletionScheduler<SetError>,
                                           GetCompletionScheduler<SetStopped>>)
-                constexpr friend auto tag_invoke(Tag tag, Env const& self,
-                                                 Args&&... args) -> meta::InvokeResult<Tag, SenderEnv const&, Args...> {
+                constexpr friend auto tag_invoke(Tag tag, Env const& self, Args&&... args)
+                    -> meta::InvokeResult<Tag, SenderEnv const&, Args...> {
                     return tag(self.sender_env, util::forward<Args>(args)...);
                 }
             };

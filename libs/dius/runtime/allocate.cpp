@@ -1,3 +1,5 @@
+#include <dius/runtime/allocate.h>
+
 #include <di/assert/assert_bool.h>
 #include <di/bit/operation/popcount.h>
 #include <di/container/interface/empty.h>
@@ -8,7 +10,6 @@
 #include <di/util/construct_at.h>
 #include <di/util/voidify.h>
 #include <di/vocab/tuple/tie.h>
-#include <dius/runtime/allocate.h>
 #include <dius/system/system_call.h>
 
 namespace dius::runtime {

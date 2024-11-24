@@ -18,8 +18,8 @@ namespace detail {
 
     template<concepts::MemberFunctionPointer F, typename FirstArg, typename... Args>
     requires(concepts::ReferenceWrapper<meta::Decay<FirstArg>>)
-    constexpr auto invoke_impl(F f, FirstArg&& first_arg,
-                               Args&&... args) -> decltype((first_arg.get().*f)(util::forward<Args>(args)...)) {
+    constexpr auto invoke_impl(F f, FirstArg&& first_arg, Args&&... args)
+        -> decltype((first_arg.get().*f)(util::forward<Args>(args)...)) {
         return (first_arg.get().*f)(util::forward<Args>(args)...);
     }
 

@@ -77,5 +77,5 @@ constexpr inline auto async_accept = async_net_ns::AsyncAccept {};
 constexpr inline auto async_bind = async_net_ns::AsyncBind {};
 constexpr inline auto async_connect = async_net_ns::AsyncConnect {};
 constexpr inline auto async_listen = async_net_ns::AsyncListen {};
-constexpr inline auto async_shutdown = async_net_ns::AsyncListen {};
+constexpr inline auto async_shutdown = async_net_ns::AsyncShutdown {};
 }

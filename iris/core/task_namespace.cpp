@@ -1,5 +1,6 @@
-#include <iris/core/print.h>
 #include <iris/core/task_namespace.h>
+
+#include <iris/core/print.h>
 
 namespace iris {
 Expected<TaskId> LockedTaskNamespace::allocate_task_id() {

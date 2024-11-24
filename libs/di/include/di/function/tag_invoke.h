@@ -11,8 +11,8 @@ namespace tag_invoke_detail {
 
     struct TagInvokeFn {
         template<typename Tag, typename... Args>
-        constexpr auto operator()(Tag tag, Args&&... args) const -> decltype(tag_invoke(static_cast<Tag&&>(tag),
-                                                                                        static_cast<Args&&>(args)...)) {
+        constexpr auto operator()(Tag tag, Args&&... args) const
+            -> decltype(tag_invoke(static_cast<Tag&&>(tag), static_cast<Args&&>(args)...)) {
             return tag_invoke(static_cast<Tag&&>(tag), static_cast<Args&&>(args)...);
         }
     };

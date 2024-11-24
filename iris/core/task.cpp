@@ -1,3 +1,5 @@
+#include <iris/core/task.h>
+
 #include <di/exec/elf/prelude.h>
 #include <di/execution/algorithm/prelude.h>
 #include <di/math/prelude.h>
@@ -6,7 +8,6 @@
 #include <iris/core/global_state.h>
 #include <iris/core/interrupt_disabler.h>
 #include <iris/core/print.h>
-#include <iris/core/task.h>
 #include <iris/core/task_namespace.h>
 #include <iris/core/userspace_access.h>
 #include <iris/fs/file.h>

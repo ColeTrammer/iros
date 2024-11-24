@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include <di/function/tag_invoke.h>

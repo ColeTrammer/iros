@@ -1,8 +1,9 @@
+#include <iris/arch/x86/amd64/hw/local_apic.h>
+
 #include <di/vocab/pointer/prelude.h>
 #include <iris/arch/x86/amd64/core/interrupt_disabler.h>
 #include <iris/arch/x86/amd64/core/processor.h>
 #include <iris/arch/x86/amd64/gdt.h>
-#include <iris/arch/x86/amd64/hw/local_apic.h>
 #include <iris/arch/x86/amd64/idt.h>
 #include <iris/arch/x86/amd64/io_instructions.h>
 #include <iris/arch/x86/amd64/msr.h>

@@ -1,5 +1,6 @@
-#include <di/function/prelude.h>
 #include <dius/memory_region.h>
+
+#include <di/function/prelude.h>
 #include <dius/system/system_call.h>
 
 namespace dius {

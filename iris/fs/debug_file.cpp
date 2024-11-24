@@ -1,6 +1,7 @@
+#include <iris/fs/debug_file.h>
+
 #include <iris/core/global_state.h>
 #include <iris/core/print.h>
-#include <iris/fs/debug_file.h>
 
 namespace iris {
 di::AnySenderOf<usize> tag_invoke(di::Tag<read_file>, DebugFile&, UserspaceBuffer<byte> buffer) {

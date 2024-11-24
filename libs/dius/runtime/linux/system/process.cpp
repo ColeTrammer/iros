@@ -1,5 +1,6 @@
-#include <dius/print.h>
 #include <dius/system/process.h>
+
+#include <dius/print.h>
 #include <dius/system/system_call.h>
 #include <linux/sched.h>
 #include <linux/signal.h>

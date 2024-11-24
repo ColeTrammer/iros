@@ -1,7 +1,8 @@
+#include <dius/sync_file.h>
+
 #include <di/assert/prelude.h>
 #include <di/container/algorithm/prelude.h>
 #include <di/function/prelude.h>
-#include <dius/sync_file.h>
 #include <dius/system/system_call.h>
 
 namespace dius {

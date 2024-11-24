@@ -146,13 +146,11 @@ public:
         return m_base;
     }
 
-    constexpr View base() &&
-    requires(concepts::CopyConstructible<View>)
-    {
-        return util::move(m_base);
-    }
+    constexpr View base() && requires(concepts::CopyConstructible<View>) { return util::move(m_base); }
 
-    constexpr View& base_ref() { return m_base; }
+        constexpr View& base_ref() {
+        return m_base;
+    }
     constexpr View const& base_ref() const { return m_base; }
 
     constexpr auto begin()

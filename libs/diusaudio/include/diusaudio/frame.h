@@ -63,14 +63,9 @@ namespace frame {
             m_buffer.shrink_to_first(count * stride());
         }
 
-        operator ConstBuffer() &&
-        requires(!is_const)
-        {
-            return ConstBuffer(di::move(m_buffer), m_info);
-        }
+    operator ConstBuffer() && requires(!is_const) { return ConstBuffer(di::move(m_buffer), m_info); }
 
-    private:
-        Buffer m_buffer;
+        private : Buffer m_buffer;
         FrameInfo m_info;
     };
 }

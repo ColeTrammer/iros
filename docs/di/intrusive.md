@@ -97,7 +97,9 @@ drops the last reference to `MyType`, since its initial reference count is 1.
 ```cpp
 struct MyTag;
 
-class MyType : public di::IntrusiveListNode<MyTag>, di::IntrusiveRefCount<MyType> {};
+class MyType
+    : public di::IntrusiveListNode<MyTag>
+    , di::IntrusiveRefCount<MyType> {};
 
 struct MyTag : di::IntrusiveListTag<MyTag> {
     using Node = di::IntrusiveListTag<MyTag>::Node;

@@ -60,23 +60,13 @@ namespace receiver_interface_ns {
                 }
             }
 
-            Base& base() &
-            requires(has_base)
+            Base& base() & requires(has_base) { return this->m_base.value; } Base const& base() const&
+                requires(has_base)
             {
                 return this->m_base.value;
             }
-            Base const& base() const&
-            requires(has_base)
-            {
-                return this->m_base.value;
-            }
-            Base&& base() &&
-            requires(has_base)
-            {
-                return util::move(this->m_base).value;
-            }
-            Base const&& base() const&&
-            requires(has_base)
+            Base&& base() && requires(has_base) { return util::move(this->m_base).value; } Base const&& base() const&&
+                requires(has_base)
             {
                 return util::move(this->m_base).value;
             }

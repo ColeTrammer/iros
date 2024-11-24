@@ -11,8 +11,8 @@ namespace di::io {
 namespace detail {
     struct WriteExactlyFunction {
         template<concepts::Impl<Writer> Writer>
-        constexpr auto operator()(Writer& writer,
-                                  vocab::Span<byte const> data) const -> meta::WriterResult<void, Writer> {
+        constexpr auto operator()(Writer& writer, vocab::Span<byte const> data) const
+            -> meta::WriterResult<void, Writer> {
             auto nwritten = usize { 0 };
             while (nwritten < data.size()) {
                 auto n = DI_TRY(write_some(writer, *data.subspan(nwritten)));

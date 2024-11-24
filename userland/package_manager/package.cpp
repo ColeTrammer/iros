@@ -1,3 +1,5 @@
+#include "package.h"
+
 #include <di/container/string/string_view.h>
 #include <di/function/tag_invoke.h>
 #include <di/platform/custom.h>
@@ -7,8 +9,6 @@
 #include <dius/print.h>
 #include <dius/sync_file.h>
 #include <dius/system/process.h>
-
-#include "package.h"
 
 namespace pm {
 enum class PackageJsonDownloadType {

@@ -1,5 +1,6 @@
-#include <iris/core/global_state.h>
 #include <iris/hw/irq.h>
+
+#include <iris/core/global_state.h>
 
 namespace iris {
 Expected<GlobalIrqNumber> irq_number_for_legacy_isa_interrupt_number(IrqLine irq_line) {

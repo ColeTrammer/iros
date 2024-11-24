@@ -18,9 +18,9 @@ namespace detail {
 }
 
 template<typename F, concepts::TupleLike Tup>
-constexpr auto apply(F&& f,
-                     Tup&& tuple) -> decltype(detail::apply_impl(meta::MakeIndexSequence<meta::TupleSize<Tup>> {},
-                                                                 util::forward<F>(f), util::forward<Tup>(tuple))) {
+constexpr auto apply(F&& f, Tup&& tuple)
+    -> decltype(detail::apply_impl(meta::MakeIndexSequence<meta::TupleSize<Tup>> {}, util::forward<F>(f),
+                                   util::forward<Tup>(tuple))) {
     return detail::apply_impl(meta::MakeIndexSequence<meta::TupleSize<Tup>> {}, util::forward<F>(f),
                               util::forward<Tup>(tuple));
 }

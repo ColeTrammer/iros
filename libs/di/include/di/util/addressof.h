@@ -1,7 +1,7 @@
 #pragma once
 
 #ifndef DI_NO_USE_STD
-#include <utility>
+#include <memory>
 #else
 namespace std {
 // This uses a compiler builtin because user-defined types can overload operator&.

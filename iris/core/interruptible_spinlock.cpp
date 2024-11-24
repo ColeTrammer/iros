@@ -1,6 +1,7 @@
+#include <iris/core/interruptible_spinlock.h>
+
 #include <iris/core/global_state.h>
 #include <iris/core/interrupt_disabler.h>
-#include <iris/core/interruptible_spinlock.h>
 #include <iris/core/task.h>
 
 namespace iris {

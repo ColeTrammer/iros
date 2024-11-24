@@ -1,16 +1,9 @@
 ---
-BasedOnStyle: Webkit
+BasedOnStyle: WebKit
 IndentWidth: 4
 ---
 Language: Cpp
 ColumnLimit: 120
-IncludeCategories:
-  - Regex: "<*>"
-    Priority: 1
-  - Regex: '"*.h"'
-    Priority: 4
-  - Regex: "*"
-    Priority: 5
 KeepEmptyLinesAtTheStartOfBlocks: false
 SpaceAfterTemplateKeyword: false
 SpaceAfterCStyleCast: true
@@ -23,20 +16,34 @@ BraceWrapping:
   AfterFunction: false
   SplitEmptyFunction: false
 IndentCaseLabels: true
-AlignConsecutiveMacros: true
-AlignEscapedNewlines: true
+AlignConsecutiveMacros: Consecutive
+AlignEscapedNewlines: LeftWithLastLine
 BreakBeforeBinaryOperators: None
-AlignOperands: true
-AlignAfterOpenBracket: true
+AlignOperands: Align
+AlignAfterOpenBracket: Align
 AllowAllArgumentsOnNextLine: true
 AllowShortFunctionsOnASingleLine: Inline
 AllowShortLambdasOnASingleLine: Empty
 AlwaysBreakTemplateDeclarations: Yes
 SpaceInEmptyBlock: false
+KeepEmptyLines:
+  AtEndOfFile: false
+  AtStartOfBlock: false
+  AtStartOfFile: false
 RequiresClausePosition: OwnLine
 IndentRequiresClause: false
 QualifierAlignment: Custom
 InsertBraces: true
+MainIncludeChar: Any
+IncludeBlocks: Regroup
+MaxEmptyLinesToKeep: 1
+IncludeCategories:
+  - Regex: "^<.*>"
+    Priority: 2
+    SortPriority: 2
+  - Regex: ".*"
+    Priority: 3
+    SortPriority: 3
 QualifierOrder: ["constexpr", "static", "inline", "friend", "type", "const", "volatile"]
 WhitespaceSensitiveMacros:
   [

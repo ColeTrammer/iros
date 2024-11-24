@@ -1,5 +1,6 @@
-#include <iris/core/task.h>
 #include <iris/core/task_status.h>
+
+#include <iris/core/task.h>
 
 namespace iris {
 void TaskStatus::set_exited() {

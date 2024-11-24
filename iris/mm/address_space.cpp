@@ -1,7 +1,8 @@
+#include <iris/mm/address_space.h>
+
 #include <di/math/prelude.h>
 #include <iris/core/global_state.h>
 #include <iris/core/print.h>
-#include <iris/mm/address_space.h>
 #include <iris/mm/backing_object.h>
 #include <iris/mm/map_physical_address.h>
 #include <iris/mm/page_frame_allocator.h>

@@ -5,6 +5,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+
 #include "wayland-client.h"
 
 #ifdef __cplusplus

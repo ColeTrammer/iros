@@ -1,5 +1,6 @@
-#include <iris/arch/x86/amd64/io_instructions.h>
 #include <iris/core/print.h>
+
+#include <iris/arch/x86/amd64/io_instructions.h>
 #include <iris/hw/power.h>
 
 namespace iris {

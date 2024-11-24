@@ -23,12 +23,12 @@ public:
                             di::TransparentStringView patch) const -> di::Path;
 
     auto package_json_for_package(di::TransparentStringView name) const -> di::Path;
-    auto base_directory_for_package(di::TransparentStringView name,
-                                    di::TransparentStringView version) const -> di::Path;
-    auto source_directory_for_package(di::TransparentStringView name,
-                                      di::TransparentStringView version) const -> di::Path;
-    auto build_directory_for_package(di::TransparentStringView name,
-                                     di::TransparentStringView version) const -> di::Path;
+    auto base_directory_for_package(di::TransparentStringView name, di::TransparentStringView version) const
+        -> di::Path;
+    auto source_directory_for_package(di::TransparentStringView name, di::TransparentStringView version) const
+        -> di::Path;
+    auto build_directory_for_package(di::TransparentStringView name, di::TransparentStringView version) const
+        -> di::Path;
 
     auto target_architecture() const -> di::TransparentStringView { return m_target_architecture; }
     auto target_host() const -> di::TransparentStringView { return m_target_host; }

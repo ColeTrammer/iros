@@ -175,8 +175,8 @@ namespace then_ns {
 
             template<concepts::RemoveCVRefSameAs<Type> Self, typename E>
             requires(concepts::DecayConvertible<meta::Like<Self, Fun>>)
-            friend auto tag_invoke(Tag<get_completion_signatures>, Self&&,
-                                   E&&) -> Sigs<CPO, meta::Like<Self, Send>, E, Fun> {
+            friend auto tag_invoke(Tag<get_completion_signatures>, Self&&, E&&)
+                -> Sigs<CPO, meta::Like<Self, Send>, E, Fun> {
                 return {};
             }
 

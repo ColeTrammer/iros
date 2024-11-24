@@ -1,7 +1,8 @@
+#include <iris/hw/irq.h>
+
 #include <di/util/prelude.h>
 #include <iris/core/global_state.h>
 #include <iris/core/print.h>
-#include <iris/hw/irq.h>
 #include <iris/hw/irq_controller.h>
 #include <iris/hw/power.h>
 #include <iris/uapi/syscall.h>

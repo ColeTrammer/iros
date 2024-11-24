@@ -1,8 +1,9 @@
+#include <iris/hw/acpi/acpi.h>
+
 #include <iris/arch/x86/amd64/hw/io_apic.h>
 #include <iris/arch/x86/amd64/hw/local_apic.h>
 #include <iris/core/global_state.h>
 #include <iris/core/print.h>
-#include <iris/hw/acpi/acpi.h>
 #include <iris/hw/acpi/system_tables.h>
 #include <iris/mm/map_physical_address.h>
 #include <iris/third_party/limine.h>

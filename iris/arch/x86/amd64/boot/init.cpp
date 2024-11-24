@@ -1,3 +1,5 @@
+#include <iris/boot/init.h>
+
 #include <iris/arch/x86/amd64/gdt.h>
 #include <iris/arch/x86/amd64/hw/io_apic.h>
 #include <iris/arch/x86/amd64/hw/local_apic.h>
@@ -13,7 +15,6 @@
 #include <iris/arch/x86/amd64/system_segment_descriptor.h>
 #include <iris/arch/x86/amd64/tss.h>
 #include <iris/boot/cxx_init.h>
-#include <iris/boot/init.h>
 #include <iris/core/global_state.h>
 #include <iris/core/interrupt_disabler.h>
 #include <iris/core/print.h>

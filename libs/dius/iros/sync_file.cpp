@@ -1,6 +1,7 @@
+#include <dius/sync_file.h>
+
 #include <di/function/prelude.h>
 #include <di/math/prelude.h>
-#include <dius/sync_file.h>
 #include <dius/system/system_call.h>
 #include <iris/uapi/open.h>
 

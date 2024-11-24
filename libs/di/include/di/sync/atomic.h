@@ -120,10 +120,12 @@ public:
     {
         return as_ref().fetch_xor(value, order);
     }
-    constexpr T fetch_xor(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) volatile requires(
-        concepts::Integral<T>) { return as_ref().fetch_xor(value, order); }
+constexpr T fetch_xor(T value,
+                      MemoryOrder order = MemoryOrder::SequentialConsistency) volatile requires(concepts::Integral<T>) {
+    return as_ref().fetch_xor(value, order);
+}
 
-    private : T m_value;
+private : T m_value;
 };
 }
 

@@ -1,4 +1,3 @@
-
 #include <di/meta/algorithm.h>
 #include <di/meta/common.h>
 #include <di/meta/constexpr.h>

@@ -1,4 +1,3 @@
-
 #include <di/function/make_deferred.h>
 #include <di/function/prelude.h>
 #include <di/function/proj.h>

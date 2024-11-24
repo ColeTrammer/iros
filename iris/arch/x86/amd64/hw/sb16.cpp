@@ -1,8 +1,9 @@
+#include <iris/arch/x86/amd64/hw/sb16.h>
+
 #include <di/container/algorithm/fill.h>
 #include <di/util/compiler_barrier.h>
 #include <di/vocab/expected/expected_forward_declaration.h>
 #include <iris/arch/x86/amd64/core/interrupt_disabler.h>
-#include <iris/arch/x86/amd64/hw/sb16.h>
 #include <iris/arch/x86/amd64/io_instructions.h>
 #include <iris/arch/x86/amd64/page_structure.h>
 #include <iris/core/interrupt_disabler.h>

@@ -214,14 +214,13 @@ public:
     }
 
     constexpr Optional<T> optional_value() &&
-    requires(concepts::MoveConstructible<T>)
-    {
-        return has_value() ? Optional<T> { in_place, *util::move(*this) } : nullopt;
-    }
+        requires(concepts::MoveConstructible<T>) {
+            return has_value() ? Optional<T> { in_place, *util::move(*this) } : nullopt;
+        }
 
-    template<typename... Args>
-    requires(concepts::ConstructibleFrom<T, Args...>)
-    constexpr T& emplace(Args&&... args) {
+        template<typename... Args>
+        requires(concepts::ConstructibleFrom<T, Args...>)
+        constexpr T& emplace(Args&&... args) {
         return internal_emplace(util::forward<Args>(args)...);
     }
 

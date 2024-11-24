@@ -47,14 +47,9 @@ namespace bitmap {
 
         constexpr auto as_raw_bytes() const { return m_buffer.span(); }
 
-        operator ConstBuffer() &&
-        requires(!is_const)
-        {
-            return ConstBuffer(di::move(m_buffer), m_width, m_height);
-        }
+    operator ConstBuffer() && requires(!is_const) { return ConstBuffer(di::move(m_buffer), m_width, m_height); }
 
-    private:
-        Buffer m_buffer;
+        private : Buffer m_buffer;
         usize m_width;
         usize m_height;
     };

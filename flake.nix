@@ -20,7 +20,7 @@
         { config, pkgs, ... }:
         let
           gccVersion = "14";
-          llvmVersion = "18";
+          llvmVersion = "19";
 
           clang = pkgs."llvmPackages_${llvmVersion}".libcxxClang;
           clangTools = pkgs."clang-tools_${llvmVersion}".override { enableLibcxx = true; };

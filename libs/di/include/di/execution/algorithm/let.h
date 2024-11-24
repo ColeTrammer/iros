@@ -156,8 +156,8 @@ namespace let_ns {
                 meta::Unique<meta::Concat<BaseCompletionSignatures<Self, Env>, InvokeCompletionSignatures<Self, Env>>>>;
 
             template<concepts::DecaysTo<Type> Self, typename Env>
-            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&,
-                                   Env&&) -> CompletionSignatures<Self, MakeEnv<Env>> {
+            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env&&)
+                -> CompletionSignatures<Self, MakeEnv<Env>> {
                 return {};
             }
 

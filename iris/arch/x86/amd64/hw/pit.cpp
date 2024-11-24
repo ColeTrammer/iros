@@ -1,4 +1,5 @@
 #include <iris/arch/x86/amd64/hw/pit.h>
+
 #include <iris/arch/x86/amd64/io_instructions.h>
 #include <iris/core/global_state.h>
 #include <iris/core/interrupt_disabler.h>

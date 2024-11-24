@@ -1,5 +1,6 @@
-#include <iris/core/print.h>
 #include <iris/core/spinlock.h>
+
+#include <iris/core/print.h>
 
 namespace iris {
 void Spinlock::lock() {

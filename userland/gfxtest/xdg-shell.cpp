@@ -32,6 +32,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+
 #include "wayland-util.h"
 
 #undef WL_EXPORT
