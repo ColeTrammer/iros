@@ -21,6 +21,8 @@
 #include <dius/test/prelude.h>
 
 #ifdef __linux__
+namespace socket_test {
+
 static void unix_scoket() {
     auto context = *di::create<dius::IoContext>();
     auto scheduler = context.get_scheduler();
@@ -172,4 +174,5 @@ static void ipc_binary() {
 
 TEST(socket, unix_scoket)
 TEST(socket, ipc_binary)
+}
 #endif
