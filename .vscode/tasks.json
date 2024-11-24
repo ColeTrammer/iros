@@ -14,6 +14,12 @@
             "problemMatcher": "$gcc"
         },
         {
+            "label": "Build Linux",
+            "type": "shell",
+            "command": "cmake --build --preset clang_release_default",
+            "problemMatcher": "$gcc"
+        },
+        {
             "label": "Run Iris",
             "type": "shell",
             "command": "cmake --build --preset ${command:cmake.activeBuildPresetName} --target run",
