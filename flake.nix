@@ -43,7 +43,7 @@
                 enable = true;
                 package = clangTools;
               };
-              nixfmt-rfc-style.enable = true;
+              nixfmt.enable = true;
               prettier.enable = true;
               shfmt = {
                 enable = true;
