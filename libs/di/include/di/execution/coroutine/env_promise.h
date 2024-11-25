@@ -25,6 +25,7 @@ struct EnvPromise : WithAwaitTransform<EnvPromise<Env>> {
     std::coroutine_handle<> unhandled_stopped() noexcept;
     std::coroutine_handle<> unhandled_error(vocab::Error) noexcept;
 
-    friend Env const& tag_invoke(types::Tag<get_env>, EnvPromise const&) noexcept;
+    template<typename E>
+    friend E const& tag_invoke(types::Tag<get_env>, EnvPromise<E> const&) noexcept;
 };
 }

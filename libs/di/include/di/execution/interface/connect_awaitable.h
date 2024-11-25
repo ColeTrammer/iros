@@ -138,6 +138,8 @@ namespace connect_awaitable_ns {
         }
 
     private:
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsubobject-linkage"
         template<typename Awaitable, typename Receiver>
         static OperationState<Receiver> impl(Awaitable awaitable, Receiver receiver) {
             using Result = meta::AwaitResult<Awaitable, Promise<Receiver>>;
@@ -162,6 +164,7 @@ namespace connect_awaitable_ns {
                 };
             }
         }
+#pragma GCC diagnostic pop
     };
 
     constexpr inline auto connect_awaitable = Funciton {};

@@ -119,7 +119,7 @@ namespace first_value_ns {
             void complete_outer_stopped() { set_stopped(util::move(receiver)); }
 
             [[no_unique_address]] Rec receiver;
-            [[no_unique_address]] Storage storage;
+            [[no_unique_address]] Storage storage {};
             sync::Atomic<bool> got_first_value { false };
         };
     };

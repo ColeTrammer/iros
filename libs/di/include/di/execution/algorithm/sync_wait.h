@@ -98,7 +98,7 @@ namespace sync_wait_ns {
                 return function::tag_invoke(*this, context, util::forward<Send>(sender));
             } else if constexpr (concepts::SequenceSender<Send>) {
                 static_assert(concepts::AlwaysFalse<Send>,
-                              "sync_wait() cannot be called on sequences. Use a sequence consume like ignore_all() or "
+                              "sync_wait() cannot be called on sequences. Use a sequence consumer like ignore_all() or "
                               "first_value() before sync_wait().");
             } else {
                 auto value = Uninit<ResultType<Context, Send>> {};

@@ -67,7 +67,7 @@ public:
 
     template<concepts::ConvertibleTo<T>... Ts>
     requires(sizeof...(Ts) == extent)
-    constexpr Vec(Ts&&... values) : m_values { di::forward<Ts>(values)... } {}
+    constexpr Vec(Ts&&... values) : m_values { T(di::forward<Ts>(values))... } {}
 
     constexpr auto values() -> Storage& { return m_values; }
     constexpr auto values() const -> Storage const& { return m_values; }

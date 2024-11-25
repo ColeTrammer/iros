@@ -12,7 +12,7 @@ struct Equal {
         { a == b } -> concepts::ImplicitlyConvertibleTo<bool>;
     })
     {
-        if constexpr (concepts::Integer<T> && concepts::Integer<U>) {
+        if constexpr (concepts::Integral<T> && concepts::Integral<U>) {
             return math::cmp_equal(a, b);
         } else {
             return a == b;

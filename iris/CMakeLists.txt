@@ -45,7 +45,7 @@ add_library(iris_headers INTERFACE)
 add_library(Iris::iris_headers ALIAS iris_headers)
 
 target_include_directories(
-    iris_headers SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
+    iris_headers INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
 )
 
 target_sources(
@@ -109,8 +109,8 @@ if(IROS_BuildIris)
     add_library(Iris::iris_internal_headers ALIAS iris_internal_headers)
 
     target_include_directories(
-        iris_internal_headers SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-                                               $<INSTALL_INTERFACE:include>
+        iris_internal_headers INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+                                        $<INSTALL_INTERFACE:include>
     )
 
     target_sources(
@@ -154,7 +154,7 @@ if(IROS_BuildIris)
         -nostartfiles
     )
     target_link_libraries(iris PRIVATE di iris_headers iris_internal_headers)
-    target_include_directories(iris SYSTEM PRIVATE "${LIMINE_DIR}")
+    target_include_directories(iris PRIVATE "${LIMINE_DIR}")
     target_compile_definitions(
         iris PRIVATE "DI_CUSTOM_ASSERT_HANDLER" "DI_NO_ASSERT_ALLOCATION" "DI_NO_USE_STD"
                      "DI_CUSTOM_PLATFORM=<iris/core/platform.h>"

@@ -12,13 +12,16 @@ namespace detail {
     template<template<typename...> typename, typename...>
     struct DeferHelper {};
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsubobject-linkage"
     template<template<typename...> typename Fun, typename... Args>
     requires(concepts::ValidInstantiation<Fun, Args...>)
     struct DeferHelper<Fun, Args...> : TypeConstant<Fun<Args...>> {};
+#pragma GCC diagnostic pop
 }
 
 template<template<typename...> typename Fun, typename... Args>
-struct Defer : detail::DeferHelper<Fun, Args...> {};
+using Defer = detail::DeferHelper<Fun, Args...>;
 
 template<template<typename...> typename Fun>
 struct Quote {

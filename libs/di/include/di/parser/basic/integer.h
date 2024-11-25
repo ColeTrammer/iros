@@ -134,7 +134,7 @@ namespace detail {
         constexpr auto operator()(int radix = 0) const {
             using namespace di::literals;
 
-            DI_ASSERT(radix == 0 || radix >= 2 && radix <= 36);
+            DI_ASSERT(radix == 0 || (radix >= 2 && radix <= 36));
 
             auto sign = [] {
                 if constexpr (concepts::Signed<T> || mode == IntegerMode::CStandard) {

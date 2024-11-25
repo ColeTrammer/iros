@@ -24,7 +24,7 @@ if(NOT WAYLAND_INCLUDE_DIRS OR NOT WAYLAND_LIBRARIES)
     message(FATAL_ERROR "Wayland not found")
 endif()
 
-target_include_directories(gfx_test PUBLIC ${WAYLAND_INCLUDE_DIRS})
+target_include_directories(gfx_test SYSTEM PUBLIC ${WAYLAND_INCLUDE_DIRS})
 target_link_libraries(gfx_test PUBLIC ${WAYLAND_LIBRARIES})
 
 install(TARGETS gfx_test RUNTIME DESTINATION bin)

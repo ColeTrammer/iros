@@ -5,7 +5,7 @@
 namespace di::math {
 namespace detail {
     struct CmpEqualFunction {
-        template<concepts::Integer T, concepts::Integer U>
+        template<concepts::Integral T, concepts::Integral U>
         constexpr bool operator()(T a, U b) const {
             using UT = meta::MakeUnsigned<T>;
             using UU = meta::MakeUnsigned<U>;

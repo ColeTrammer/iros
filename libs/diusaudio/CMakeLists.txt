@@ -51,7 +51,7 @@ target_sources(
 )
 
 target_include_directories(
-    diusaudio SYSTEM PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
+    diusaudio PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
 )
 
 find_package(Dius REQUIRED)

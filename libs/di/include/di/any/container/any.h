@@ -259,7 +259,7 @@ struct AnyT {
                     m_vtable = VTable::template create_for<Storage, VT>();
                 };
             } else {
-                Storage::init(this, in_place_type<VT>, util::forward<Args>(args)...);
+                (void) Storage::init(this, in_place_type<VT>, util::forward<Args>(args)...);
                 m_vtable = VTable::template create_for<Storage, VT>();
             }
         }

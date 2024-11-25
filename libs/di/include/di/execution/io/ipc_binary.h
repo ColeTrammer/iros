@@ -120,6 +120,9 @@ namespace ipc_binary_ns {
     template<typename Proto, typename Read, typename Write, typename Alloc>
     struct ConnectionDataT {
         struct Type {
+            explicit Type(Read&& read, Write&& write, Alloc&& allocator)
+                : read(di::move(read)), write(di::move(write)), allocator(di::move(allocator)) {}
+
             [[no_unique_address]] Read read;
             [[no_unique_address]] Write write;
             [[no_unique_address]] Alloc allocator;
@@ -446,6 +449,7 @@ namespace ipc_binary_ns {
 
                                   using Value = meta::SingleSenderValueType<Send, Env>;
                                   if constexpr (concepts::LanguageVoid<Value>) {
+                                      (void) header;
                                       return sender_function();
                                   } else if constexpr (concepts::MessageWithReply<T>) {
                                       static_assert(
@@ -455,6 +459,7 @@ namespace ipc_binary_ns {
                                                  return send(Token(data), di::move(reply), header.message_number);
                                              });
                                   } else if constexpr (meta::Contains<meta::MessageTypes<Token>, Value>) {
+                                      (void) header;
                                       return sender_function() | let_value([data](Value& message) {
                                                  return send(Token(data), di::move(message));
                                              });

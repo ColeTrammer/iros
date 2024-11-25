@@ -6,7 +6,7 @@ add_library(di INTERFACE)
 add_library(Di::di ALIAS di)
 
 target_include_directories(
-    di SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
+    di INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
 )
 
 file(GLOB_RECURSE headers CONFIGURE_DEPENDS *.h)
@@ -22,8 +22,7 @@ target_sources(
               ${headers}
 )
 
-# FIXME: use the feature flag once a new enough CMake is out. target_compile_features(di INTERFACE cxx_std_26)
-target_compile_options(di INTERFACE --std=gnu++26)
+target_compile_features(di INTERFACE cxx_std_26)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     target_compile_options(di INTERFACE -fsized-deallocation)
 endif()

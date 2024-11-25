@@ -46,7 +46,7 @@ target_sources(
 )
 
 target_include_directories(
-    diusgfx SYSTEM PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
+    diusgfx PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
 )
 
 find_package(Dius REQUIRED)
