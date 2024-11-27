@@ -171,7 +171,7 @@ struct CMakePresets {
     }
 };
 
-static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_configure_presets() {
+static auto make_configure_presets() -> di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> {
     auto presets = di::Vector<CMakeConfigurePreset> {};
 
     auto base_presets = *di::from_json_string<di::Vector<CMakeConfigurePreset>>(R"([
@@ -190,7 +190,7 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
             "name": "gcc_base",
             "hidden": true,
             "cacheVariables": {
-                "IROS_DiagnosticFlags": "-fdiagnostics-color=always -ffold-simple-inlines"
+                "IROS_DiagnosticFlags": "-fdiagnostics-color=always"
             }
         },
         {
@@ -496,7 +496,7 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
     return { di::move(presets), di::move(preset_names) };
 }
 
-di::Vector<CMakeBuildPreset> make_build_presets(di::Span<di::String const> preset_names) {
+auto make_build_presets(di::Span<di::String const> preset_names) -> di::Vector<CMakeBuildPreset> {
     auto presets = di::Vector<CMakeBuildPreset> {};
 
     auto base_presets = *di::from_json_string<di::Vector<CMakeBuildPreset>>(R"([
@@ -505,9 +505,14 @@ di::Vector<CMakeBuildPreset> make_build_presets(di::Span<di::String const> prese
             "hidden": true
         },
         {
-            "name": "ci_base",
+            "name": "ci_debug_base",
             "hidden": true,
             "targets": ["all", "all_verify_interface_header_sets"]
+        },
+        {
+            "name": "ci_release_base",
+            "hidden": true,
+            "targets": ["all", "all_verify_interface_header_sets", "check_tidy"]
         },
         {
             "name": "docs_base",
@@ -533,7 +538,12 @@ di::Vector<CMakeBuildPreset> make_build_presets(di::Span<di::String const> prese
             auto inherits = di::Vector<di::String> {};
             inherits.push_back("build_base"_sv.to_owned());
             if (type != "default"_sv) {
-                inherits.push_back(*di::present("{}_base"_sv, type));
+                if (type == "ci"_sv) {
+                    inherits.push_back(*di::present("{}_{}_base"_sv, type,
+                                                    configure_name.contains("release"_sv) ? "release"_sv : "debug"_sv));
+                } else {
+                    inherits.push_back(*di::present("{}_base"_sv, type));
+                }
             }
 
             auto preset = CMakeBuildPreset {};
@@ -548,7 +558,7 @@ di::Vector<CMakeBuildPreset> make_build_presets(di::Span<di::String const> prese
     return presets;
 }
 
-di::Vector<CMakeTestPreset> make_test_presets(di::Span<di::String const> preset_names) {
+auto make_test_presets(di::Span<di::String const> preset_names) -> di::Vector<CMakeTestPreset> {
     auto presets = di::Vector<CMakeTestPreset> {};
 
     auto base_presets = *di::from_json_string<di::Vector<CMakeTestPreset>>(R"([
@@ -611,7 +621,7 @@ di::Vector<CMakeTestPreset> make_test_presets(di::Span<di::String const> preset_
     return presets;
 }
 
-di::Result<void> main(Args& args) {
+auto main(Args& args) -> di::Result<void> {
     auto [configure_presets, configure_preset_names] = make_configure_presets();
     auto build_presets = make_build_presets(configure_preset_names.span());
     auto test_presets = make_test_presets(configure_preset_names.span());

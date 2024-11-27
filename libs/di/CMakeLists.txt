@@ -22,9 +22,14 @@ target_sources(
               ${headers}
 )
 
-target_compile_features(di INTERFACE cxx_std_26)
+target_compile_options(di INTERFACE -std=gnu++26)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     target_compile_options(di INTERFACE -fsized-deallocation)
+endif()
+
+# This is needed to make header set verification work with clang. It would be best remove this if possible.
+if(CMAKE_SYSTEM_NAME STREQUAL "Iros")
+    target_compile_definitions(di INTERFACE DI_NO_USE_STD DI_CUSTOM_ASSERT_HANDLER)
 endif()
 
 target_compile_options(di INTERFACE -fno-exceptions -fno-rtti)

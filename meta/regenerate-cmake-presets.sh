@@ -2,7 +2,7 @@
 
 set -e
 
-PARENT_DIR=$(realpath $(dirname -- "$0"))
+PARENT_DIR=$(realpath "$(dirname -- "$0")")
 IROS_ROOT=$(realpath "$PARENT_DIR"/..)
 
 cd "$IROS_ROOT"

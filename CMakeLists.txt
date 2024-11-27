@@ -57,7 +57,7 @@ macro(add_library)
     _add_library(${ARGV})
     if(NOT "${ARGV1}" IN_LIST not_buildable_library)
         target_compile_options(
-            ${ARGV0} PRIVATE ${IROS_DiagnosticFlags} ${IROS_WarningFlags} ${IROS_SanitizerFlags} ${IROS_ExtraFlags}
+            ${ARGV0} PUBLIC ${IROS_DiagnosticFlags} ${IROS_WarningFlags} ${IROS_SanitizerFlags} ${IROS_ExtraFlags}
         )
         target_link_options(
             ${ARGV0} PRIVATE ${IROS_DiagnosticFlags} ${IROS_WarningFlags} ${IROS_SanitizerFlags} ${IROS_ExtraFlags}
@@ -133,6 +133,8 @@ if(NOT IROS_NeverBuildDocs)
     include(meta/cmake/doxygen.cmake)
 endif()
 
+include(meta/cmake/tidy.cmake)
+
 if(IROS_NonUnityBuildPreset)
     # Generate compile_commands.json using a non-unity build to greatly improve IDE tooling.
     execute_process(
@@ -140,6 +142,14 @@ if(IROS_NonUnityBuildPreset)
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     )
     file(COPY "${CMAKE_BINARY_DIR}/non_unity/compile_commands.json" DESTINATION "${CMAKE_BINARY_DIR}")
+
+    # If we're an Iros build, we need to download limine now or the compilation database may be invalid.
+    if(CMAKE_SYSTEM_NAME STREQUAL "Iros")
+        execute_process(
+            COMMAND ${CMAKE_COMMAND} --build --preset "${IROS_NonUnityBuildPreset}" -t limine
+            WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        )
+    endif()
 endif()
 
 # Link the active compile_commands.json to the project directory, and the build directory.

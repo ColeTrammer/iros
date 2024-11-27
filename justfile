@@ -1,5 +1,5 @@
 preset := env("PRESET", "clang_release_default")
-iros_preset := if preset =~ 'iros' { preset } else { "gcc_iros_x86_64_release_default" }
+iros_preset := env("IROS_PRESET", if preset =~ 'iros' { preset } else { "gcc_iros_x86_64_release_default" })
 test := "^test_di$"
 default_iros_test := "^test_iris$"
 
@@ -15,6 +15,7 @@ alias bf := build_file
 alias bonly := build_target
 alias r := run
 alias br := build_run
+alias vh := verify_headers
 
 # Default command: configure and build
 default:
@@ -35,6 +36,12 @@ test *args="": ensure_configured
 # Run a specific test (regex matching)
 test_only name=test: ensure_configured
     ctest --preset {{ preset }} -R {{ name }}
+
+# Simulate base CI
+ci:
+    cmake --preset {{ preset }} -DCMAKE_COMPILE_WARNING_AS_ERROR=On
+    cmake --build --preset {{ preset }}_ci
+    ctest --preset {{ preset }}
 
 # Configure and build
 configure_build:
@@ -135,6 +142,51 @@ build_run name *args:
     @just preset={{ preset }} build_target {{ name }}
     @just preset={{ preset }} run {{ name }} {{ args }}
 
+# Verify all header files
+verify_headers:
+    @just preset={{ preset }} build -t all_verify_interface_header_sets
+
+# Run clang-tidy and perform fixes
+tidy *args="": ensure_configured
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    export IROS_TIDY_ARGS="{{ args }}"
+    cmake --build --preset {{ preset }} -t tidy
+
+# Run static analysis
+analyze *args="": ensure_configured
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    export IROS_TIDY_ARGS="{{ args }}"
+    cmake --build --preset {{ preset }} -t analyze
+
+# Run clang-tidy and output failures
+check_tidy *args="": ensure_configured
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    export IROS_TIDY_ARGS="{{ args }}"
+    cmake --build --preset {{ preset }} -t check_tidy
+
+# Clean
+clean: ensure_configured
+    @just preset={{ preset }} build --target clean
+
+# Build docs
+build_docs: ensure_configured
+    @just preset={{ preset }} build --target docs
+
+# Open docs
+open_docs: ensure_configured
+    @just preset={{ preset }} build --target open_docs
+
+# Build and open docs
+docs:
+    @just preset={{ preset }} build_docs
+    @just preset={{ preset }} open_docs
+
 alias ic := iros_configure
 alias ibimg := iros_build_image
 alias ir := iros_run
@@ -142,13 +194,22 @@ alias ib := iros_build
 alias ibr := iros_build_run
 alias it := iros_test
 alias itonly := iros_test_only
+alias ici := iros_ci
 alias ibt := iros_build_test
 alias ibtonly := iros_build_test_only
 alias ibd := iros_build_debug
+alias ivh := iros_verify_headers
+alias itidy := iros_tidy
+alias ianalyze := iros_analyze
+alias icheck_tidy := iros_check_tidy
+alias iclean := iros_clean
+alias ibuild_docs := iros_build_docs
+alias iopen_docs := iros_open_docs
+alias idocs := iros_docs
 
 # Configure the build system for Iros
-iros_configure:
-    cmake --preset {{ iros_preset }}
+iros_configure *args="":
+    cmake --preset {{ iros_preset }} {{ args }}
 
 # Build Iros disk image
 iros_build_image: ensure_iros_configured
@@ -159,8 +220,8 @@ iros_run: ensure_iros_configured
     cmake --build --preset {{ iros_preset }} -t run
 
 # Full build Iros and produce disk image
-iros_build: ensure_iros_configured
-    cmake --build --preset {{ iros_preset }}
+iros_build *args="": ensure_iros_configured
+    cmake --build --preset {{ iros_preset }} {{ args }}
 
 # Full build Iros and run
 iros_build_run: ensure_iros_configured
@@ -173,6 +234,10 @@ iros_test: ensure_iros_configured
 # Run a specific test on Iros (regex matching)
 iros_test_only name=default_iros_test: ensure_iros_configured
     ctest --preset {{ iros_preset }} -R {{ name }}
+
+# Simulate base CI on Iros
+iros_ci:
+    @just preset={{ iros_preset }} ci
 
 # Full build Iros and run tests
 iros_build_test:
@@ -188,6 +253,39 @@ iros_build_test_only name=default_iros_test:
 iros_build_debug iros_preset="gcc_iros_x86_64_release_iris_debug":
     @just iros_preset={{ iros_preset }} ibimg
     IROS_DEBUG=1 IROS_DISABLE_KVM=1 cmake --build --preset {{ iros_preset }} -t run
+
+# Verify all header files for Iros
+iros_verify_headers:
+    @just preset={{ iros_preset }} verify_headers
+
+# Run clang-tidy and perform fixes for Iros
+iros_tidy *args="":
+    @just preset={{ iros_preset }} tidy {{ args }}
+
+# Run static analysis for Iros
+iros_analyze *args="":
+    @just preset={{ iros_preset }} analyze {{ args }}
+
+# Run clang-tidy and output failures for Iros
+iros_check_tidy *args="":
+    @just preset={{ iros_preset }} check_tidy {{ args }}
+
+# Clean
+iros_clean: ensure_iros_configured
+    @just iros_preset={{ iros_preset }} ib --target clean
+
+# Build docs
+iros_build_docs: ensure_iros_configured
+    @just iros_preset={{ iros_preset }} ib --target docs
+
+# Open docs
+iros_open_docs: ensure_iros_configured
+    @just iros_preset={{ iros_preset }} ib --target open_docs
+
+# Build and open docs
+iros_docs:
+    @just iros_preset={{ iros_preset }} iros_build_docs
+    @just iros_preset={{ iros_preset }} iros_open_docs
 
 # Build Iros cross compiler
 build_toolchain:
@@ -209,22 +307,17 @@ format:
 check:
     nix flake check
 
-# Build docs
-build_docs: ensure_configured
-    cmake --build --preset {{ preset }} --target docs
-
-# Open docs
-open_docs: ensure_configured
-    cmake --build --preset {{ preset }} --target open_docs
-
-# Build and open docs
-docs:
-    @just preset={{ preset }} build_docs
-    @just preset={{ preset }} open_docs
-
 # Select a CMake preset (meant to be run with eval, e.g. `eval $(just choose)`)
 choose:
     @echo "export PRESET=\$(cmake --list-presets=configure | tail +2 | fzf | awk '{ print \$1 }' | tr -d '[\"]')"
+
+# Select a Iros CMake preset (meant to be run with eval, e.g. `eval $(just choose)`)
+ichoose:
+    @echo "export IROS_PRESET=\$(cmake --list-presets=configure | tail +2 | grep iros | fzf | awk '{ print \$1 }' | tr -d '[\"]')"
+
+# Clean all
+cleanall:
+    rm -rf build/
 
 [private]
 ensure_configured preset=preset:

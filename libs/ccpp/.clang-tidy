@@ -1,4 +1,0 @@
----
-InheritParentConfig: true
-Checks: >
-  -modernize-*,

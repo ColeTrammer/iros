@@ -104,7 +104,7 @@ if(IROS_UseDiusRuntime)
     target_compile_options(
         dius
         PUBLIC "-nostdlib" "-static"
-        PRIVATE "-fno-stack-protector" "-ffreestanding"
+        PRIVATE "-fno-stack-protector" "-ffreestanding" "-fPIC"
     )
     target_link_options(
         dius

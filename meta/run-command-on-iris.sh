@@ -17,8 +17,8 @@ exec 9>$LOCKFILE || die "Could not open exclusive lock."
 flock -w "$LOCK_TIMEOUT_SECONDS" 9 || die "Could not acquire exclusive lock."
 trap "rm -f $LOCKFILE" EXIT
 
-PARENT_DIR=$(realpath $(dirname -- "$0"))
-export IROS_ROOT=$(realpath "$PARENT_DIR"/..)
+PARENT_DIR=$(realpath "$(dirname -- "$0")")
+export IROS_ROOT="$(realpath "$PARENT_DIR"/..)"
 
 export IROS_ARCH=x86_64
 

@@ -54,7 +54,11 @@ find_package(Dius REQUIRED)
 
 target_link_libraries(ccpp PUBLIC Dius::dius)
 
-target_compile_options(ccpp PRIVATE -ffreestanding -nostdinc++)
+target_compile_options(
+    ccpp
+    PRIVATE -ffreestanding -fPIC
+    PUBLIC -nostdinc++
+)
 
 if(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "x86_64")
     include(arch/x86_64/CMakeLists.txt)

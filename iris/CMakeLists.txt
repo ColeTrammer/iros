@@ -124,6 +124,12 @@ if(IROS_BuildIris)
                   FILES
                   ${headers}
     )
+    target_compile_definitions(
+        iris_internal_headers INTERFACE "DI_CUSTOM_ASSERT_HANDLER" "DI_NO_ASSERT_ALLOCATION" "DI_NO_USE_STD"
+                                        "DI_CUSTOM_PLATFORM=<iris/core/platform.h>"
+    )
+    target_link_libraries(iris_internal_headers INTERFACE Di::di)
+    target_include_directories(iris_internal_headers INTERFACE "${LIMINE_DIR}")
 
     add_executable(iris ${sources})
 
@@ -133,16 +139,7 @@ if(IROS_BuildIris)
         message(FATAL_ERROR "The Iris kernel does not support the \"" ${CMAKE_HOST_SYSTEM_PROCESSOR} "\" architecture.")
     endif()
 
-    target_compile_options(
-        iris
-        PRIVATE -ffreestanding
-                -nostdlib
-                -fno-pic
-                -fno-pie
-                -static
-                -nostartfiles
-                -fno-stack-protector
-    )
+    target_compile_options(iris PRIVATE -ffreestanding -nostdlib -fno-pic -fno-pie -static -fno-stack-protector)
     target_link_options(
         iris
         PRIVATE
@@ -154,17 +151,12 @@ if(IROS_BuildIris)
         -nostartfiles
     )
     target_link_libraries(iris PRIVATE di iris_headers iris_internal_headers)
-    target_include_directories(iris PRIVATE "${LIMINE_DIR}")
-    target_compile_definitions(
-        iris PRIVATE "DI_CUSTOM_ASSERT_HANDLER" "DI_NO_ASSERT_ALLOCATION" "DI_NO_USE_STD"
-                     "DI_CUSTOM_PLATFORM=<iris/core/platform.h>"
-    )
-    add_dependencies(iris limine)
+    add_dependencies(iris_internal_headers limine)
 
     install(TARGETS iris RUNTIME DESTINATION boot)
 
     add_executable(test_userspace test_userspace.cpp)
-    target_compile_options(test_userspace PRIVATE -ffreestanding -nostdlib -nostartfiles -fno-pic -fno-pie -static)
+    target_compile_options(test_userspace PRIVATE -ffreestanding -nostdlib -fno-pic -fno-pie -static)
     target_link_options(
         test_userspace
         PRIVATE
@@ -178,7 +170,7 @@ if(IROS_BuildIris)
     install(TARGETS test_userspace RUNTIME DESTINATION boot)
 
     add_executable(test_create_task test_create_task.cpp)
-    target_compile_options(test_create_task PRIVATE -ffreestanding -nostdlib -nostartfiles -fno-pic -fno-pie -static)
+    target_compile_options(test_create_task PRIVATE -ffreestanding -nostdlib -fno-pic -fno-pie -static)
     target_link_options(
         test_create_task
         PRIVATE
@@ -192,7 +184,7 @@ if(IROS_BuildIris)
     install(TARGETS test_create_task RUNTIME DESTINATION boot)
 
     add_executable(test_read test_read.cpp)
-    target_compile_options(test_read PRIVATE -ffreestanding -nostdlib -nostartfiles -fno-pic -fno-pie -static)
+    target_compile_options(test_read PRIVATE -ffreestanding -nostdlib -fno-pic -fno-pie -static)
     target_link_options(
         test_read
         PRIVATE

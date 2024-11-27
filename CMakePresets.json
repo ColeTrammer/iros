@@ -21,7 +21,7 @@
             "name": "gcc_base",
             "hidden": true,
             "cacheVariables": {
-                "IROS_DiagnosticFlags": "-fdiagnostics-color=always -ffold-simple-inlines"
+                "IROS_DiagnosticFlags": "-fdiagnostics-color=always"
             }
         },
         {
@@ -1269,9 +1269,14 @@
             "hidden": true
         },
         {
-            "name": "ci_base",
+            "name": "ci_debug_base",
             "hidden": true,
             "targets": ["all", "all_verify_interface_header_sets"]
+        },
+        {
+            "name": "ci_release_base",
+            "hidden": true,
+            "targets": ["all", "all_verify_interface_header_sets", "check_tidy"]
         },
         {
             "name": "docs_base",
@@ -1290,7 +1295,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_iros_x86_64_release_default",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "gcc_iros_x86_64_release_default_docs",
@@ -1311,7 +1316,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_iros_x86_64_release_default_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "gcc_iros_x86_64_release_default_non_unity_docs",
@@ -1332,7 +1337,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_iros_x86_64_release_iris_debug",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "gcc_iros_x86_64_release_iris_debug_docs",
@@ -1353,7 +1358,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_iros_x86_64_release_iris_debug_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "gcc_iros_x86_64_release_iris_debug_non_unity_docs",
@@ -1374,7 +1379,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_iros_x86_64_debug_default",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "gcc_iros_x86_64_debug_default_docs",
@@ -1395,7 +1400,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_iros_x86_64_debug_default_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "gcc_iros_x86_64_debug_default_non_unity_docs",
@@ -1416,7 +1421,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_iros_x86_64_release_default",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "clang_iros_x86_64_release_default_docs",
@@ -1437,7 +1442,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_iros_x86_64_release_default_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "clang_iros_x86_64_release_default_non_unity_docs",
@@ -1458,7 +1463,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_iros_x86_64_release_iris_debug",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "clang_iros_x86_64_release_iris_debug_docs",
@@ -1479,7 +1484,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_iros_x86_64_release_iris_debug_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "clang_iros_x86_64_release_iris_debug_non_unity_docs",
@@ -1500,7 +1505,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_iros_x86_64_debug_default",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "clang_iros_x86_64_debug_default_docs",
@@ -1521,7 +1526,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_iros_x86_64_debug_default_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "clang_iros_x86_64_debug_default_non_unity_docs",
@@ -1542,7 +1547,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_release_dius_runtime",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "clang_release_dius_runtime_docs",
@@ -1563,7 +1568,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_release_dius_runtime_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "clang_release_dius_runtime_non_unity_docs",
@@ -1584,7 +1589,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_release_ubasan",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "clang_release_ubasan_docs",
@@ -1605,7 +1610,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_release_ubasan_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "clang_release_ubasan_non_unity_docs",
@@ -1626,7 +1631,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_release_default",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "clang_release_default_docs",
@@ -1647,7 +1652,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_release_default_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "clang_release_default_non_unity_docs",
@@ -1668,7 +1673,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_release_coverage",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "clang_release_coverage_docs",
@@ -1689,7 +1694,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_release_coverage_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "clang_release_coverage_non_unity_docs",
@@ -1710,7 +1715,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_release_tools",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "clang_release_tools_docs",
@@ -1731,7 +1736,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_release_tools_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "clang_release_tools_non_unity_docs",
@@ -1752,7 +1757,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_release_asan",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "clang_release_asan_docs",
@@ -1773,7 +1778,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_release_asan_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "clang_release_asan_non_unity_docs",
@@ -1794,7 +1799,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_release_ubsan",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "clang_release_ubsan_docs",
@@ -1815,7 +1820,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_release_ubsan_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "clang_release_ubsan_non_unity_docs",
@@ -1836,7 +1841,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_release_tsan",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "clang_release_tsan_docs",
@@ -1857,7 +1862,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_release_tsan_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "clang_release_tsan_non_unity_docs",
@@ -1878,7 +1883,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_release_msan",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "clang_release_msan_docs",
@@ -1899,7 +1904,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_release_msan_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "clang_release_msan_non_unity_docs",
@@ -1920,7 +1925,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_debug_dius_runtime",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "clang_debug_dius_runtime_docs",
@@ -1941,7 +1946,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_debug_dius_runtime_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "clang_debug_dius_runtime_non_unity_docs",
@@ -1962,7 +1967,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_debug_ubasan",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "clang_debug_ubasan_docs",
@@ -1983,7 +1988,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_debug_ubasan_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "clang_debug_ubasan_non_unity_docs",
@@ -2004,7 +2009,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_debug_default",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "clang_debug_default_docs",
@@ -2025,7 +2030,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_debug_default_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "clang_debug_default_non_unity_docs",
@@ -2046,7 +2051,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_debug_coverage",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "clang_debug_coverage_docs",
@@ -2067,7 +2072,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_debug_coverage_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "clang_debug_coverage_non_unity_docs",
@@ -2088,7 +2093,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_debug_tools",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "clang_debug_tools_docs",
@@ -2109,7 +2114,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_debug_tools_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "clang_debug_tools_non_unity_docs",
@@ -2130,7 +2135,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_debug_asan",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "clang_debug_asan_docs",
@@ -2151,7 +2156,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_debug_asan_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "clang_debug_asan_non_unity_docs",
@@ -2172,7 +2177,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_debug_ubsan",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "clang_debug_ubsan_docs",
@@ -2193,7 +2198,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_debug_ubsan_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "clang_debug_ubsan_non_unity_docs",
@@ -2214,7 +2219,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_debug_tsan",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "clang_debug_tsan_docs",
@@ -2235,7 +2240,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_debug_tsan_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "clang_debug_tsan_non_unity_docs",
@@ -2256,7 +2261,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_debug_msan",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "clang_debug_msan_docs",
@@ -2277,7 +2282,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "clang_debug_msan_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "clang_debug_msan_non_unity_docs",
@@ -2298,7 +2303,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_release_dius_runtime",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "gcc_release_dius_runtime_docs",
@@ -2319,7 +2324,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_release_dius_runtime_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "gcc_release_dius_runtime_non_unity_docs",
@@ -2340,7 +2345,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_release_ubasan",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "gcc_release_ubasan_docs",
@@ -2361,7 +2366,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_release_ubasan_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "gcc_release_ubasan_non_unity_docs",
@@ -2382,7 +2387,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_release_default",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "gcc_release_default_docs",
@@ -2403,7 +2408,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_release_default_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "gcc_release_default_non_unity_docs",
@@ -2424,7 +2429,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_release_coverage",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "gcc_release_coverage_docs",
@@ -2445,7 +2450,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_release_coverage_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "gcc_release_coverage_non_unity_docs",
@@ -2466,7 +2471,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_release_tools",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "gcc_release_tools_docs",
@@ -2487,7 +2492,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_release_tools_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "gcc_release_tools_non_unity_docs",
@@ -2508,7 +2513,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_release_asan",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "gcc_release_asan_docs",
@@ -2529,7 +2534,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_release_asan_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "gcc_release_asan_non_unity_docs",
@@ -2550,7 +2555,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_release_ubsan",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "gcc_release_ubsan_docs",
@@ -2571,7 +2576,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_release_ubsan_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "gcc_release_ubsan_non_unity_docs",
@@ -2592,7 +2597,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_release_tsan",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "gcc_release_tsan_docs",
@@ -2613,7 +2618,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_release_tsan_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_release_base"]
         },
         {
             "name": "gcc_release_tsan_non_unity_docs",
@@ -2634,7 +2639,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_debug_dius_runtime",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "gcc_debug_dius_runtime_docs",
@@ -2655,7 +2660,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_debug_dius_runtime_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "gcc_debug_dius_runtime_non_unity_docs",
@@ -2676,7 +2681,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_debug_ubasan",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "gcc_debug_ubasan_docs",
@@ -2697,7 +2702,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_debug_ubasan_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "gcc_debug_ubasan_non_unity_docs",
@@ -2718,7 +2723,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_debug_default",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "gcc_debug_default_docs",
@@ -2739,7 +2744,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_debug_default_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "gcc_debug_default_non_unity_docs",
@@ -2760,7 +2765,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_debug_coverage",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "gcc_debug_coverage_docs",
@@ -2781,7 +2786,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_debug_coverage_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "gcc_debug_coverage_non_unity_docs",
@@ -2802,7 +2807,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_debug_tools",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "gcc_debug_tools_docs",
@@ -2823,7 +2828,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_debug_tools_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "gcc_debug_tools_non_unity_docs",
@@ -2844,7 +2849,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_debug_asan",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "gcc_debug_asan_docs",
@@ -2865,7 +2870,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_debug_asan_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "gcc_debug_asan_non_unity_docs",
@@ -2886,7 +2891,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_debug_ubsan",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "gcc_debug_ubsan_docs",
@@ -2907,7 +2912,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_debug_ubsan_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "gcc_debug_ubsan_non_unity_docs",
@@ -2928,7 +2933,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_debug_tsan",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "gcc_debug_tsan_docs",
@@ -2949,7 +2954,7 @@
             "displayName": "Build for CI",
             "description": "Build all targets and verify headers",
             "configurePreset": "gcc_debug_tsan_non_unity",
-            "inherits": ["build_base", "ci_base"]
+            "inherits": ["build_base", "ci_debug_base"]
         },
         {
             "name": "gcc_debug_tsan_non_unity_docs",
