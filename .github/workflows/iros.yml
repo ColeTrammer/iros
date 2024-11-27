@@ -69,7 +69,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        preset: [gcc_iros_x86_64_release_default]
+        preset: [gcc_iros_x86_64_release_default, clang_iros_x86_64_release_default]
     needs: toolchain
     container:
       image: ${{ needs.toolchain.outputs.image }}
@@ -86,5 +86,5 @@ jobs:
         with:
           configurePreset: ${{ matrix.preset }}
           configurePresetAdditionalArgs: "['-DCMAKE_COMPILE_WARNING_AS_ERROR=ON']"
-          buildPreset: ${{ matrix.preset }}
+          buildPreset: ${{ matrix.preset }}_ci
           testPreset: ${{ matrix.preset }}

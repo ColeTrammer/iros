@@ -3,20 +3,7 @@ FROM ghcr.io/coletrammer/iros_toolchain:iris
 ARG USERNAME=ubuntu
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
-ARG LLVM_VERSION=18
 ARG doxygen_version=1.10.0
-
-# Install clang
-RUN sudo apt-get -y update \
-    && sudo apt-get -y install lsb-release wget software-properties-common gnupg \
-    && sudo apt-get -y install clang-${LLVM_VERSION} clang-tools-${LLVM_VERSION} clang-format-${LLVM_VERSION} clang-tidy-${LLVM_VERSION} clangd-${LLVM_VERSION} \
-    && sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${LLVM_VERSION} ${LLVM_VERSION} --slave /usr/bin/clang++ clang++ /usr/bin/clang++-${LLVM_VERSION} --slave /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-${LLVM_VERSION}  --slave /usr/bin/clang-format clang-format /usr/bin/clang-format-${LLVM_VERSION} --slave /usr/bin/clangd clangd /usr/bin/clangd-${LLVM_VERSION}
-
-# This installs any version but is not yet needed, since latest ubuntu already is packing the version we want.
-# && wget https://apt.llvm.org/llvm.sh \
-# && chmod +x llvm.sh \
-# && sudo ./llvm.sh ${LLVM_VERSION} all \
-# && rm llvm.sh
 
 # Install misc debugging tools
 RUN sudo apt-get -y install gdb strace

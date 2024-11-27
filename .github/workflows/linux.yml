@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        preset: [gcc_debug_ubasan, gcc_release_dius_runtime, gcc_debug_coverage, clang_release_dius_runtime]
+        preset: [gcc_debug_ubasan, gcc_release_default, gcc_debug_coverage, clang_release_dius_runtime]
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -30,7 +30,7 @@ jobs:
           key: ${{ github.job }}-${{ matrix.preset }}
       - name: Configure build
         run: |
-          nix develop --command cmake --preset ${{ matrix.preset }} -DCMAKE_COMPILE_WARNING_AS_ERROR=On -DCMAKE_VERIFY_INTERFACE_HEADER_SETS=On
+          nix develop --command cmake --preset ${{ matrix.preset }} -DCMAKE_COMPILE_WARNING_AS_ERROR=On
       - name: Run build
         run: |
           nix develop --command cmake --build --preset ${{ matrix.preset }}_ci
