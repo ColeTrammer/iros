@@ -13,7 +13,7 @@
 
 namespace dius::filesystem {
 namespace linux {
-    static di::Expected<int, di::GenericCode> mknod(di::PathView path, FileType type, Perms perms) {
+    static auto mknod(di::PathView path, FileType type, Perms perms) -> di::Expected<int, di::GenericCode> {
         auto raw_data = path.data();
         char null_terminated_string[4097];
         ASSERT_LT(raw_data.size(), sizeof(null_terminated_string) - 1);
@@ -25,7 +25,7 @@ namespace linux {
                                         static_cast<u32>(perms) | static_cast<u32>(type), 0);
     }
 
-    static di::Expected<int, di::GenericCode> mkdir(di::PathView path, Perms perms) {
+    static auto mkdir(di::PathView path, Perms perms) -> di::Expected<int, di::GenericCode> {
         auto raw_data = path.data();
         char null_terminated_string[4097];
         ASSERT_LT(raw_data.size(), sizeof(null_terminated_string) - 1);
@@ -39,7 +39,7 @@ namespace linux {
 }
 
 namespace detail {
-    di::Result<bool> CreateRegularFileFunction::operator()(di::PathView path) const {
+    auto CreateRegularFileFunction::operator()(di::PathView path) const -> di::Result<bool> {
         auto result = linux::mknod(path, FileType::Regular, Perms::All);
         if (!result) {
             if (result.error() == PosixError::FileExists) {
@@ -50,7 +50,7 @@ namespace detail {
         return true;
     }
 
-    di::Result<bool> CreateDirectoryFunction::operator()(di::PathView path) const {
+    auto CreateDirectoryFunction::operator()(di::PathView path) const -> di::Result<bool> {
         auto result = linux::mkdir(path, Perms::All);
         if (!result) {
             if (result.error() == PosixError::FileExists) {

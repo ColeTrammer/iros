@@ -18,7 +18,7 @@ namespace detail {
     struct EnumerateFunction : function::pipeline::EnablePipeline {
         template<concepts::ViewableContainer Con>
         requires(CustomEnumerate<Con> || ViewEnumerate<Con>)
-        constexpr concepts::View auto operator()(Con&& container) const {
+        constexpr auto operator()(Con&& container) const -> concepts::View auto {
             if constexpr (CustomEnumerate<Con>) {
                 return function::tag_invoke(*this, util::forward<Con>(container));
             } else {

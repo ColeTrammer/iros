@@ -10,7 +10,7 @@ namespace detail {
     struct GetDelegateeSchedulerFunction : ForwardingQuery {
         template<typename T>
         requires(concepts::TagInvocable<GetDelegateeSchedulerFunction, T const&>)
-        constexpr concepts::Scheduler auto operator()(T&& value) const {
+        constexpr auto operator()(T&& value) const -> concepts::Scheduler auto {
             return function::tag_invoke(*this, util::as_const(value));
         }
 

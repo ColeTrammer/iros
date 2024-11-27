@@ -186,7 +186,7 @@ namespace let_ns {
     template<concepts::OneOf<SetValue, SetError, SetStopped> CPO>
     struct Function {
         template<concepts::Sender Send, concepts::MovableValue Fun>
-        concepts::Sender auto operator()(Send&& sender, Fun&& function) const {
+        auto operator()(Send&& sender, Fun&& function) const -> concepts::Sender auto {
             if constexpr (requires {
                               function::tag_invoke(*this, get_completion_scheduler<SetValue>(get_env(sender)),
                                                    util::forward<Send>(sender), util::forward<Fun>(function));

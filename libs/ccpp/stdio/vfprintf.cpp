@@ -5,7 +5,7 @@
 
 namespace ccpp {
 // https://pubs.opengroup.org/onlinepubs/9699919799/functions/vfprintf.html
-extern "C" int vfprintf(FILE* __restrict file, char const* __restrict format, va_list args) {
+extern "C" auto vfprintf(FILE* __restrict file, char const* __restrict format, va_list args) -> int {
     auto guard = di::ScopedLock(file->locked.get_lock());
     return STDIO_TRY(printf_implementation(
         [&](di::TransparentStringView bytes) -> di::Expected<void, di::GenericCode> {

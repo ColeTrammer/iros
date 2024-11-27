@@ -20,7 +20,7 @@ namespace detail {
     struct ChunkByFunction {
         template<concepts::ViewableContainer Con, typename Pred>
         requires(CustomChunkBy<Con, Pred> || ViewChunkBy<Con, Pred>)
-        constexpr concepts::View auto operator()(Con&& container, Pred&& predicate) const {
+        constexpr auto operator()(Con&& container, Pred&& predicate) const -> concepts::View auto {
             if constexpr (CustomChunkBy<Con, Pred>) {
                 return function::tag_invoke(*this, util::forward<Con>(container), util::forward<Pred>(predicate));
             } else {

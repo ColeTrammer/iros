@@ -12,7 +12,7 @@ namespace detail {
     struct ForEachFunction {
         template<concepts::InputIterator Iter, concepts::SentinelFor<Iter> Sent, typename Proj = function::Identity,
                  concepts::IndirectlyUnaryInvocable<meta::Projected<Iter, Proj>> F>
-        constexpr InFunResult<Iter, F> operator()(Iter first, Sent last, F f, Proj proj = {}) const {
+        constexpr auto operator()(Iter first, Sent last, F f, Proj proj = {}) const -> InFunResult<Iter, F> {
             for (; first != last; ++first) {
                 function::invoke(f, function::invoke(proj, *first));
             }
@@ -21,7 +21,8 @@ namespace detail {
 
         template<concepts::InputContainer Con, typename Proj = function::Identity,
                  concepts::IndirectlyUnaryInvocable<meta::Projected<meta::ContainerIterator<Con>, Proj>> F>
-        constexpr InFunResult<meta::BorrowedIterator<Con>, F> operator()(Con&& container, F f, Proj proj = {}) const {
+        constexpr auto operator()(Con&& container, F f, Proj proj = {}) const
+            -> InFunResult<meta::BorrowedIterator<Con>, F> {
             return (*this)(container::begin(container), container::end(container), util::move(f), util::ref(proj));
         }
     };

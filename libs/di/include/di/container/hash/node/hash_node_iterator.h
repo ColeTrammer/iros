@@ -35,12 +35,12 @@ public:
         , m_bucket_index(bucket_index)
         , m_before_current(current_current) {}
 
-    constexpr Value& operator*() const {
+    constexpr auto operator*() const -> Value& {
         DI_ASSERT(m_before_current != BucketIter {});
         return Tag::down_cast(in_place_type<Value>,
                               static_cast<ConcreteNode&>(*container::next(m_before_current).node()));
     }
-    constexpr Value* operator->() const { return util::addressof(**this); }
+    constexpr auto operator->() const -> Value* { return util::addressof(**this); }
 
     constexpr void advance_one() {
         DI_ASSERT(m_before_current != BucketIter {});
@@ -62,12 +62,12 @@ public:
         m_before_current = {};
     }
 
-    constexpr BucketIter before_current() const { return m_before_current; }
-    constexpr usize bucket_index() const { return m_bucket_index; }
-    constexpr Node& node() const { return static_cast<Node&>(*container::next(m_before_current).node()); }
+    constexpr auto before_current() const -> BucketIter { return m_before_current; }
+    constexpr auto bucket_index() const -> usize { return m_bucket_index; }
+    constexpr auto node() const -> Node& { return static_cast<Node&>(*container::next(m_before_current).node()); }
 
 private:
-    constexpr friend bool operator==(HashNodeIterator const& a, HashNodeIterator const& b) {
+    constexpr friend auto operator==(HashNodeIterator const& a, HashNodeIterator const& b) -> bool {
         return a.m_before_current == b.m_before_current;
     }
 

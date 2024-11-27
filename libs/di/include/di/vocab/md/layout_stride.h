@@ -73,12 +73,12 @@ public:
         }
     }
 
-    Mapping& operator=(Mapping const&) = default;
+    auto operator=(Mapping const&) -> Mapping& = default;
 
-    constexpr ExtentsType const& extents() const { return m_extents; }
-    constexpr Array<SizeType, rank> strides() const { return m_strides; }
+    constexpr auto extents() const -> ExtentsType const& { return m_extents; }
+    constexpr auto strides() const -> Array<SizeType, rank> { return m_strides; }
 
-    constexpr SizeType required_span_size() const {
+    constexpr auto required_span_size() const -> SizeType {
         SizeType size = 1;
         for (auto d : container::view::range(rank)) {
             if (extents().extent(0) == 0) {
@@ -91,26 +91,26 @@ public:
 
     template<typename... Indices>
     requires(sizeof...(Indices) == ExtentsType::rank() && (concepts::ConvertibleTo<Indices, SizeType> && ...))
-    constexpr SizeType operator()(Indices... indices) const {
+    constexpr auto operator()(Indices... indices) const -> SizeType {
         return function::unpack<meta::MakeIndexSequence<sizeof...(Indices)>>([&]<size_t... i>(meta::ListV<i...>) {
             return ((static_cast<SizeType>(indices) * stride(i)) + ... + 0);
         });
     }
 
-    constexpr static bool is_always_unique() { return true; }
-    constexpr static bool is_always_exhaustive() { return false; }
-    constexpr static bool is_always_strided() { return true; }
+    constexpr static auto is_always_unique() -> bool { return true; }
+    constexpr static auto is_always_exhaustive() -> bool { return false; }
+    constexpr static auto is_always_strided() -> bool { return true; }
 
-    constexpr static bool is_unique() { return true; }
-    constexpr bool is_exhaustive() const { return required_span_size() == extents().fwd_prod_of_extents(rank); }
-    constexpr static bool is_strided() { return true; }
+    constexpr static auto is_unique() -> bool { return true; }
+    constexpr auto is_exhaustive() const -> bool { return required_span_size() == extents().fwd_prod_of_extents(rank); }
+    constexpr static auto is_strided() -> bool { return true; }
 
-    constexpr SizeType stride(RankType i) const { return m_strides[i]; }
+    constexpr auto stride(RankType i) const -> SizeType { return m_strides[i]; }
 
 private:
     template<typename OtherExtents>
     requires(Extents::rank() == OtherExtents::rank())
-    constexpr friend bool operator==(Mapping const& a, Mapping<OtherExtents> const& b) {
+    constexpr friend auto operator==(Mapping const& a, Mapping<OtherExtents> const& b) -> bool {
         return a.extents() == b.extents() && a.m_strides == b.m_strides;
     }
 

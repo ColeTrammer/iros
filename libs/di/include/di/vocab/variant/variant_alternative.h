@@ -10,8 +10,8 @@ namespace detail {
     struct VariantAlternativeFunction {
         template<typename Variant, size_t index>
         requires(concepts::TagInvocable<VariantAlternativeFunction, InPlaceType<Variant>, Constexpr<index>>)
-        constexpr meta::TagInvokeResult<VariantAlternativeFunction, InPlaceType<Variant>, Constexpr<index>>
-        operator()(InPlaceType<Variant>, Constexpr<index>) const {
+        constexpr auto operator()(InPlaceType<Variant>, Constexpr<index>) const
+            -> meta::TagInvokeResult<VariantAlternativeFunction, InPlaceType<Variant>, Constexpr<index>> {
             return function::tag_invoke(*this, in_place_type<Variant>, c_<index>);
         }
     };

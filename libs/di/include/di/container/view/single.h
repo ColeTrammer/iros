@@ -9,7 +9,7 @@ namespace di::container::view {
 namespace detail {
     struct SingleFunction {
         template<typename T>
-        constexpr meta::TagInvokeResult<SingleFunction, T> operator()(T&& value) const {
+        constexpr auto operator()(T&& value) const -> meta::TagInvokeResult<SingleFunction, T> {
             return function::tag_invoke(*this, util::forward<T>(value));
         }
 

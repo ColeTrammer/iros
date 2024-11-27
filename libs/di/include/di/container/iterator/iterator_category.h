@@ -10,6 +10,6 @@ constexpr inline struct IteratorCategoryFunction {
     constexpr auto operator()(types::InPlaceType<T> x) const -> decltype(function::tag_invoke(*this, x));
 
     template<typename T>
-    constexpr types::ContiguousIteratorTag operator()(types::InPlaceType<T*>) const;
+    constexpr auto operator()(types::InPlaceType<T*>) const -> types::ContiguousIteratorTag;
 } iterator_category;
 }

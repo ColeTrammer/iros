@@ -8,7 +8,7 @@ namespace detail {
         template<concepts::BidirectionalIterator It, concepts::SentinelFor<It> Sent, typename Comp = function::Compare,
                  typename Proj = function::Identity>
         requires(concepts::Sortable<It, Comp, Proj>)
-        constexpr InFoundResult<It> operator()(It first, Sent last, Comp comp = {}, Proj proj = {}) const {
+        constexpr auto operator()(It first, Sent last, Comp comp = {}, Proj proj = {}) const -> InFoundResult<It> {
             return container::next_permutation(
                 util::move(first), last,
                 [&]<typename T, typename U>(
@@ -21,8 +21,8 @@ namespace detail {
         template<concepts::BidirectionalContainer Con, typename Comp = function::Compare,
                  typename Proj = function::Identity>
         requires(concepts::Sortable<meta::ContainerIterator<Con>, Comp, Proj>)
-        constexpr InFoundResult<meta::BorrowedIterator<Con>> operator()(Con&& container, Comp comp = {},
-                                                                        Proj proj = {}) const {
+        constexpr auto operator()(Con&& container, Comp comp = {}, Proj proj = {}) const
+            -> InFoundResult<meta::BorrowedIterator<Con>> {
             return (*this)(container::begin(container), container::end(container), util::ref(comp), util::ref(proj));
         }
     };

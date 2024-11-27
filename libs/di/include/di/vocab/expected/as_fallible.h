@@ -11,13 +11,13 @@ namespace detail {
     struct AsFallibleFunction : function::pipeline::EnablePipeline {
         template<concepts::Expected T>
         requires(concepts::ConstructibleFrom<meta::Decay<T>, T>)
-        constexpr meta::Decay<T> operator()(T&& value) const {
+        constexpr auto operator()(T&& value) const -> meta::Decay<T> {
             return util::forward<T>(value);
         }
 
         template<typename T, typename R = Expected<meta::UnwrapRefRValue<T>, void>>
         requires(!concepts::Expected<T> && concepts::ConstructibleFrom<R, T>)
-        constexpr R operator()(T&& value) const {
+        constexpr auto operator()(T&& value) const -> R {
             return util::forward<T>(value);
         }
     };

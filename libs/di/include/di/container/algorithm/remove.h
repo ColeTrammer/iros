@@ -11,7 +11,7 @@ namespace detail {
         template<concepts::Permutable It, concepts::SentinelFor<It> Sent, typename T,
                  typename Proj = function::Identity>
         requires(concepts::IndirectBinaryPredicate<function::Equal, meta::Projected<It, Proj>, T const*>)
-        constexpr View<It> operator()(It first, Sent last, T const& value, Proj proj = {}) const {
+        constexpr auto operator()(It first, Sent last, T const& value, Proj proj = {}) const -> View<It> {
             auto fast = container::find(util::move(first), last, value, util::ref(proj));
             if (fast == last) {
                 return { fast, fast };
@@ -31,7 +31,7 @@ namespace detail {
         requires(concepts::Permutable<meta::ContainerIterator<Con>> &&
                  concepts::IndirectBinaryPredicate<function::Equal, meta::Projected<meta::ContainerIterator<Con>, Proj>,
                                                    T const*>)
-        constexpr meta::BorrowedView<Con> operator()(Con&& container, T const& value, Proj proj = {}) const {
+        constexpr auto operator()(Con&& container, T const& value, Proj proj = {}) const -> meta::BorrowedView<Con> {
             return (*this)(container::begin(container), container::end(container), value, util::ref(proj));
         }
     };

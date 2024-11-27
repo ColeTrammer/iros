@@ -9,7 +9,7 @@ struct Args {
     constexpr static auto get_cli_parser() { return di::cli_parser<Args>("sh"_sv, "Iros shell"_sv).help(); }
 };
 
-di::Result<void> main(Args&) {
+auto main(Args&) -> di::Result<void> {
     auto buffer = di::Array<di::Byte, 1> {};
 
     dius::println("//////////////////////////////////"_sv);

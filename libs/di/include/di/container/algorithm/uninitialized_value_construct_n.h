@@ -12,7 +12,7 @@ namespace detail {
     struct UninitializedValueConstructNFunction {
         template<concepts::UninitForwardIterator Out>
         requires(concepts::DefaultInitializable<meta::IteratorValue<Out>>)
-        constexpr Out operator()(Out out, meta::IteratorSSizeType<Out> n) const {
+        constexpr auto operator()(Out out, meta::IteratorSSizeType<Out> n) const -> Out {
             for (; n > 0; --n, ++out) {
                 util::construct_at(util::addressof(*out));
             }

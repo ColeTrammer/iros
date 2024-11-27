@@ -10,16 +10,17 @@ static_assert(di::concepts::ContiguousIterator<int*>);
 static_assert(di::concepts::SentinelFor<int*, int*>);
 
 struct I {
-    constexpr bool operator*() const { return false; }
-    constexpr I& operator++() { return *this; }
-    constexpr I operator++(int) { return *this; }
-    constexpr friend bool operator==(I, I) { return true; }
+    constexpr auto operator*() const -> bool { return false; }
+    constexpr auto operator++() -> I& { return *this; }
+    constexpr auto operator++(int) -> I { return *this; }
+    constexpr friend auto operator==(I, I) -> bool { return true; }
 
 private:
-    constexpr friend di::InPlaceType<bool> tag_invoke(di::Tag<di::container::iterator_value>, di::InPlaceType<I>);
-    constexpr friend di::types::ForwardIteratorTag tag_invoke(di::Tag<di::container::iterator_category>,
-                                                              di::InPlaceType<I>);
-    constexpr friend di::ssize_t tag_invoke(di::Tag<di::container::iterator_ssize_type>, di::InPlaceType<I>);
+    constexpr friend auto tag_invoke(di::Tag<di::container::iterator_value>, di::InPlaceType<I>)
+        -> di::InPlaceType<bool>;
+    constexpr friend auto tag_invoke(di::Tag<di::container::iterator_category>, di::InPlaceType<I>)
+        -> di::types::ForwardIteratorTag;
+    constexpr friend auto tag_invoke(di::Tag<di::container::iterator_ssize_type>, di::InPlaceType<I>) -> di::ssize_t;
 };
 
 static_assert(di::concepts::InputIterator<I>);
@@ -30,15 +31,16 @@ static_assert(!di::concepts::ContiguousIterator<I>);
 static_assert(di::concepts::SentinelFor<I, I>);
 
 struct J {
-    constexpr bool operator*() const { return false; }
-    constexpr J& operator++() { return *this; }
-    constexpr J& operator++(int) { return *this; }
+    constexpr auto operator*() const -> bool { return false; }
+    constexpr auto operator++() -> J& { return *this; }
+    constexpr auto operator++(int) -> J& { return *this; }
 
 private:
-    constexpr friend di::InPlaceType<bool> tag_invoke(di::Tag<di::container::iterator_value>, di::InPlaceType<J>);
-    constexpr friend di::types::InputIteratorTag tag_invoke(di::Tag<di::container::iterator_category>,
-                                                            di::InPlaceType<J>);
-    constexpr friend di::ssize_t tag_invoke(di::Tag<di::container::iterator_ssize_type>, di::InPlaceType<J>);
+    constexpr friend auto tag_invoke(di::Tag<di::container::iterator_value>, di::InPlaceType<J>)
+        -> di::InPlaceType<bool>;
+    constexpr friend auto tag_invoke(di::Tag<di::container::iterator_category>, di::InPlaceType<J>)
+        -> di::types::InputIteratorTag;
+    constexpr friend auto tag_invoke(di::Tag<di::container::iterator_ssize_type>, di::InPlaceType<J>) -> di::ssize_t;
 };
 
 static_assert(di::concepts::InputIterator<J>);
@@ -56,27 +58,27 @@ static_assert(!di::concepts::ContiguousIterator<int>);
 static_assert(!di::concepts::SentinelFor<int, int>);
 
 struct S : di::meta::EnableBorrowedContainer<S> {
-    constexpr int* begin() const { return nullptr; }
-    constexpr int* end() const { return nullptr; }
-    constexpr size_t size() const { return 4; }
-    constexpr int* data() const { return nullptr; }
+    constexpr auto begin() const -> int* { return nullptr; }
+    constexpr auto end() const -> int* { return nullptr; }
+    constexpr auto size() const -> size_t { return 4; }
+    constexpr auto data() const -> int* { return nullptr; }
 };
 
 struct F
     : di::meta::EnableView<F, false>
     , di::meta::EnableBorrowedContainer<F> {
 private:
-    constexpr friend bool* tag_invoke(di::Tag<di::container::begin>, F const&) { return nullptr; }
-    constexpr friend bool* tag_invoke(di::Tag<di::container::end>, F const&) { return nullptr; }
-    constexpr friend size_t tag_invoke(di::Tag<di::container::size>, F const&) { return 2; }
+    constexpr friend auto tag_invoke(di::Tag<di::container::begin>, F const&) -> bool* { return nullptr; }
+    constexpr friend auto tag_invoke(di::Tag<di::container::end>, F const&) -> bool* { return nullptr; }
+    constexpr friend auto tag_invoke(di::Tag<di::container::size>, F const&) -> size_t { return 2; }
 };
 
 struct G
     : di::meta::EnableView<G>
     , di::meta::EnableBorrowedContainer<G> {
 private:
-    constexpr friend bool* tag_invoke(di::Tag<di::container::begin>, G const&) { return nullptr; }
-    constexpr friend bool* tag_invoke(di::Tag<di::container::end>, G const&) { return nullptr; }
+    constexpr friend auto tag_invoke(di::Tag<di::container::begin>, G const&) -> bool* { return nullptr; }
+    constexpr friend auto tag_invoke(di::Tag<di::container::end>, G const&) -> bool* { return nullptr; }
 };
 
 constexpr int x[5] = { 0, 1, 2, 3, 4 };

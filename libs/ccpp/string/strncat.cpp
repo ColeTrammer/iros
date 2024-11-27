@@ -3,7 +3,7 @@
 #include <di/container/view/prelude.h>
 #include <string.h>
 
-extern "C" char* strncat(char* __restrict dest, char const* __restrict src, size_t count) {
+extern "C" auto strncat(char* __restrict dest, char const* __restrict src, size_t count) -> char* {
     auto dest_zstring = di::ZString(dest);
     auto* output = di::next(dest_zstring.begin(), dest_zstring.end()).base();
 

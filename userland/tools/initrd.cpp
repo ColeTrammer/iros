@@ -57,7 +57,7 @@ struct FSNode {
         }
     }
 
-    usize compute_block_offsets(usize starting_offset = 1) {
+    auto compute_block_offsets(usize starting_offset = 1) -> usize {
         this->block_offset = starting_offset;
         starting_offset += di::divide_round_up(this->size, block_size);
         for (auto& child : this->children) {
@@ -66,7 +66,7 @@ struct FSNode {
         return starting_offset;
     }
 
-    di::Result<void> write_to_disk(dius::SyncFile& output) {
+    auto write_to_disk(dius::SyncFile& output) -> di::Result<void> {
         if (this->type == Type::Regular) {
             auto buffer = di::Array<di::Byte, block_size> {};
             auto file = TRY(dius::open_sync(this->path, dius::OpenMode::Readonly));
@@ -110,7 +110,7 @@ struct FSNode {
     }
 };
 
-static di::Result<void> write_super_block(FSNode& root, dius::SyncFile& output, usize total_blocks) {
+static auto write_super_block(FSNode& root, dius::SyncFile& output, usize total_blocks) -> di::Result<void> {
     // FIXME: Seed the randon number generate properly, or use /dev/urandom on Linux.
     auto uuid_generation = di::generate_uuid(di::MinstdRand {});
     dius::println("Generating super block with id {}"_sv, uuid_generation);
@@ -132,7 +132,7 @@ static di::Result<void> write_super_block(FSNode& root, dius::SyncFile& output, 
     return output.write_exactly(0, di::as_bytes(di::Span { &super_block, 1 }));
 }
 
-di::Result<FSNode&> find_parent(FSNode& root, di::PathView path) {
+auto find_parent(FSNode& root, di::PathView path) -> di::Result<FSNode&> {
     if (path.empty()) {
         return root;
     }
@@ -148,7 +148,7 @@ di::Result<FSNode&> find_parent(FSNode& root, di::PathView path) {
     return di::Unexpected(di::BasicError::InvalidArgument);
 }
 
-di::Result<void> main(Args& args) {
+auto main(Args& args) -> di::Result<void> {
     auto root = FSNode {};
     root.type = Type::Directory;
 

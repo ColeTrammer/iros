@@ -67,7 +67,7 @@ struct CustomCommonReference {};
 
 namespace detail {
     template<typename T>
-    T __get_value();
+    auto __get_value() -> T;
 
     template<typename T>
     struct ProjectQualifiers {

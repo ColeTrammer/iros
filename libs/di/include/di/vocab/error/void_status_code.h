@@ -11,12 +11,12 @@ public:
     using Domain = void;
     using Value = void;
 
-    constexpr StatusCodeDomain const& domain() const {
+    constexpr auto domain() const -> StatusCodeDomain const& {
         DI_ASSERT(!empty());
         return *m_domain;
     }
 
-    [[nodiscard]] constexpr bool empty() const { return m_domain == nullptr; }
+    [[nodiscard]] constexpr auto empty() const -> bool { return m_domain == nullptr; }
 
     constexpr auto message() const {
         if (!empty()) {
@@ -25,11 +25,11 @@ public:
         return container::ErasedString(u8"[invalid status code]");
     }
 
-    constexpr bool success() const { return !empty() && !domain().do_failure(*this); }
-    constexpr bool failure() const { return !empty() && domain().do_failure(*this); }
+    constexpr auto success() const -> bool { return !empty() && !domain().do_failure(*this); }
+    constexpr auto failure() const -> bool { return !empty() && domain().do_failure(*this); }
 
     template<typename Domain>
-    constexpr bool strictly_equivalent(StatusCode<Domain> const& other) const {
+    constexpr auto strictly_equivalent(StatusCode<Domain> const& other) const -> bool {
         if (this->empty() || other.empty()) {
             return this->empty() == other.empty();
         }
@@ -37,11 +37,11 @@ public:
     }
 
     template<typename Domain>
-    constexpr bool equivalent(StatusCode<Domain> const& other) const {
+    constexpr auto equivalent(StatusCode<Domain> const& other) const -> bool {
         return this->strictly_equivalent(other) || other.strictly_equivalent(*this);
     }
 
-    constexpr GenericCode generic_code() const;
+    constexpr auto generic_code() const -> GenericCode;
 
 protected:
     constexpr explicit StatusCode(StatusCodeDomain const* domain) : m_domain(domain) {}
@@ -50,8 +50,8 @@ protected:
     StatusCode(StatusCode const&) = default;
     StatusCode(StatusCode&&) = default;
 
-    StatusCode& operator=(StatusCode const&) = default;
-    StatusCode& operator=(StatusCode&&) = default;
+    auto operator=(StatusCode const&) -> StatusCode& = default;
+    auto operator=(StatusCode&&) -> StatusCode& = default;
 
     ~StatusCode() = default;
 

@@ -6,7 +6,7 @@
 namespace iris::mm {
 void reserve_page_frames(PhysicalAddress base_address, usize page_count);
 void unreserve_page_frames(PhysicalAddress base_address, usize page_count);
-Expected<PhysicalAddress> allocate_page_frame();
-Expected<PhysicalAddress> allocate_physically_contiguous_page_frames(usize page_count);
+auto allocate_page_frame() -> Expected<PhysicalAddress>;
+auto allocate_physically_contiguous_page_frames(usize page_count) -> Expected<PhysicalAddress>;
 void deallocate_page_frame(PhysicalAddress);
 }

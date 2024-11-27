@@ -2,6 +2,22 @@
 
 #ifdef DI_CUSTOM_PLATFORM
 #include DI_CUSTOM_PLATFORM
+#elifdef DI_NO_USE_STD
+#include <di/container/allocator/forward_declaration.h>
+#include <di/platform/default_generic_domain.h>
+#include <di/sync/dumb_spinlock.h>
+
+namespace di::platform {
+using ThreadId = int;
+
+inline auto get_current_thread_id() -> ThreadId {
+    return 0;
+}
+
+using DefaultLock = di::sync::DumbSpinlock;
+using DefaultAllocator = container::InfallibleAllocator;
+using DefaultFallibleAllocator = container::FallibleAllocator;
+}
 #else
 #include <di/container/allocator/forward_declaration.h>
 #include <di/platform/default_generic_domain.h>
@@ -13,7 +29,7 @@
 namespace di::platform {
 using ThreadId = std::thread::id;
 
-inline ThreadId get_current_thread_id() {
+inline auto get_current_thread_id() -> ThreadId {
     return std::this_thread::get_id();
 }
 

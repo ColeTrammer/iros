@@ -49,7 +49,7 @@ private:
     }
 
     template<typename... Args, typename R = meta::AllocatorResult<platform::DefaultAllocator, T*>>
-    constexpr static R make(Args&&... args)
+    constexpr static auto make(Args&&... args) -> R
     requires(requires { new (std::nothrow) T(util::forward<Args>(args)...); })
     {
         if consteval {

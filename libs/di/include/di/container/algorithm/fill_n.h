@@ -9,7 +9,7 @@ namespace di::container {
 namespace detail {
     struct FillNFunction {
         template<typename T, concepts::OutputIterator<T const&> Out, typename SSizeType = meta::IteratorSSizeType<Out>>
-        constexpr Out operator()(Out first, meta::TypeIdentity<SSizeType> n, T const& value) const {
+        constexpr auto operator()(Out first, meta::TypeIdentity<SSizeType> n, T const& value) const -> Out {
             for (SSizeType i = 0; i < n; ++i, ++first) {
                 *first = value;
             }

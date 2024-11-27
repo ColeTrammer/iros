@@ -27,12 +27,12 @@ public:
 
     template<typename It, typename St>
     requires(concepts::ConvertibleTo<It const&, Iter> && concepts::ConvertibleTo<St const&, Sent>)
-    constexpr CommonIterator& operator=(CommonIterator<It, St> const& other) {
+    constexpr auto operator=(CommonIterator<It, St> const& other) -> CommonIterator& {
         this->m_state = other.m_state;
         return *this;
     }
 
-    constexpr decltype(auto) operator*() const { return *util::get<0>(m_state); }
+    constexpr auto operator*() const -> decltype(auto) { return *util::get<0>(m_state); }
 
     constexpr auto operator->() const
     requires((concepts::IndirectlyReadable<Iter const> && (requires(Iter const& it) { it.operator->(); })) ||
@@ -47,7 +47,9 @@ public:
         } else {
             class Proxy {
             public:
-                constexpr meta::IteratorValue<Iter> const* operator->() const { return util::addressof(m_value); }
+                constexpr auto operator->() const -> meta::IteratorValue<Iter> const* {
+                    return util::addressof(m_value);
+                }
 
             private:
                 constexpr Proxy(meta::IteratorReference<Iter>&& value) : m_value(util::move(value)) {}
@@ -68,7 +70,7 @@ private:
 
     template<typename It, concepts::SentinelFor<It> St>
     requires(concepts::SentinelFor<Sent, It>)
-    constexpr friend bool operator==(CommonIterator const& a, CommonIterator<It, St> const& b) {
+    constexpr friend auto operator==(CommonIterator const& a, CommonIterator<It, St> const& b) -> bool {
         if (a.m_state.index() == b.m_state.index()) {
             return true;
         }
@@ -81,7 +83,7 @@ private:
 
     template<typename It, concepts::SentinelFor<It> St>
     requires(concepts::SentinelFor<Sent, It> && concepts::EqualityComparableWith<Iter, It>)
-    constexpr friend bool operator==(CommonIterator const& a, CommonIterator<It, St> const& b) {
+    constexpr friend auto operator==(CommonIterator const& a, CommonIterator<It, St> const& b) -> bool {
         if (a.m_state.index() == 1 && b.m_state.index() == 1) {
             return true;
         } else if (a.m_state.index() == 0 && b.m_state.index() == 0) {
@@ -95,7 +97,8 @@ private:
 
     template<concepts::SizedSentinelFor<Iter> It, concepts::SizedSentinelFor<Iter> St>
     requires(concepts::SizedSentinelFor<Sent, Iter>)
-    constexpr friend meta::IteratorSSizeType<It> operator-(CommonIterator const& a, CommonIterator<It, St> const& b) {
+    constexpr friend auto operator-(CommonIterator const& a, CommonIterator<It, St> const& b)
+        -> meta::IteratorSSizeType<It> {
         if (a.m_state.index() == 1 && b.m_state.index() == 1) {
             return 0;
         } else if (a.m_state.index() == 0 && b.m_state.index() == 0) {
@@ -107,7 +110,7 @@ private:
         }
     }
 
-    constexpr friend decltype(auto) tag_invoke(types::Tag<iterator_move>, CommonIterator const& a) {
+    constexpr friend auto tag_invoke(types::Tag<iterator_move>, CommonIterator const& a) -> decltype(auto) {
         return iterator_move(util::get<0>(a.m_state));
     }
 

@@ -32,16 +32,16 @@ public:
     StaticRing(StaticRing const&) = default;
     StaticRing(StaticRing&&) = default;
 
-    StaticRing& operator=(StaticRing const&) = default;
-    StaticRing& operator=(StaticRing&&) = default;
+    auto operator=(StaticRing const&) -> StaticRing& = default;
+    auto operator=(StaticRing&&) -> StaticRing& = default;
 
-    constexpr Span<T> span() { return { m_data, m_size }; }
-    constexpr Span<T const> span() const { return { m_data, m_size }; }
+    constexpr auto span() -> Span<T> { return { m_data, m_size }; }
+    constexpr auto span() const -> Span<T const> { return { m_data, m_size }; }
 
-    constexpr usize capacity() const { return inline_capacity; }
-    constexpr usize max_size() const { return inline_capacity; }
+    constexpr auto capacity() const -> usize { return inline_capacity; }
+    constexpr auto max_size() const -> usize { return inline_capacity; }
 
-    constexpr Expected<void, NoCapacityError> reserve_from_nothing(usize n) {
+    constexpr auto reserve_from_nothing(usize n) -> Expected<void, NoCapacityError> {
         DI_ASSERT(this->size() == 0u);
         if (n > inline_capacity) {
             return Unexpected(NoCapacityError {});
@@ -50,8 +50,8 @@ public:
     }
     constexpr void assume_size(usize size) { m_size = static_cast<SizeType>(size); }
 
-    constexpr usize head() const { return m_head; }
-    constexpr usize tail() const { return m_tail; }
+    constexpr auto head() const -> usize { return m_head; }
+    constexpr auto tail() const -> usize { return m_tail; }
 
     constexpr void assume_head(usize head) { m_head = static_cast<SizeType>(head); }
     constexpr void assume_tail(usize tail) { m_tail = static_cast<SizeType>(tail); }

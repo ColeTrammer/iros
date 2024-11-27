@@ -13,7 +13,7 @@ namespace detail {
     struct UnpackFunction<meta::ListV<values...>> {
         template<typename F>
         requires(concepts::Invocable<F&, meta::ListV<values...>>)
-        constexpr decltype(auto) operator()(F&& function) const {
+        constexpr auto operator()(F&& function) const -> decltype(auto) {
             return function::invoke(function, meta::ListV<values...> {});
         }
     };

@@ -24,8 +24,8 @@ using IrqHandler = di::Function<IrqStatus(IrqContext&)>;
 /// @param error_code The CPU error code, 0 if not present
 extern "C" void generic_irq_handler(GlobalIrqNumber irq, iris::arch::TaskState& task_state, int error_code);
 
-Expected<GlobalIrqNumber> irq_number_for_legacy_isa_interrupt_number(IrqLine irq_line);
-Expected<usize> register_external_irq_handler(IrqLine line, IrqHandler handler);
-Expected<void> register_exception_handler(GlobalIrqNumber number, IrqHandler handler);
+auto irq_number_for_legacy_isa_interrupt_number(IrqLine irq_line) -> Expected<GlobalIrqNumber>;
+auto register_external_irq_handler(IrqLine line, IrqHandler handler) -> Expected<usize>;
+auto register_exception_handler(GlobalIrqNumber number, IrqHandler handler) -> Expected<void>;
 void unregister_external_irq_handler(IrqLine line, usize handler_id);
 }

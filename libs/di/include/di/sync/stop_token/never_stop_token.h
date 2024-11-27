@@ -11,7 +11,7 @@ public:
     template<typename>
     using CallbackType = Callback;
 
-    constexpr static bool stop_requested() { return false; }
-    constexpr static bool stop_possible() { return false; }
+    constexpr static auto stop_requested() -> bool { return false; }
+    constexpr static auto stop_possible() -> bool { return false; }
 };
 }

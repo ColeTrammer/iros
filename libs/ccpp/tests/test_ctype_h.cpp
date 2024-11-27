@@ -3,11 +3,11 @@
 #include <stdio.h>
 
 namespace ctype_h {
-[[gnu::noinline]] static bool do_ctype(int (*f)(int), int ch) {
+[[gnu::noinline]] static auto do_ctype(int (*f)(int), int ch) -> bool {
     return bool(di::black_box(f)(di::black_box(ch)));
 }
 
-[[gnu::noinline]] static int do_toc(int (*f)(int), int ch) {
+[[gnu::noinline]] static auto do_toc(int (*f)(int), int ch) -> int {
     return di::black_box(f)(di::black_box(ch));
 }
 

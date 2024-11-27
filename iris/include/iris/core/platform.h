@@ -5,7 +5,6 @@
 #include <di/container/allocator/forward_declaration.h>
 #include <di/types/integers.h>
 #include <di/util/std_new.h>
-#include <di/vocab/error/prelude.h>
 #include <iris/core/error.h>
 #include <iris/core/spinlock.h>
 
@@ -16,7 +15,7 @@ class DumbSpinlock;
 namespace di::platform {
 using ThreadId = types::i32;
 
-extern ThreadId get_current_thread_id();
+extern auto get_current_thread_id() -> ThreadId;
 
 using DefaultLock = iris::Spinlock;
 

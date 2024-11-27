@@ -1,7 +1,7 @@
 #include <ctype.h>
 #include <stdio.h>
 
-extern "C" int isalpha(int ch) {
+extern "C" auto isalpha(int ch) -> int {
     if (ch == EOF) {
         return 0;
     }

@@ -11,7 +11,7 @@ namespace detail {
     struct MinMaxElementFunction {
         template<concepts::ForwardIterator It, concepts::SentinelFor<It> Sent, typename Proj = function::Identity,
                  concepts::IndirectStrictWeakOrder<meta::Projected<It, Proj>> Comp = function::Compare>
-        constexpr MinMaxResult<It> operator()(It first, Sent last, Comp comp = {}, Proj proj = {}) const {
+        constexpr auto operator()(It first, Sent last, Comp comp = {}, Proj proj = {}) const -> MinMaxResult<It> {
             if (first == last) {
                 return { first, first };
             }
@@ -67,8 +67,8 @@ namespace detail {
         template<concepts::ForwardContainer Con, typename Proj = function::Identity,
                  concepts::IndirectStrictWeakOrder<meta::Projected<meta::ContainerIterator<Con>, Proj>> Comp =
                      function::Compare>
-        constexpr MinMaxResult<meta::BorrowedIterator<Con>> operator()(Con&& container, Comp comp = {},
-                                                                       Proj proj = {}) const {
+        constexpr auto operator()(Con&& container, Comp comp = {}, Proj proj = {}) const
+            -> MinMaxResult<meta::BorrowedIterator<Con>> {
             return (*this)(container::begin(container), container::end(container), util::ref(comp), util::ref(proj));
         }
     };

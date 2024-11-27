@@ -9,6 +9,7 @@
 #include <di/execution/meta/await_result.h>
 #include <di/execution/receiver/set_error.h>
 #include <di/function/invoke.h>
+#include <di/platform/compiler.h>
 #include <di/platform/prelude.h>
 #include <di/util/addressof.h>
 #include <di/util/exchange.h>
@@ -38,7 +39,7 @@ namespace connect_awaitable_ns {
 
                 auto get_return_object() { return Type { CoroutineHandle<Promise>::from_promise(*this) }; }
 
-                void* operator new(usize size) noexcept { return ::operator new(size, std::nothrow); }
+                auto operator new(usize size) noexcept -> void* { return ::operator new(size, std::nothrow); }
 
                 void operator delete(void* ptr, usize size) noexcept { ::operator delete(ptr, size); }
 
@@ -49,7 +50,7 @@ namespace connect_awaitable_ns {
                     struct Awaiter {
                         Fn&& function;
 
-                        bool await_ready() noexcept { return false; }
+                        auto await_ready() noexcept -> bool { return false; }
                         void await_suspend(CoroutineHandle<>) { function::invoke(util::forward<Fn>(function)); }
                         void await_resume() { util::unreachable(); }
                     };
@@ -57,23 +58,23 @@ namespace connect_awaitable_ns {
                     return Awaiter { util::forward<Fn>(function) };
                 }
 
-                CoroutineHandle<> unhandled_error(vocab::Error error) {
+                auto unhandled_error(vocab::Error error) -> CoroutineHandle<> {
                     set_error(util::move(receiver), util::move(error));
                     return noop_coroutine();
                 }
 
-                CoroutineHandle<> unhandled_stopped() {
+                auto unhandled_stopped() -> CoroutineHandle<> {
                     set_stopped(util::move(receiver));
                     return noop_coroutine();
                 }
 
-                SuspendAlways initial_suspend() noexcept { return {}; }
-                SuspendAlways final_suspend() noexcept { util::unreachable(); }
+                auto initial_suspend() noexcept -> SuspendAlways { return {}; }
+                auto final_suspend() noexcept -> SuspendAlways { util::unreachable(); }
                 void return_void() noexcept { util::unreachable(); }
                 void unhandled_exception() noexcept { util::unreachable(); }
 
             private:
-                friend decltype(auto) tag_invoke(types::Tag<get_env>, Promise const& self) {
+                friend auto tag_invoke(types::Tag<get_env>, Promise const& self) -> decltype(auto) {
                     return get_env(self.receiver);
                 }
             };
@@ -91,7 +92,7 @@ namespace connect_awaitable_ns {
 
             void set_receiver(Receiver&& receiver) { m_receiver = util::move(receiver); }
 
-            bool allocation_failed() const { return !m_coroutine; }
+            auto allocation_failed() const -> bool { return !m_coroutine; }
 
         private:
             explicit Type(CoroutineHandle<> coroutine) : m_coroutine(coroutine) {}
@@ -139,9 +140,11 @@ namespace connect_awaitable_ns {
 
     private:
 #pragma GCC diagnostic push
+#ifdef DI_GCC
 #pragma GCC diagnostic ignored "-Wsubobject-linkage"
+#endif
         template<typename Awaitable, typename Receiver>
-        static OperationState<Receiver> impl(Awaitable awaitable, Receiver receiver) {
+        static auto impl(Awaitable awaitable, Receiver receiver) -> OperationState<Receiver> {
             using Result = meta::AwaitResult<Awaitable, Promise<Receiver>>;
 
             // Connecting any awaitable with a receiver is a matter of returning an operation

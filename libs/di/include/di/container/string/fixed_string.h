@@ -15,19 +15,19 @@ public:
         m_data[count] = '\0';
     }
 
-    constexpr char const* data() const { return m_data; }
+    constexpr auto data() const -> char const* { return m_data; }
     constexpr static auto size() { return count; }
 
-    constexpr char const* begin() const { return m_data; }
-    constexpr char const* end() const { return m_data + count; }
+    constexpr auto begin() const -> char const* { return m_data; }
+    constexpr auto end() const -> char const* { return m_data + count; }
 
     template<types::size_t other_size>
     requires(count != other_size)
-    constexpr friend bool operator==(FixedString const&, FixedString<other_size> const&) {
+    constexpr friend auto operator==(FixedString const&, FixedString<other_size> const&) -> bool {
         return false;
     }
 
-    bool operator==(FixedString const&) const = default;
+    auto operator==(FixedString const&) const -> bool = default;
     auto operator<=>(FixedString const&) const = default;
 };
 

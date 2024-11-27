@@ -18,7 +18,7 @@ namespace detail {
     struct ChunkFunction {
         template<concepts::ViewableContainer Con, typename SSizeType>
         requires(CustomChunk<Con, SSizeType> || ViewChunk<Con, SSizeType>)
-        constexpr concepts::View auto operator()(Con&& container, SSizeType&& predicate) const {
+        constexpr auto operator()(Con&& container, SSizeType&& predicate) const -> concepts::View auto {
             if constexpr (CustomChunk<Con, SSizeType>) {
                 return function::tag_invoke(*this, util::forward<Con>(container), util::forward<SSizeType>(predicate));
             } else {

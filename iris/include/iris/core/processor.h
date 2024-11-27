@@ -22,19 +22,19 @@ public:
 
     explicit Processor(u16 id) : m_id(id) {}
 
-    u16 id() const { return m_id; }
-    Scheduler& scheduler() { return m_scheduler; }
+    auto id() const -> u16 { return m_id; }
+    auto scheduler() -> Scheduler& { return m_scheduler; }
 
     void mark_as_initialized() { m_is_initialized.store(true, di::MemoryOrder::Release); }
-    bool is_initialized() const { return m_is_initialized.load(di::MemoryOrder::Acquire); }
+    auto is_initialized() const -> bool { return m_is_initialized.load(di::MemoryOrder::Acquire); }
 
     void mark_as_booted() { m_is_booted.store(true, di::MemoryOrder::Release); }
-    bool is_booted() const { return m_is_booted.load(di::MemoryOrder::Acquire); }
+    auto is_booted() const -> bool { return m_is_booted.load(di::MemoryOrder::Acquire); }
 
     void mark_as_online() { m_is_online.store(true, di::MemoryOrder::Relaxed); }
-    bool is_online() const { return m_is_online.load(di::MemoryOrder::Relaxed); }
+    auto is_online() const -> bool { return m_is_online.load(di::MemoryOrder::Relaxed); }
 
-    arch::ArchProcessor& arch_processor() { return m_arch_processor; }
+    auto arch_processor() -> arch::ArchProcessor& { return m_arch_processor; }
 
     void send_ipi(u32 target_processor_id, di::FunctionRef<void(IpiMessage&)> factory);
     void broadcast_ipi(di::FunctionRef<void(IpiMessage&)> factory);

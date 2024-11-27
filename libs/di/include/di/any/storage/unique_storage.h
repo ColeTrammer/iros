@@ -42,10 +42,10 @@ public:
     using Manage = meta::Type<detail::UniqueStorageManage<UniqueStorage, Alloc>>;
     using Interface = meta::List<Manage>;
 
-    constexpr static StorageCategory storage_category() { return StorageCategory::TriviallyRelocatable; }
+    constexpr static auto storage_category() -> StorageCategory { return StorageCategory::TriviallyRelocatable; }
 
     template<typename T>
-    constexpr static bool creation_is_fallible(InPlaceType<T>) {
+    constexpr static auto creation_is_fallible(InPlaceType<T>) -> bool {
         return concepts::FallibleAllocator<Alloc>;
     }
 
@@ -80,7 +80,7 @@ public:
     UniqueStorage() = default;
 
     UniqueStorage(UniqueStorage const&) = default;
-    UniqueStorage& operator=(UniqueStorage const&) = default;
+    auto operator=(UniqueStorage const&) -> UniqueStorage& = default;
 
     ~UniqueStorage() = default;
 
@@ -107,12 +107,12 @@ public:
     }
 
     template<typename T>
-    constexpr T* down_cast() {
+    constexpr auto down_cast() -> T* {
         return static_cast<T*>(m_pointer);
     }
 
     template<typename T>
-    constexpr T const* down_cast() const {
+    constexpr auto down_cast() const -> T const* {
         return static_cast<T const*>(m_pointer);
     }
 

@@ -20,7 +20,7 @@ namespace detail {
     struct ReflectFunction {
         template<typename T, typename U = meta::RemoveCVRef<T>>
         requires(concepts::TagInvocable<ReflectFunction, InPlaceType<U>>)
-        constexpr decltype(auto) operator()(InPlaceType<T>) const {
+        constexpr auto operator()(InPlaceType<T>) const -> decltype(auto) {
             using R = meta::TagInvokeResult<ReflectFunction, InPlaceType<U>>;
             static_assert(concepts::ReflectionValue<R>, "Reflect function must return fields or an atom");
             return function::tag_invoke(*this, in_place_type<U>);
@@ -30,14 +30,14 @@ namespace detail {
         requires(!concepts::TagInvocable<ReflectFunction, InPlaceType<U>> &&
                  (concepts::SameAs<U, bool> || concepts::Integer<U> || concepts::detail::ConstantString<U> ||
                   concepts::Container<U>) )
-        constexpr decltype(auto) operator()(InPlaceType<T>) const {
+        constexpr auto operator()(InPlaceType<T>) const -> decltype(auto) {
             return Atom<U> {};
         }
 
         template<typename T, typename U = meta::RemoveCVRef<T>>
         requires(!concepts::InstanceOf<U, InPlaceType> &&
                  requires { (util::declval<ReflectFunction const&>())(in_place_type<U>); })
-        constexpr decltype(auto) operator()(T&&) const {
+        constexpr auto operator()(T&&) const -> decltype(auto) {
             return (*this)(in_place_type<U>);
         }
     };

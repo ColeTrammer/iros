@@ -20,19 +20,19 @@
 namespace iris::mm {
 using namespace x86::amd64;
 
-static PageStructurePhysicalPage& init_as_page_structure_parent(PhysicalAddress address) {
+static auto init_as_page_structure_parent(PhysicalAddress address) -> PageStructurePhysicalPage& {
     auto& page = physical_page(address);
     di::construct_at(&page.as_page_structure_page, PageStructurePhysicalPage::Parent {});
     return page.as_page_structure_page;
 }
 
-static PageStructurePhysicalPage& init_as_page_structure_leaf(PhysicalAddress address) {
+static auto init_as_page_structure_leaf(PhysicalAddress address) -> PageStructurePhysicalPage& {
     auto& page = physical_page(address);
     di::construct_at(&page.as_page_structure_page, PageStructurePhysicalPage::Leaf {});
     return page.as_page_structure_page;
 };
 
-static page_structure::VirtualAddressStructure decompose_virtual_address(VirtualAddress virtual_address) {
+static auto decompose_virtual_address(VirtualAddress virtual_address) -> page_structure::VirtualAddressStructure {
     return di::bit_cast<page_structure::VirtualAddressStructure>(virtual_address.raw_value());
 }
 
@@ -58,7 +58,7 @@ AddressSpace::~AddressSpace() {
     });
 }
 
-Expected<void> LockedAddressSpace::destroy_region(VirtualAddress base, usize length) {
+auto LockedAddressSpace::destroy_region(VirtualAddress base, usize length) -> Expected<void> {
     auto it = this->m_regions.find(base);
     if (it == this->m_regions.end()) {
         println("WARNING: trying to unmap non-existent region"_sv);
@@ -144,8 +144,8 @@ void AddressSpace::load() {
     load_cr3(m_architecture_page_table_base.raw_value());
 }
 
-Expected<void> LockedAddressSpace::map_physical_page_early(VirtualAddress location, PhysicalAddress physical_address,
-                                                           RegionFlags flags) {
+auto LockedAddressSpace::map_physical_page_early(VirtualAddress location, PhysicalAddress physical_address,
+                                                 RegionFlags flags) -> Expected<void> {
     // NOTE: In the future, this function will not use the HHDM, which is only provided by Limine. To support other
     // bootloaders, we will need to use a different method to map pages early.
     auto const writable = !!(flags & RegionFlags::Writable);
@@ -201,8 +201,8 @@ Expected<void> LockedAddressSpace::map_physical_page_early(VirtualAddress locati
     return {};
 }
 
-Expected<void> LockedAddressSpace::map_physical_page(VirtualAddress location, PhysicalAddress physical_address,
-                                                     RegionFlags flags) {
+auto LockedAddressSpace::map_physical_page(VirtualAddress location, PhysicalAddress physical_address, RegionFlags flags)
+    -> Expected<void> {
     // NOTE: The writable and not executable flags only apply at page granularity.
     //       Without any better knowledge, we have to assume some parts of the higher-level
     //       page will have mixed mappings, so try to set the page structure flags to be as
@@ -283,7 +283,7 @@ Expected<void> LockedAddressSpace::map_physical_page(VirtualAddress location, Ph
     return {};
 }
 
-Expected<void> LockedAddressSpace::create_low_identity_mapping(VirtualAddress base, usize page_aligned_length) {
+auto LockedAddressSpace::create_low_identity_mapping(VirtualAddress base, usize page_aligned_length) -> Expected<void> {
     for (auto address : di::iota(base, base + isize(page_aligned_length)) | di::stride(4096)) {
         auto physical_address = PhysicalAddress(address.raw_value());
         auto flags = RegionFlags::Readable | RegionFlags::Writable | RegionFlags::Executable;
@@ -292,7 +292,7 @@ Expected<void> LockedAddressSpace::create_low_identity_mapping(VirtualAddress ba
     return {};
 }
 
-Expected<void> LockedAddressSpace::remove_low_identity_mapping(VirtualAddress base, usize page_aligned_length) {
+auto LockedAddressSpace::remove_low_identity_mapping(VirtualAddress base, usize page_aligned_length) -> Expected<void> {
     for (auto page = base; page < base + page_aligned_length; page += 4096zu) {
         auto decomposed = decompose_virtual_address(page);
         auto pml4_offset = decomposed.get<page_structure::Pml4Offset>();
@@ -364,8 +364,8 @@ Expected<void> LockedAddressSpace::remove_low_identity_mapping(VirtualAddress ba
     return {};
 }
 
-Expected<void> LockedAddressSpace::setup_physical_memory_map(PhysicalAddress start, PhysicalAddress end,
-                                                             VirtualAddress virtual_start) {
+auto LockedAddressSpace::setup_physical_memory_map(PhysicalAddress start, PhysicalAddress end,
+                                                   VirtualAddress virtual_start) -> Expected<void> {
     auto decomposed = decompose_virtual_address(virtual_start);
     auto pml4_offset = decomposed.get<page_structure::Pml4Offset>();
     ASSERT_EQ(decomposed.get<page_structure::PdpOffset>(), 0);
@@ -423,9 +423,8 @@ Expected<void> LockedAddressSpace::setup_physical_memory_map(PhysicalAddress sta
     return {};
 }
 
-Expected<void> LockedAddressSpace::setup_kernel_region(PhysicalAddress kernel_physical_start,
-                                                       VirtualAddress kernel_virtual_start,
-                                                       VirtualAddress kernel_virtual_end, RegionFlags flags) {
+auto LockedAddressSpace::setup_kernel_region(PhysicalAddress kernel_physical_start, VirtualAddress kernel_virtual_start,
+                                             VirtualAddress kernel_virtual_end, RegionFlags flags) -> Expected<void> {
     for (auto offset = 0_u64; kernel_virtual_start + offset < kernel_virtual_end; offset += 4096) {
         auto physical_address = kernel_physical_start + offset;
         auto virtual_address = kernel_virtual_start + offset;
@@ -434,7 +433,7 @@ Expected<void> LockedAddressSpace::setup_kernel_region(PhysicalAddress kernel_ph
     return {};
 }
 
-Expected<void> LockedAddressSpace::bootstrap_kernel_page_tracking() {
+auto LockedAddressSpace::bootstrap_kernel_page_tracking() -> Expected<void> {
     auto& global_state = global_state_in_boot();
     auto const max_physical_address = global_state.max_physical_address;
     auto const total_pages = di::divide_round_up(max_physical_address.raw_value(), 4096);
@@ -615,7 +614,7 @@ void LockedAddressSpace::flush_tlb_global(VirtualAddress base, usize byte_length
     }
 }
 
-Expected<di::Arc<AddressSpace>> create_empty_user_address_space() {
+auto create_empty_user_address_space() -> Expected<di::Arc<AddressSpace>> {
     // NOTE: allocate the address space first, so that the allocated page frame
     //       will not be leaked on failure.
     auto new_address_space = TRY(di::make_arc<AddressSpace>());

@@ -12,8 +12,8 @@ namespace detail {
         requires((concepts::ForwardIterator<It> || concepts::SizedSentinelFor<Sent, It>) &&
                  (concepts::ForwardIterator<Jt> || concepts::SizedSentinelFor<Jent, Jt>) &&
                  concepts::IndirectlyComparable<It, Jt, Pred, Proj, Jroj>)
-        constexpr bool operator()(It it, Sent ed, Jt jt, Jent fd, Pred pred = {}, Proj proj = {},
-                                  Jroj jroj = {}) const {
+        constexpr auto operator()(It it, Sent ed, Jt jt, Jent fd, Pred pred = {}, Proj proj = {}, Jroj jroj = {}) const
+            -> bool {
             auto n = container::distance(it, ed);
             auto m = container::distance(jt, fd);
             if (n < m) {
@@ -31,7 +31,7 @@ namespace detail {
                  (concepts::ForwardContainer<Don> || concepts::SizedContainer<Don>) &&
                  concepts::IndirectlyComparable<meta::ContainerIterator<Con>, meta::ContainerIterator<Don>, Pred, Proj,
                                                 Jroj>)
-        constexpr bool operator()(Con&& a, Don&& b, Pred pred = {}, Proj proj = {}, Jroj jroj = {}) const {
+        constexpr auto operator()(Con&& a, Don&& b, Pred pred = {}, Proj proj = {}, Jroj jroj = {}) const -> bool {
             return (*this)(container::begin(a), container::end(a), container::begin(b), container::end(b),
                            util::ref(pred), util::ref(proj), util::ref(jroj));
         }

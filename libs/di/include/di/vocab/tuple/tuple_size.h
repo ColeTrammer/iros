@@ -9,7 +9,7 @@ namespace di::vocab {
 struct TupleSizeFunction {
     template<typename T>
     requires(concepts::TagInvocableTo<TupleSizeFunction, types::size_t, types::InPlaceType<T>>)
-    constexpr types::size_t operator()(types::InPlaceType<T>) const {
+    constexpr auto operator()(types::InPlaceType<T>) const -> types::size_t {
         return function::tag_invoke(*this, types::in_place_type<T>);
     }
 };

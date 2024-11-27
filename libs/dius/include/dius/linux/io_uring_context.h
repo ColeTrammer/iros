@@ -52,7 +52,7 @@ static void enqueue_io_operation(IoUringContext*, OperationStateBase* op, Fun&& 
 
 inline void enqueue_operation(IoUringContext*, OperationStateBase*);
 
-inline IoUringScheduler get_scheduler(IoUringContext*);
+inline auto get_scheduler(IoUringContext*) -> IoUringScheduler;
 
 struct OperationStateBase : di::IntrusiveForwardListNode<> {
 public:
@@ -62,13 +62,13 @@ public:
 
 struct IoUringContext {
 public:
-    static di::Result<IoUringContext> create();
+    static auto create() -> di::Result<IoUringContext>;
 
     IoUringContext(IoUringContext&& other) : m_handle(di::move(other.m_handle)) {}
 
     ~IoUringContext();
 
-    IoUringScheduler get_scheduler();
+    auto get_scheduler() -> IoUringScheduler;
 
     void run();
     void finish() { m_done.store(true); }
@@ -87,9 +87,9 @@ public:
     IoUringContext* parent { nullptr };
 
 private:
-    friend ScheduleSender tag_invoke(di::Tag<di::execution::schedule>, IoUringScheduler const& self);
+    friend auto tag_invoke(di::Tag<di::execution::schedule>, IoUringScheduler const& self) -> ScheduleSender;
 
-    constexpr friend bool operator==(IoUringScheduler const&, IoUringScheduler const&) = default;
+    constexpr friend auto operator==(IoUringScheduler const&, IoUringScheduler const&) -> bool = default;
 };
 
 struct Env {
@@ -631,12 +631,12 @@ public:
     explicit AsyncFile(IoUringContext* parent, di::Path path, OpenMode mode, u16 create_mode)
         : m_parent(parent), m_path(di::move(path)), m_mode(mode), m_create_mode(create_mode) {}
 
-    IoUringContext* parent() const { return m_parent; }
-    di::Path const& path() const { return m_path; }
-    OpenMode mode() const { return m_mode; }
-    u16 create_mode() const { return m_create_mode; }
+    auto parent() const -> IoUringContext* { return m_parent; }
+    auto path() const -> di::Path const& { return m_path; }
+    auto mode() const -> OpenMode { return m_mode; }
+    auto create_mode() const -> u16 { return m_create_mode; }
 
-    int fd() const { return m_fd; }
+    auto fd() const -> int { return m_fd; }
     void set_fd(int fd) { m_fd = fd; }
 
 private:
@@ -661,7 +661,7 @@ class AcceptSocket {
 public:
     explicit AcceptSocket(int base_fd) : m_base_fd(base_fd) {}
 
-    int base_fd() const { return m_base_fd; }
+    auto base_fd() const -> int { return m_base_fd; }
 
 private:
     int m_base_fd { -1 };
@@ -677,9 +677,9 @@ public:
     explicit AsyncSocket(IoUringContext* context, Args&&... args)
         : Base(di::forward<Args>(args)...), m_parent(context) {}
 
-    IoUringContext* parent() const { return m_parent; }
+    auto parent() const -> IoUringContext* { return m_parent; }
 
-    int fd() const { return m_fd; }
+    auto fd() const -> int { return m_fd; }
     void set_fd(int fd) { m_fd = fd; }
 
 private:
@@ -960,8 +960,8 @@ private:
             public:
                 explicit Rec2(Rec* receiver) : m_receiver(receiver) {}
 
-                Rec const& base() const& { return *m_receiver; }
-                Rec&& base() && { return di::move(*m_receiver); }
+                auto base() const& -> Rec const& { return *m_receiver; }
+                auto base() && -> Rec&& { return di::move(*m_receiver); }
 
             private:
                 Rec* m_receiver;
@@ -1028,7 +1028,7 @@ inline auto tag_invoke(di::Tag<di::execution::run>, AsyncSocket<AcceptSocket>& s
     return RunSender<AsyncSocket<AcceptSocket>, AcceptSender> { self.parent(), self };
 }
 
-inline ScheduleSender tag_invoke(di::Tag<di::execution::schedule>, IoUringScheduler const& self) {
+inline auto tag_invoke(di::Tag<di::execution::schedule>, IoUringScheduler const& self) -> ScheduleSender {
     return { self.parent };
 }
 
@@ -1045,7 +1045,7 @@ inline auto tag_invoke(di::Tag<di::execution::async_make_socket>, IoUringSchedul
     return di::make_deferred<AsyncSocket<di::Void>>(self.parent);
 }
 
-inline di::Result<IoUringContext> IoUringContext::create() {
+inline auto IoUringContext::create() -> di::Result<IoUringContext> {
     return IoUringContext(TRY(io_uring::IoUringHandle::create()));
 }
 
@@ -1064,11 +1064,11 @@ inline void enqueue_operation(IoUringContext* context, OperationStateBase* op) {
     context->m_queue.push(*op);
 }
 
-inline IoUringScheduler get_scheduler(IoUringContext* context) {
+inline auto get_scheduler(IoUringContext* context) -> IoUringScheduler {
     return context->get_scheduler();
 }
 
-inline IoUringScheduler IoUringContext::get_scheduler() {
+inline auto IoUringContext::get_scheduler() -> IoUringScheduler {
     return IoUringScheduler(this);
 }
 }

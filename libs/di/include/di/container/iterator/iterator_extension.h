@@ -27,8 +27,8 @@ public:
 
     constexpr explicit IteratorExtension(Iter base) : m_base(util::move(base)) {}
 
-    constexpr Iter const& base() const& { return m_base; }
-    constexpr Iter base() && { return util::move(m_base); }
+    constexpr auto base() const& -> Iter const& { return m_base; }
+    constexpr auto base() && -> Iter { return util::move(m_base); }
 
     constexpr void advance_one() { ++m_base; }
 
@@ -45,13 +45,13 @@ public:
     }
 
 private:
-    constexpr friend SSizeType operator-(Self const& a, Self const& b)
+    constexpr friend auto operator-(Self const& a, Self const& b) -> SSizeType
     requires(concepts::RandomAccessIterator<Iter>)
     {
         return a.base() - b.base();
     }
 
-    constexpr friend bool operator==(Self const& a, Self const& b)
+    constexpr friend auto operator==(Self const& a, Self const& b) -> bool
     requires(concepts::EqualityComparable<Iter>)
     {
         return a.base() == b.base();

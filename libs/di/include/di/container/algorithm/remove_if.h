@@ -10,7 +10,7 @@ namespace detail {
     struct RemoveIfFunction {
         template<concepts::Permutable It, concepts::SentinelFor<It> Sent, typename Proj = function::Identity,
                  concepts::IndirectUnaryPredicate<meta::Projected<It, Proj>> Pred>
-        constexpr View<It> operator()(It first, Sent last, Pred pred, Proj proj = {}) const {
+        constexpr auto operator()(It first, Sent last, Pred pred, Proj proj = {}) const -> View<It> {
             auto fast = container::find_if(util::move(first), last, util::ref(pred), util::ref(proj));
             if (fast == last) {
                 return { fast, fast };
@@ -29,7 +29,7 @@ namespace detail {
         template<concepts::ForwardContainer Con, typename Proj = function::Identity,
                  concepts::IndirectUnaryPredicate<meta::Projected<meta::ContainerIterator<Con>, Proj>> Pred>
         requires(concepts::Permutable<meta::ContainerIterator<Con>>)
-        constexpr meta::BorrowedView<Con> operator()(Con&& container, Pred pred, Proj proj = {}) const {
+        constexpr auto operator()(Con&& container, Pred pred, Proj proj = {}) const -> meta::BorrowedView<Con> {
             return (*this)(container::begin(container), container::end(container), util::ref(pred), util::ref(proj));
         }
     };

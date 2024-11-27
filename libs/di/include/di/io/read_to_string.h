@@ -7,7 +7,7 @@
 namespace di::io {
 namespace detail {
     struct ReadToString {
-        constexpr Result<String> operator()(Impl<Reader> auto& reader) const {
+        constexpr auto operator()(Impl<Reader> auto& reader) const -> Result<String> {
             auto buffer = DI_TRY(read_all(reader));
 
             // FIXME: consider using reinterpret_cast<> when not in constexpr context.

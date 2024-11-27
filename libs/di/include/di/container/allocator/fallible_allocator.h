@@ -11,7 +11,8 @@
 
 namespace di::container {
 struct FallibleAllocator {
-    static vocab::Expected<AllocationResult<>, vocab::GenericCode> allocate(usize size, usize alignment) noexcept {
+    static auto allocate(usize size, usize alignment) noexcept
+        -> vocab::Expected<AllocationResult<>, vocab::GenericCode> {
         auto* result =
             ::operator new(size, std::align_val_t { container::max(alignment, alignof(void*)) }, std::nothrow);
         if (!result) {

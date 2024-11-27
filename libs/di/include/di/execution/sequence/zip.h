@@ -174,7 +174,7 @@ namespace zip_ns {
                 }
             }
 
-            bool at_least_one_sequence_stopped() const {
+            auto at_least_one_sequence_stopped() const -> bool {
                 // This can use relaxed memory ordering, since it's only checked after all sequences have either
                 // completed or have sent their next value.
                 return outer_remaining.load(sync::MemoryOrder::Relaxed) < sizeof...(Seqs);

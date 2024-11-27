@@ -10,8 +10,8 @@ class RecursiveDirectoryIterator
     , public di::meta::EnableBorrowedContainer<RecursiveDirectoryIterator>
     , public di::meta::EnableView<RecursiveDirectoryIterator> {
 public:
-    static di::Result<RecursiveDirectoryIterator> create(di::Path path,
-                                                         DirectoryOptions options = DirectoryOptions::None) {
+    static auto create(di::Path path, DirectoryOptions options = DirectoryOptions::None)
+        -> di::Result<RecursiveDirectoryIterator> {
         auto result = RecursiveDirectoryIterator { options };
         auto base = DI_TRY(DirectoryIterator::create(di::move(path), options));
         if (base != DirectoryIterator {}) {
@@ -26,17 +26,17 @@ public:
     RecursiveDirectoryIterator(RecursiveDirectoryIterator const&) = delete;
     RecursiveDirectoryIterator(RecursiveDirectoryIterator&&) = default;
 
-    RecursiveDirectoryIterator& operator=(RecursiveDirectoryIterator const&) = delete;
-    RecursiveDirectoryIterator& operator=(RecursiveDirectoryIterator&&) = default;
+    auto operator=(RecursiveDirectoryIterator const&) -> RecursiveDirectoryIterator& = delete;
+    auto operator=(RecursiveDirectoryIterator&&) -> RecursiveDirectoryIterator& = default;
 
-    di::Expected<DirectoryEntry const&, di::GenericCode> operator*() const { return **m_stack.top(); }
+    auto operator*() const -> di::Expected<DirectoryEntry const&, di::GenericCode> { return **m_stack.top(); }
 
-    RecursiveDirectoryIterator begin() { return di::move(*this); }
-    RecursiveDirectoryIterator end() const { return {}; }
+    auto begin() -> RecursiveDirectoryIterator { return di::move(*this); }
+    auto end() const -> RecursiveDirectoryIterator { return {}; }
 
-    constexpr DirectoryOptions options() const { return m_options; }
-    constexpr i32 depth() const { return static_cast<i32>(m_stack.size()) - 1; }
-    constexpr bool recursion_pending() const { return m_recursion_pending; }
+    constexpr auto options() const -> DirectoryOptions { return m_options; }
+    constexpr auto depth() const -> i32 { return static_cast<i32>(m_stack.size()) - 1; }
+    constexpr auto recursion_pending() const -> bool { return m_recursion_pending; }
 
     void advance_one() {
         auto& top = *m_stack.top();
@@ -97,7 +97,7 @@ public:
 private:
     constexpr explicit RecursiveDirectoryIterator(DirectoryOptions options) : m_options(options) {}
 
-    constexpr friend bool operator==(RecursiveDirectoryIterator const& a, RecursiveDirectoryIterator const& b) {
+    constexpr friend auto operator==(RecursiveDirectoryIterator const& a, RecursiveDirectoryIterator const& b) -> bool {
         return a.m_stack.empty() && b.m_stack.empty();
     }
 

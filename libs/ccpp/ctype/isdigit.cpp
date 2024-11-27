@@ -1,7 +1,7 @@
 #include <ctype.h>
 #include <stdio.h>
 
-extern "C" int isdigit(int ch) {
+extern "C" auto isdigit(int ch) -> int {
     if (ch == EOF) {
         return 0;
     }

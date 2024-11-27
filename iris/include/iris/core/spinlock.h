@@ -10,7 +10,7 @@ public:
     Spinlock() = default;
 
     void lock();
-    bool try_lock();
+    auto try_lock() -> bool;
     void unlock();
 
 private:

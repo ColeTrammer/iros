@@ -6,7 +6,7 @@
 
 namespace di::container::vector {
 template<concepts::detail::ConstantVector Vec>
-constexpr size_t size_bytes(Vec const& vector) {
+constexpr auto size_bytes(Vec const& vector) -> size_t {
     return sizeof(meta::detail::VectorValue<Vec>) * vector::size(vector);
 }
 }

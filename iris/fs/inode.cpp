@@ -15,39 +15,39 @@
 namespace iris {
 InodeFile::InodeFile(di::Arc<TNode> tnode) : m_tnode(di::move(tnode)) {}
 
-di::AnySenderOf<mm::PhysicalAddress> tag_invoke(di::Tag<inode_read>, Inode& self, mm::BackingObject& backing_object,
-                                                u64 page_number) {
+auto tag_invoke(di::Tag<inode_read>, Inode& self, mm::BackingObject& backing_object, u64 page_number)
+    -> di::AnySenderOf<mm::PhysicalAddress> {
     return inode_read(self.m_impl, backing_object, page_number);
 }
 
-di::AnySenderOf<usize> tag_invoke(di::Tag<inode_read_directory>, Inode& self, mm::BackingObject& backing_object,
-                                  u64& offset, UserspaceBuffer<byte> buffer) {
+auto tag_invoke(di::Tag<inode_read_directory>, Inode& self, mm::BackingObject& backing_object, u64& offset,
+                UserspaceBuffer<byte> buffer) -> di::AnySenderOf<usize> {
     return inode_read_directory(self.m_impl, backing_object, offset, buffer);
 }
 
-di::AnySenderOf<di::Arc<TNode>> tag_invoke(di::Tag<inode_lookup>, Inode& self, di::Arc<TNode> parent,
-                                           di::TransparentStringView name) {
+auto tag_invoke(di::Tag<inode_lookup>, Inode& self, di::Arc<TNode> parent, di::TransparentStringView name)
+    -> di::AnySenderOf<di::Arc<TNode>> {
     return inode_lookup(self.m_impl, di::move(parent), name);
 }
 
-di::AnySenderOf<Metadata> tag_invoke(di::Tag<inode_metadata>, Inode& self) {
+auto tag_invoke(di::Tag<inode_metadata>, Inode& self) -> di::AnySenderOf<Metadata> {
     return inode_metadata(self.m_impl);
 }
 
-di::AnySenderOf<di::Arc<TNode>> tag_invoke(di::Tag<inode_create_node>, Inode& self, di::Arc<TNode> parent,
-                                           di::TransparentStringView name, MetadataType type) {
+auto tag_invoke(di::Tag<inode_create_node>, Inode& self, di::Arc<TNode> parent, di::TransparentStringView name,
+                MetadataType type) -> di::AnySenderOf<di::Arc<TNode>> {
     return inode_create_node(self.m_impl, di::move(parent), name, type);
 }
 
-di::AnySenderOf<> tag_invoke(di::Tag<inode_truncate>, Inode& self, u64 size) {
+auto tag_invoke(di::Tag<inode_truncate>, Inode& self, u64 size) -> di::AnySenderOf<> {
     return inode_truncate(self.m_impl, size);
 }
 
-di::AnySenderOf<di::Span<byte const>> tag_invoke(di::Tag<inode_hack_raw_data>, Inode& self) {
+auto tag_invoke(di::Tag<inode_hack_raw_data>, Inode& self) -> di::AnySenderOf<di::Span<byte const>> {
     return inode_hack_raw_data(self.m_impl);
 }
 
-di::AnySenderOf<usize> tag_invoke(di::Tag<read_file>, InodeFile& self, UserspaceBuffer<byte> buffer) {
+auto tag_invoke(di::Tag<read_file>, InodeFile& self, UserspaceBuffer<byte> buffer) -> di::AnySenderOf<usize> {
     auto& inode = *self.m_tnode->inode();
     auto metadata = co_await inode_metadata(inode);
     auto size = metadata.size;
@@ -86,12 +86,12 @@ di::AnySenderOf<usize> tag_invoke(di::Tag<read_file>, InodeFile& self, Userspace
     co_return nread;
 }
 
-di::AnySenderOf<usize> tag_invoke(di::Tag<read_directory>, InodeFile& self, UserspaceBuffer<byte> buffer) {
+auto tag_invoke(di::Tag<read_directory>, InodeFile& self, UserspaceBuffer<byte> buffer) -> di::AnySenderOf<usize> {
     auto& inode = *self.m_tnode->inode();
     return inode_read_directory(inode, inode.backing_object(), self.m_offset, buffer);
 }
 
-di::AnySenderOf<usize> tag_invoke(di::Tag<write_file>, InodeFile& self, UserspaceBuffer<byte const> buffer) {
+auto tag_invoke(di::Tag<write_file>, InodeFile& self, UserspaceBuffer<byte const> buffer) -> di::AnySenderOf<usize> {
     auto& inode = *self.m_tnode->inode();
     auto metadata = co_await inode_metadata(inode);
     auto size = metadata.size;
@@ -131,12 +131,12 @@ di::AnySenderOf<usize> tag_invoke(di::Tag<write_file>, InodeFile& self, Userspac
     co_return nwritten;
 }
 
-di::AnySenderOf<Metadata> tag_invoke(di::Tag<file_metadata>, InodeFile& self) {
+auto tag_invoke(di::Tag<file_metadata>, InodeFile& self) -> di::AnySenderOf<Metadata> {
     auto& inode = *self.m_tnode->inode();
     return inode_metadata(inode);
 }
 
-di::AnySenderOf<u64> tag_invoke(di::Tag<seek_file>, InodeFile& self, i64 offset, int whence) {
+auto tag_invoke(di::Tag<seek_file>, InodeFile& self, i64 offset, int whence) -> di::AnySenderOf<u64> {
     switch (whence) {
         case 0:
             self.m_offset = offset;
@@ -154,12 +154,12 @@ di::AnySenderOf<u64> tag_invoke(di::Tag<seek_file>, InodeFile& self, i64 offset,
     co_return di::Unexpected(Error::InvalidArgument);
 }
 
-di::AnySenderOf<void> tag_invoke(di::Tag<file_truncate>, InodeFile& self, u64 size) {
+auto tag_invoke(di::Tag<file_truncate>, InodeFile& self, u64 size) -> di::AnySenderOf<void> {
     auto& inode = *self.m_tnode->inode();
     return inode_truncate(inode, size);
 }
 
-di::AnySenderOf<di::Span<byte const>> tag_invoke(di::Tag<file_hack_raw_data>, InodeFile& self) {
+auto tag_invoke(di::Tag<file_hack_raw_data>, InodeFile& self) -> di::AnySenderOf<di::Span<byte const>> {
     auto& inode = *self.m_tnode->inode();
     return inode_hack_raw_data(inode);
 }

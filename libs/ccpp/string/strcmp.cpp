@@ -2,7 +2,7 @@
 #include <di/container/string/prelude.h>
 #include <string.h>
 
-extern "C" int strcmp(char const* lhs, char const* rhs) {
+extern "C" auto strcmp(char const* lhs, char const* rhs) -> int {
     auto a = di::ZCUString((unsigned char const*) lhs);
     auto b = di::ZCUString((unsigned char const*) rhs);
     auto result = di::container::compare(a, b);

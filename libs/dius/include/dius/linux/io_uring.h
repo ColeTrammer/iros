@@ -11,19 +11,19 @@ namespace io_uring {
     using CQE = struct io_uring_cqe;
     using SetupParams = struct io_uring_params;
 
-    di::Result<int> sys_enter(unsigned int fd, unsigned int to_submit, unsigned int min_complete, unsigned int flags,
-                              void const* arg, size_t arg_size);
-    di::Result<int> sys_register(unsigned int fd, unsigned int op_code, void* arg, unsigned int nr_args);
-    di::Result<SyncFile> sys_setup(u32 entries, SetupParams* params);
+    auto sys_enter(unsigned int fd, unsigned int to_submit, unsigned int min_complete, unsigned int flags,
+                   void const* arg, size_t arg_size) -> di::Result<int>;
+    auto sys_register(unsigned int fd, unsigned int op_code, void* arg, unsigned int nr_args) -> di::Result<int>;
+    auto sys_setup(u32 entries, SetupParams* params) -> di::Result<SyncFile>;
 
     class IoUringHandle {
     public:
-        static di::Result<IoUringHandle> create();
+        static auto create() -> di::Result<IoUringHandle>;
 
-        di::Optional<SQE&> get_next_sqe();
-        di::Optional<CQE&> get_next_cqe();
+        auto get_next_sqe() -> di::Optional<SQE&>;
+        auto get_next_cqe() -> di::Optional<CQE&>;
 
-        di::Result<void> submit_and_wait();
+        auto submit_and_wait() -> di::Result<void>;
 
     private:
         IoUringHandle() = default;

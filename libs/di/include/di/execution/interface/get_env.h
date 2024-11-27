@@ -10,7 +10,7 @@ namespace di::execution {
 namespace detail {
     struct GetEnvFunction {
         template<typename T>
-        constexpr decltype(auto) operator()(T const& value) const {
+        constexpr auto operator()(T const& value) const -> decltype(auto) {
             if constexpr (concepts::TagInvocable<GetEnvFunction, T const&>) {
                 static_assert(concepts::Queryable<meta::TagInvokeResult<GetEnvFunction, T const&>>,
                               "get_env() must return a Queryable.");

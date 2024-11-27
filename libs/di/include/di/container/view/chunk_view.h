@@ -33,11 +33,11 @@ private:
 
     public:
         InnerIterator(InnerIterator&&) = default;
-        InnerIterator& operator=(InnerIterator&&) = default;
+        auto operator=(InnerIterator&&) -> InnerIterator& = default;
 
-        constexpr Iter const& base() const& { return *m_parent->m_current; }
+        constexpr auto base() const& -> Iter const& { return *m_parent->m_current; }
 
-        constexpr decltype(auto) operator*() const { return **m_parent->m_current; }
+        constexpr auto operator*() const -> decltype(auto) { return **m_parent->m_current; }
 
         constexpr void advance_one() {
             ++*m_parent->m_current;
@@ -49,21 +49,21 @@ private:
         }
 
     private:
-        constexpr bool at_end() const { return m_parent->m_remainder == 0; }
+        constexpr auto at_end() const -> bool { return m_parent->m_remainder == 0; }
 
-        constexpr SSizeType distance() const {
+        constexpr auto distance() const -> SSizeType {
             return container::min(m_parent->m_remainder, container::end(m_parent->m_base) - *m_parent->m_current);
         }
 
-        constexpr friend bool operator==(InnerIterator const& a, DefaultSentinel) { return a.at_end(); }
+        constexpr friend auto operator==(InnerIterator const& a, DefaultSentinel) -> bool { return a.at_end(); }
 
-        constexpr friend SSizeType operator-(DefaultSentinel, InnerIterator const& a)
+        constexpr friend auto operator-(DefaultSentinel, InnerIterator const& a) -> SSizeType
         requires(concepts::SizedSentinelFor<Sent, Iter>)
         {
             return a.distance();
         }
 
-        constexpr friend SSizeType operator-(InnerIterator const& a, DefaultSentinel)
+        constexpr friend auto operator-(InnerIterator const& a, DefaultSentinel) -> SSizeType
         requires(concepts::SizedSentinelFor<Sent, Iter>)
         {
             return -(default_sentinel - a);
@@ -100,9 +100,9 @@ private:
 
     public:
         OuterIterator(OuterIterator&&) = default;
-        OuterIterator& operator=(OuterIterator&&) = default;
+        auto operator=(OuterIterator&&) -> OuterIterator& = default;
 
-        constexpr ValueType operator*() const { return ValueType(*m_parent); }
+        constexpr auto operator*() const -> ValueType { return ValueType(*m_parent); }
 
         constexpr void advance_one() {
             container::advance(*m_parent->m_current, m_parent->m_remainder, container::end(m_parent->m_base));
@@ -110,11 +110,11 @@ private:
         }
 
     private:
-        constexpr bool at_end() const {
+        constexpr auto at_end() const -> bool {
             return *m_parent->m_current == container::end(m_parent->m_base) && m_parent->m_remainder != 0;
         }
 
-        constexpr SSizeType distance() const {
+        constexpr auto distance() const -> SSizeType {
             auto const distance = container::end(m_parent->m_base) - *m_parent->m_current;
 
             if (distance < m_parent->m_remainder) {
@@ -123,15 +123,15 @@ private:
             return math::divide_round_up(distance - m_parent->m_remainder, m_parent->m_chunk_size) + 1;
         }
 
-        constexpr friend bool operator==(OuterIterator const& a, DefaultSentinel) { return a.at_end(); }
+        constexpr friend auto operator==(OuterIterator const& a, DefaultSentinel) -> bool { return a.at_end(); }
 
-        constexpr friend SSizeType operator-(DefaultSentinel, OuterIterator const& a)
+        constexpr friend auto operator-(DefaultSentinel, OuterIterator const& a) -> SSizeType
         requires(concepts::SizedSentinelFor<Sent, Iter>)
         {
             return a.distance();
         }
 
-        constexpr friend SSizeType operator-(OuterIterator const& a, DefaultSentinel)
+        constexpr friend auto operator-(OuterIterator const& a, DefaultSentinel) -> SSizeType
         requires(concepts::SizedSentinelFor<Sent, Iter>)
         {
             return -(default_sentinel - a);
@@ -149,12 +149,12 @@ public:
         DI_ASSERT(chunk_size > 0);
     }
 
-    constexpr View base() const&
+    constexpr auto base() const& -> View
     requires(concepts::CopyConstructible<View>)
     {
         return m_base;
     }
-    constexpr View base() && { return util::move(m_base); }
+    constexpr auto base() && -> View { return util::move(m_base); }
 
     constexpr auto chunk_size() const { return m_chunk_size; }
 
@@ -237,9 +237,9 @@ private:
             , m_chunk_size(other.m_chunk_size)
             , m_missing(other.m_missing) {}
 
-        constexpr Iter<is_const> base() { return m_base; }
+        constexpr auto base() -> Iter<is_const> { return m_base; }
 
-        constexpr decltype(auto) operator*() const {
+        constexpr auto operator*() const -> decltype(auto) {
             return view::take(reconstruct(in_place_type<Base<is_const>>, m_base, m_end), m_chunk_size);
         }
 
@@ -267,8 +267,10 @@ private:
         template<bool>
         friend class Iterator;
 
-        constexpr friend bool operator==(Iterator const& self, DefaultSentinel) { return self.m_base == self.m_end; }
-        constexpr friend bool operator==(Iterator const& a, Iterator const& b) { return a.m_base == b.m_base; }
+        constexpr friend auto operator==(Iterator const& self, DefaultSentinel) -> bool {
+            return self.m_base == self.m_end;
+        }
+        constexpr friend auto operator==(Iterator const& a, Iterator const& b) -> bool { return a.m_base == b.m_base; }
 
         constexpr friend auto operator<=>(Iterator const& a, Iterator const& b)
         requires(concepts::RandomAccessIterator<Iter<is_const>>)
@@ -276,17 +278,17 @@ private:
             return a.m_base <=> b.m_base;
         }
 
-        constexpr friend SSizeType<is_const> operator-(Iterator const& a, Iterator const& b)
+        constexpr friend auto operator-(Iterator const& a, Iterator const& b) -> SSizeType<is_const>
         requires(concepts::SizedSentinelFor<Iter<is_const>, Iter<is_const>>)
         {
             auto n = a.m_base - b.m_base;
             return (n + a.m_missing - b.m_missing) / a.m_chunk_size;
         }
 
-        constexpr friend SSizeType<is_const> operator-(DefaultSentinel, Iterator const& b) {
+        constexpr friend auto operator-(DefaultSentinel, Iterator const& b) -> SSizeType<is_const> {
             return math::divide_round_up(b.m_base - b.m_current, b.m_chunk_size);
         }
-        constexpr friend SSizeType<is_const> operator-(Iterator const& a, DefaultSentinel) {
+        constexpr friend auto operator-(Iterator const& a, DefaultSentinel) -> SSizeType<is_const> {
             return -(default_sentinel - a);
         }
 
@@ -306,12 +308,12 @@ public:
         DI_ASSERT(chunk_size > 0);
     }
 
-    constexpr View base() const&
+    constexpr auto base() const& -> View
     requires(concepts::CopyConstructible<View>)
     {
         return m_base;
     }
-    constexpr View base() && { return util::move(m_base); }
+    constexpr auto base() && -> View { return util::move(m_base); }
 
     constexpr auto chunk_size() const { return m_chunk_size; }
 

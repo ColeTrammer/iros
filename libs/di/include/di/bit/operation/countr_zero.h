@@ -7,7 +7,7 @@ namespace di::bit {
 namespace detail {
     struct CountrZeroFunction {
         template<concepts::UnsignedInteger T>
-        constexpr int operator()(T value) const {
+        constexpr auto operator()(T value) const -> int {
             if (value == 0) {
                 return 0;
             }

@@ -19,13 +19,13 @@ extern void (*__fini_array_start[])(void);
 extern void (*__fini_array_end[])(void);
 }
 
-extern "C" int main(int, char**, char**);
+extern "C" auto main(int, char**, char**) -> int;
 
 extern "C" di::exec::ElfHeader<> __ehdr_start;
 
 static constinit dius::runtime::TlsInfo s_tls_info {};
 
-dius::runtime::TlsInfo get_tls_info() {
+auto get_tls_info() -> dius::runtime::TlsInfo {
     return s_tls_info;
 }
 

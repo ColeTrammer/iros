@@ -34,18 +34,17 @@ public:
     template<concepts::ConvertibleTo<Iter> T>
     constexpr ConstIteratorImpl(T&& other) : m_base(util::forward<T>(other)) {}
 
-    constexpr Iter const& base() const& { return m_base; }
-    constexpr Iter base() && { return util::move(m_base); }
+    constexpr auto base() const& -> Iter const& { return m_base; }
+    constexpr auto base() && -> Iter { return util::move(m_base); }
 
-    constexpr meta::IteratorConstReference<Iter> operator*() const { return *m_base; }
+    constexpr auto operator*() const -> meta::IteratorConstReference<Iter> { return *m_base; }
 
-    constexpr Value const* operator->() const
-    requires(concepts::ContiguousIterator<Iter>)
-    {
-        return util::to_address(m_base);
+    constexpr auto operator->() const
+        -> Value const* requires(concepts::ContiguousIterator<Iter>) { return util::to_address(m_base); }
+
+    constexpr void advance_one() {
+        ++m_base;
     }
-
-    constexpr void advance_one() { ++m_base; }
     constexpr void back_one()
     requires(concepts::BidirectionalIterator<Iter>)
     {
@@ -59,7 +58,7 @@ public:
     }
 
 private:
-    constexpr friend bool operator==(Self const& a, Self const& b)
+    constexpr friend auto operator==(Self const& a, Self const& b) -> bool
     requires(concepts::SentinelFor<Iter, Iter>)
     {
         return a.base() == b.base();
@@ -67,7 +66,7 @@ private:
 
     template<typename Sent>
     requires(!concepts::SameAs<Self, Sent> && concepts::SentinelFor<Sent, Iter>)
-    constexpr friend bool operator==(Self const& a, Sent const& b) {
+    constexpr friend auto operator==(Self const& a, Sent const& b) -> bool {
         return a.base() == b;
     }
 
@@ -84,7 +83,7 @@ private:
         return a.base() <=> b;
     }
 
-    constexpr friend SSizeType operator-(Self const& a, Self const& b)
+    constexpr friend auto operator-(Self const& a, Self const& b) -> SSizeType
     requires(concepts::RandomAccessIterator<Iter>)
     {
         return a.base() - b.base();
@@ -92,13 +91,13 @@ private:
 
     template<typename Sent>
     requires(!concepts::SameAs<Sent, Iter> && concepts::SizedSentinelFor<Sent, Iter>)
-    constexpr SSizeType operator-(Sent const& b) {
+    constexpr auto operator-(Sent const& b) -> SSizeType {
         return this->base() - b;
     }
 
     template<typename Sent>
     requires(!concepts::SameAs<Sent, Self> && concepts::SizedSentinelFor<Sent, Iter>)
-    constexpr friend SSizeType operator-(Sent const& a, Self const& b) {
+    constexpr friend auto operator-(Sent const& a, Self const& b) -> SSizeType {
         return a - b.base();
     }
 

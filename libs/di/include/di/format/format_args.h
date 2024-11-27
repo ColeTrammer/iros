@@ -9,9 +9,9 @@ class FormatArgs {
 public:
     constexpr FormatArgs(Span<Arg> args) : m_args(args) {}
 
-    constexpr size_t size() const { return m_args.size(); }
+    constexpr auto size() const -> size_t { return m_args.size(); }
 
-    constexpr Arg operator[](size_t index) const { return m_args[index]; }
+    constexpr auto operator[](size_t index) const -> Arg { return m_args[index]; }
 
     constexpr void set_args(Span<Arg> args) { m_args = args; }
 

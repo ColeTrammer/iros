@@ -6,7 +6,7 @@ namespace di::bit {
 namespace detail {
     struct BitFloorFunction {
         template<concepts::UnsignedInteger T>
-        constexpr T operator()(T value) const {
+        constexpr auto operator()(T value) const -> T {
             if (value == 0) {
                 return 0;
             }

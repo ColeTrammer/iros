@@ -1,7 +1,7 @@
 #include <dius/print.h>
 #include <dius/system/prelude.h>
 
-extern "C" int main() {
+extern "C" auto main() -> int {
     auto* x = new int;
     *x = 42;
 

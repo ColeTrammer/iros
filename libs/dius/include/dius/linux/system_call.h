@@ -60,7 +60,7 @@ namespace detail {
 }
 
 template<detail::SystemCallResult R>
-di::Expected<R, di::BasicError> system_call(Number number) {
+auto system_call(Number number) -> di::Expected<R, di::BasicError> {
     SystemCallResult res = di::to_underlying(number);
     asm volatile(DIUS_SYSTEM_CALL_INSTRUCTION
                  : DIUS_SYSTEM_CALL_ASM_RESULT(res)
@@ -73,7 +73,7 @@ di::Expected<R, di::BasicError> system_call(Number number) {
 }
 
 template<detail::SystemCallResult R, detail::SystemCallArgument T1>
-di::Expected<R, di::BasicError> system_call(Number number, T1&& a1) {
+auto system_call(Number number, T1&& a1) -> di::Expected<R, di::BasicError> {
     SystemCallResult res = di::to_underlying(number);
     SystemCallArg y1 = SystemCallArg(a1);
     register SystemCallArg x1 asm(DIUS_SYSTEM_CALL_ASM_ARG1) = y1;
@@ -88,7 +88,7 @@ di::Expected<R, di::BasicError> system_call(Number number, T1&& a1) {
 }
 
 template<detail::SystemCallResult R, detail::SystemCallArgument T1, detail::SystemCallArgument T2>
-di::Expected<R, di::BasicError> system_call(Number number, T1&& a1, T2&& a2) {
+auto system_call(Number number, T1&& a1, T2&& a2) -> di::Expected<R, di::BasicError> {
     SystemCallResult res = di::to_underlying(number);
     SystemCallArg y1 = SystemCallArg(a1);
     SystemCallArg y2 = SystemCallArg(a2);
@@ -106,7 +106,7 @@ di::Expected<R, di::BasicError> system_call(Number number, T1&& a1, T2&& a2) {
 
 template<detail::SystemCallResult R, detail::SystemCallArgument T1, detail::SystemCallArgument T2,
          detail::SystemCallArgument T3>
-di::Expected<R, di::BasicError> system_call(Number number, T1&& a1, T2&& a2, T3&& a3) {
+auto system_call(Number number, T1&& a1, T2&& a2, T3&& a3) -> di::Expected<R, di::BasicError> {
     SystemCallResult res = di::to_underlying(number);
     SystemCallArg y1 = SystemCallArg(a1);
     SystemCallArg y2 = SystemCallArg(a2);
@@ -126,7 +126,7 @@ di::Expected<R, di::BasicError> system_call(Number number, T1&& a1, T2&& a2, T3&
 
 template<detail::SystemCallResult R, detail::SystemCallArgument T1, detail::SystemCallArgument T2,
          detail::SystemCallArgument T3, detail::SystemCallArgument T4>
-di::Expected<R, di::BasicError> system_call(Number number, T1&& a1, T2&& a2, T3&& a3, T4&& a4) {
+auto system_call(Number number, T1&& a1, T2&& a2, T3&& a3, T4&& a4) -> di::Expected<R, di::BasicError> {
     SystemCallResult res = di::to_underlying(number);
     SystemCallArg y1 = SystemCallArg(a1);
     SystemCallArg y2 = SystemCallArg(a2);
@@ -148,7 +148,7 @@ di::Expected<R, di::BasicError> system_call(Number number, T1&& a1, T2&& a2, T3&
 
 template<detail::SystemCallResult R, detail::SystemCallArgument T1, detail::SystemCallArgument T2,
          detail::SystemCallArgument T3, detail::SystemCallArgument T4, detail::SystemCallArgument T5>
-di::Expected<R, di::BasicError> system_call(Number number, T1&& a1, T2&& a2, T3&& a3, T4&& a4, T5&& a5) {
+auto system_call(Number number, T1&& a1, T2&& a2, T3&& a3, T4&& a4, T5&& a5) -> di::Expected<R, di::BasicError> {
     SystemCallResult res = di::to_underlying(number);
     SystemCallArg y1 = SystemCallArg(a1);
     SystemCallArg y2 = SystemCallArg(a2);
@@ -173,7 +173,8 @@ di::Expected<R, di::BasicError> system_call(Number number, T1&& a1, T2&& a2, T3&
 template<detail::SystemCallResult R, detail::SystemCallArgument T1, detail::SystemCallArgument T2,
          detail::SystemCallArgument T3, detail::SystemCallArgument T4, detail::SystemCallArgument T5,
          detail::SystemCallArgument T6>
-di::Expected<R, di::BasicError> system_call(Number number, T1&& a1, T2&& a2, T3&& a3, T4&& a4, T5&& a5, T6&& a6) {
+auto system_call(Number number, T1&& a1, T2&& a2, T3&& a3, T4&& a4, T5&& a5, T6&& a6)
+    -> di::Expected<R, di::BasicError> {
     SystemCallResult res = di::to_underlying(number);
     SystemCallArg y1 = SystemCallArg(a1);
     SystemCallArg y2 = SystemCallArg(a2);

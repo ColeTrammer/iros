@@ -14,11 +14,11 @@ public:
     constexpr static auto modulus = m;
     constexpr static T default_seed = 1u;
 
-    constexpr static T min() { return increment == 0u ? 1u : 0u; }
-    constexpr static T max() { return modulus - 1u; }
+    constexpr static auto min() -> T { return increment == 0u ? 1u : 0u; }
+    constexpr static auto max() -> T { return modulus - 1u; }
 
 private:
-    constexpr T safe_modulo(T value) {
+    constexpr auto safe_modulo(T value) -> T {
         if constexpr (modulus == 0u) {
             return value;
         } else {
@@ -39,7 +39,7 @@ public:
         }
     }
 
-    constexpr T operator()() {
+    constexpr auto operator()() -> T {
         if constexpr (multiplier == 0) {
             return safe_modulo(increment);
         } else {
@@ -54,7 +54,7 @@ public:
     }
 
 private:
-    constexpr friend bool operator==(LinearCongruentialEngine const& x, LinearCongruentialEngine const& y) {
+    constexpr friend auto operator==(LinearCongruentialEngine const& x, LinearCongruentialEngine const& y) -> bool {
         return x.m_state == y.m_state;
     }
 

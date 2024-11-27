@@ -9,7 +9,7 @@ namespace detail {
     template<concepts::InstanceOf<Duration> To>
     struct TimePointCastFunction {
         template<typename Clock, typename Duration>
-        constexpr TimePoint<Clock, To> operator()(TimePoint<Clock, Duration> const& from) const {
+        constexpr auto operator()(TimePoint<Clock, Duration> const& from) const -> TimePoint<Clock, To> {
             return TimePoint<Clock, To>(chrono::duration_cast<To>(from.time_since_epoch()));
         }
     };

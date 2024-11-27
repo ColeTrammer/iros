@@ -47,7 +47,7 @@ public:
 
         Iterator() = default;
 
-        constexpr Value&& operator*() const { return util::move(m_parent->m_current_value); }
+        constexpr auto operator*() const -> Value&& { return util::move(m_parent->m_current_value); }
 
         constexpr void advance_one() {
             if (m_position == m_data.end()) {
@@ -154,7 +154,7 @@ public:
         }
 
     private:
-        constexpr friend bool operator==(Iterator const& a, container::DefaultSentinel) { return a.m_at_end; }
+        constexpr friend auto operator==(Iterator const& a, container::DefaultSentinel) -> bool { return a.m_at_end; }
 
         constexpr void set_error(Error error) {
 #ifdef DI_CLANG
@@ -188,9 +188,9 @@ public:
     constexpr auto end() const { return container::default_sentinel; }
 
     constexpr void set_current_format_string(View view) { m_current_format_string = view; }
-    constexpr View current_format_string() const { return m_current_format_string; }
+    constexpr auto current_format_string() const -> View { return m_current_format_string; }
 
-    constexpr Result<size_t> next_arg_index() {
+    constexpr auto next_arg_index() -> Result<size_t> {
         if (m_indexing_mode == IndexingMode::Manual) {
             return Unexpected(BasicError::InvalidArgument);
         }
@@ -203,7 +203,7 @@ public:
         return index;
     }
 
-    constexpr Result<void> check_arg_index(size_t index) {
+    constexpr auto check_arg_index(size_t index) -> Result<void> {
         if (m_indexing_mode == IndexingMode::Automatic) {
             return Unexpected(BasicError::InvalidArgument);
         }

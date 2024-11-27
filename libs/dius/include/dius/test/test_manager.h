@@ -6,7 +6,7 @@
 namespace dius::test {
 class TestManager {
 public:
-    static TestManager& the();
+    static auto the() -> TestManager&;
 
     void register_test_case(TestCase);
 
@@ -26,9 +26,9 @@ public:
         }
     };
 
-    di::Result<void> run_tests(Args& args);
+    auto run_tests(Args& args) -> di::Result<void>;
 
-    bool is_test_application() const { return !m_test_cases.empty(); }
+    auto is_test_application() const -> bool { return !m_test_cases.empty(); }
     void handle_assertion_failure();
 
 private:

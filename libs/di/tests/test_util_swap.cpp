@@ -41,7 +41,7 @@ struct Y {
 
     constexpr Y(int v) : x(v) {}
     constexpr Y(Y&&) = default;
-    constexpr Y& operator=(Y&&) = delete;
+    constexpr auto operator=(Y&&) -> Y& = delete;
 };
 
 constexpr void non_assignable() {
@@ -62,10 +62,10 @@ struct Z {
     constexpr Z(int v) : x(v) {}
 
     constexpr Z(Z&&) = default;
-    constexpr Z& operator=(Z&&) = default;
+    constexpr auto operator=(Z&&) -> Z& = default;
 
     constexpr Z(Z const&) = delete;
-    constexpr Z& operator=(Z const&) = delete;
+    constexpr auto operator=(Z const&) -> Z& = delete;
 };
 
 constexpr void move_only() {

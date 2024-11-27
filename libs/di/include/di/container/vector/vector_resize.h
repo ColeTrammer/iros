@@ -16,7 +16,7 @@ namespace di::container::vector {
 template<concepts::detail::MutableVector Vec, typename T = meta::detail::VectorValue<Vec>,
          typename R = meta::detail::VectorAllocResult<Vec>>
 requires(concepts::DefaultConstructible<T>)
-constexpr R resize(Vec& vector, size_t count) {
+constexpr auto resize(Vec& vector, size_t count) -> R {
     auto size = vector::size(vector);
     if (count == size) {
         return util::create<R>();
@@ -37,7 +37,7 @@ constexpr R resize(Vec& vector, size_t count) {
 template<concepts::detail::MutableVector Vec, typename T = meta::detail::VectorValue<Vec>,
          typename R = meta::detail::VectorAllocResult<Vec>>
 requires(concepts::CopyConstructible<T>)
-constexpr R resize(Vec& vector, size_t count, T const& value) {
+constexpr auto resize(Vec& vector, size_t count, T const& value) -> R {
     auto size = vector::size(vector);
     if (count < size) {
         auto end = vector::end(vector);

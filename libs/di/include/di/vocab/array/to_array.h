@@ -18,7 +18,7 @@ constexpr auto to_array(T (&array)[size]) {
 
 template<typename T, types::size_t size>
 requires(concepts::MoveConstructible<T> && !concepts::LanguageArray<T>)
-constexpr Array<meta::RemoveCV<T>, size> to_array(T (&&array)[size]) {
+constexpr auto to_array(T (&&array)[size]) -> Array<meta::RemoveCV<T>, size> {
     return [&]<types::size_t... indices>(meta::ListV<indices...>) {
         return Array<meta::RemoveCV<T>, size> { { util::move(array[indices])... } };
     }(meta::MakeIndexSequence<size> {});

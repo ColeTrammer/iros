@@ -14,20 +14,20 @@ namespace detail {
     struct InvokeAsFallibleFunction : function::pipeline::EnablePipeline {
         template<typename F, typename... Args, concepts::DecayConstructible R = meta::InvokeResult<F, Args...>>
         requires(concepts::Expected<R>)
-        constexpr meta::Decay<R> operator()(F&& function, Args&&... args) const {
+        constexpr auto operator()(F&& function, Args&&... args) const -> meta::Decay<R> {
             return function::invoke(util::forward<F>(function), util::forward<Args>(args)...);
         }
 
         template<typename F, typename... Args, typename R = meta::InvokeResult<F, Args...>,
                  typename G = Expected<meta::UnwrapRefRValue<R>, void>>
         requires(!concepts::Expected<R> && concepts::ConstructibleFrom<G, R>)
-        constexpr G operator()(F&& function, Args&&... args) const {
+        constexpr auto operator()(F&& function, Args&&... args) const -> G {
             return G { function::invoke(util::forward<F>(function), util::forward<Args>(args)...) };
         }
 
         template<typename F, typename... Args, typename R = meta::InvokeResult<F, Args...>>
         requires(concepts::LanguageVoid<R>)
-        constexpr Expected<void, void> operator()(F&& function, Args&&... args) const {
+        constexpr auto operator()(F&& function, Args&&... args) const -> Expected<void, void> {
             function::invoke(util::forward<F>(function), util::forward<Args>(args)...);
             return {};
         }

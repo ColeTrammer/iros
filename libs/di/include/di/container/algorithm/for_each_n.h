@@ -12,8 +12,8 @@ namespace detail {
     struct ForEachNFunction {
         template<concepts::InputIterator Iter, typename SSizeType = meta::IteratorSSizeType<Iter>,
                  typename Proj = function::Identity, concepts::IndirectlyUnaryInvocable<meta::Projected<Iter, Proj>> F>
-        constexpr InFunResult<Iter, F> operator()(Iter first, meta::TypeIdentity<SSizeType> n, F f,
-                                                  Proj proj = {}) const {
+        constexpr auto operator()(Iter first, meta::TypeIdentity<SSizeType> n, F f, Proj proj = {}) const
+            -> InFunResult<Iter, F> {
             for (SSizeType i = 0; i < n; ++i, ++first) {
                 function::invoke(f, function::invoke(proj, *first));
             }

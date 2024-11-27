@@ -46,7 +46,7 @@ private:
         requires(concepts::DefaultInitializable<Iter>)
         = default;
 
-        constexpr decltype(auto) operator*() const {
+        constexpr auto operator*() const -> decltype(auto) {
             return container::reconstruct(in_place_type<View>, m_current, m_next);
         }
 
@@ -63,8 +63,10 @@ private:
         }
 
     private:
-        constexpr friend bool operator==(Iterator const& a, Iterator const& b) { return a.m_current == b.m_current; }
-        constexpr friend bool operator==(Iterator const& a, DefaultSentinel) { return a.m_current == a.m_next; }
+        constexpr friend auto operator==(Iterator const& a, Iterator const& b) -> bool {
+            return a.m_current == b.m_current;
+        }
+        constexpr friend auto operator==(Iterator const& a, DefaultSentinel) -> bool { return a.m_current == a.m_next; }
 
         ChunkByView* m_parent { nullptr };
         Iter m_current {};
@@ -79,16 +81,16 @@ public:
     constexpr explicit ChunkByView(View base, Pred predicate)
         : m_base(util::move(base)), m_predicate(util::move(predicate)) {}
 
-    constexpr View base() const&
+    constexpr auto base() const& -> View
     requires(concepts::CopyConstructible<View>)
     {
         return m_base;
     }
-    constexpr View base() && { return util::move(m_base); }
+    constexpr auto base() && -> View { return util::move(m_base); }
 
-    constexpr Pred const& pred() const { return m_predicate.value(); }
+    constexpr auto pred() const -> Pred const& { return m_predicate.value(); }
 
-    constexpr Iterator begin() {
+    constexpr auto begin() -> Iterator {
         if (!m_cache) {
             m_cache = Iterator(*this, container::begin(m_base), find_next(container::begin(m_base)));
         }
@@ -104,13 +106,13 @@ public:
     }
 
 private:
-    constexpr Iter find_next(Iter current) {
+    constexpr auto find_next(Iter current) -> Iter {
         return container::next(
             container::adjacent_find(current, container::end(m_base), function::not_fn(util::ref(m_predicate.value()))),
             1, container::end(m_base));
     }
 
-    constexpr Iter find_prev(Iter current)
+    constexpr auto find_prev(Iter current) -> Iter
     requires(concepts::BidirectionalContainer<View>)
     {
         auto reversed = container::View(container::begin(m_base), current) | view::reverse;

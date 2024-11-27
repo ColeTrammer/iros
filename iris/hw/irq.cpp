@@ -8,7 +8,7 @@
 #include <iris/uapi/syscall.h>
 
 namespace iris {
-Expected<usize> register_external_irq_handler(IrqLine line, IrqHandler handler) {
+auto register_external_irq_handler(IrqLine line, IrqHandler handler) -> Expected<usize> {
     auto irq = TRY(irq_number_for_legacy_isa_interrupt_number(line));
 
     auto& irq_handlers = global_state().irq_handlers;
@@ -25,7 +25,7 @@ Expected<usize> register_external_irq_handler(IrqLine line, IrqHandler handler) 
     });
 }
 
-Expected<void> register_exception_handler(GlobalIrqNumber irq, IrqHandler handler) {
+auto register_exception_handler(GlobalIrqNumber irq, IrqHandler handler) -> Expected<void> {
     auto& irq_handlers = global_state().irq_handlers;
     return irq_handlers.with_lock([&](auto& irq_handlers) -> Expected<void> {
         TRY(irq_handlers[irq.raw_value()].emplace_back(di::move(handler)) & [](auto&&) {

@@ -41,12 +41,14 @@ struct ProcessorInfo {
 
     void print_to_console();
 
-    bool has_xsave() const { return (fpu_valid_xcr0 & 0b11) == 0b11 && !!(features & ProcessorFeatures::Xsave); }
-    bool has_fs_gs_base() const { return !!(features & ProcessorFeatures::FsGsBase); }
+    auto has_xsave() const -> bool {
+        return (fpu_valid_xcr0 & 0b11) == 0b11 && !!(features & ProcessorFeatures::Xsave);
+    }
+    auto has_fs_gs_base() const -> bool { return !!(features & ProcessorFeatures::FsGsBase); }
 
-    bool has_apic() const { return !!(features & ProcessorFeatures::Apic); }
-    bool has_gib_pages() const { return !!(features & ProcessorFeatures::GibPages); }
+    auto has_apic() const -> bool { return !!(features & ProcessorFeatures::Apic); }
+    auto has_gib_pages() const -> bool { return !!(features & ProcessorFeatures::GibPages); }
 };
 
-ProcessorInfo detect_processor_info();
+auto detect_processor_info() -> ProcessorInfo;
 }

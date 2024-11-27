@@ -21,9 +21,9 @@ class MyClass {
 public:
     constexpr MyClass(int x, int y, int z) : m_x(x), m_y(y), m_z(z) {}
 
-    constexpr int x() const { return m_x; }
-    constexpr int y() const { return m_y; }
-    constexpr int z() const { return m_z; }
+    constexpr auto x() const -> int { return m_x; }
+    constexpr auto y() const -> int { return m_y; }
+    constexpr auto z() const -> int { return m_z; }
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyClass>) {
         return di::make_fields(di::field<"x", &MyClass::m_x>, di::field<"y", &MyClass::m_y>,

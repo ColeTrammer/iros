@@ -3,7 +3,7 @@
 namespace di::container {
 struct UnreachableSentinel {
     template<typename T>
-    constexpr friend bool operator==(UnreachableSentinel, T const&) {
+    constexpr friend auto operator==(UnreachableSentinel, T const&) -> bool {
         return false;
     }
 };

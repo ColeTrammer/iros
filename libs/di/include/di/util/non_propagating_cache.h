@@ -15,27 +15,25 @@ public:
     constexpr NonPropagatingCache(NonPropagatingCache&& other) { other.reset(); }
 
     template<concepts::ConvertibleTo<T> U>
-    constexpr NonPropagatingCache& operator=(U&& value) {
+    constexpr auto operator=(U&& value) -> NonPropagatingCache& {
         this->emplace(util::forward<U>(value));
         return *this;
     }
 
-    constexpr NonPropagatingCache& operator=(NonPropagatingCache const& other) {
+    constexpr auto operator=(NonPropagatingCache const& other) -> NonPropagatingCache& {
         if (util::addressof(other) != this) {
             this->reset();
         }
         return *this;
     }
-    constexpr NonPropagatingCache& operator=(NonPropagatingCache&& other) {
+    constexpr auto operator=(NonPropagatingCache&& other) -> NonPropagatingCache& {
         this->reset();
         other.reset();
         return *this;
     }
 
     template<typename I>
-    constexpr T& emplace_deref(I const& it)
-    requires(requires { T(*it); })
-    {
+    constexpr auto emplace_deref(I const& it) -> T& requires(requires { T(*it); }) {
         this->reset();
         return this->emplace(*it);
     }

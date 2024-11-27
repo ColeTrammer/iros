@@ -82,11 +82,11 @@ struct GlobalState {
 
 /// This function returns a mutable reference to the global state. This is only
 /// valid during kernel boot, when no other tasks can execute.
-GlobalState& global_state_in_boot();
+auto global_state_in_boot() -> GlobalState&;
 
 /// This function returns a shared reference to the global state. This only provides
 /// readonly access, and mutable fields must be protected using di::Synchronized.
-inline GlobalState const& global_state() {
+inline auto global_state() -> GlobalState const& {
     return global_state_in_boot();
 }
 }

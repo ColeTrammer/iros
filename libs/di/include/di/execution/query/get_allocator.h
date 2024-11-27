@@ -12,7 +12,7 @@ namespace di::execution {
 namespace detail {
     struct GetAllocatorFunction : ForwardingQuery {
         template<typename T>
-        constexpr concepts::Allocator auto operator()(T&& value) const {
+        constexpr auto operator()(T&& value) const -> concepts::Allocator auto {
             if constexpr (concepts::TagInvocable<GetAllocatorFunction, T const&>) {
                 return function::tag_invoke(*this, util::as_const(value));
             } else {

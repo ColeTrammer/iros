@@ -9,7 +9,8 @@
 namespace di::util {
 template<typename Derived, typename Base>
 requires(concepts::DerivedFrom<meta::RemoveCVRef<Derived>, Base>)
-constexpr meta::Like<meta::RemoveReference<Derived>&, Base>&& forward_as_base(meta::RemoveReference<Derived>& derived) {
+constexpr auto forward_as_base(meta::RemoveReference<Derived>& derived)
+    -> meta::Like<meta::RemoveReference<Derived>&, Base>&& {
     if constexpr (concepts::Const<meta::RemoveReference<Derived>>) {
         return di::forward_like<meta::RemoveReference<Derived>&>(static_cast<Base const&>(derived));
     } else {
@@ -19,8 +20,8 @@ constexpr meta::Like<meta::RemoveReference<Derived>&, Base>&& forward_as_base(me
 
 template<typename Derived, typename Base>
 requires(concepts::DerivedFrom<meta::RemoveCVRef<Derived>, Base>)
-constexpr meta::Like<meta::RemoveReference<Derived>&&, Base>&&
-forward_as_base(meta::RemoveReference<Derived>&& derived) {
+constexpr auto forward_as_base(meta::RemoveReference<Derived>&& derived)
+    -> meta::Like<meta::RemoveReference<Derived>&&, Base>&& {
     if constexpr (concepts::Const<meta::RemoveReference<Derived>>) {
         return di::forward_like<meta::RemoveReference<Derived>&&>(static_cast<Base const&>(derived));
     } else {

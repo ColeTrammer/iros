@@ -114,7 +114,7 @@ private:
 
         friend class SlideView;
 
-        constexpr friend bool operator==(Iterator const& a, Iterator const& b) {
+        constexpr friend auto operator==(Iterator const& a, Iterator const& b) -> bool {
             if constexpr (detail::SlideCachesFirst<Base<is_const>>) {
                 return a.m_last_element.value == b.m_last_element.value;
             } else {
@@ -150,7 +150,7 @@ private:
     public:
         Sentinel() = default;
 
-        constexpr bool equals(Iterator<false> const& other) { return m_base == other.m_last_element; }
+        constexpr auto equals(Iterator<false> const& other) -> bool { return m_base == other.m_last_element; }
 
         constexpr auto difference(Iterator<false> const& other)
         requires(concepts::SizedSentinelFor<Sent<false>, Iter<false>>)
@@ -174,12 +174,12 @@ public:
         DI_ASSERT(window_size > 0);
     }
 
-    constexpr View base() const&
+    constexpr auto base() const& -> View
     requires(concepts::CopyConstructible<View>)
     {
         return m_base;
     }
-    constexpr View base() && { return util::move(m_base); }
+    constexpr auto base() && -> View { return util::move(m_base); }
 
     constexpr auto window_size() const { return m_window_size; }
 

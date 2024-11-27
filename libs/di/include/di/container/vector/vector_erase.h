@@ -11,7 +11,7 @@
 namespace di::container::vector {
 template<concepts::detail::MutableVector Vec, typename Iter = meta::detail::VectorIterator<Vec>,
          typename CIter = meta::detail::VectorConstIterator<Vec>>
-constexpr Iter erase(Vec& vector, CIter cstart, CIter cend) {
+constexpr auto erase(Vec& vector, CIter cstart, CIter cend) -> Iter {
     auto start = vector::iterator(vector, cstart);
     auto end = vector::iterator(vector, cend);
     auto size = vector::size(vector);
@@ -26,7 +26,7 @@ constexpr Iter erase(Vec& vector, CIter cstart, CIter cend) {
 
 template<concepts::detail::MutableVector Vec, typename Iter = meta::detail::VectorIterator<Vec>,
          typename CIter = meta::detail::VectorConstIterator<Vec>>
-constexpr Iter erase(Vec& vector, CIter citerator) {
+constexpr auto erase(Vec& vector, CIter citerator) -> Iter {
     return vector::erase(vector, citerator, citerator + 1);
 }
 }

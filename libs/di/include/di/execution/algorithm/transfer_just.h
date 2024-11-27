@@ -9,7 +9,7 @@ namespace di::execution {
 namespace transfer_just_ns {
     struct Function {
         template<concepts::Scheduler Sched, concepts::MovableValue... Values>
-        concepts::Sender auto operator()(Sched&& scheduler, Values&&... values) const {
+        auto operator()(Sched&& scheduler, Values&&... values) const -> concepts::Sender auto {
             if constexpr (concepts::TagInvocable<Function, Sched, Values...>) {
                 return function::tag_invoke(*this, util::forward<Sched>(scheduler), util::forward<Values>(values)...);
             } else {

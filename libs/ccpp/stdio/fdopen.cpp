@@ -6,7 +6,7 @@
 
 namespace ccpp {
 // https://pubs.opengroup.org/onlinepubs/9699919799/functions/fdopen.html
-extern "C" FILE* fdopen(int fd, char const* mode) {
+extern "C" auto fdopen(int fd, char const* mode) -> FILE* {
     // FIXME: this may need to change the underlying file descriptor or validate it is read/writable.
     auto mode_sv = di::TransparentStringView(mode, mode + strlen(mode));
     auto permissions = Permissions::None;

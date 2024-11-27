@@ -3,75 +3,75 @@
 #include <string.h>
 
 namespace string_h {
-[[gnu::noinline]] static char const* do_strchr(char const* s, int ch) {
+[[gnu::noinline]] static auto do_strchr(char const* s, int ch) -> char const* {
     return strchr(s, ch);
 }
 
-[[gnu::noinline]] static char const* do_strrchr(char const* s, int ch) {
+[[gnu::noinline]] static auto do_strrchr(char const* s, int ch) -> char const* {
     return strrchr(s, ch);
 }
 
-[[gnu::noinline]] static char const* do_strstr(char const* s, char const* t) {
+[[gnu::noinline]] static auto do_strstr(char const* s, char const* t) -> char const* {
     return strstr(s, t);
 }
 
-[[gnu::noinline]] static int do_strcmp(char const* s, char const* t) {
+[[gnu::noinline]] static auto do_strcmp(char const* s, char const* t) -> int {
     return strcmp(s, t);
 }
 
-[[gnu::noinline]] static int do_strncmp(char const* s, char const* t, size_t count) {
+[[gnu::noinline]] static auto do_strncmp(char const* s, char const* t, size_t count) -> int {
     return strncmp(s, t, count);
 }
 
-[[gnu::noinline]] static char* do_strcat(char* s, char const* t) {
+[[gnu::noinline]] static auto do_strcat(char* s, char const* t) -> char* {
     return strcat(s, t);
 }
 
-[[gnu::noinline]] static char* do_strncat(char* s, char const* t, size_t count) {
+[[gnu::noinline]] static auto do_strncat(char* s, char const* t, size_t count) -> char* {
     return strncat(s, t, count);
 }
 
-[[gnu::noinline]] static char* do_strcpy(char* s, char const* t) {
+[[gnu::noinline]] static auto do_strcpy(char* s, char const* t) -> char* {
     return strcpy(s, t);
 }
 
-[[gnu::noinline]] static char* do_strncpy(char* s, char const* t, size_t count) {
+[[gnu::noinline]] static auto do_strncpy(char* s, char const* t, size_t count) -> char* {
     return strncpy(s, t, count);
 }
 
-[[gnu::noinline]] static usize do_strlen(char const* s) {
+[[gnu::noinline]] static auto do_strlen(char const* s) -> usize {
     return strlen(s);
 }
 
-[[gnu::noinline]] static int do_strcoll(char const* s, char const* t) {
+[[gnu::noinline]] static auto do_strcoll(char const* s, char const* t) -> int {
     return strcoll(s, t);
 }
 
-[[gnu::noinline]] static char* do_strerror(int errnum) {
+[[gnu::noinline]] static auto do_strerror(int errnum) -> char* {
     return strerror(errnum);
 }
 
-[[gnu::noinline]] static usize do_strxfrm(char* s, char const* t, size_t count) {
+[[gnu::noinline]] static auto do_strxfrm(char* s, char const* t, size_t count) -> usize {
     return strxfrm(s, t, count);
 }
 
-[[gnu::noinline]] static void const* do_memchr(byte const* s, int ch, usize n) {
+[[gnu::noinline]] static auto do_memchr(byte const* s, int ch, usize n) -> void const* {
     return memchr(s, ch, di::black_box(n));
 }
 
-[[gnu::noinline]] static int do_memcmp(byte* dest, byte const* src, usize n) {
+[[gnu::noinline]] static auto do_memcmp(byte* dest, byte const* src, usize n) -> int {
     return memcmp(dest, src, di::black_box(n));
 }
 
-[[gnu::noinline]] static void* do_memcpy(byte* dest, byte const* src, usize n) {
+[[gnu::noinline]] static auto do_memcpy(byte* dest, byte const* src, usize n) -> void* {
     return memcpy(dest, src, di::black_box(n));
 }
 
-[[gnu::noinline]] static void* do_memmove(byte* dest, byte const* src, usize n) {
+[[gnu::noinline]] static auto do_memmove(byte* dest, byte const* src, usize n) -> void* {
     return memmove(dest, src, di::black_box(n));
 }
 
-[[gnu::noinline]] static void* do_memset(byte* dest, byte x, usize n) {
+[[gnu::noinline]] static auto do_memset(byte* dest, byte x, usize n) -> void* {
     return memset(dest, di::to_integer<int>(x), di::black_box(n));
 }
 

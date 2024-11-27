@@ -13,23 +13,23 @@ public:
     static weak_ordering const equivalent;
     static weak_ordering const greater;
 
-    constexpr friend bool operator==(weak_ordering v, weak_ordering w) { return v.m_value == w.m_value; }
-    constexpr friend bool operator==(weak_ordering v, int) { return v.m_value == 0; }
+    constexpr friend auto operator==(weak_ordering v, weak_ordering w) -> bool { return v.m_value == w.m_value; }
+    constexpr friend auto operator==(weak_ordering v, int) -> bool { return v.m_value == 0; }
 
-    constexpr friend bool operator<(weak_ordering v, int) { return v.m_value < 0; }
-    constexpr friend bool operator<(int, weak_ordering v) { return v.m_value > 0; }
+    constexpr friend auto operator<(weak_ordering v, int) -> bool { return v.m_value < 0; }
+    constexpr friend auto operator<(int, weak_ordering v) -> bool { return v.m_value > 0; }
 
-    constexpr friend bool operator<=(weak_ordering v, int) { return v == 0 || v < 0; }
-    constexpr friend bool operator<=(int, weak_ordering v) { return v == 0 || 0 < v; }
+    constexpr friend auto operator<=(weak_ordering v, int) -> bool { return v == 0 || v < 0; }
+    constexpr friend auto operator<=(int, weak_ordering v) -> bool { return v == 0 || 0 < v; }
 
-    constexpr friend bool operator>(weak_ordering v, int) { return 0 < v; }
-    constexpr friend bool operator>(int, weak_ordering v) { return v < 0; }
+    constexpr friend auto operator>(weak_ordering v, int) -> bool { return 0 < v; }
+    constexpr friend auto operator>(int, weak_ordering v) -> bool { return v < 0; }
 
-    constexpr friend bool operator>=(weak_ordering v, int) { return 0 <= v; }
-    constexpr friend bool operator>=(int, weak_ordering v) { return v <= 0; }
+    constexpr friend auto operator>=(weak_ordering v, int) -> bool { return 0 <= v; }
+    constexpr friend auto operator>=(int, weak_ordering v) -> bool { return v <= 0; }
 
-    constexpr friend weak_ordering operator<=>(weak_ordering v, int) { return v; }
-    constexpr friend weak_ordering operator<=>(int, weak_ordering v) { return weak_ordering(-v.m_value); }
+    constexpr friend auto operator<=>(weak_ordering v, int) -> weak_ordering { return v; }
+    constexpr friend auto operator<=>(int, weak_ordering v) -> weak_ordering { return weak_ordering(-v.m_value); }
 
     constexpr operator partial_ordering() const { return partial_ordering(m_value); }
 

@@ -11,7 +11,7 @@ namespace di::container {
 namespace detail {
     struct RotateFunction {
         template<concepts::Permutable Iter, concepts::SentinelFor<Iter> Sent>
-        constexpr View<Iter> operator()(Iter first, Iter pivot, Sent last_sentinel) const {
+        constexpr auto operator()(Iter first, Iter pivot, Sent last_sentinel) const -> View<Iter> {
             // Full Rotation: first == pivot
             if (first == pivot) {
                 auto last = container::next(first, last_sentinel);
@@ -85,7 +85,8 @@ namespace detail {
 
         template<concepts::ForwardContainer Con>
         requires(concepts::Permutable<meta::ContainerIterator<Con>>)
-        constexpr meta::BorrowedView<Con> operator()(Con&& container, meta::ContainerIterator<Con> pivot) const {
+        constexpr auto operator()(Con&& container, meta::ContainerIterator<Con> pivot) const
+            -> meta::BorrowedView<Con> {
             return (*this)(container::begin(container), util::move(pivot), container::end(container));
         }
     };

@@ -2,7 +2,7 @@
 #include <di/util/prelude.h>
 #include <string.h>
 
-extern "C" void* memmove(void* dest, void const* src, size_t count) {
+extern "C" auto memmove(void* dest, void const* src, size_t count) -> void* {
     auto* dest_typed = (unsigned char*) dest;
     auto const* src_typed = (unsigned char const*) src;
     if (di::to_uintptr(dest_typed) < di::to_uintptr(src_typed)) {

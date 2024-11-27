@@ -10,7 +10,7 @@ template<concepts::OneOf<SetValue, SetError, SetStopped> CPO>
 struct GetCompletionScheduler : ForwardingQuery {
     template<concepts::Queryable T>
     requires(concepts::TagInvocable<GetCompletionScheduler, T const&>)
-    constexpr concepts::Scheduler auto operator()(T const& env) const {
+    constexpr auto operator()(T const& env) const -> concepts::Scheduler auto {
         return function::tag_invoke(*this, env);
     }
 };

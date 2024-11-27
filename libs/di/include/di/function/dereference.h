@@ -8,7 +8,7 @@ namespace di::function {
 struct Dereference : function::pipeline::EnablePipeline {
     template<typename T>
     requires(requires(T&& a) { *util::forward<T>(a); })
-    constexpr decltype(auto) operator()(T&& a) const {
+    constexpr auto operator()(T&& a) const -> decltype(auto) {
         return *util::forward<T>(a);
     }
 };

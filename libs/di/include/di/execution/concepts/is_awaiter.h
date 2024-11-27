@@ -8,7 +8,7 @@
 namespace di::concepts {
 namespace detail {
     template<typename Promise, typename Awaiter>
-    decltype(auto) do_await_suspend(Awaiter& awaiter) {
+    auto do_await_suspend(Awaiter& awaiter) -> decltype(auto) {
         if constexpr (!concepts::SameAs<Promise, void>) {
             return awaiter.await_suspend(std::coroutine_handle<Promise> {});
         }

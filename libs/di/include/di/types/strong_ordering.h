@@ -15,23 +15,23 @@ public:
     static strong_ordering const equal;
     static strong_ordering const greater;
 
-    constexpr friend bool operator==(strong_ordering v, strong_ordering w) { return v.m_value == w.m_value; }
-    constexpr friend bool operator==(strong_ordering v, int) { return v.m_value == 0; }
+    constexpr friend auto operator==(strong_ordering v, strong_ordering w) -> bool { return v.m_value == w.m_value; }
+    constexpr friend auto operator==(strong_ordering v, int) -> bool { return v.m_value == 0; }
 
-    constexpr friend bool operator<(strong_ordering v, int) { return v.m_value < 0; }
-    constexpr friend bool operator<(int, strong_ordering v) { return v.m_value > 0; }
+    constexpr friend auto operator<(strong_ordering v, int) -> bool { return v.m_value < 0; }
+    constexpr friend auto operator<(int, strong_ordering v) -> bool { return v.m_value > 0; }
 
-    constexpr friend bool operator<=(strong_ordering v, int) { return v == 0 || v < 0; }
-    constexpr friend bool operator<=(int, strong_ordering v) { return v == 0 || 0 < v; }
+    constexpr friend auto operator<=(strong_ordering v, int) -> bool { return v == 0 || v < 0; }
+    constexpr friend auto operator<=(int, strong_ordering v) -> bool { return v == 0 || 0 < v; }
 
-    constexpr friend bool operator>(strong_ordering v, int) { return 0 < v; }
-    constexpr friend bool operator>(int, strong_ordering v) { return v < 0; }
+    constexpr friend auto operator>(strong_ordering v, int) -> bool { return 0 < v; }
+    constexpr friend auto operator>(int, strong_ordering v) -> bool { return v < 0; }
 
-    constexpr friend bool operator>=(strong_ordering v, int) { return 0 <= v; }
-    constexpr friend bool operator>=(int, strong_ordering v) { return v <= 0; }
+    constexpr friend auto operator>=(strong_ordering v, int) -> bool { return 0 <= v; }
+    constexpr friend auto operator>=(int, strong_ordering v) -> bool { return v <= 0; }
 
-    constexpr friend strong_ordering operator<=>(strong_ordering v, int) { return v; }
-    constexpr friend strong_ordering operator<=>(int, strong_ordering v) { return strong_ordering(-v.m_value); }
+    constexpr friend auto operator<=>(strong_ordering v, int) -> strong_ordering { return v; }
+    constexpr friend auto operator<=>(int, strong_ordering v) -> strong_ordering { return strong_ordering(-v.m_value); }
 
     constexpr operator partial_ordering() const { return partial_ordering(m_value); }
     constexpr operator weak_ordering() const { return weak_ordering(m_value); }

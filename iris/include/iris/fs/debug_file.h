@@ -8,9 +8,10 @@
 namespace iris {
 struct DebugFile {
 private:
-    friend di::AnySenderOf<usize> tag_invoke(di::Tag<read_file>, DebugFile&, UserspaceBuffer<byte> data);
+    friend auto tag_invoke(di::Tag<read_file>, DebugFile&, UserspaceBuffer<byte> data) -> di::AnySenderOf<usize>;
 
-    friend di::AnySenderOf<usize> tag_invoke(di::Tag<write_file>, DebugFile& self, UserspaceBuffer<byte const> data);
+    friend auto tag_invoke(di::Tag<write_file>, DebugFile& self, UserspaceBuffer<byte const> data)
+        -> di::AnySenderOf<usize>;
 
     InterruptibleSpinlock m_lock;
 };

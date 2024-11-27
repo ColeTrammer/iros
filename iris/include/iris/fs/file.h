@@ -15,39 +15,41 @@ namespace iris {
 namespace detail {
     struct WriteFileDefaultFunction {
         template<typename T>
-        di::AnySenderOf<usize> operator()(T&, UserspaceBuffer<byte const>) const {
+        auto operator()(T&, UserspaceBuffer<byte const>) const -> di::AnySenderOf<usize> {
             return di::Unexpected(Error::NotSupported);
         }
     };
 
     struct ReadFileDefaultFunction {
         template<typename T>
-        di::AnySenderOf<usize> operator()(T&, UserspaceBuffer<byte>) const {
+        auto operator()(T&, UserspaceBuffer<byte>) const -> di::AnySenderOf<usize> {
             return di::Unexpected(Error::NotSupported);
         }
     };
 
     struct ReadDirectoryDefaultFunction {
         template<typename T>
-        di::AnySenderOf<usize> operator()(T&, UserspaceBuffer<byte>) const {
+        auto operator()(T&, UserspaceBuffer<byte>) const -> di::AnySenderOf<usize> {
             return di::Unexpected(Error::NotSupported);
         }
     };
 
     struct SeekFileDefaultFunction {
-        di::AnySenderOf<i64> operator()(auto&, i64, int) const { return di::Unexpected(Error::NotSupported); }
+        auto operator()(auto&, i64, int) const -> di::AnySenderOf<i64> { return di::Unexpected(Error::NotSupported); }
     };
 
     struct FileMetadataDefaultFunction {
-        di::AnySenderOf<Metadata> operator()(auto&) const { return di::Unexpected(Error::NotSupported); }
+        auto operator()(auto&) const -> di::AnySenderOf<Metadata> { return di::Unexpected(Error::NotSupported); }
     };
 
     struct FileTruncateDefaultFunction {
-        di::AnySenderOf<> operator()(auto&, u64) const { return di::Unexpected(Error::NotSupported); }
+        auto operator()(auto&, u64) const -> di::AnySenderOf<> { return di::Unexpected(Error::NotSupported); }
     };
 
     struct FileHACKRawDataFunction {
-        di::AnySenderOf<di::Span<byte const>> operator()(auto&) const { return di::Unexpected(Error::NotSupported); }
+        auto operator()(auto&) const -> di::AnySenderOf<di::Span<byte const>> {
+            return di::Unexpected(Error::NotSupported);
+        }
     };
 }
 
@@ -97,7 +99,7 @@ using File = di::AnyShared<FileInterface>;
 
 class FileTable {
 public:
-    Expected<di::Tuple<File&, i32>> allocate_file_handle() {
+    auto allocate_file_handle() -> Expected<di::Tuple<File&, i32>> {
         for (auto [i, file] : di::enumerate(m_files)) {
             if (!file.has_value()) {
                 m_file_allocated[i] = true;
@@ -107,7 +109,7 @@ public:
         return di::Unexpected(Error::TooManyFilesOpen);
     }
 
-    Expected<File&> lookup_file_handle(i32 file_handle) {
+    auto lookup_file_handle(i32 file_handle) -> Expected<File&> {
         if (file_handle < 0 || di::equal_or_greater(file_handle, m_files.size())) {
             return di::Unexpected(Error::BadFileDescriptor);
         }
@@ -117,7 +119,7 @@ public:
         return m_files[file_handle];
     }
 
-    Expected<void> deallocate_file_handle(i32 file_handle) {
+    auto deallocate_file_handle(i32 file_handle) -> Expected<void> {
         if (file_handle < 0 || di::equal_or_greater(file_handle, m_files.size())) {
             return di::Unexpected(Error::BadFileDescriptor);
         }

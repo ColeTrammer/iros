@@ -14,7 +14,7 @@ enum class ModelSpecificRegister : u32 {
     KernelGsBase = 0xC0000102U,
 };
 
-static inline u64 read_msr(ModelSpecificRegister msr) {
+static inline auto read_msr(ModelSpecificRegister msr) -> u64 {
     u32 low;
     u32 high;
     asm volatile("rdmsr\n" : "=a"(low), "=d"(high) : "c"(msr));

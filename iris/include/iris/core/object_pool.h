@@ -14,7 +14,7 @@ namespace iris {
 namespace detail {
     struct InternalObjectTag : di::IntrusiveForwardListTag<InternalObjectTag> {
         template<typename U>
-        constexpr static bool is_sized(di::InPlaceType<U>) {
+        constexpr static auto is_sized(di::InPlaceType<U>) -> bool {
             return true;
         }
     };
@@ -40,7 +40,7 @@ namespace detail {
 template<typename T, di::concepts::FallibleAllocator Alloc = di::DefaultAllocator>
 class ObjectPool {
 public:
-    static Expected<ObjectPool> create(usize requested_capacity) {
+    static auto create(usize requested_capacity) -> Expected<ObjectPool> {
         auto pool = ObjectPool {};
 
         auto [storage, effective_capacity] =
@@ -70,7 +70,7 @@ public:
 
     ~ObjectPool() { clear(); }
 
-    ObjectPool& operator=(ObjectPool&& other) {
+    auto operator=(ObjectPool&& other) -> ObjectPool& {
         clear();
 
         m_free_list = di::move(other.m_free_list);
@@ -90,7 +90,7 @@ public:
         }
     }
 
-    Expected<T&> allocate() {
+    auto allocate() -> Expected<T&> {
         if (m_free_list.empty()) {
             return di::Unexpected(Error::NotEnoughMemory);
         }

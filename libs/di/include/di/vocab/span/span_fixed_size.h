@@ -90,66 +90,62 @@ public:
 
     constexpr Span(Span const&) = default;
 
-    constexpr Span& operator=(Span const&) = default;
+    constexpr auto operator=(Span const&) -> Span& = default;
 
-    constexpr T* begin() const { return data(); }
-    constexpr T* end() const { return data() + extent; }
+    constexpr auto begin() const -> T* { return data(); }
+    constexpr auto end() const -> T* { return data() + extent; }
 
-    constexpr T& front() const
+    constexpr auto front() const -> T&
     requires(extent > 0)
     {
         return *data();
     }
 
-    constexpr T& back() const
-    requires(extent > 0)
-    {
-        return *(end() - 1);
-    }
+    constexpr auto back() const -> T& requires(extent > 0) { return *(end() - 1); }
 
-    constexpr vocab::Optional<T&> at(types::size_t index) const {
+    constexpr auto at(types::size_t index) const -> vocab::Optional<T&> {
         if (index >= extent) {
             return nullopt;
         }
         return (*this)[index];
     }
 
-    constexpr T& operator[](types::size_t index) const
-    requires(extent > 0)
-    {
+    constexpr auto operator[](types::size_t index) const -> T& requires(extent > 0) {
         DI_ASSERT(index < extent);
         return data()[index];
     }
 
-    constexpr T* data() const { return m_data; }
+    constexpr auto data() const -> T* {
+        return m_data;
+    }
 
-    constexpr types::size_t size() const { return extent; }
-    constexpr types::size_t size_bytes() const { return sizeof(T) * extent; }
+    constexpr auto size() const -> types::size_t { return extent; }
+    constexpr auto size_bytes() const -> types::size_t { return sizeof(T) * extent; }
 
-    [[nodiscard]] constexpr bool empty() const { return extent == 0; }
+    [[nodiscard]] constexpr auto empty() const -> bool { return extent == 0; }
 
-    constexpr Optional<Span<T>> first(types::size_t count) const {
+    constexpr auto first(types::size_t count) const -> Optional<Span<T>> {
         if (count > extent) {
             return nullopt;
         }
         return Span<T> { data(), count };
     }
 
-    constexpr Optional<Span<T>> last(types::size_t count) const {
+    constexpr auto last(types::size_t count) const -> Optional<Span<T>> {
         if (count > extent) {
             return nullopt;
         }
         return Span<T> { end() - count, count };
     }
 
-    constexpr Optional<Span<T>> subspan(types::size_t offset) const {
+    constexpr auto subspan(types::size_t offset) const -> Optional<Span<T>> {
         if (offset > extent) {
             return nullopt;
         }
         return Span<T> { data() + offset, extent - offset };
     }
 
-    constexpr Optional<Span<T>> subspan(types::size_t offset, types::size_t count) const {
+    constexpr auto subspan(types::size_t offset, types::size_t count) const -> Optional<Span<T>> {
         if (offset + count > extent) {
             return nullopt;
         }
@@ -180,7 +176,7 @@ public:
 
     template<typename U = meta::RemoveCV<T>>
     requires(concepts::CopyConstructible<U>)
-    constexpr Array<U, extent> to_owned() const {
+    constexpr auto to_owned() const -> Array<U, extent> {
         return apply(
             [](auto const&... args) {
                 return Array<U, extent> { args... };
@@ -189,7 +185,7 @@ public:
     }
 
 private:
-    constexpr friend bool operator==(Span a, Span b)
+    constexpr friend auto operator==(Span a, Span b) -> bool
     requires(concepts::EqualityComparable<T>)
     {
         return container::equal(a, b);
@@ -203,28 +199,32 @@ private:
 
     template<concepts::ContiguousIterator It, concepts::SizedSentinelFor<It> Sent>
     requires(concepts::QualificationConvertibleTo<It, T*>)
-    constexpr friend Span<T> tag_invoke(types::Tag<container::reconstruct>, InPlaceType<Span>, It first, Sent last) {
+    constexpr friend auto tag_invoke(types::Tag<container::reconstruct>, InPlaceType<Span>, It first, Sent last)
+        -> Span<T> {
         return Span<T>(util::move(first), util::move(last));
     }
 
     template<types::size_t index>
     requires(index < extent)
-    constexpr friend InPlaceType<T> tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Span>, Constexpr<index>) {
+    constexpr friend auto tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Span>, Constexpr<index>)
+        -> InPlaceType<T> {
         return {};
     }
 
     template<types::size_t index>
     requires(index < extent)
-    constexpr friend InPlaceType<T> tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Span const>,
-                                               Constexpr<index>) {
+    constexpr friend auto tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Span const>, Constexpr<index>)
+        -> InPlaceType<T> {
         return {};
     }
 
-    constexpr friend types::size_t tag_invoke(types::Tag<tuple_size>, types::InPlaceType<Span>) { return extent; }
+    constexpr friend auto tag_invoke(types::Tag<tuple_size>, types::InPlaceType<Span>) -> types::size_t {
+        return extent;
+    }
 
     template<types::size_t index>
     requires(index < extent)
-    constexpr friend T& tag_invoke(types::Tag<util::get_in_place>, Constexpr<index>, Span self) {
+    constexpr friend auto tag_invoke(types::Tag<util::get_in_place>, Constexpr<index>, Span self) -> T& {
         return self[index];
     }
 

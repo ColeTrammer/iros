@@ -4,7 +4,7 @@
 #include <di/container/view/prelude.h>
 #include <di/math/prelude.h>
 
-int main(int argc, char** argv) {
+auto main(int argc, char** argv) -> int {
     auto args = di::Vector<di::TransparentString> {};
     for (auto i : di::range(1, argc)) {
         args.push_back(

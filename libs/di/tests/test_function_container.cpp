@@ -3,11 +3,11 @@
 #include <dius/test/prelude.h>
 
 namespace function_container {
-constexpr i32 do_calc(i32 x) noexcept {
+constexpr auto do_calc(i32 x) noexcept -> i32 {
     return x + 2;
 }
 
-constexpr i32 do_calc2(i32 x) {
+constexpr auto do_calc2(i32 x) -> i32 {
     return x + 3;
 }
 
@@ -27,7 +27,7 @@ constexpr void function_ref_basic() {
     ASSERT_EQ(h(5), 8);
 
     struct X {
-        constexpr i32 h(i32 x) const { return x + y; }
+        constexpr auto h(i32 x) const -> i32 { return x + y; }
 
         i32 y {};
     };
@@ -65,7 +65,7 @@ constexpr void function_basic() {
     ASSERT_EQ(g(1), 4);
 
     struct X {
-        constexpr i32 h(i32 x) const { return x + y; }
+        constexpr auto h(i32 x) const -> i32 { return x + y; }
 
         i32 y {};
     };

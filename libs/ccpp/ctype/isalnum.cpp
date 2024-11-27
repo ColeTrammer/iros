@@ -1,7 +1,7 @@
 #include <ctype.h>
 #include <stdio.h>
 
-extern "C" int isalnum(int ch) {
+extern "C" auto isalnum(int ch) -> int {
     if (ch == EOF) {
         return 0;
     }

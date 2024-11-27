@@ -1,7 +1,7 @@
 #include <setjmp.h>
 
 extern "C" {
-[[gnu::naked]] int setjmp([[maybe_unused]] jmp_buf env) {
+[[gnu::naked]] auto setjmp([[maybe_unused]] jmp_buf env) -> int {
     asm volatile(
         // Save the SYS-V ABI callee-saved registers.
         "movq %rbp, 0(%rdi)\n"

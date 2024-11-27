@@ -8,13 +8,13 @@ extern "C" [[gnu::weak]] [[noreturn]] void __cxa_pure_virtual() {
     di::unreachable();
 }
 
-extern "C" int __cxa_atexit(void (*)(void*), void*, void*) {
+extern "C" auto __cxa_atexit(void (*)(void*), void*, void*) -> int {
     return 0;
 }
 
 __extension__ typedef int __guard __attribute__((mode(__DI__)));
 
-extern "C" [[gnu::weak]] int __cxa_guard_acquire(__guard* guard) {
+extern "C" [[gnu::weak]] auto __cxa_guard_acquire(__guard* guard) -> int {
     __guard expected = 0;
     if (di::AtomicRef(*guard).compare_exchange_strong(expected, 1, di::MemoryOrder::AcquireRelease)) {
         return 1;

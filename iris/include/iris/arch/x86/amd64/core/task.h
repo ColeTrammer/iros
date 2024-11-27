@@ -5,21 +5,23 @@
 #include <iris/core/error.h>
 #include <iris/uapi/syscall.h>
 
+#include "iris/mm/virtual_address.h"
+
 namespace iris::arch {
 // This is x86_64 specific.
 struct TaskState {
     explicit TaskState(bool userspace);
 
-    SystemCall syscall_number() const { return SystemCall(rax); }
+    auto syscall_number() const -> SystemCall { return SystemCall(rax); }
 
-    bool in_kernel() const { return (cs & 0x3) == 0; }
+    auto in_kernel() const -> bool { return (cs & 0x3) == 0; }
 
-    u64 syscall_arg1() const { return rdi; }
-    u64 syscall_arg2() const { return rsi; }
-    u64 syscall_arg3() const { return rdx; }
-    u64 syscall_arg4() const { return r10; }
-    u64 syscall_arg5() const { return r8; }
-    u64 syscall_arg6() const { return r9; }
+    auto syscall_arg1() const -> u64 { return rdi; }
+    auto syscall_arg2() const -> u64 { return rsi; }
+    auto syscall_arg3() const -> u64 { return rdx; }
+    auto syscall_arg4() const -> u64 { return r10; }
+    auto syscall_arg5() const -> u64 { return r8; }
+    auto syscall_arg6() const -> u64 { return r9; }
 
     void set_syscall_return(Expected<uptr> value) {
         if (value) {
@@ -72,11 +74,11 @@ struct FpuState {
     ~FpuState();
 
     /// Setup the task's FPU state. This must be called for userspace tasks.
-    Expected<void> setup_fpu_state();
+    auto setup_fpu_state() -> Expected<void>;
 
     /// Setup initial FPU state. This creates a clean-copy of the FPU state which is copied to newly created tasks. This
     /// also configures the processor to allow floating-point / SIMD operations.
-    Expected<void> setup_initial_fpu_state();
+    auto setup_initial_fpu_state() -> Expected<void>;
 
     /// Load this task's FPU state into the registers. This only makes sense to call when IRQs are disabled, right
     /// before performing a context switch.
@@ -91,7 +93,7 @@ struct FpuState {
     byte* fpu_state { nullptr };
 
 private:
-    Expected<byte*> allocate_fpu_state();
+    auto allocate_fpu_state() -> Expected<byte*>;
 };
 
 void load_kernel_stack(mm::VirtualAddress base);

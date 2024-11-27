@@ -41,14 +41,14 @@ public:
     template<typename U>
     requires(!concepts::SameAs<Iter, U> && concepts::ConvertibleTo<U const&, Iter> &&
              concepts::AssignableFrom<Iter&, U const&>)
-    constexpr ReverseIterator& operator=(ReverseIterator<U> const& other) {
+    constexpr auto operator=(ReverseIterator<U> const& other) -> ReverseIterator& {
         m_base = other.base();
         return *this;
     }
 
-    constexpr Iter base() const { return m_base; }
+    constexpr auto base() const -> Iter { return m_base; }
 
-    constexpr decltype(auto) operator*() const {
+    constexpr auto operator*() const -> decltype(auto) {
         auto copy = base();
         return *--copy;
     }
@@ -73,7 +73,7 @@ public:
     }
 
 private:
-    constexpr friend decltype(auto) tag_invoke(types::Tag<iterator_move>, ReverseIterator const& self)
+    constexpr friend auto tag_invoke(types::Tag<iterator_move>, ReverseIterator const& self) -> decltype(auto)
     requires(requires { typename meta::IteratorRValue<Iter>; })
     {
         auto temp = self.base();
@@ -92,7 +92,7 @@ private:
 };
 
 template<typename Iter, concepts::EqualityComparableWith<Iter> U>
-constexpr bool operator==(ReverseIterator<Iter> const& a, ReverseIterator<U> const& b) {
+constexpr auto operator==(ReverseIterator<Iter> const& a, ReverseIterator<U> const& b) -> bool {
     return a.base() == b.base();
 }
 

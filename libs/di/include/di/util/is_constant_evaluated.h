@@ -1,7 +1,7 @@
 #pragma once
 
 namespace di::util {
-constexpr bool is_constant_evaluated() noexcept {
+constexpr auto is_constant_evaluated() noexcept -> bool {
     if consteval {
         return true;
     } else {

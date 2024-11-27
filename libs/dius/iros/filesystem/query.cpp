@@ -7,13 +7,13 @@
 
 namespace dius::filesystem {
 namespace iros {
-    static di::Expected<int, PosixError> sys_path_metadata(di::PathView path, iris::Metadata* metadata) {
+    static auto sys_path_metadata(di::PathView path, iris::Metadata* metadata) -> di::Expected<int, PosixError> {
         return system::system_call<int>(system::Number::path_metadata, path.data().data(), path.data().size(),
                                         metadata);
     }
 }
 
-static FileStatus stat_to_file_status(iris::Metadata const& info) {
+static auto stat_to_file_status(iris::Metadata const& info) -> FileStatus {
     auto type = [&] {
         if (info.type == iris::MetadataType::Regular) {
             return FileType::Regular;
@@ -27,7 +27,7 @@ static FileStatus stat_to_file_status(iris::Metadata const& info) {
 }
 
 namespace detail {
-    di::Result<bool> IsEmptyFunction::operator()(di::PathView path) const {
+    auto IsEmptyFunction::operator()(di::PathView path) const -> di::Result<bool> {
         auto info = iris::Metadata {};
         TRY(iros::sys_path_metadata(path, &info));
         if (info.type != iris::MetadataType::Regular && info.type != iris::MetadataType::Directory) {
@@ -41,7 +41,7 @@ namespace detail {
         return info.size == 0;
     }
 
-    di::Result<FileStatus> StatusFunction::operator()(di::PathView path) const {
+    auto StatusFunction::operator()(di::PathView path) const -> di::Result<FileStatus> {
         auto info = iris::Metadata {};
         auto result = iros::sys_path_metadata(path, &info);
         if (result == di::Unexpected(PosixError::NoSuchFileOrDirectory)) {
@@ -53,7 +53,7 @@ namespace detail {
         return stat_to_file_status(info);
     }
 
-    di::Result<FileStatus> SymlinkStatusFunction::operator()(di::PathView path) const {
+    auto SymlinkStatusFunction::operator()(di::PathView path) const -> di::Result<FileStatus> {
         auto info = iris::Metadata {};
         auto result = iros::sys_path_metadata(path, &info);
         if (result == di::Unexpected(PosixError::NoSuchFileOrDirectory)) {
@@ -65,7 +65,7 @@ namespace detail {
         return stat_to_file_status(info);
     }
 
-    di::Result<umax> FileSizeFunction::operator()(di::PathView path) const {
+    auto FileSizeFunction::operator()(di::PathView path) const -> di::Result<umax> {
         auto info = iris::Metadata {};
         TRY(iros::sys_path_metadata(path, &info));
 
@@ -78,7 +78,7 @@ namespace detail {
         return info.size;
     }
 
-    di::Result<umax> HardLinkCountFunction::operator()(di::PathView) const {
+    auto HardLinkCountFunction::operator()(di::PathView) const -> di::Result<umax> {
         return di::Unexpected(PosixError::OperationNotSupported);
     }
 }

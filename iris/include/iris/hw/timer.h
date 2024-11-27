@@ -20,7 +20,7 @@ using TimerResolution = di::Picoseconds;
 namespace detail {
     template<typename R = void>
     struct TimerDefaultNotSupported {
-        inline Expected<R> operator()(auto&&...) const { return di::Unexpected(Error::NotSupported); }
+        inline auto operator()(auto&&...) const -> Expected<R> { return di::Unexpected(Error::NotSupported); }
     };
 }
 
@@ -50,8 +50,8 @@ using TimerInterface = di::meta::List<TimerName, TimerCapabilitiesFunction, Time
                                       TimerCalibrateFunction, TimerSetSingleShotFunction, TimerSetIntervalFunction>;
 using Timer = di::Any<TimerInterface>;
 
-di::Synchronized<Timer>& scheduler_timer();
-di::Synchronized<Timer>& calibration_timer();
+auto scheduler_timer() -> di::Synchronized<Timer>&;
+auto calibration_timer() -> di::Synchronized<Timer>&;
 
 void init_timer_assignments();
 }

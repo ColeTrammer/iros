@@ -34,7 +34,8 @@ namespace async_net_ns {
     struct AsyncBind {
         template<typename Socket, typename... ExtraArgs>
         requires(concepts::TagInvocable<AsyncBind, Socket, ExtraArgs...>)
-        constexpr concepts::SenderOf<SetValue()> auto operator()(Socket&& socket, ExtraArgs&&... extra_args) const {
+        constexpr auto operator()(Socket&& socket, ExtraArgs&&... extra_args) const
+            -> concepts::SenderOf<SetValue()> auto {
             static_assert(concepts::SenderOf<meta::TagInvokeResult<AsyncBind, Socket, ExtraArgs...>, SetValue()>,
                           "async_bind() customizations must return a sender of void.");
             return tag_invoke(*this, di::forward<Socket>(socket), di::forward<ExtraArgs>(extra_args)...);
@@ -44,7 +45,8 @@ namespace async_net_ns {
     struct AsyncConnect {
         template<typename Socket, typename... ExtraArgs>
         requires(concepts::TagInvocable<AsyncConnect, Socket, ExtraArgs...>)
-        constexpr concepts::SenderOf<SetValue()> auto operator()(Socket&& socket, ExtraArgs&&... extra_args) const {
+        constexpr auto operator()(Socket&& socket, ExtraArgs&&... extra_args) const
+            -> concepts::SenderOf<SetValue()> auto {
             static_assert(concepts::SenderOf<meta::TagInvokeResult<AsyncConnect, Socket, ExtraArgs...>, SetValue()>,
                           "async_connect() customizations must return a sender of void.");
             return tag_invoke(*this, di::forward<Socket>(socket), di::forward<ExtraArgs>(extra_args)...);
@@ -54,7 +56,8 @@ namespace async_net_ns {
     struct AsyncListen {
         template<typename Socket, typename... ExtraArgs>
         requires(concepts::TagInvocable<AsyncListen, Socket, ExtraArgs...>)
-        constexpr concepts::SenderOf<SetValue()> auto operator()(Socket&& socket, ExtraArgs&&... extra_args) const {
+        constexpr auto operator()(Socket&& socket, ExtraArgs&&... extra_args) const
+            -> concepts::SenderOf<SetValue()> auto {
             static_assert(concepts::SenderOf<meta::TagInvokeResult<AsyncListen, Socket, ExtraArgs...>, SetValue()>,
                           "async_listen() customizations must return a sender of void.");
             return tag_invoke(*this, di::forward<Socket>(socket), di::forward<ExtraArgs>(extra_args)...);
@@ -64,7 +67,8 @@ namespace async_net_ns {
     struct AsyncShutdown {
         template<typename Socket, typename... ExtraArgs>
         requires(concepts::TagInvocable<AsyncShutdown, Socket, ExtraArgs...>)
-        constexpr concepts::SenderOf<SetValue()> auto operator()(Socket&& socket, ExtraArgs&&... extra_args) const {
+        constexpr auto operator()(Socket&& socket, ExtraArgs&&... extra_args) const
+            -> concepts::SenderOf<SetValue()> auto {
             static_assert(concepts::SenderOf<meta::TagInvokeResult<AsyncShutdown, Socket, ExtraArgs...>, SetValue()>,
                           "async_shutdown() customizations must return a sender of void.");
             return tag_invoke(*this, di::forward<Socket>(socket), di::forward<ExtraArgs>(extra_args)...);

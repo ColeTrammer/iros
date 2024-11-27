@@ -1,7 +1,7 @@
 #include <ctype.h>
 #include <stdio.h>
 
-extern "C" int isxdigit(int ch) {
+extern "C" auto isxdigit(int ch) -> int {
     if (ch == EOF) {
         return 0;
     }

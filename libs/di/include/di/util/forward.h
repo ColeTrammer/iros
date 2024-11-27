@@ -7,12 +7,12 @@
 #else
 namespace std {
 template<typename T>
-constexpr T&& forward(di::meta::RemoveReference<T>& value) noexcept {
+constexpr auto forward(di::meta::RemoveReference<T>& value) noexcept -> T&& {
     return static_cast<T&&>(value);
 }
 
 template<typename T>
-constexpr T&& forward(di::meta::RemoveReference<T>&& value) noexcept {
+constexpr auto forward(di::meta::RemoveReference<T>&& value) noexcept -> T&& {
     return static_cast<T&&>(value);
 }
 }

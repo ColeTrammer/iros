@@ -30,8 +30,8 @@ namespace repeat_effect_until_ns {
         public:
             explicit Type(OperationState<Send, Rec, Pred>* data) : m_op_state(data) {}
 
-            Rec const& base() const& { return m_op_state->m_receiver; }
-            Rec&& base() && { return util::move(m_op_state->m_receiver); }
+            auto base() const& -> Rec const& { return m_op_state->m_receiver; }
+            auto base() && -> Rec&& { return util::move(m_op_state->m_receiver); }
 
         private:
             void set_value() && { m_op_state->repeat_effect(); }
@@ -116,7 +116,7 @@ namespace repeat_effect_until_ns {
     struct Function {
         template<concepts::SenderOf<SetValue()> Send, concepts::MovableValue Pred>
         requires(concepts::CopyConstructible<Send> && concepts::Predicate<meta::Decay<Pred>&>)
-        constexpr concepts::SenderOf<SetValue()> auto operator()(Send&& sender, Pred&& predicate) const {
+        constexpr auto operator()(Send&& sender, Pred&& predicate) const -> concepts::SenderOf<SetValue()> auto {
             if constexpr (concepts::TagInvocable<Function, Send, Pred>) {
                 return function::tag_invoke(*this, util::forward<Send>(sender), util::forward<Pred>(predicate));
             } else {

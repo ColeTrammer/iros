@@ -5,7 +5,7 @@
 namespace iris::mm {
 struct TempPage;
 
-Expected<TempPage> map_temp_page();
+auto map_temp_page() -> Expected<TempPage>;
 void unmap_temp_page(void*);
 
 struct TempPage {
@@ -16,12 +16,12 @@ public:
 
     TempPage(TempPage const&) = delete;
     TempPage(TempPage&&) = delete;
-    TempPage& operator=(TempPage const&) = delete;
-    TempPage& operator=(TempPage&&) = delete;
+    auto operator=(TempPage const&) -> TempPage& = delete;
+    auto operator=(TempPage&&) -> TempPage& = delete;
 
     template<typename T>
     requires(sizeof(T) <= 4096 && alignof(T) <= 4096)
-    T* typed() const {
+    auto typed() const -> T* {
         return reinterpret_cast<T*>(m_data);
     }
 

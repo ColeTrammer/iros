@@ -2,7 +2,7 @@
 #include <errno.h>
 
 // https://pubs.opengroup.org/onlinepubs/9699919799/functions/fileno_unlocked.html
-extern "C" int fileno_unlocked(FILE* file) {
+extern "C" auto fileno_unlocked(FILE* file) -> int {
     auto result = file->get_unlocked().file.file_descriptor();
     if (result == -1) {
         errno = EBADF;

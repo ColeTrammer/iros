@@ -19,15 +19,15 @@ struct B {
     di::Box<i32> nothing;
 };
 
-constexpr i32 tag_invoke(X, i32 const& x, i32 y) {
+constexpr auto tag_invoke(X, i32 const& x, i32 y) -> i32 {
     return x + y;
 }
 
-constexpr i32 tag_invoke(X, A const&, i32 y) {
+constexpr auto tag_invoke(X, A const&, i32 y) -> i32 {
     return y + 4;
 }
 
-constexpr i32 tag_invoke(X, B const&, i32 y) {
+constexpr auto tag_invoke(X, B const&, i32 y) -> i32 {
     return y + 5;
 }
 
@@ -39,7 +39,7 @@ struct Y : di::Dispatcher<Y, i32(di::This&), decltype(return_1)> {};
 
 constexpr inline auto yf = Y {};
 
-constexpr i32 tag_invoke(Y, i32& x) {
+constexpr auto tag_invoke(Y, i32& x) -> i32 {
     return x + 2;
 }
 
@@ -234,11 +234,11 @@ struct Z : di::Immovable {
     int x;
 };
 
-constexpr i32 tag_invoke(X, Z const& z, i32 y) {
+constexpr auto tag_invoke(X, Z const& z, i32 y) -> i32 {
     return y + z.x;
 }
 
-constexpr i32 tag_invoke(Y, di::meta::Type<Y>, Z& z) {
+constexpr auto tag_invoke(Y, di::meta::Type<Y>, Z& z) -> i32 {
     return 4 + z.x;
 }
 

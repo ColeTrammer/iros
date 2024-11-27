@@ -34,15 +34,19 @@ public:
 
     constexpr ReverseView(View view) : m_view(util::move(view)) {}
 
-    constexpr View base() const&
+    constexpr auto base() const& -> View
     requires(concepts::CopyConstructible<View>)
     {
         return m_view;
     }
 
-    constexpr View base() && requires(concepts::CopyConstructible<View>) { return util::move(m_view); }
+    constexpr auto base() && -> View
+    requires(concepts::CopyConstructible<View>)
+    {
+        return util::move(m_view);
+    }
 
-        constexpr ReverseIterator<Iter> begin() {
+    constexpr auto begin() -> ReverseIterator<Iter> {
         if (m_begin_cache.value.has_value()) {
             return *m_begin_cache.value;
         } else {
@@ -51,7 +55,7 @@ public:
         }
     }
 
-    constexpr ReverseIterator<Iter> begin()
+    constexpr auto begin() -> ReverseIterator<Iter>
     requires(concepts::CommonContainer<View>)
     {
         return container::make_reverse_iterator(container::end(m_view));
@@ -63,7 +67,7 @@ public:
         return container::make_reverse_iterator(container::end(m_view));
     }
 
-    constexpr ReverseIterator<Iter> end() { return container::make_reverse_iterator(container::begin(m_view)); }
+    constexpr auto end() -> ReverseIterator<Iter> { return container::make_reverse_iterator(container::begin(m_view)); }
 
     constexpr auto end() const
     requires(concepts::CommonContainer<View const>)

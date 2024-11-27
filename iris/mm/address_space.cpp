@@ -11,13 +11,13 @@
 #include <iris/mm/sections.h>
 
 namespace iris::mm {
-AddressSpace& LockedAddressSpace::base() {
+auto LockedAddressSpace::base() -> AddressSpace& {
     return static_cast<AddressSpace&>(
         reinterpret_cast<di::Synchronized<LockedAddressSpace, InterruptibleSpinlock>&>(*this));
 }
 
-Expected<VirtualAddress> LockedAddressSpace::allocate_region(di::Arc<BackingObject> backing_object,
-                                                             di::Box<Region> region) {
+auto LockedAddressSpace::allocate_region(di::Arc<BackingObject> backing_object, di::Box<Region> region)
+    -> Expected<VirtualAddress> {
     // Basic hack algorithm: allocate the new region at a large fixed offset from the old region.
     // Additionally, immediately fill in the newly created pages.
 
@@ -59,7 +59,8 @@ Expected<VirtualAddress> LockedAddressSpace::allocate_region(di::Arc<BackingObje
     return new_region->base();
 }
 
-Expected<void> LockedAddressSpace::allocate_region_at(di::Arc<BackingObject> backing_object, di::Box<Region> region) {
+auto LockedAddressSpace::allocate_region_at(di::Arc<BackingObject> backing_object, di::Box<Region> region)
+    -> Expected<void> {
     auto flags = region->flags();
     if (base().m_kernel == !!(flags & RegionFlags::User)) {
         println("WARNING: attempt to allocate a region with mismatched userspace flag."_sv);
@@ -84,21 +85,21 @@ Expected<void> LockedAddressSpace::allocate_region_at(di::Arc<BackingObject> bac
     return {};
 }
 
-Expected<VirtualAddress> AddressSpace::allocate_region(di::Arc<BackingObject> backing_object, usize page_aligned_length,
-                                                       RegionFlags flags) {
+auto AddressSpace::allocate_region(di::Arc<BackingObject> backing_object, usize page_aligned_length, RegionFlags flags)
+    -> Expected<VirtualAddress> {
     auto region = TRY(di::make_box<Region>(VirtualAddress(0), page_aligned_length, flags));
     return lock()->allocate_region(di::move(backing_object), di::move(region));
 }
 
-Expected<void> AddressSpace::allocate_region_at(di::Arc<BackingObject> backing_object, VirtualAddress location,
-                                                usize page_aligned_length, RegionFlags flags) {
+auto AddressSpace::allocate_region_at(di::Arc<BackingObject> backing_object, VirtualAddress location,
+                                      usize page_aligned_length, RegionFlags flags) -> Expected<void> {
     auto region = TRY(di::make_box<Region>(location, page_aligned_length, flags));
     return lock()->allocate_region_at(di::move(backing_object), di::move(region));
 }
 
-Expected<void> init_and_load_initial_kernel_address_space(PhysicalAddress kernel_physical_start,
-                                                          VirtualAddress kernel_virtual_start,
-                                                          PhysicalAddress max_physical_address) {
+auto init_and_load_initial_kernel_address_space(PhysicalAddress kernel_physical_start,
+                                                VirtualAddress kernel_virtual_start,
+                                                PhysicalAddress max_physical_address) -> Expected<void> {
     auto& global_state = global_state_in_boot();
     auto const total_pages = di::divide_round_up(max_physical_address.raw_value(), 4096);
     auto pages_needed_for_physical_pages = di::divide_round_up(total_pages * sizeof(PhysicalPage), 4096);

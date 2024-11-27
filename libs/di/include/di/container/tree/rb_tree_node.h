@@ -12,10 +12,10 @@ public:
 
     RBTreeNode() = default;
 
-    constexpr bool is_left_child() const { return parent && parent->left == this; }
-    constexpr bool is_right_child() const { return parent && parent->right == this; }
+    constexpr auto is_left_child() const -> bool { return parent && parent->left == this; }
+    constexpr auto is_right_child() const -> bool { return parent && parent->right == this; }
 
-    constexpr RBTreeNode& find_min() {
+    constexpr auto find_min() -> RBTreeNode& {
         auto* node = this;
         while (node->left) {
             node = node->left;
@@ -23,7 +23,7 @@ public:
         return *node;
     }
 
-    constexpr RBTreeNode& find_max() {
+    constexpr auto find_max() -> RBTreeNode& {
         auto* node = this;
         while (node->right) {
             node = node->right;
@@ -31,7 +31,7 @@ public:
         return *node;
     }
 
-    constexpr RBTreeNode* predecessor() const {
+    constexpr auto predecessor() const -> RBTreeNode* {
         if (left) {
             return &left->find_max();
         }
@@ -45,7 +45,7 @@ public:
         return parent;
     }
 
-    constexpr RBTreeNode* successor() const {
+    constexpr auto successor() const -> RBTreeNode* {
         if (right) {
             return &right->find_min();
         }

@@ -14,10 +14,11 @@ enum class PathLookupFlags {
 
 DI_DEFINE_ENUM_BITWISE_OPERATIONS(PathLookupFlags)
 
-di::AnySenderOf<di::Arc<TNode>> lookup_path(di::Arc<TNode> root, di::Arc<TNode> relative_to, di::PathView path,
-                                            PathLookupFlags flags = PathLookupFlags::None);
+auto lookup_path(di::Arc<TNode> root, di::Arc<TNode> relative_to, di::PathView path,
+                 PathLookupFlags flags = PathLookupFlags::None) -> di::AnySenderOf<di::Arc<TNode>>;
 
-di::AnySenderOf<void> create_node(di::Arc<TNode> root, di::Arc<TNode> relative_to, di::PathView path,
-                                  MetadataType type);
-di::AnySenderOf<File> open_path(di::Arc<TNode> root, di::Arc<TNode> relative_to, di::PathView path, OpenMode mode);
+auto create_node(di::Arc<TNode> root, di::Arc<TNode> relative_to, di::PathView path, MetadataType type)
+    -> di::AnySenderOf<void>;
+auto open_path(di::Arc<TNode> root, di::Arc<TNode> relative_to, di::PathView path, OpenMode mode)
+    -> di::AnySenderOf<File>;
 }

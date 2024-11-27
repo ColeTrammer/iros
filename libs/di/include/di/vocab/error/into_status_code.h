@@ -8,7 +8,7 @@ namespace detail {
     struct IntoStatusCodeFunction {
         template<typename... Args>
         requires(concepts::TagInvocable<IntoStatusCodeFunction, Args...>)
-        constexpr concepts::StatusCode decltype(auto) operator()(Args&&... args) const {
+        constexpr auto operator()(Args&&... args) const -> concepts::StatusCode decltype(auto) {
             return function::tag_invoke(*this, util::forward<Args>(args)...);
         }
     };

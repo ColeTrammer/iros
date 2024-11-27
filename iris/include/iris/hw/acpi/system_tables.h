@@ -6,7 +6,7 @@
 #include <di/vocab/span/prelude.h>
 
 namespace iris::acpi {
-bool validate_acpi_checksum(di::Span<byte const> data);
+auto validate_acpi_checksum(di::Span<byte const> data) -> bool;
 
 /// @brief Root System Description Pointer
 ///
@@ -30,7 +30,9 @@ struct [[gnu::packed]] RSDP {
     di::Array<byte, 3> reserved;
     /// @}
 
-    bool validate_v1() const { return validate_acpi_checksum(di::as_bytes(di::Span { this, 1 }) | di::take(20)); }
+    auto validate_v1() const -> bool {
+        return validate_acpi_checksum(di::as_bytes(di::Span { this, 1 }) | di::take(20));
+    }
 };
 
 /// @brief System Description Table Header
@@ -47,9 +49,11 @@ struct [[gnu::packed]] SDTHeader {
     u32 creator_id;
     u32 creator_revision;
 
-    di::Span<byte const> as_bytes() const { return di::Span { reinterpret_cast<byte const*>(this), this->length }; }
+    auto as_bytes() const -> di::Span<byte const> {
+        return di::Span { reinterpret_cast<byte const*>(this), this->length };
+    }
 
-    bool validate(usize min_length) const {
+    auto validate(usize min_length) const -> bool {
         if (this->length < min_length) {
             return false;
         }
@@ -61,7 +65,7 @@ struct [[gnu::packed]] SDTHeader {
 ///
 /// See [OSDEV](https://wiki.osdev.org/RSDT) or ACPI 6.5 spec section 5.2.7.
 struct [[gnu::packed]] RSDT : SDTHeader {
-    di::Span<u32 const> entries() const {
+    auto entries() const -> di::Span<u32 const> {
         return di::Span { reinterpret_cast<u32 const*>(this + 1), (this->length - sizeof(SDTHeader)) / sizeof(u32) };
     }
 };
@@ -103,12 +107,12 @@ struct InterruptControllerStructureHeader {
     InterruptControllerStructureType type;
     u8 length;
 
-    InterruptControllerStructureHeader const* next() const {
+    auto next() const -> InterruptControllerStructureHeader const* {
         return reinterpret_cast<InterruptControllerStructureHeader const*>(reinterpret_cast<byte const*>(this) +
                                                                            this->length);
     }
 
-    bool validate(usize min_length) const { return this->length >= min_length; }
+    auto validate(usize min_length) const -> bool { return this->length >= min_length; }
 };
 
 /// @brief Processor Local APIC Structure
@@ -156,8 +160,8 @@ struct [[gnu::packed]] MPSInterruptFlags {
         Level = 3,
     };
 
-    Polarity polarity() const { return Polarity(value & 0b11); }
-    TriggerMode trigger_mode() const { return TriggerMode((value & 0b1100) >> 2); }
+    auto polarity() const -> Polarity { return Polarity(value & 0b11); }
+    auto trigger_mode() const -> TriggerMode { return TriggerMode((value & 0b1100) >> 2); }
 
     u16 value;
 };
@@ -193,10 +197,10 @@ public:
                                                   InterruptControllerStructureHeader const* end)
         : m_current(current), m_end(end) {}
 
-    InterruptControllerStructureHeader const& operator*() const { return *m_current; }
-    InterruptControllerStructureHeader const* operator->() const { return m_current; }
+    auto operator*() const -> InterruptControllerStructureHeader const& { return *m_current; }
+    auto operator->() const -> InterruptControllerStructureHeader const* { return m_current; }
 
-    bool validate(usize min_size) const {
+    auto validate(usize min_size) const -> bool {
         auto const* readable_end = reinterpret_cast<byte const*>(m_current) + min_size;
         return m_current->validate(min_size) && m_current->next() <= m_end &&
                di::to_uintptr(readable_end) <= di::to_uintptr(m_end);
@@ -204,12 +208,14 @@ public:
 
     void advance_one() { m_current = m_current->next(); }
 
-    InterruptControllerStructureIterator begin() const { return *this; }
-    InterruptControllerStructureIterator end() const { return InterruptControllerStructureIterator { m_end, m_end }; }
+    auto begin() const -> InterruptControllerStructureIterator { return *this; }
+    auto end() const -> InterruptControllerStructureIterator {
+        return InterruptControllerStructureIterator { m_end, m_end };
+    }
 
 private:
-    friend bool operator==(InterruptControllerStructureIterator const& a,
-                           InterruptControllerStructureIterator const& b) {
+    friend auto operator==(InterruptControllerStructureIterator const& a, InterruptControllerStructureIterator const& b)
+        -> bool {
         return a.m_current == b.m_current;
     }
 
@@ -228,7 +234,7 @@ struct [[gnu::packed]] MADT : SDTHeader {
     u32 local_apic_address;
     Flags flags;
 
-    InterruptControllerStructureIterator interrupt_controller_structures() const {
+    auto interrupt_controller_structures() const -> InterruptControllerStructureIterator {
         return InterruptControllerStructureIterator {
             reinterpret_cast<InterruptControllerStructureHeader const*>(this + 1),
             reinterpret_cast<InterruptControllerStructureHeader const*>(this->as_bytes().end())

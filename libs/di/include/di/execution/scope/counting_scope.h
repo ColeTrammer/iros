@@ -278,7 +278,7 @@ namespace counting_scope_ns {
     template<typename Alloc>
     struct CountingScopeT<Alloc>::Type : util::Immovable {
     public:
-        Data<Alloc>* data() { return util::addressof(m_data); }
+        auto data() -> Data<Alloc>* { return util::addressof(m_data); }
 
     private:
         template<concepts::SenderIn<Env<Alloc>> Send>

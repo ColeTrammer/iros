@@ -197,7 +197,7 @@ namespace then_ns {
 
     struct ValueFunction {
         template<concepts::Sender Send, concepts::MovableValue Fun>
-        concepts::Sender auto operator()(Send&& sender, Fun&& function) const {
+        auto operator()(Send&& sender, Fun&& function) const -> concepts::Sender auto {
             if constexpr (requires {
                               function::tag_invoke(*this, get_completion_scheduler<SetValue>(get_env(sender)),
                                                    util::forward<Send>(sender), util::forward<Fun>(function));
@@ -217,7 +217,7 @@ namespace then_ns {
 
     struct ErrorFunction {
         template<concepts::Sender Send, concepts::MovableValue Fun>
-        concepts::Sender auto operator()(Send&& sender, Fun&& function) const {
+        auto operator()(Send&& sender, Fun&& function) const -> concepts::Sender auto {
             if constexpr (requires {
                               function::tag_invoke(*this, get_completion_scheduler<SetError>(get_env(sender)),
                                                    util::forward<Send>(sender), util::forward<Fun>(function));
@@ -237,7 +237,7 @@ namespace then_ns {
 
     struct StoppedFunction {
         template<concepts::Sender Send, concepts::MovableValue Fun>
-        concepts::Sender auto operator()(Send&& sender, Fun&& function) const {
+        auto operator()(Send&& sender, Fun&& function) const -> concepts::Sender auto {
             if constexpr (requires {
                               function::tag_invoke(*this, get_completion_scheduler<SetStopped>(get_env(sender)),
                                                    util::forward<Send>(sender), util::forward<Fun>(function));

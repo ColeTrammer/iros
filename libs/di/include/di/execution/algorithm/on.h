@@ -37,11 +37,11 @@ namespace on_ns {
         public:
             explicit Type(OperationState<Send, Rec, Sched>* operation_state) : m_operation_state(operation_state) {}
 
-            Rec const& base() const& { return m_operation_state->receiver; }
-            Rec&& base() && { return util::move(m_operation_state->receiver); }
+            auto base() const& -> Rec const& { return m_operation_state->receiver; }
+            auto base() && -> Rec&& { return util::move(m_operation_state->receiver); }
 
         private:
-            Env<meta::EnvOf<Rec>, Sched> get_env() const& {
+            auto get_env() const& -> Env<meta::EnvOf<Rec>, Sched> {
                 return make_env(execution::get_env(base()), with(get_scheduler, m_operation_state->scheduler));
             }
 
@@ -62,8 +62,8 @@ namespace on_ns {
         public:
             explicit Type(OperationState<Send, Rec, Sched>* operation_state) : m_operation_state(operation_state) {}
 
-            Rec const& base() const& { return m_operation_state->receiver; }
-            Rec&& base() && { return util::move(m_operation_state->receiver); }
+            auto base() const& -> Rec const& { return m_operation_state->receiver; }
+            auto base() && -> Rec&& { return util::move(m_operation_state->receiver); }
 
         private:
             void set_value() && { m_operation_state->phase2(); }
@@ -146,7 +146,7 @@ namespace on_ns {
 
     struct Function {
         template<concepts::Scheduler Sched, concepts::Sender Send>
-        concepts::Sender auto operator()(Sched&& scheduler, Send&& sender) const {
+        auto operator()(Sched&& scheduler, Send&& sender) const -> concepts::Sender auto {
             if constexpr (concepts::TagInvocable<Function, Sched, Send>) {
                 return function::tag_invoke(*this, util::forward<Sched>(scheduler), util::forward<Send>(sender));
             } else {

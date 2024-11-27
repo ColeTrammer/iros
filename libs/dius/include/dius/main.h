@@ -21,7 +21,7 @@ constexpr auto help_set(T const& result) -> bool {
 }
 
 #define DIUS_MAIN(Type, NS)                                                                      \
-    int main(int argc, char** argv) {                                                            \
+    auto main(int argc, char** argv) -> int {                                                    \
         auto args = ::di::Vector<::di::TransparentStringView> {};                                \
         for (int i = 0; i < argc; i++) {                                                         \
             char* arg = argv[i];                                                                 \

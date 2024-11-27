@@ -13,8 +13,8 @@ namespace di::concepts {
 namespace detail {
     template<typename T>
     struct MonadBindId {
-        constexpr T operator()(auto&& value) const { return T(util::forward<decltype(value)>(value)); }
-        constexpr T operator()() const { return T(); }
+        constexpr auto operator()(auto&& value) const -> T { return T(util::forward<decltype(value)>(value)); }
+        constexpr auto operator()() const -> T { return T(); }
     };
 
     template<typename M>

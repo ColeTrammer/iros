@@ -29,8 +29,8 @@ namespace di::container {
 template<typename Self, typename Value>
 class MutableVectorInterface : public ConstantVectorInterface<Self, Value> {
 private:
-    constexpr Self& self() { return static_cast<Self&>(*this); }
-    constexpr Self const& self() const { return static_cast<Self const&>(*this); }
+    constexpr auto self() -> Self& { return static_cast<Self&>(*this); }
+    constexpr auto self() const -> Self const& { return static_cast<Self const&>(*this); }
 
     using Iterator = Value*;
     using ConstIterator = Value const*;
@@ -56,13 +56,13 @@ public:
 
     constexpr void clear() { return vector::clear(self()); }
 
-    constexpr decltype(auto) push_back(Value const& value)
+    constexpr auto push_back(Value const& value) -> decltype(auto)
     requires(concepts::CopyConstructible<Value>)
     {
         return vector::emplace_back(self(), value);
     }
 
-    constexpr decltype(auto) push_back(Value&& value)
+    constexpr auto push_back(Value&& value) -> decltype(auto)
     requires(concepts::MoveConstructible<Value>)
     {
         return vector::emplace_back(self(), util::move(value));
@@ -70,7 +70,7 @@ public:
 
     template<typename... Args>
     requires(concepts::ConstructibleFrom<Value, Args...>)
-    constexpr decltype(auto) emplace_back(Args&&... args) {
+    constexpr auto emplace_back(Args&&... args) -> decltype(auto) {
         return vector::emplace_back(self(), util::forward<Args>(args)...);
     }
 

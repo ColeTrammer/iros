@@ -10,7 +10,7 @@ public:
     constexpr BitProxyReference(BitProxyReference const&) = default;
     constexpr BitProxyReference(BitProxyReference&&) = default;
 
-    constexpr BitProxyReference const& operator=(bool value) const {
+    constexpr auto operator=(bool value) const -> BitProxyReference const& {
         if (value) {
             *m_byte |= (1u << m_bit_offset);
         } else {
@@ -18,13 +18,15 @@ public:
         }
         return *this;
     }
-    constexpr BitProxyReference const& operator=(BitProxyReference const& other) const { return *this = bool(other); }
+    constexpr auto operator=(BitProxyReference const& other) const -> BitProxyReference const& {
+        return *this = bool(other);
+    }
 
     constexpr operator bool() const { return !!(*m_byte & (1u << m_bit_offset)); }
 
-    constexpr bool operator~() const { return !bool(*this); }
+    constexpr auto operator~() const -> bool { return !bool(*this); }
 
-    constexpr BitProxyReference const& flip() const {
+    constexpr auto flip() const -> BitProxyReference const& {
         *m_byte ^= (1u << m_bit_offset);
         return *this;
     }

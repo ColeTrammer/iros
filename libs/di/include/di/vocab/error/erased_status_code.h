@@ -39,8 +39,8 @@ public:
     constexpr StatusCode(U&& v, Args&&... args)
         : StatusCode(into_status_code(util::forward<U>(v), util::forward<Args>(args)...)) {}
 
-    StatusCode& operator=(StatusCode const&) = delete;
-    StatusCode& operator=(StatusCode&&) = default;
+    auto operator=(StatusCode const&) -> StatusCode& = delete;
+    auto operator=(StatusCode&&) -> StatusCode& = default;
 
     constexpr ~StatusCode() {
         if (this->m_domain) {

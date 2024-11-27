@@ -15,15 +15,15 @@ public:
     explicit ProcessResult(int exit_code_or_signal, bool signaled)
         : m_exit_code_or_signal(exit_code_or_signal), m_signaled(signaled) {}
 
-    bool signaled() const { return m_signaled; }
-    bool exited() const { return !m_signaled; }
+    auto signaled() const -> bool { return m_signaled; }
+    auto exited() const -> bool { return !m_signaled; }
 
-    int exit_code() const {
+    auto exit_code() const -> int {
         ASSERT(exited());
         return m_exit_code_or_signal;
     }
 
-    int signal() const {
+    auto signal() const -> int {
         ASSERT(signaled());
         return m_exit_code_or_signal;
     }
@@ -37,7 +37,7 @@ class Process {
 public:
     explicit Process(di::Vector<di::TransparentString> arguments) : m_arguments(di::move(arguments)) {}
 
-    di::Result<ProcessResult> spawn_and_wait() &&;
+    auto spawn_and_wait() && -> di::Result<ProcessResult>;
 
 private:
     di::Vector<di::TransparentString> m_arguments;

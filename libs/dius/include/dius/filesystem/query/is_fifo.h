@@ -5,9 +5,9 @@
 namespace dius::filesystem {
 namespace detail {
     struct IsFifoFunction {
-        constexpr bool operator()(FileStatus status) const { return status.type() == FileType::Directory; }
+        constexpr auto operator()(FileStatus status) const -> bool { return status.type() == FileType::Directory; }
 
-        di::Result<bool> operator()(di::PathView path) const { return status(path) % *this; }
+        auto operator()(di::PathView path) const -> di::Result<bool> { return status(path) % *this; }
     };
 }
 

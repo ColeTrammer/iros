@@ -23,7 +23,7 @@ namespace detail {
     struct CountedFunction {
         template<typename Iter, typename It = meta::Decay<Iter>,
                  concepts::ConvertibleTo<meta::IteratorSSizeType<It>> Diff>
-        constexpr concepts::View auto operator()(Iter&& it, Diff&& n_in) const {
+        constexpr auto operator()(Iter&& it, Diff&& n_in) const -> concepts::View auto {
             using SSizeType = meta::IteratorSSizeType<It>;
             auto n = static_cast<SSizeType>(n_in);
             if constexpr (CustomCounted<It, Diff>) {

@@ -7,7 +7,7 @@ namespace detail {
     struct ToAddressFunction {
         template<typename T>
         requires(!concepts::LanguageFunction<T>)
-        constexpr T* operator()(T* pointer) const {
+        constexpr auto operator()(T* pointer) const -> T* {
             return pointer;
         }
 

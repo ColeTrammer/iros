@@ -17,8 +17,8 @@ namespace detail {
 
         template<template<typename...> typename Template, typename... Args>
         requires(!CTADDeducible<Template, Args...>)
-        constexpr meta::TagInvokeResult<DeduceCreateFunction, InPlaceTemplate<Template>, Args...>
-        operator()(InPlaceTemplate<Template>, Args&&...) const;
+        constexpr auto operator()(InPlaceTemplate<Template>, Args&&...) const
+            -> meta::TagInvokeResult<DeduceCreateFunction, InPlaceTemplate<Template>, Args...>;
     };
 }
 

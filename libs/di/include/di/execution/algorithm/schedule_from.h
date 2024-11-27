@@ -71,8 +71,8 @@ namespace schedule_from_ns {
     public:
         explicit Type(Data<Rec, Sched, Completions>* data) : m_data(data) {}
 
-        Rec const& base() const& { return m_data->out_r; }
-        Rec&& base() && { return util::move(m_data->out_r); }
+        auto base() const& -> Rec const& { return m_data->out_r; }
+        auto base() && -> Rec&& { return util::move(m_data->out_r); }
 
     private:
         void set_value() && {
@@ -103,8 +103,8 @@ namespace schedule_from_ns {
         public:
             explicit Type(Data<Rec, Sched, Completions>* data) : m_data(data) {}
 
-            Rec const& base() const& { return m_data->out_r; }
-            Rec&& base() && { return util::move(m_data->out_r); }
+            auto base() const& -> Rec const& { return m_data->out_r; }
+            auto base() && -> Rec&& { return util::move(m_data->out_r); }
 
         private:
             template<typename... Args>
@@ -221,7 +221,7 @@ namespace schedule_from_ns {
 
     struct Function {
         template<concepts::Scheduler Sched, concepts::Sender Send>
-        concepts::Sender auto operator()(Sched&& scheduler, Send&& sender) const {
+        auto operator()(Sched&& scheduler, Send&& sender) const -> concepts::Sender auto {
             if constexpr (concepts::TagInvocable<Function, Sched, Send>) {
                 return function::tag_invoke(*this, util::forward<Sched>(scheduler), util::forward<Send>(sender));
             } else {

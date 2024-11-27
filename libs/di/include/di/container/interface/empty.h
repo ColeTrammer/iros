@@ -29,7 +29,7 @@ namespace detail {
 struct EmptyFunction : function::pipeline::EnablePipeline {
     template<typename T>
     requires(detail::CustomEmpty<T> || detail::MemberEmpty<T> || detail::SizeEmpty<T> || detail::IteratorEmpty<T>)
-    constexpr bool operator()(T&& container) const {
+    constexpr auto operator()(T&& container) const -> bool {
         if constexpr (detail::CustomEmpty<T>) {
             return function::tag_invoke(*this, container);
         } else if constexpr (detail::MemberEmpty<T>) {

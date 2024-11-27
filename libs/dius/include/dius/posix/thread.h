@@ -7,8 +7,8 @@
 
 namespace dius {
 struct PlatformThread : public di::Immovable {
-    pthread_t id() const { return native_handle; }
-    di::Result<void> join();
+    auto id() const -> pthread_t { return native_handle; }
+    auto join() -> di::Result<void>;
 
     pthread_t native_handle {};
     di::Function<void()> entry;

@@ -7,7 +7,7 @@
 #include <di/types/prelude.h>
 
 namespace di::container::vector {
-constexpr decltype(auto) lookup(concepts::detail::ConstantVector auto& vector, size_t index) {
+constexpr auto lookup(concepts::detail::ConstantVector auto& vector, size_t index) -> decltype(auto) {
     DI_ASSERT(index < vector::size(vector));
     return vector::data(vector)[index];
 }

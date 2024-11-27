@@ -17,7 +17,8 @@ namespace detail {
                   (concepts::InputIterator<Out> &&
                    concepts::SameAs<meta::IteratorValue<It>, meta::IteratorValue<Out>>) ||
                   concepts::IndirectlyCopyableStorable<It, Out>) )
-        constexpr InOutResult<It, Out> operator()(It first, Sent last, Out out, Comp comp = {}, Proj proj = {}) const {
+        constexpr auto operator()(It first, Sent last, Out out, Comp comp = {}, Proj proj = {}) const
+            -> InOutResult<It, Out> {
             if (first == last) {
                 return { util::move(first), util::move(out) };
             }
@@ -74,8 +75,8 @@ namespace detail {
                   (concepts::InputIterator<Out> &&
                    concepts::SameAs<meta::ContainerValue<Con>, meta::ContainerValue<Out>>) ||
                   concepts::IndirectlyCopyableStorable<meta::ContainerIterator<Con>, Out>) )
-        constexpr InOutResult<meta::BorrowedIterator<Con>, Out> operator()(Con&& container, Out out, Comp comp = {},
-                                                                           Proj proj = {}) const {
+        constexpr auto operator()(Con&& container, Out out, Comp comp = {}, Proj proj = {}) const
+            -> InOutResult<meta::BorrowedIterator<Con>, Out> {
             return (*this)(container::begin(container), container::end(container), util::move(out), util::ref(comp),
                            util::ref(proj));
         }

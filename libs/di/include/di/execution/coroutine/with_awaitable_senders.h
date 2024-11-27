@@ -34,23 +34,23 @@ public:
         }
     }
 
-    CoroutineHandle<> continuation() const { return m_continuation; }
-    CoroutineHandle<> unhandled_stopped() { return m_stopped_handler(m_continuation.address()); }
-    CoroutineHandle<> unhandled_error(Error error) {
+    auto continuation() const -> CoroutineHandle<> { return m_continuation; }
+    auto unhandled_stopped() -> CoroutineHandle<> { return m_stopped_handler(m_continuation.address()); }
+    auto unhandled_error(Error error) -> CoroutineHandle<> {
         return m_error_handler(m_continuation.address(), util::move(error));
     }
 
     template<typename Value>
-    decltype(auto) await_transform(Value&& value) {
+    auto await_transform(Value&& value) -> decltype(auto) {
         return as_awaitable(util::forward<Value>(value), static_cast<Promise&>(*this));
     }
 
 private:
-    [[noreturn]] static CoroutineHandle<> default_unhandled_stopped(void*) {
+    [[noreturn]] static auto default_unhandled_stopped(void*) -> CoroutineHandle<> {
         DI_ASSERT(false);
         util::unreachable();
     }
-    [[noreturn]] static CoroutineHandle<> default_unhandled_error(void*, Error) {
+    [[noreturn]] static auto default_unhandled_error(void*, Error) -> CoroutineHandle<> {
         DI_ASSERT(false);
         util::unreachable();
     }

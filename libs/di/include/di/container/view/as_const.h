@@ -19,7 +19,7 @@ namespace detail {
     struct AsConstFunction : public function::pipeline::EnablePipeline {
         template<concepts::ViewableContainer Con>
         requires(AllAsConst<Con> || AsConstViewAsConst<Con>)
-        constexpr concepts::View auto operator()(Con&& container) const {
+        constexpr auto operator()(Con&& container) const -> concepts::View auto {
             if constexpr (AllAsConst<Con>) {
                 return all(util::forward<Con>(container));
             } else {

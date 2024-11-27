@@ -3,7 +3,7 @@
 
 #include "malloc_block.h"
 
-extern "C" void* realloc(void* pointer, size_t new_size) {
+extern "C" auto realloc(void* pointer, size_t new_size) -> void* {
     // If pointer is NULL, this is simply a call to malloc().
     if (!pointer) {
         return malloc(new_size);

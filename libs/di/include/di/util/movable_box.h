@@ -29,17 +29,17 @@ public:
     MovableBox(MovableBox const&) = delete;
     constexpr MovableBox(MovableBox&&) : MovableBox() {}
 
-    MovableBox& operator=(MovableBox const&) = delete;
-    MovableBox& operator=(MovableBox&&) = delete;
+    auto operator=(MovableBox const&) -> MovableBox& = delete;
+    auto operator=(MovableBox&&) -> MovableBox& = delete;
 
     template<typename... Args>
     requires(concepts::ConstructibleFrom<T, Args...>)
     constexpr explicit MovableBox(types::InPlace, Args&&... args) : m_value(util::forward<Args>(args)...) {}
 
-    constexpr T& value() & { return m_value; }
-    constexpr T const& value() const& { return m_value; }
-    constexpr T&& value() && { return util::move(m_value); }
-    constexpr T const&& value() const&& { return util::move(m_value); }
+    constexpr auto value() & -> T& { return m_value; }
+    constexpr auto value() const& -> T const& { return m_value; }
+    constexpr auto value() && -> T&& { return util::move(m_value); }
+    constexpr auto value() const&& -> T const&& { return util::move(m_value); }
 
 private:
     T m_value {};

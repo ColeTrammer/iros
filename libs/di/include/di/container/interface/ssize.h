@@ -22,7 +22,7 @@ namespace detail {
 struct SSizeFunction : function::pipeline::EnablePipeline {
     template<typename T>
     requires(detail::CustomSSize<T> || detail::SizeSSize<T>)
-    constexpr meta::MakeSigned<meta::ContainerSizeType<T>> operator()(T&& container) const {
+    constexpr auto operator()(T&& container) const -> meta::MakeSigned<meta::ContainerSizeType<T>> {
         if constexpr (detail::CustomSize<T>) {
             return function::tag_invoke(*this, util::forward<T>(container));
         } else {

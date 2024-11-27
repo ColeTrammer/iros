@@ -27,8 +27,8 @@ public:
 
     constexpr explicit Atomic(T value) : m_value(value) {}
 
-    Atomic& operator=(Atomic const&) = delete;
-    Atomic& operator=(Atomic const&) volatile = delete;
+    auto operator=(Atomic const&) -> Atomic& = delete;
+    auto operator=(Atomic const&) volatile -> Atomic& = delete;
 
     constexpr void store(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) {
         return as_ref().store(value, order);
@@ -37,95 +37,111 @@ public:
         return as_ref().store(value, order);
     }
 
-    constexpr T load(MemoryOrder order = MemoryOrder::SequentialConsistency) const { return as_ref().load(order); }
-    constexpr T load(MemoryOrder order = MemoryOrder::SequentialConsistency) const volatile {
+    constexpr auto load(MemoryOrder order = MemoryOrder::SequentialConsistency) const -> T {
+        return as_ref().load(order);
+    }
+    constexpr auto load(MemoryOrder order = MemoryOrder::SequentialConsistency) const volatile -> T {
         return as_ref().load(order);
     }
 
-    constexpr T exchange(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) {
+    constexpr auto exchange(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) -> T {
         return as_ref().exchange(value, order);
     }
-    constexpr T exchange(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) volatile {
+    constexpr auto exchange(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) volatile -> T {
         return as_ref().exchange(value, order);
     }
 
-    constexpr bool compare_exchange_weak(T& expected, T desired, MemoryOrder success, MemoryOrder failure) {
+    constexpr auto compare_exchange_weak(T& expected, T desired, MemoryOrder success, MemoryOrder failure) -> bool {
         return as_ref().compare_exchange_weak(expected, desired, success, failure);
     }
-    constexpr bool compare_exchange_weak(T& expected, T desired, MemoryOrder success, MemoryOrder failure) volatile {
+    constexpr auto compare_exchange_weak(T& expected, T desired, MemoryOrder success, MemoryOrder failure) volatile
+        -> bool {
         return as_ref().compare_exchange_weak(expected, desired, success, failure);
     }
 
-    constexpr bool compare_exchange_weak(T& expected, T desired,
-                                         MemoryOrder order = MemoryOrder::SequentialConsistency) {
+    constexpr auto compare_exchange_weak(T& expected, T desired, MemoryOrder order = MemoryOrder::SequentialConsistency)
+        -> bool {
         return as_ref().compare_exchange_weak(expected, desired, order);
     }
-    constexpr bool compare_exchange_weak(T& expected, T desired,
-                                         MemoryOrder order = MemoryOrder::SequentialConsistency) volatile {
+    constexpr auto compare_exchange_weak(T& expected, T desired,
+                                         MemoryOrder order = MemoryOrder::SequentialConsistency) volatile -> bool {
         return as_ref().compare_exchange_weak(expected, desired, order);
     }
 
-    constexpr bool compare_exchange_strong(T& expected, T desired, MemoryOrder success, MemoryOrder failure) {
+    constexpr auto compare_exchange_strong(T& expected, T desired, MemoryOrder success, MemoryOrder failure) -> bool {
         return as_ref().compare_exchange_strong(expected, desired, success, failure);
     }
-    constexpr bool compare_exchange_strong(T& expected, T desired, MemoryOrder success, MemoryOrder failure) volatile {
+    constexpr auto compare_exchange_strong(T& expected, T desired, MemoryOrder success, MemoryOrder failure) volatile
+        -> bool {
         return as_ref().compare_exchange_strong(expected, desired, success, failure);
     }
 
-    constexpr bool compare_exchange_strong(T& expected, T desired,
-                                           MemoryOrder order = MemoryOrder::SequentialConsistency) {
+    constexpr auto compare_exchange_strong(T& expected, T desired,
+                                           MemoryOrder order = MemoryOrder::SequentialConsistency) -> bool {
         return as_ref().compare_exchange_strong(expected, desired, order);
     }
-    constexpr bool compare_exchange_strong(T& expected, T desired,
-                                           MemoryOrder order = MemoryOrder::SequentialConsistency) volatile {
+    constexpr auto compare_exchange_strong(T& expected, T desired,
+                                           MemoryOrder order = MemoryOrder::SequentialConsistency) volatile -> bool {
         return as_ref().compare_exchange_strong(expected, desired, order);
     }
 
-    constexpr T fetch_add(DeltaType delta, MemoryOrder order = MemoryOrder::SequentialConsistency)
+    constexpr auto fetch_add(DeltaType delta, MemoryOrder order = MemoryOrder::SequentialConsistency) -> T
     requires(concepts::Integral<T> || concepts::Pointer<T>)
     {
         return as_ref().fetch_add(delta, order);
     }
-    constexpr T fetch_add(DeltaType delta, MemoryOrder order = MemoryOrder::SequentialConsistency) volatile requires(
-        concepts::Integral<T> || concepts::Pointer<T>) { return as_ref().fetch_add(delta, order); }
+    constexpr auto fetch_add(DeltaType delta, MemoryOrder order = MemoryOrder::SequentialConsistency) volatile -> T
+    requires(concepts::Integral<T> || concepts::Pointer<T>)
+    {
+        return as_ref().fetch_add(delta, order);
+    }
 
-    constexpr T fetch_sub(DeltaType delta, MemoryOrder order = MemoryOrder::SequentialConsistency)
+    constexpr auto fetch_sub(DeltaType delta, MemoryOrder order = MemoryOrder::SequentialConsistency) -> T
     requires(concepts::Integral<T> || concepts::Pointer<T>)
     {
         return as_ref().fetch_sub(delta, order);
     }
-    constexpr T fetch_sub(DeltaType delta, MemoryOrder order = MemoryOrder::SequentialConsistency) volatile requires(
-        concepts::Integral<T> || concepts::Pointer<T>) { return as_ref().fetch_sub(delta, order); }
+    constexpr auto fetch_sub(DeltaType delta, MemoryOrder order = MemoryOrder::SequentialConsistency) volatile -> T
+    requires(concepts::Integral<T> || concepts::Pointer<T>)
+    {
+        return as_ref().fetch_sub(delta, order);
+    }
 
-    constexpr T fetch_and(T value, MemoryOrder order = MemoryOrder::SequentialConsistency)
+    constexpr auto fetch_and(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) -> T
     requires(concepts::Integral<T>)
     {
         return as_ref().fetch_and(value, order);
     }
-    constexpr T fetch_and(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) volatile requires(
-        concepts::Integral<T>) { return as_ref().fetch_and(value, order); }
+    constexpr auto fetch_and(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) volatile -> T
+    requires(concepts::Integral<T>)
+    {
+        return as_ref().fetch_and(value, order);
+    }
 
-    constexpr T fetch_or(T value, MemoryOrder order = MemoryOrder::SequentialConsistency)
+    constexpr auto fetch_or(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) -> T
     requires(concepts::Integral<T>)
     {
         return as_ref().fetch_or(value, order);
     }
-    constexpr T
-    fetch_or(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) volatile requires(concepts::Integral<T>) {
+    constexpr auto fetch_or(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) volatile -> T
+    requires(concepts::Integral<T>)
+    {
         return as_ref().fetch_or(value, order);
     }
 
-    constexpr T fetch_xor(T value, MemoryOrder order = MemoryOrder::SequentialConsistency)
+    constexpr auto fetch_xor(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) -> T
     requires(concepts::Integral<T>)
     {
         return as_ref().fetch_xor(value, order);
     }
-constexpr T fetch_xor(T value,
-                      MemoryOrder order = MemoryOrder::SequentialConsistency) volatile requires(concepts::Integral<T>) {
-    return as_ref().fetch_xor(value, order);
-}
+    constexpr auto fetch_xor(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) volatile -> T
+    requires(concepts::Integral<T>)
+    {
+        return as_ref().fetch_xor(value, order);
+    }
 
-private : T m_value;
+private:
+    T m_value;
 };
 }
 

@@ -10,7 +10,7 @@ namespace detail {
     struct VariantTypesFunction {
         template<typename Variant>
         requires(concepts::TagInvocable<VariantTypesFunction, InPlaceType<Variant>>)
-        constexpr concepts::TypeList auto operator()(InPlaceType<Variant>) const {
+        constexpr auto operator()(InPlaceType<Variant>) const -> concepts::TypeList auto {
             return function::tag_invoke(*this, in_place_type<Variant>);
         }
     };

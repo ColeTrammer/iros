@@ -6,7 +6,7 @@
 #include <dius/system/system_call.h>
 
 namespace dius {
-di::Result<di::Box<PlatformThread, PlatformThreadDeleter>> PlatformThread::create(runtime::TlsInfo) {
+auto PlatformThread::create(runtime::TlsInfo) -> di::Result<di::Box<PlatformThread, PlatformThreadDeleter>> {
     auto [tls_data, tls_size, tls_alignment] = runtime::get_tls_info();
 
     auto alignment = di::max(tls_alignment, alignof(PlatformThread));
@@ -36,7 +36,7 @@ void PlatformThreadDeleter::operator()(PlatformThread* thread) const {
     ::operator delete(storage, size, std::align_val_t(alignment));
 }
 
-di::Result<Thread> Thread::do_start(di::Function<void()> entry) {
+auto Thread::do_start(di::Function<void()> entry) -> di::Result<Thread> {
     auto platform_thread = TRY(PlatformThread::create(runtime::get_tls_info()));
     platform_thread->entry = di::move(entry);
 
@@ -67,7 +67,7 @@ di::Result<Thread> Thread::do_start(di::Function<void()> entry) {
     return Thread(di::move(platform_thread));
 }
 
-di::Result<void> PlatformThread::join() {
+auto PlatformThread::join() -> di::Result<void> {
     while (!join_word.load(di::MemoryOrder::Acquire)) {
         ;
     }

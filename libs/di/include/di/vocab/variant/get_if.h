@@ -10,7 +10,7 @@
 
 namespace di::vocab {
 template<size_t index, concepts::VariantLike Var, typename Res = meta::VariantValue<Var, index>>
-constexpr Optional<meta::RemoveRValueReference<Res>> get_if(Var&& variant) {
+constexpr auto get_if(Var&& variant) -> Optional<meta::RemoveRValueReference<Res>> {
     if (variant_index(variant) != index) {
         return nullopt;
     }
@@ -20,7 +20,7 @@ constexpr Optional<meta::RemoveRValueReference<Res>> get_if(Var&& variant) {
 template<typename T, concepts::VariantLike Var, typename List = meta::VariantTypes<Var>,
          auto index = meta::Lookup<T, List>, typename Res = meta::VariantValue<Var, index>>
 requires(meta::UniqueType<T, List>)
-constexpr Optional<meta::RemoveRValueReference<Res>> get_if(Var&& variant) {
+constexpr auto get_if(Var&& variant) -> Optional<meta::RemoveRValueReference<Res>> {
     if (variant_index(variant) != index) {
         return nullopt;
     }

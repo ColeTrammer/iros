@@ -13,7 +13,7 @@ namespace detail {
         template<concepts::InputIterator Iter, concepts::SentinelFor<Iter> Sent, typename T,
                  typename Proj = function::Identity>
         requires(concepts::IndirectBinaryPredicate<function::Equal, meta::Projected<Iter, Proj>, T const*>)
-        constexpr Iter operator()(Iter first, Sent last, T const& needle, Proj proj = {}) const {
+        constexpr auto operator()(Iter first, Sent last, T const& needle, Proj proj = {}) const -> Iter {
             for (; first != last; ++first) {
                 if (function::invoke(proj, *first) == needle) {
                     break;
@@ -25,7 +25,8 @@ namespace detail {
         template<concepts::InputContainer Con, typename T, typename Proj = function::Identity>
         requires(concepts::IndirectBinaryPredicate<function::Equal, meta::Projected<meta::ContainerIterator<Con>, Proj>,
                                                    T const*>)
-        constexpr meta::BorrowedIterator<Con> operator()(Con&& container, T const& needle, Proj proj = {}) const {
+        constexpr auto operator()(Con&& container, T const& needle, Proj proj = {}) const
+            -> meta::BorrowedIterator<Con> {
             return (*this)(container::begin(container), container::end(container), needle, util::ref(proj));
         }
     };

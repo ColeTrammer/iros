@@ -10,7 +10,7 @@ namespace detail {
     struct UniqueFunction {
         template<concepts::Permutable It, concepts::SentinelFor<It> Sent, typename Proj = function::Identity,
                  concepts::IndirectEquivalenceRelation<meta::Projected<It, Proj>> Comp = function::Equal>
-        constexpr View<It> operator()(It first, Sent last, Comp comp = {}, Proj proj = {}) const {
+        constexpr auto operator()(It first, Sent last, Comp comp = {}, Proj proj = {}) const -> View<It> {
             // Find the first element where duplicate elements occur.
             auto fast = container::adjacent_find(util::move(first), last, util::ref(comp), util::ref(proj));
             if (fast == last) {
@@ -35,7 +35,7 @@ namespace detail {
                  concepts::IndirectEquivalenceRelation<meta::Projected<meta::ContainerIterator<Con>, Proj>> Comp =
                      function::Equal>
         requires(concepts::Permutable<meta::ContainerIterator<Con>>)
-        constexpr meta::BorrowedView<Con> operator()(Con&& container, Comp comp = {}, Proj proj = {}) const {
+        constexpr auto operator()(Con&& container, Comp comp = {}, Proj proj = {}) const -> meta::BorrowedView<Con> {
             return (*this)(container::begin(container), container::end(container), util::ref(comp), util::ref(proj));
         }
     };

@@ -9,7 +9,7 @@ namespace detail {
     template<concepts::Integer T>
     struct RepresentableAsFunction {
         template<concepts::Integer U>
-        constexpr bool operator()(U value) const {
+        constexpr auto operator()(U value) const -> bool {
             return cmp_greater_equal(value, NumericLimits<T>::min) && cmp_less_equal(value, NumericLimits<T>::max);
         }
     };

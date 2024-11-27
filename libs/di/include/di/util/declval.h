@@ -5,7 +5,7 @@
 
 namespace di::util {
 template<typename T>
-meta::AddRValueReference<T> declval() {
+auto declval() -> meta::AddRValueReference<T> {
     static_assert(concepts::AlwaysFalse<T>, "declval() is only usable in non-evaluated contexts.");
 }
 }

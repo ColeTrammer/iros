@@ -48,16 +48,16 @@ public:
     template<typename, concepts::Allocator>
     friend struct detail::HybridStorageManage;
 
-    constexpr static StorageCategory storage_category() { return category; }
+    constexpr static auto storage_category() -> StorageCategory { return category; }
 
     template<typename T>
-    constexpr static bool creation_is_inline(InPlaceType<T>) {
+    constexpr static auto creation_is_inline(InPlaceType<T>) -> bool {
         return sizeof(T) <= inline_size && alignof(T) <= inline_align &&
                (concepts::MoveConstructible<T> || category == StorageCategory::Immovable);
     }
 
     template<typename T>
-    constexpr static bool creation_is_fallible(InPlaceType<T>) {
+    constexpr static auto creation_is_fallible(InPlaceType<T>) -> bool {
         return !creation_is_inline(in_place_type<T>) && concepts::FallibleAllocator<Alloc>;
     }
 
@@ -68,7 +68,7 @@ public:
     HybridStorage() = default;
 
     HybridStorage(HybridStorage const&) = delete;
-    HybridStorage& operator=(HybridStorage const&) = delete;
+    auto operator=(HybridStorage const&) -> HybridStorage& = delete;
 
     template<typename Any, typename T, typename... Args>
     requires(concepts::ConstructibleFrom<T, Args...> && creation_is_fallible(in_place_type<T>))
@@ -146,7 +146,7 @@ public:
     }
 
     template<typename T>
-    constexpr T* down_cast() {
+    constexpr auto down_cast() -> T* {
         if consteval {
             return static_cast<T*>(m_pointer);
         }
@@ -158,7 +158,7 @@ public:
     }
 
     template<typename T>
-    constexpr T const* down_cast() const {
+    constexpr auto down_cast() const -> T const* {
         if consteval {
             return static_cast<T const*>(m_pointer);
         }
@@ -170,8 +170,8 @@ public:
     }
 
 private:
-    void* address() { return static_cast<void*>(util::addressof(m_storage[0])); }
-    void const* address() const { return static_cast<void const*>(util::addressof(m_storage[0])); }
+    auto address() -> void* { return static_cast<void*>(util::addressof(m_storage[0])); }
+    auto address() const -> void const* { return static_cast<void const*>(util::addressof(m_storage[0])); }
 
     union {
         void* m_pointer { nullptr };

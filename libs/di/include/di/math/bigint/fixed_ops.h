@@ -19,9 +19,9 @@ using StorageType = unsigned long;
 
 template<usize words>
 struct FixedOps {
-    constexpr static usize word_index(usize bit) { return bit / (8 * sizeof(StorageType)); }
+    constexpr static auto word_index(usize bit) -> usize { return bit / (8 * sizeof(StorageType)); }
 
-    constexpr static bool get_bit(Span<StorageType const, words> storage, usize bit) {
+    constexpr static auto get_bit(Span<StorageType const, words> storage, usize bit) -> bool {
         auto word_index = FixedOps::word_index(bit);
         auto bit_index = bit % (8 * sizeof(StorageType));
         return (storage[word_index] & (StorageType(1) << bit_index)) != 0;
@@ -37,11 +37,12 @@ struct FixedOps {
         }
     }
 
-    constexpr static bool twos_complement_negative(Span<StorageType const, words> storage) {
+    constexpr static auto twos_complement_negative(Span<StorageType const, words> storage) -> bool {
         return get_bit(storage, words * 8 * sizeof(StorageType) - 1);
     }
 
-    constexpr static strong_ordering compare(Span<StorageType const, words> lhs, Span<StorageType const, words> rhs) {
+    constexpr static auto compare(Span<StorageType const, words> lhs, Span<StorageType const, words> rhs)
+        -> strong_ordering {
         return container::compare(container::view::reverse(lhs), container::view::reverse(rhs));
     }
 

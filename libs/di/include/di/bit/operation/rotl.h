@@ -7,7 +7,7 @@ namespace di::bit {
 namespace detail {
     struct RotlFunction {
         template<concepts::UnsignedInteger T>
-        constexpr T operator()(T x, int s) const {
+        constexpr auto operator()(T x, int s) const -> T {
             constexpr auto N = math::NumericLimits<T>::digits;
             int r = s % N;
             if (r == 0) {

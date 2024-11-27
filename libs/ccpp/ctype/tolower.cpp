@@ -1,7 +1,7 @@
 #include <ctype.h>
 #include <stdio.h>
 
-extern "C" int tolower(int ch) {
+extern "C" auto tolower(int ch) -> int {
     if (ch == EOF) {
         return EOF;
     }

@@ -26,7 +26,7 @@ public:
         }
     }
 
-    ScopeExit& operator=(ScopeExit&&) = delete;
+    auto operator=(ScopeExit&&) -> ScopeExit& = delete;
 
     constexpr void release() { m_released = true; }
 

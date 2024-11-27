@@ -13,7 +13,7 @@ extern as_awaitable_ns::Function const as_awaitable;
 template<typename Derived>
 struct WithAwaitTransform {
     template<typename T>
-    T&& await_transform(T&& value) noexcept {
+    auto await_transform(T&& value) noexcept -> T&& {
         return util::forward<T>(value);
     }
 

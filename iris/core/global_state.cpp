@@ -17,12 +17,12 @@ public:
         ::new (di::voidify(m_data)) T(di::forward<Args>(args)...);
     }
 
-    T& get() { return *reinterpret_cast<T*>(m_data); }
+    auto get() -> T& { return *reinterpret_cast<T*>(m_data); }
 };
 
 static DisableDestruction<iris::GlobalState> s_global_state;
 
-GlobalState& global_state_in_boot() {
+auto global_state_in_boot() -> GlobalState& {
     return s_global_state.get();
 }
 }

@@ -16,8 +16,8 @@ namespace proj_ns {
         constexpr ProjImpl(ProjImpl const&) = default;
         constexpr ProjImpl(ProjImpl&&) = default;
 
-        constexpr ProjImpl& operator=(ProjImpl const&) = delete;
-        constexpr ProjImpl& operator=(ProjImpl&&) = delete;
+        constexpr auto operator=(ProjImpl const&) -> ProjImpl& = delete;
+        constexpr auto operator=(ProjImpl&&) -> ProjImpl& = delete;
 
         template<typename... Args>
         requires(concepts::Invocable<F&, meta::InvokeResult<P&, Args>...>)

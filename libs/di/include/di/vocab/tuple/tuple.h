@@ -52,28 +52,24 @@ public:
 
     constexpr ~Tuple() = default;
 
-    constexpr Tuple& operator=(Tuple const& other)
-    requires(concepts::CopyAssignable<Types> && ...)
-    {
+    constexpr auto operator=(Tuple const& other) -> Tuple& requires(concepts::CopyAssignable<Types>&&...) {
         Base::static_assign(util::forward_as_base<Tuple&, Base>(*this), other);
         return *this;
     }
 
-    constexpr Tuple const& operator=(Tuple const& other) const
+    constexpr auto operator=(Tuple const& other) const -> Tuple const&
     requires(concepts::CopyAssignable<Types const> && ...)
     {
         Base::static_assign(util::forward_as_base<Tuple const&, Base>(*this), other);
         return *this;
     }
 
-    constexpr Tuple& operator=(Tuple&& other)
-    requires(concepts::MoveAssignable<Types> && ...)
-    {
+    constexpr auto operator=(Tuple&& other) -> Tuple& requires(concepts::MoveAssignable<Types>&&...) {
         Base::static_assign(util::forward_as_base<Tuple&, Base>(*this), util::move(other));
         return *this;
     }
 
-    constexpr Tuple const& operator=(Tuple&& other) const
+    constexpr auto operator=(Tuple&& other) const -> Tuple const&
     requires(concepts::AssignableFrom<Types const&, Types> && ...)
     {
         Base::static_assign(util::forward_as_base<Tuple const&, Base>(*this), util::move(other));
@@ -83,7 +79,7 @@ public:
     template<concepts::TupleLike Tup>
     requires(!concepts::DecaySameAs<Tup, Tuple> &&
              requires(Base& self, Tup&& other) { Base::static_assign(self, util::forward<Tup>(other)); })
-    constexpr Tuple& operator=(Tup&& other) {
+    constexpr auto operator=(Tup&& other) -> Tuple& {
         Base::static_assign(util::forward_as_base<Tuple&, Base>(*this), util::forward<Tup>(other));
         return *this;
     }
@@ -91,7 +87,7 @@ public:
     template<concepts::TupleLike Tup>
     requires(!concepts::DecaySameAs<Tup, Tuple> &&
              requires(Base const& self, Tup&& other) { Base::static_assign(self, util::forward<Tup>(other)); })
-    constexpr Tuple const& operator=(Tup&& other) const {
+    constexpr auto operator=(Tup&& other) const -> Tuple const& {
         Base::static_assign(util::forward_as_base<Tuple const&, Base>(*this), util::forward<Tup>(other));
         return *this;
     }
@@ -100,7 +96,7 @@ private:
     template<typename... Other>
     requires(sizeof...(Types) == sizeof...(Other) &&
              requires { requires(concepts::EqualityComparableWith<Types, Other> && ...); })
-    constexpr friend bool operator==(Tuple const& a, Tuple<Other...> const& b) {
+    constexpr friend auto operator==(Tuple const& a, Tuple<Other...> const& b) -> bool {
         return function::unpack<meta::MakeIndexSequence<sizeof...(Types)>>(
             [&]<size_t... indices>(meta::ListV<indices...>) {
                 return ((util::get<indices>(a) == util::get<indices>(b)) && ...);
@@ -110,8 +106,8 @@ private:
     template<typename... Other>
     requires(sizeof...(Types) == sizeof...(Other) &&
              requires { requires(concepts::ThreeWayComparableWith<Types, Other> && ...); })
-    constexpr friend meta::CommonComparisonCategory<meta::CompareThreeWayResult<Types, Other>...>
-    operator<=>(Tuple const& a, Tuple<Other...> const& b) {
+    constexpr friend auto operator<=>(Tuple const& a, Tuple<Other...> const& b)
+        -> meta::CommonComparisonCategory<meta::CompareThreeWayResult<Types, Other>...> {
         if constexpr (sizeof...(Types) == 0) {
             return di::strong_ordering::equal;
         } else {
@@ -130,28 +126,28 @@ private:
     }
 
     template<concepts::DerivedFrom<Tuple> Self = Tuple>
-    constexpr friend types::size_t tag_invoke(types::Tag<tuple_size>, types::InPlaceType<Self>) {
+    constexpr friend auto tag_invoke(types::Tag<tuple_size>, types::InPlaceType<Self>) -> types::size_t {
         return sizeof...(Types);
     }
 
     using TypeList = meta::List<Types...>;
 
     template<types::size_t index, concepts::DerivedFrom<Tuple> Self = Tuple>
-    constexpr friend InPlaceType<meta::At<TypeList, index>> tag_invoke(types::Tag<tuple_element>,
-                                                                       types::InPlaceType<Self>, Constexpr<index>) {
+    constexpr friend auto tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Self>, Constexpr<index>)
+        -> InPlaceType<meta::At<TypeList, index>> {
         return {};
     }
 
     template<types::size_t index, concepts::DerivedFrom<Tuple> Self = Tuple>
-    constexpr friend InPlaceType<meta::At<TypeList, index> const>
-    tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Self const>, Constexpr<index>) {
+    constexpr friend auto tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Self const>, Constexpr<index>)
+        -> InPlaceType<meta::At<TypeList, index> const> {
         return {};
     }
 
     template<types::size_t index, typename Self>
     requires(index < sizeof...(Types) && concepts::DerivedFrom<meta::Decay<Self>, Tuple>)
-    constexpr friend meta::Like<Self, meta::TupleElement<Self, index>>&& tag_invoke(types::Tag<util::get_in_place>,
-                                                                                    Constexpr<index>, Self&& self) {
+    constexpr friend auto tag_invoke(types::Tag<util::get_in_place>, Constexpr<index>, Self&& self)
+        -> meta::Like<Self, meta::TupleElement<Self, index>>&& {
         using Impl = detail::TupleImplBase<index, meta::IndexSequenceFor<Types...>, Types...>::Type;
         return static_cast<meta::Like<Self, meta::TupleElement<Self, index>>&&>(
             Impl::static_get(util::forward_as_base<Self, Impl>(self)));
@@ -159,7 +155,8 @@ private:
 
     template<typename T, typename Self = Tuple>
     requires(concepts::DerivedFrom<meta::RemoveCVRef<Self>, Tuple> && meta::UniqueType<T, meta::List<Types...>>)
-    constexpr friend meta::Like<Self, T>&& tag_invoke(types::Tag<util::get_in_place>, InPlaceType<T>, Self&& self) {
+    constexpr friend auto tag_invoke(types::Tag<util::get_in_place>, InPlaceType<T>, Self&& self)
+        -> meta::Like<Self, T>&& {
         constexpr auto index = meta::Lookup<T, meta::List<Types...>>;
         using Impl = detail::TupleImplBase<index, meta::IndexSequenceFor<Types...>, Types...>::Type;
         return static_cast<meta::Like<Self, meta::TupleElement<Self, index>>&&>(

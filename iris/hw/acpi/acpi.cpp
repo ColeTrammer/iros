@@ -17,7 +17,7 @@ static limine_rsdp_request volatile rsdp_request = {
 };
 }
 
-bool validate_acpi_checksum(di::Span<byte const> data) {
+auto validate_acpi_checksum(di::Span<byte const> data) -> bool {
     auto checksum = di::fold_left(data | di::transform(di::to_underlying), 0, [](u8 a, u8 b) -> u8 {
         return a + b;
     });

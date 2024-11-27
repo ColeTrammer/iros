@@ -287,10 +287,10 @@ namespace detail {
     };
 
     template<concepts::Encoding Enc>
-    constexpr Result<void>
-    present_string_view_to(concepts::FormatContext auto& context, Optional<FillAndAlign> fill_and_align,
-                           Optional<size_t> width, Optional<size_t> precision, bool debug,
-                           container::string::StringViewImpl<Enc> view_in, char32_t delimit_code_point = U'"') {
+    constexpr auto present_string_view_to(concepts::FormatContext auto& context, Optional<FillAndAlign> fill_and_align,
+                                          Optional<size_t> width, Optional<size_t> precision, bool debug,
+                                          container::string::StringViewImpl<Enc> view_in,
+                                          char32_t delimit_code_point = U'"') -> Result<void> {
         using CodePoint = meta::EncodingCodePoint<Enc>;
 
         auto delimit = lift_bool(debug) % function::value(delimit_code_point);
@@ -356,9 +356,8 @@ namespace detail {
     }
 
     template<concepts::Encoding Enc>
-    constexpr Result<void> present_character_to(concepts::FormatContext auto& context,
-                                                Optional<FillAndAlign> fill_and_align, Optional<size_t> width,
-                                                bool debug, c32 value) {
+    constexpr auto present_character_to(concepts::FormatContext auto& context, Optional<FillAndAlign> fill_and_align,
+                                        Optional<size_t> width, bool debug, c32 value) -> Result<void> {
         auto encoding = context.encoding();
         auto as_code_units = container::string::encoding::convert_to_code_units(encoding, value);
         auto [first, last] =
@@ -368,9 +367,9 @@ namespace detail {
     }
 
     template<concepts::Encoding Enc, concepts::Integral T>
-    constexpr Result<void>
-    present_integer_to(concepts::FormatContext auto& context, Optional<FillAndAlign> fill_and_align, Sign sign,
-                       HashTag hash_tag, Zero zero, Optional<size_t> width, IntegerType type, bool debug, T value) {
+    constexpr auto present_integer_to(concepts::FormatContext auto& context, Optional<FillAndAlign> fill_and_align,
+                                      Sign sign, HashTag hash_tag, Zero zero, Optional<size_t> width, IntegerType type,
+                                      bool debug, T value) -> Result<void> {
         if (type == IntegerType::Character) {
             return present_character_to<Enc>(context, fill_and_align, width, debug, static_cast<c32>(value));
         }
@@ -500,10 +499,10 @@ namespace detail {
     }
 
     template<concepts::Encoding Enc>
-    constexpr Result<void> present_formatted_to(concepts::FormatContext auto& context,
-                                                Optional<FillAndAlign> fill_and_align, Optional<size_t> width,
-                                                Optional<size_t> precision,
-                                                container::string::StringViewImpl<Enc> format_string, auto&&... args) {
+    constexpr auto present_formatted_to(concepts::FormatContext auto& context, Optional<FillAndAlign> fill_and_align,
+                                        Optional<size_t> width, Optional<size_t> precision,
+                                        container::string::StringViewImpl<Enc> format_string, auto&&... args)
+        -> Result<void> {
         // If there is no width, fill_and_align is ignored, so no temporary buffer is needed.
 
         // Precision in this case refers to the upper bound on the text width to be printed.

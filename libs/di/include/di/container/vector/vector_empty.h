@@ -4,7 +4,7 @@
 #include <di/container/vector/vector_size.h>
 
 namespace di::container::vector {
-constexpr bool empty(concepts::detail::ConstantVector auto const& vector) {
+constexpr auto empty(concepts::detail::ConstantVector auto const& vector) -> bool {
     return vector::size(vector) == 0;
 }
 }

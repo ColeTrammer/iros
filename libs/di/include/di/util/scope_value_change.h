@@ -19,7 +19,7 @@ public:
 
     constexpr ~ScopeValueChange() { m_value = util::move(m_old_value); }
 
-    ScopeValueChange& operator=(ScopeValueChange&&) = delete;
+    auto operator=(ScopeValueChange&&) -> ScopeValueChange& = delete;
 
     constexpr void release() { m_released = true; }
 

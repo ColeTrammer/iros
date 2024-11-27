@@ -5,9 +5,9 @@
 namespace dius::filesystem {
 namespace detail {
     struct IsSymlinkFunction {
-        constexpr bool operator()(FileStatus status) const { return status.type() == FileType::Symlink; }
+        constexpr auto operator()(FileStatus status) const -> bool { return status.type() == FileType::Symlink; }
 
-        di::Result<bool> operator()(di::PathView path) const { return symlink_status(path) % *this; }
+        auto operator()(di::PathView path) const -> di::Result<bool> { return symlink_status(path) % *this; }
     };
 }
 

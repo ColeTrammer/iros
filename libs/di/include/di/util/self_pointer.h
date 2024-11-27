@@ -8,8 +8,8 @@ struct SelfPointer {
     constexpr SelfPointer(SelfPointer const&) : SelfPointer() {}
     constexpr SelfPointer(SelfPointer&&) : SelfPointer() {}
 
-    constexpr SelfPointer& operator=(SelfPointer const&) { return *this; }
-    constexpr SelfPointer& operator=(SelfPointer&&) { return *this; }
+    constexpr auto operator=(SelfPointer const&) -> SelfPointer& { return *this; }
+    constexpr auto operator=(SelfPointer&&) -> SelfPointer& { return *this; }
 
     T* self { nullptr };
 };

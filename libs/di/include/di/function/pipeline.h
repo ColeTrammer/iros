@@ -8,7 +8,7 @@
 namespace di::function::pipeline {
 template<typename T, Pipeable F>
 requires(concepts::Invocable<F, T>)
-constexpr decltype(auto) operator|(T&& value, F&& function) {
+constexpr auto operator|(T&& value, F&& function) -> decltype(auto) {
     return function::invoke(util::forward<F>(function), util::forward<T>(value));
 }
 

@@ -423,8 +423,8 @@ struct xdg_wm_base_listener {
 /**
  * @ingroup iface_xdg_wm_base
  */
-static inline int xdg_wm_base_add_listener(struct xdg_wm_base* xdg_wm_base, const struct xdg_wm_base_listener* listener,
-                                           void* data) {
+static inline auto xdg_wm_base_add_listener(struct xdg_wm_base* xdg_wm_base,
+                                            const struct xdg_wm_base_listener* listener, void* data) -> int {
     return wl_proxy_add_listener((struct wl_proxy*) xdg_wm_base, (void (**)(void)) listener, data);
 }
 
@@ -461,11 +461,11 @@ static inline void xdg_wm_base_set_user_data(struct xdg_wm_base* xdg_wm_base, vo
 }
 
 /** @ingroup iface_xdg_wm_base */
-static inline void* xdg_wm_base_get_user_data(struct xdg_wm_base* xdg_wm_base) {
+static inline auto xdg_wm_base_get_user_data(struct xdg_wm_base* xdg_wm_base) -> void* {
     return wl_proxy_get_user_data((struct wl_proxy*) xdg_wm_base);
 }
 
-static inline uint32_t xdg_wm_base_get_version(struct xdg_wm_base* xdg_wm_base) {
+static inline auto xdg_wm_base_get_version(struct xdg_wm_base* xdg_wm_base) -> uint32_t {
     return wl_proxy_get_version((struct wl_proxy*) xdg_wm_base);
 }
 
@@ -490,7 +490,7 @@ static inline void xdg_wm_base_destroy(struct xdg_wm_base* xdg_wm_base) {
  * surfaces relative to some parent surface. See the interface description
  * and xdg_surface.get_popup for details.
  */
-static inline struct xdg_positioner* xdg_wm_base_create_positioner(struct xdg_wm_base* xdg_wm_base) {
+static inline auto xdg_wm_base_create_positioner(struct xdg_wm_base* xdg_wm_base) -> struct xdg_positioner* {
     struct wl_proxy* id;
 
     id =
@@ -517,8 +517,8 @@ static inline struct xdg_positioner* xdg_wm_base_create_positioner(struct xdg_wm
  * See the documentation of xdg_surface for more details about what an
  * xdg_surface is and how it is used.
  */
-static inline struct xdg_surface* xdg_wm_base_get_xdg_surface(struct xdg_wm_base* xdg_wm_base,
-                                                              struct wl_surface* surface) {
+static inline auto xdg_wm_base_get_xdg_surface(struct xdg_wm_base* xdg_wm_base, struct wl_surface* surface)
+    -> struct xdg_surface* {
     struct wl_proxy* id;
 
     id = wl_proxy_marshal_flags((struct wl_proxy*) xdg_wm_base, XDG_WM_BASE_GET_XDG_SURFACE, &xdg_surface_interface,
@@ -745,11 +745,11 @@ static inline void xdg_positioner_set_user_data(struct xdg_positioner* xdg_posit
 }
 
 /** @ingroup iface_xdg_positioner */
-static inline void* xdg_positioner_get_user_data(struct xdg_positioner* xdg_positioner) {
+static inline auto xdg_positioner_get_user_data(struct xdg_positioner* xdg_positioner) -> void* {
     return wl_proxy_get_user_data((struct wl_proxy*) xdg_positioner);
 }
 
-static inline uint32_t xdg_positioner_get_version(struct xdg_positioner* xdg_positioner) {
+static inline auto xdg_positioner_get_version(struct xdg_positioner* xdg_positioner) -> uint32_t {
     return wl_proxy_get_version((struct wl_proxy*) xdg_positioner);
 }
 
@@ -981,8 +981,8 @@ struct xdg_surface_listener {
 /**
  * @ingroup iface_xdg_surface
  */
-static inline int xdg_surface_add_listener(struct xdg_surface* xdg_surface, const struct xdg_surface_listener* listener,
-                                           void* data) {
+static inline auto xdg_surface_add_listener(struct xdg_surface* xdg_surface,
+                                            const struct xdg_surface_listener* listener, void* data) -> int {
     return wl_proxy_add_listener((struct wl_proxy*) xdg_surface, (void (**)(void)) listener, data);
 }
 
@@ -1024,11 +1024,11 @@ static inline void xdg_surface_set_user_data(struct xdg_surface* xdg_surface, vo
 }
 
 /** @ingroup iface_xdg_surface */
-static inline void* xdg_surface_get_user_data(struct xdg_surface* xdg_surface) {
+static inline auto xdg_surface_get_user_data(struct xdg_surface* xdg_surface) -> void* {
     return wl_proxy_get_user_data((struct wl_proxy*) xdg_surface);
 }
 
-static inline uint32_t xdg_surface_get_version(struct xdg_surface* xdg_surface) {
+static inline auto xdg_surface_get_version(struct xdg_surface* xdg_surface) -> uint32_t {
     return wl_proxy_get_version((struct wl_proxy*) xdg_surface);
 }
 
@@ -1053,7 +1053,7 @@ static inline void xdg_surface_destroy(struct xdg_surface* xdg_surface) {
  * See the documentation of xdg_toplevel for more details about what an
  * xdg_toplevel is and how it is used.
  */
-static inline struct xdg_toplevel* xdg_surface_get_toplevel(struct xdg_surface* xdg_surface) {
+static inline auto xdg_surface_get_toplevel(struct xdg_surface* xdg_surface) -> struct xdg_toplevel* {
     struct wl_proxy* id;
 
     id = wl_proxy_marshal_flags((struct wl_proxy*) xdg_surface, XDG_SURFACE_GET_TOPLEVEL, &xdg_toplevel_interface,
@@ -1074,8 +1074,8 @@ static inline struct xdg_toplevel* xdg_surface_get_toplevel(struct xdg_surface* 
  * See the documentation of xdg_popup for more details about what an
  * xdg_popup is and how it is used.
  */
-static inline struct xdg_popup* xdg_surface_get_popup(struct xdg_surface* xdg_surface, struct xdg_surface* parent,
-                                                      struct xdg_positioner* positioner) {
+static inline auto xdg_surface_get_popup(struct xdg_surface* xdg_surface, struct xdg_surface* parent,
+                                         struct xdg_positioner* positioner) -> struct xdg_popup* {
     struct wl_proxy* id;
 
     id = wl_proxy_marshal_flags((struct wl_proxy*) xdg_surface, XDG_SURFACE_GET_POPUP, &xdg_popup_interface,
@@ -1456,8 +1456,8 @@ struct xdg_toplevel_listener {
 /**
  * @ingroup iface_xdg_toplevel
  */
-static inline int xdg_toplevel_add_listener(struct xdg_toplevel* xdg_toplevel,
-                                            const struct xdg_toplevel_listener* listener, void* data) {
+static inline auto xdg_toplevel_add_listener(struct xdg_toplevel* xdg_toplevel,
+                                             const struct xdg_toplevel_listener* listener, void* data) -> int {
     return wl_proxy_add_listener((struct wl_proxy*) xdg_toplevel, (void (**)(void)) listener, data);
 }
 
@@ -1556,11 +1556,11 @@ static inline void xdg_toplevel_set_user_data(struct xdg_toplevel* xdg_toplevel,
 }
 
 /** @ingroup iface_xdg_toplevel */
-static inline void* xdg_toplevel_get_user_data(struct xdg_toplevel* xdg_toplevel) {
+static inline auto xdg_toplevel_get_user_data(struct xdg_toplevel* xdg_toplevel) -> void* {
     return wl_proxy_get_user_data((struct wl_proxy*) xdg_toplevel);
 }
 
-static inline uint32_t xdg_toplevel_get_version(struct xdg_toplevel* xdg_toplevel) {
+static inline auto xdg_toplevel_get_version(struct xdg_toplevel* xdg_toplevel) -> uint32_t {
     return wl_proxy_get_version((struct wl_proxy*) xdg_toplevel);
 }
 
@@ -2033,8 +2033,8 @@ struct xdg_popup_listener {
 /**
  * @ingroup iface_xdg_popup
  */
-static inline int xdg_popup_add_listener(struct xdg_popup* xdg_popup, const struct xdg_popup_listener* listener,
-                                         void* data) {
+static inline auto xdg_popup_add_listener(struct xdg_popup* xdg_popup, const struct xdg_popup_listener* listener,
+                                          void* data) -> int {
     return wl_proxy_add_listener((struct wl_proxy*) xdg_popup, (void (**)(void)) listener, data);
 }
 
@@ -2074,11 +2074,11 @@ static inline void xdg_popup_set_user_data(struct xdg_popup* xdg_popup, void* us
 }
 
 /** @ingroup iface_xdg_popup */
-static inline void* xdg_popup_get_user_data(struct xdg_popup* xdg_popup) {
+static inline auto xdg_popup_get_user_data(struct xdg_popup* xdg_popup) -> void* {
     return wl_proxy_get_user_data((struct wl_proxy*) xdg_popup);
 }
 
-static inline uint32_t xdg_popup_get_version(struct xdg_popup* xdg_popup) {
+static inline auto xdg_popup_get_version(struct xdg_popup* xdg_popup) -> uint32_t {
     return wl_proxy_get_version((struct wl_proxy*) xdg_popup);
 }
 

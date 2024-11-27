@@ -41,7 +41,7 @@ struct FrameInfo {
     SampleFormat format { SampleFormat::Float32LE };
     u32 sample_rate_hz { 44100 };
 
-    constexpr bool operator==(FrameInfo const&) const = default;
+    constexpr auto operator==(FrameInfo const&) const -> bool = default;
     constexpr auto operator<=>(FrameInfo const&) const = default;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<FrameInfo>) {

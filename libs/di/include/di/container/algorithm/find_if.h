@@ -11,7 +11,7 @@ namespace detail {
     struct FindIfFunction {
         template<concepts::InputIterator Iter, concepts::SentinelFor<Iter> Sent, typename Proj = function::Identity,
                  concepts::IndirectUnaryPredicate<meta::Projected<Iter, Proj>> Pred>
-        constexpr Iter operator()(Iter first, Sent last, Pred pred, Proj projection = {}) const {
+        constexpr auto operator()(Iter first, Sent last, Pred pred, Proj projection = {}) const -> Iter {
             for (; first != last; ++first) {
                 if (function::invoke(pred, function::invoke(projection, *first))) {
                     break;
@@ -22,7 +22,7 @@ namespace detail {
 
         template<concepts::InputContainer Con, typename Proj = function::Identity,
                  concepts::IndirectUnaryPredicate<meta::Projected<meta::ContainerIterator<Con>, Proj>> Pred>
-        constexpr meta::BorrowedIterator<Con> operator()(Con&& container, Pred pred, Proj proj = {}) const {
+        constexpr auto operator()(Con&& container, Pred pred, Proj proj = {}) const -> meta::BorrowedIterator<Con> {
             return (*this)(container::begin(container), container::end(container), util::ref(pred), util::ref(proj));
         }
     };

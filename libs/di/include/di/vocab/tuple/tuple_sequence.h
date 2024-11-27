@@ -10,7 +10,7 @@ namespace detail {
     template<typename R>
     struct TupleSequenceFunction {
         template<typename F, concepts::TupleLike T>
-        constexpr R operator()(F&& function, T&& tuple) const {
+        constexpr auto operator()(F&& function, T&& tuple) const -> R {
             return vocab::apply(
                 [&](auto&&... args) {
                     return helper(function, util::forward<decltype(args)>(args)...);
@@ -20,12 +20,12 @@ namespace detail {
 
     private:
         template<typename F>
-        constexpr static R helper(F&&) {
+        constexpr static auto helper(F&&) -> R {
             return R();
         }
 
         template<typename F, typename T, typename... Ts>
-        constexpr static R helper(F&& function, T&& value, Ts&&... values) {
+        constexpr static auto helper(F&& function, T&& value, Ts&&... values) -> R {
             DI_TRY(function::invoke(function, util::forward<T>(value)));
             return helper(function, util::forward<Ts>(values)...);
         }

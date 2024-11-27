@@ -25,8 +25,8 @@ namespace detail {
     class GeneratorPromiseBase {
     private:
         struct FinalAwaiter {
-            bool await_ready() noexcept { return false; }
-            CoroutineHandle<> await_suspend(CoroutineHandle<>) noexcept { return noop_coroutine(); }
+            auto await_ready() noexcept -> bool { return false; }
+            auto await_suspend(CoroutineHandle<>) noexcept -> CoroutineHandle<> { return noop_coroutine(); }
             void await_resume() noexcept {}
         };
 
@@ -64,12 +64,12 @@ namespace detail {
 
         GeneratorIterator(GeneratorIterator&& other) : m_coroutine(util::exchange(other.m_coroutine, {})) {}
 
-        GeneratorIterator& operator=(GeneratorIterator&& other) {
+        auto operator=(GeneratorIterator&& other) -> GeneratorIterator& {
             m_coroutine = util::exchange(other.m_coroutine);
             return *this;
         }
 
-        Ref operator*() const {
+        auto operator*() const -> Ref {
             DI_ASSERT(!m_coroutine.done());
             return static_cast<Ref>(*m_coroutine.promise().m_pointer);
         }
@@ -80,7 +80,9 @@ namespace detail {
         }
 
     private:
-        friend bool operator==(GeneratorIterator const& a, container::DefaultSentinel) { return a.m_coroutine.done(); }
+        friend auto operator==(GeneratorIterator const& a, container::DefaultSentinel) -> bool {
+            return a.m_coroutine.done();
+        }
 
         Handle m_coroutine;
     };
@@ -91,7 +93,7 @@ class Generator : public container::ViewInterface<Generator<Ref, Value>> {
     using BasePromiseType = detail::GeneratorPromiseBase<detail::GeneratorYield<Ref>>;
 
     struct PromiseType : BasePromiseType {
-        Generator get_return_object() noexcept {
+        auto get_return_object() noexcept -> Generator {
             return Generator { in_place, CoroutineHandle<PromiseType>::from_promise(*this) };
         }
     };
@@ -107,7 +109,7 @@ public:
         }
     }
 
-    Generator& operator=(Generator other) {
+    auto operator=(Generator other) -> Generator& {
         util::swap(this->m_coroutine, other.m_coroutine);
         return *this;
     }

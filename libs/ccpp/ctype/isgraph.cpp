@@ -1,7 +1,7 @@
 #include <ctype.h>
 #include <stdio.h>
 
-extern "C" int isgraph(int ch) {
+extern "C" auto isgraph(int ch) -> int {
     if (ch == EOF) {
         return 0;
     }

@@ -29,7 +29,7 @@ namespace detail {
         template<typename Format, concepts::Impl<io::Writer> Writer, typename... Args>
         requires(concepts::TagInvocable<SerializerFunction, Format, Writer, Args...> ||
                  requires { Format::serializer(util::declval<Writer>(), util::declval<Args>()...); })
-        constexpr concepts::Serializer auto operator()(Format, Writer&& writer, Args&&... args) const {
+        constexpr auto operator()(Format, Writer&& writer, Args&&... args) const -> concepts::Serializer auto {
             if constexpr (concepts::TagInvocable<SerializerFunction, Format, Writer, Args...>) {
                 return function::tag_invoke(*this, Format {}, util::forward<Writer>(writer),
                                             util::forward<Args>(args)...);
@@ -67,7 +67,7 @@ namespace detail {
                  concepts::SerializationFormat V = meta::RemoveCVRef<S>>
         requires(concepts::TagInvocable<SerializeMetadataFunction, InPlaceType<U>, InPlaceType<V>> ||
                  concepts::TagInvocable<SerializeMetadataFunction, InPlaceType<U>> || concepts::Reflectable<T>)
-        constexpr concepts::ReflectionValue auto operator()(InPlaceType<T>, InPlaceType<S>) const {
+        constexpr auto operator()(InPlaceType<T>, InPlaceType<S>) const -> concepts::ReflectionValue auto {
             if constexpr (concepts::TagInvocable<SerializeMetadataFunction, InPlaceType<U>, InPlaceType<V>>) {
                 return function::tag_invoke(*this, in_place_type<U>, in_place_type<V>);
             } else if constexpr (concepts::TagInvocable<SerializeMetadataFunction, InPlaceType<U>>) {
@@ -93,7 +93,7 @@ namespace detail {
         template<concepts::Serializer S, typename T, typename F = meta::SerializationFormat<S>>
         requires(concepts::TagInvocable<SerializeFunction, F, S&, T&> ||
                  requires(S& serializer, T& value) { serializer.serialize(value); })
-        constexpr meta::SerializeResult<S> operator()(S&& serializer, T&& value) const {
+        constexpr auto operator()(S&& serializer, T&& value) const -> meta::SerializeResult<S> {
             if constexpr (concepts::TagInvocable<SerializeFunction, F, S&, T&>) {
                 return function::tag_invoke(*this, F(), serializer, value);
             } else {
@@ -107,7 +107,7 @@ namespace detail {
                  !requires(S& serializer, T& value) { serializer.serialize(value); } &&
                  (concepts::TagInvocable<SerializeFunction, S&, T&, M> ||
                   requires(S& serializer, T& value) { serializer.serialize(value, M()); }))
-        constexpr meta::SerializeResult<S> operator()(S&& serializer, T&& value) const {
+        constexpr auto operator()(S&& serializer, T&& value) const -> meta::SerializeResult<S> {
             if constexpr (concepts::TagInvocable<SerializeFunction, S&, T&, M>) {
                 return function::tag_invoke(*this, serializer, value, M());
             } else {
@@ -157,7 +157,7 @@ constexpr inline auto serialize_size = detail::SerializeSizeFunction {};
 namespace detail {
     struct SerializableFunction {
         template<concepts::Serializer S, typename T, typename U = meta::RemoveCVRef<T>>
-        constexpr bool operator()(InPlaceType<S>, InPlaceType<T>) const {
+        constexpr auto operator()(InPlaceType<S>, InPlaceType<T>) const -> bool {
             if constexpr (concepts::TagInvocable<SerializableFunction, meta::SerializationFormat<S>, InPlaceType<U>>) {
                 return function::tag_invoke(*this, meta::SerializationFormat<S>(), in_place_type<U>);
             } else {

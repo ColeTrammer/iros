@@ -102,7 +102,7 @@ void Processor::broadcast_ipi(di::FunctionRef<void(IpiMessage&)> factory) {
 }
 
 namespace iris::x86::amd64 {
-static IrqStatus handle_ipi_irq(IrqContext&) {
+static auto handle_ipi_irq(IrqContext&) -> IrqStatus {
     // Acknowledge the interrupt before processing messages. This way, if we get more messages while processing, we'll
     // get another interrupt.
     // SAFETY: interrupts are disabled.
@@ -119,18 +119,18 @@ LocalApic::LocalApic(mm::PhysicalAddress base) {
 
 class LocalApicTimer {
 private:
-    friend di::StringView tag_invoke(di::Tag<timer_name>, LocalApicTimer const&) { return "APIC"_sv; }
+    friend auto tag_invoke(di::Tag<timer_name>, LocalApicTimer const&) -> di::StringView { return "APIC"_sv; }
 
-    friend TimerCapabilities tag_invoke(di::Tag<timer_capabilities>, LocalApicTimer const&) {
+    friend auto tag_invoke(di::Tag<timer_capabilities>, LocalApicTimer const&) -> TimerCapabilities {
         return TimerCapabilities::Periodic | TimerCapabilities::NeedsCalibration | TimerCapabilities::PerCpu;
     }
 
-    friend TimerResolution tag_invoke(di::Tag<timer_resolution>, LocalApicTimer const& self) {
+    friend auto tag_invoke(di::Tag<timer_resolution>, LocalApicTimer const& self) -> TimerResolution {
         return self.m_resolution;
     }
 
-    friend Expected<void> tag_invoke(di::Tag<timer_set_interval>, LocalApicTimer& self, TimerResolution duration,
-                                     di::Function<void(IrqContext&)> callback) {
+    friend auto tag_invoke(di::Tag<timer_set_interval>, LocalApicTimer& self, TimerResolution duration,
+                           di::Function<void(IrqContext&)> callback) -> Expected<void> {
         ASSERT(interrupts_disabled());
 
         // SAFETY: interrupts are disabled.
@@ -153,7 +153,7 @@ private:
         return {};
     }
 
-    friend Expected<void> tag_invoke(di::Tag<timer_calibrate>, LocalApicTimer& self) {
+    friend auto tag_invoke(di::Tag<timer_calibrate>, LocalApicTimer& self) -> Expected<void> {
         ASSERT(interrupts_disabled());
 
         // SAFETY: interrupts are disabled.

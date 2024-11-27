@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 // https://pubs.opengroup.org/onlinepubs/9699919799/functions/ungetc.html
-extern "C" int ungetc(int, FILE*) {
+extern "C" auto ungetc(int, FILE*) -> int {
     ASSERT(false);
     di::unreachable();
 }

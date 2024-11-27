@@ -28,7 +28,8 @@ public:
     constexpr explicit ErasedArg(T&& value)
         : m_pointer(util::voidify(util::addressof(value))), m_do_format(erased_format<T>) {}
 
-    constexpr Result<void> do_format(FormatParseContext<Encoding>& parse_context, Context& context, bool debug) {
+    constexpr auto do_format(FormatParseContext<Encoding>& parse_context, Context& context, bool debug)
+        -> Result<void> {
         return m_do_format(m_pointer, parse_context, context, debug);
     }
 

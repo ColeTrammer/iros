@@ -61,7 +61,7 @@ namespace cpuid {
         u32 edx;
     };
 
-    inline Result query(Function function, u32 sublevel = 0) {
+    inline auto query(Function function, u32 sublevel = 0) -> Result {
         u32 eax = di::to_underlying(function);
         u32 ebx = 0;
         u32 ecx = sublevel;
@@ -71,7 +71,7 @@ namespace cpuid {
     }
 }
 
-ProcessorInfo detect_processor_info() {
+auto detect_processor_info() -> ProcessorInfo {
     auto result = cpuid::query(cpuid::Function::VendorId);
     iris::println("CPU Maximum Supported CPUID Function: {}"_sv, result.eax);
 

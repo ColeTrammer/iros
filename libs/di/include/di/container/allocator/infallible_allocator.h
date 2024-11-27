@@ -8,7 +8,7 @@
 
 namespace di::container {
 struct InfallibleAllocator {
-    static AllocationResult<> allocate(usize size, usize alignment) noexcept {
+    static auto allocate(usize size, usize alignment) noexcept -> AllocationResult<> {
         auto* result =
             ::operator new(size, std::align_val_t { container::max(alignment, alignof(void*)) }, std::nothrow);
         DI_ASSERT(result);

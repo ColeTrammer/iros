@@ -11,7 +11,8 @@ namespace detail {
         template<concepts::InputIterator It, concepts::SentinelFor<It> Sent, concepts::WeaklyIncrementable Out,
                  typename Proj = function::Identity, concepts::IndirectUnaryPredicate<meta::Projected<It, Proj>> Pred>
         requires(concepts::IndirectlyCopyable<It, Out>)
-        constexpr InOutResult<It, Out> operator()(It first, Sent last, Out output, Pred pred, Proj proj = {}) const {
+        constexpr auto operator()(It first, Sent last, Out output, Pred pred, Proj proj = {}) const
+            -> InOutResult<It, Out> {
             for (; first != last; ++first) {
                 if (function::invoke(pred, function::invoke(proj, *first))) {
                     *output = *first;
@@ -24,8 +25,8 @@ namespace detail {
         template<concepts::InputContainer Con, concepts::WeaklyIncrementable Out, typename Proj = function::Identity,
                  concepts::IndirectUnaryPredicate<meta::Projected<meta::ContainerIterator<Con>, Proj>> Pred>
         requires(concepts::IndirectlyCopyable<meta::ContainerIterator<Con>, Out>)
-        constexpr InOutResult<meta::BorrowedIterator<Con>, Out> operator()(Con&& container, Out output, Pred pred,
-                                                                           Proj proj = {}) const {
+        constexpr auto operator()(Con&& container, Out output, Pred pred, Proj proj = {}) const
+            -> InOutResult<meta::BorrowedIterator<Con>, Out> {
             return (*this)(container::begin(container), container::end(container), util::move(output), util::ref(pred),
                            util::ref(proj));
         }

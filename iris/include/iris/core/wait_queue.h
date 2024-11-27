@@ -3,7 +3,6 @@
 #include <di/container/queue/prelude.h>
 #include <di/function/container/prelude.h>
 #include <di/sync/prelude.h>
-#include <iris/core/task.h>
 
 namespace iris {
 class WaitQueue {
@@ -26,7 +25,7 @@ public:
     ///
     /// @return Returns an error if the current task was interrupted by userspace, and otherwise returns success once
     ///         an event has occurred.
-    Expected<void> wait(di::FunctionRef<bool()> predicate);
+    auto wait(di::FunctionRef<bool()> predicate) -> Expected<void>;
 
 private:
     struct WaitQueueEntry : di::IntrusiveForwardListNode<> {

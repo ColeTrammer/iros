@@ -18,7 +18,7 @@ namespace di::container::vector {
 template<concepts::detail::MutableVector Vec, concepts::InputContainer Con, typename T = meta::detail::VectorValue<Vec>,
          typename R = meta::detail::VectorAllocResult<Vec>>
 requires(concepts::ContainerCompatible<Con, T>)
-constexpr R append_container(Vec& vector, Con&& container) {
+constexpr auto append_container(Vec& vector, Con&& container) -> R {
     return container::sequence(util::forward<Con>(container), [&]<typename X>(X&& value) {
         return as_fallible(vector::emplace_back(vector, util::forward<X>(value)));
     });
@@ -28,7 +28,7 @@ template<concepts::detail::MutableVector Vec, concepts::InputContainer Con, type
          typename It = meta::detail::VectorIterator<Vec>, typename Cit = meta::detail::VectorConstIterator<Vec>,
          typename R = meta::LikeExpected<meta::detail::VectorAllocResult<Vec>, View<It, It>>>
 requires(concepts::ContainerCompatible<Con, T>)
-constexpr R insert_container(Vec& vector, Cit it, Con&& container) {
+constexpr auto insert_container(Vec& vector, Cit it, Con&& container) -> R {
     auto start_offset = it - vector::begin(vector);
     return invoke_as_fallible([&] {
                return container::sequence(util::forward<Con>(container), [&]<typename X>(X&& value) {

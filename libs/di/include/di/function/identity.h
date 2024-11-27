@@ -6,7 +6,7 @@
 namespace di::function {
 struct Identity : pipeline::EnablePipeline {
     template<typename T>
-    constexpr T&& operator()(T&& value) const {
+    constexpr auto operator()(T&& value) const -> T&& {
         return util::forward<T>(value);
     }
 

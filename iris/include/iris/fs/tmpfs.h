@@ -3,5 +3,5 @@
 #include <iris/core/error.h>
 
 namespace iris {
-Expected<void> init_tmpfs();
+auto init_tmpfs() -> Expected<void>;
 }

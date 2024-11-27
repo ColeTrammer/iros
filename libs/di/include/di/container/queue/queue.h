@@ -41,12 +41,14 @@ private:
     public:
         Iterator() = default;
 
-        constexpr Value& operator*() const { return *m_base->front(); }
+        constexpr auto operator*() const -> Value& { return *m_base->front(); }
 
         constexpr void advance_one() { m_base->pop(); }
 
     private:
-        constexpr friend bool operator==(Iterator const& a, DefaultSentinel const&) { return a.m_base->empty(); }
+        constexpr friend auto operator==(Iterator const& a, DefaultSentinel const&) -> bool {
+            return a.m_base->empty();
+        }
 
         Queue* m_base { nullptr };
     };
@@ -60,7 +62,7 @@ public:
 
     ~Queue() = default;
 
-    Queue& operator=(Queue&&) = default;
+    auto operator=(Queue&&) -> Queue& = default;
 
     constexpr auto front() { return m_container.front(); }
     constexpr auto front() const { return m_container.front(); }
@@ -76,33 +78,33 @@ public:
         return m_container.back();
     }
 
-    constexpr bool empty() const { return m_container.empty(); }
+    constexpr auto empty() const -> bool { return m_container.empty(); }
     constexpr auto size() const
     requires(concepts::SizedContainer<Con>)
     {
         return m_container.size();
     }
 
-    constexpr decltype(auto) push(Value& value)
+    constexpr auto push(Value& value) -> decltype(auto)
     requires(!concepts::CopyConstructible<Value> && !concepts::MoveConstructible<Value>)
     {
         return m_container.push_back(value);
     }
 
-    constexpr decltype(auto) push(Value const& value)
+    constexpr auto push(Value const& value) -> decltype(auto)
     requires(concepts::CopyConstructible<Value>)
     {
         return m_container.push_back(value);
     }
 
-    constexpr decltype(auto) push(Value&& value)
+    constexpr auto push(Value&& value) -> decltype(auto)
     requires(concepts::MoveConstructible<Value>)
     {
         return m_container.push_back(util::move(value));
     }
 
     template<typename... Args>
-    constexpr decltype(auto) emplace(Args&&... args)
+    constexpr auto emplace(Args&&... args) -> decltype(auto)
     requires(requires { m_container.emplace_back(util::forward<Args>(args)...); })
     {
         return m_container.emplace_back(util::forward<Args>(args)...);
@@ -119,7 +121,7 @@ public:
     constexpr auto begin() { return Iterator(*this); }
     constexpr auto end() { return default_sentinel; }
 
-    constexpr Con const& base() const { return m_container; }
+    constexpr auto base() const -> Con const& { return m_container; }
 
     constexpr void clear() { m_container.clear(); }
 
@@ -136,7 +138,7 @@ requires(detail::QueueCompatible<Con, T>)
 Queue(Con) -> Queue<T, Con>;
 
 template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>>
-Queue<T> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<Queue>, Con&&);
+auto tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<Queue>, Con&&) -> Queue<T>;
 }
 
 namespace di {

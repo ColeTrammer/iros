@@ -13,7 +13,7 @@ struct DefaultHasher {
         }
     }
 
-    constexpr u64 finish() noexcept { return util::exchange(m_hash, 0); }
+    constexpr auto finish() noexcept -> u64 { return util::exchange(m_hash, 0); }
 
 private:
     u64 m_hash { 0 };

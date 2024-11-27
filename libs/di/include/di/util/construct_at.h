@@ -8,7 +8,7 @@
 #else
 namespace std {
 template<typename T, typename... Args>
-constexpr T* construct_at(T* location, Args&&... args) {
+constexpr auto construct_at(T* location, Args&&... args) -> T* {
     return ::new (const_cast<void*>(static_cast<void const volatile*>(location))) T(di::util::forward<Args>(args)...);
 }
 }
@@ -18,11 +18,9 @@ namespace di::util {
 namespace detail {
     struct ConstructAtFunction {
         template<typename T, typename... Args>
-        constexpr T* operator()(T* location, Args&&... args) const
-        requires(requires { std::construct_at(location, util::forward<Args>(args)...); })
-        {
-            return std::construct_at(location, util::forward<Args>(args)...);
-        }
+        constexpr auto operator()(T* location, Args&&... args) const -> T* requires(requires {
+            std::construct_at(location, util::forward<Args>(args)...);
+        }) { return std::construct_at(location, util::forward<Args>(args)...); }
     };
 }
 

@@ -22,7 +22,7 @@ public:
     constexpr auto span() { return m_vector.span(); }
     constexpr auto span() const { return m_vector.span(); }
 
-    constexpr Enc encoding() const { return m_encoding; }
+    constexpr auto encoding() const -> Enc { return m_encoding; }
 
     constexpr auto capacity() const { return m_vector.capacity(); }
     constexpr auto max_size() const { return m_vector.max_size(); }

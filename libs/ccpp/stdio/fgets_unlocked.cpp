@@ -2,7 +2,7 @@
 
 // NOTE: this is an extension of fgets(), which does not lock file.
 // https://pubs.opengroup.org/onlinepubs/9699919799/functions/fgets.html
-extern "C" char* fgets_unlocked(char* __restrict str, int count, FILE* __restrict file) {
+extern "C" auto fgets_unlocked(char* __restrict str, int count, FILE* __restrict file) -> char* {
     if (count < 1) {
         errno = EINVAL;
         return nullptr;

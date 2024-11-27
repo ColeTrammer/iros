@@ -14,20 +14,20 @@ struct Enumerator {
 
     using Type = decltype(enumerator_value);
 
-    constexpr static Type get() { return value; }
+    constexpr static auto get() -> Type { return value; }
 
-    constexpr static bool is_fields() { return false; }
-    constexpr static bool is_field() { return false; }
-    constexpr static bool is_enumerator() { return true; }
-    constexpr static bool is_enumerators() { return false; }
-    constexpr static bool is_atom() { return false; }
-    constexpr static bool is_integer() { return false; }
-    constexpr static bool is_bool() { return false; }
-    constexpr static bool is_string() { return false; }
-    constexpr static bool is_list() { return false; }
-    constexpr static bool is_map() { return false; }
+    constexpr static auto is_fields() -> bool { return false; }
+    constexpr static auto is_field() -> bool { return false; }
+    constexpr static auto is_enumerator() -> bool { return true; }
+    constexpr static auto is_enumerators() -> bool { return false; }
+    constexpr static auto is_atom() -> bool { return false; }
+    constexpr static auto is_integer() -> bool { return false; }
+    constexpr static auto is_bool() -> bool { return false; }
+    constexpr static auto is_string() -> bool { return false; }
+    constexpr static auto is_list() -> bool { return false; }
+    constexpr static auto is_map() -> bool { return false; }
 
-    bool operator==(Enumerator const&) const = default;
+    auto operator==(Enumerator const&) const -> bool = default;
     auto operator<=>(Enumerator const&) const = default;
 };
 
@@ -46,16 +46,16 @@ concept Enumerator = requires {
 namespace di::reflection {
 template<concepts::Enumerator... Es>
 struct Enumerators : vocab::Tuple<Es...> {
-    constexpr static bool is_fields() { return false; }
-    constexpr static bool is_field() { return false; }
-    constexpr static bool is_enumerator() { return false; }
-    constexpr static bool is_enumerators() { return true; }
-    constexpr static bool is_atom() { return false; }
-    constexpr static bool is_integer() { return false; }
-    constexpr static bool is_bool() { return false; }
-    constexpr static bool is_string() { return false; }
-    constexpr static bool is_list() { return false; }
-    constexpr static bool is_map() { return false; }
+    constexpr static auto is_fields() -> bool { return false; }
+    constexpr static auto is_field() -> bool { return false; }
+    constexpr static auto is_enumerator() -> bool { return false; }
+    constexpr static auto is_enumerators() -> bool { return true; }
+    constexpr static auto is_atom() -> bool { return false; }
+    constexpr static auto is_integer() -> bool { return false; }
+    constexpr static auto is_bool() -> bool { return false; }
+    constexpr static auto is_string() -> bool { return false; }
+    constexpr static auto is_list() -> bool { return false; }
+    constexpr static auto is_map() -> bool { return false; }
 };
 
 namespace detail {

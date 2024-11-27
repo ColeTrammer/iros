@@ -7,7 +7,7 @@ SuperBlock::SuperBlock(di::Arc<Inode> root_inode) : m_root_inode(di::move(root_i
 
 SuperBlock::~SuperBlock() = default;
 
-di::Arc<Inode> SuperBlock::root_inode() const {
+auto SuperBlock::root_inode() const -> di::Arc<Inode> {
     return m_root_inode;
 }
 }

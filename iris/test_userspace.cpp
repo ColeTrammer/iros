@@ -1,6 +1,6 @@
 #include <dius/print.h>
 
-extern "C" int main() {
+extern "C" auto main() -> int {
     for (unsigned int i = 0; i < 2; i++) {
         dius::println("Hello, World!"_sv);
     }

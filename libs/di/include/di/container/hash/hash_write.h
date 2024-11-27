@@ -72,7 +72,7 @@ namespace detail {
     template<usize... indices>
     struct HashableTuple<meta::ListV<indices...>> {
         template<concepts::Tuple T>
-        constexpr bool operator()(InPlaceType<T>) const {
+        constexpr auto operator()(InPlaceType<T>) const -> bool {
             return (concepts::Hashable<meta::TupleValue<T const&, indices>> && ...);
         }
     };

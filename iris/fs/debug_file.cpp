@@ -4,7 +4,7 @@
 #include <iris/core/print.h>
 
 namespace iris {
-di::AnySenderOf<usize> tag_invoke(di::Tag<read_file>, DebugFile&, UserspaceBuffer<byte> buffer) {
+auto tag_invoke(di::Tag<read_file>, DebugFile&, UserspaceBuffer<byte> buffer) -> di::AnySenderOf<usize> {
     if (buffer.empty()) {
         return 0;
     }
@@ -22,7 +22,7 @@ di::AnySenderOf<usize> tag_invoke(di::Tag<read_file>, DebugFile&, UserspaceBuffe
     return TRY(buffer.write({ &byte, 1 }));
 }
 
-di::AnySenderOf<usize> tag_invoke(di::Tag<write_file>, DebugFile& self, UserspaceBuffer<byte const> data) {
+auto tag_invoke(di::Tag<write_file>, DebugFile& self, UserspaceBuffer<byte const> data) -> di::AnySenderOf<usize> {
     auto guard = di::ScopedLock(self.m_lock);
     TRY(data.copy_in_chunks<64>([&](di::Span<byte> chunk) -> Expected<void> {
         for (auto byte : chunk) {

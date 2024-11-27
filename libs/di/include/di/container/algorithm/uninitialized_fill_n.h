@@ -11,7 +11,7 @@ namespace detail {
     struct UninitializedFillNFunction {
         template<concepts::UninitForwardIterator Out, concepts::UninitSentinelFor<Out> OutSent, typename T>
         requires(concepts::ConstructibleFrom<meta::IteratorValue<Out>, T const&>)
-        constexpr Out operator()(Out out, meta::IteratorSSizeType<Out> n, T const& value) const {
+        constexpr auto operator()(Out out, meta::IteratorSSizeType<Out> n, T const& value) const -> Out {
             for (; n > 0; --n, ++out) {
                 util::construct_at(util::addressof(*out), value);
             }

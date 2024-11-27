@@ -143,14 +143,14 @@ void Scheduler::exit_current_task() {
     run_next();
 }
 
-mm::AddressSpace& Scheduler::current_address_space() {
+auto Scheduler::current_address_space() -> mm::AddressSpace& {
     if (!m_current_task) {
         return global_state().kernel_address_space;
     }
     return current_task().address_space();
 }
 
-Expected<void> Scheduler::block_current_task(di::FunctionRef<void()> before_yielding) {
+auto Scheduler::block_current_task(di::FunctionRef<void()> before_yielding) -> Expected<void> {
     auto disabler = InterruptDisabler {};
 
     m_current_task->set_waiting();

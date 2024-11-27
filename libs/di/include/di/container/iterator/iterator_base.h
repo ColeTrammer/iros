@@ -13,31 +13,30 @@ namespace di::container {
 template<typename Self, typename Category, typename ValueType, typename SSizeType>
 struct IteratorBase {
 private:
-    constexpr Self& self() { return static_cast<Self&>(*this); }
-    constexpr Self const& self() const { return static_cast<Self const&>(*this); }
+    constexpr auto self() -> Self& { return static_cast<Self&>(*this); }
+    constexpr auto self() const -> Self const& { return static_cast<Self const&>(*this); }
 
 public:
     IteratorBase() = default;
     IteratorBase(IteratorBase const&) = default;
     IteratorBase(IteratorBase&&) = default;
 
-    IteratorBase& operator=(IteratorBase const&) = default;
-    IteratorBase& operator=(IteratorBase&&) = default;
+    auto operator=(IteratorBase const&) -> IteratorBase& = default;
+    auto operator=(IteratorBase&&) -> IteratorBase& = default;
 
     IteratorBase(IteratorBase const&)
     requires(concepts::SameAs<Category, InputIteratorTag>)
     = delete;
-    IteratorBase& operator=(IteratorBase const&)
-    requires(concepts::SameAs<Category, InputIteratorTag>)
-    = delete;
+    auto operator=(IteratorBase const&)
+        -> IteratorBase& requires(concepts::SameAs<Category, InputIteratorTag>) = delete;
 
-    constexpr Self& operator++() {
+    constexpr auto operator++() -> Self& {
         self().advance_one();
         return self();
     }
     constexpr void operator++(int) { self().advance_one(); }
 
-    constexpr Self operator++(int)
+    constexpr auto operator++(int) -> Self
     requires(concepts::DerivedFrom<Category, ForwardIteratorTag>)
     {
         auto temp = self();
@@ -45,14 +44,12 @@ public:
         return temp;
     }
 
-    constexpr Self& operator--()
-    requires(concepts::DerivedFrom<Category, BidirectionalIteratorTag>)
-    {
+    constexpr auto operator--() -> Self& requires(concepts::DerivedFrom<Category, BidirectionalIteratorTag>) {
         self().back_one();
         return self();
     }
 
-    constexpr Self operator--(int)
+    constexpr auto operator--(int) -> Self
     requires(concepts::DerivedFrom<Category, BidirectionalIteratorTag>)
     {
         auto temp = self();
@@ -60,7 +57,7 @@ public:
         return temp;
     }
 
-    constexpr decltype(auto) operator[](SSizeType n) const
+    constexpr auto operator[](SSizeType n) const -> decltype(auto)
     requires(concepts::DerivedFrom<Category, RandomAccessIteratorTag>)
     {
         auto copy = self();
@@ -68,22 +65,26 @@ public:
         return *copy;
     }
 
-    constexpr Self& operator+=(SSizeType n)
-    requires(concepts::DerivedFrom<Category, RandomAccessIteratorTag>)
-    {
-        self().advance_n(n);
-        return self();
+constexpr auto operator+=(SSizeType n) -> Self& requires(concepts::DerivedFrom<Category, RandomAccessIteratorTag>) {
+    self().advance_n(n);
+    return self();
+}
+
+constexpr auto operator-=(SSizeType n) -> Self& requires(concepts::DerivedFrom<Category, RandomAccessIteratorTag>) {
+    self().advance_n(-n);
+    return self();
+}
+
+private
+    : constexpr friend auto operator+(Self const& self, SSizeType n) -> Self
+      requires(concepts::DerivedFrom<Category, RandomAccessIteratorTag>)
+{
+        auto temp = self;
+        temp.advance_n(n);
+        return temp;
     }
 
-    constexpr Self& operator-=(SSizeType n)
-    requires(concepts::DerivedFrom<Category, RandomAccessIteratorTag>)
-    {
-        self().advance_n(-n);
-        return self();
-    }
-
-private:
-    constexpr friend Self operator+(Self const& self, SSizeType n)
+    constexpr friend auto operator+(SSizeType n, Self const& self) -> Self
     requires(concepts::DerivedFrom<Category, RandomAccessIteratorTag>)
     {
         auto temp = self;
@@ -91,15 +92,7 @@ private:
         return temp;
     }
 
-    constexpr friend Self operator+(SSizeType n, Self const& self)
-    requires(concepts::DerivedFrom<Category, RandomAccessIteratorTag>)
-    {
-        auto temp = self;
-        temp.advance_n(n);
-        return temp;
-    }
-
-    constexpr friend Self operator-(Self const& self, SSizeType n)
+    constexpr friend auto operator-(Self const& self, SSizeType n) -> Self
     requires(concepts::DerivedFrom<Category, RandomAccessIteratorTag>)
     {
         auto temp = self;
@@ -107,12 +100,14 @@ private:
         return temp;
     }
 
-    friend SSizeType tag_invoke(types::Tag<iterator_ssize_type>, InPlaceType<Self>) {
+    friend auto tag_invoke(types::Tag<iterator_ssize_type>, InPlaceType<Self>) -> SSizeType {
         return util::declval<SSizeType>();
     }
-    friend InPlaceType<ValueType> tag_invoke(types::Tag<iterator_value>, InPlaceType<Self>) {
+    friend auto tag_invoke(types::Tag<iterator_value>, InPlaceType<Self>) -> InPlaceType<ValueType> {
         return in_place_type<ValueType>;
     }
-    friend Category tag_invoke(types::Tag<iterator_category>, InPlaceType<Self>) { return util::declval<Category>(); }
+    friend auto tag_invoke(types::Tag<iterator_category>, InPlaceType<Self>) -> Category {
+        return util::declval<Category>();
+    }
 };
 }

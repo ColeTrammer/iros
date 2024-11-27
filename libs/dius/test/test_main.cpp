@@ -2,7 +2,7 @@
 #include <dius/test/prelude.h>
 
 namespace dius::test {
-static di::Result<void> main(TestManager::Args& args) {
+static auto main(TestManager::Args& args) -> di::Result<void> {
     return dius::test::TestManager::the().run_tests(args);
 }
 }

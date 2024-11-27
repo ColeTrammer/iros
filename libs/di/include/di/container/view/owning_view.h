@@ -27,13 +27,13 @@ public:
     constexpr OwningView(OwningView&&) = default;
     constexpr OwningView(Cont&& container) : m_container(util::move(container)) {}
 
-    constexpr OwningView& operator=(OwningView const&) = delete;
-    constexpr OwningView& operator=(OwningView&&) = default;
+    constexpr auto operator=(OwningView const&) -> OwningView& = delete;
+    constexpr auto operator=(OwningView&&) -> OwningView& = default;
 
-    constexpr Cont& base() & { return m_container; }
-    constexpr Cont const& base() const& { return m_container; }
-    constexpr Cont&& base() && { return util::move(m_container); }
-    constexpr Cont const&& base() const&& { return util::move(m_container); }
+    constexpr auto base() & -> Cont& { return m_container; }
+    constexpr auto base() const& -> Cont const& { return m_container; }
+    constexpr auto base() && -> Cont&& { return util::move(m_container); }
+    constexpr auto base() const&& -> Cont const&& { return util::move(m_container); }
 
     constexpr auto begin() { return container::begin(m_container); }
     constexpr auto begin() const
@@ -49,12 +49,12 @@ public:
         return container::end(m_container);
     }
 
-    constexpr bool empty()
+    constexpr auto empty() -> bool
     requires(concepts::HasEmptyContainer<Cont>)
     {
         return container::empty(m_container);
     }
-    constexpr bool empty() const
+    constexpr auto empty() const -> bool
     requires(concepts::HasEmptyContainer<Cont const>)
     {
         return container::empty(m_container);

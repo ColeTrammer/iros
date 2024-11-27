@@ -71,7 +71,7 @@ private:
         }
     }
 
-    friend IrqLineRange tag_invoke(di::Tag<responsible_irq_line_range>, Pic const&) {
+    friend auto tag_invoke(di::Tag<responsible_irq_line_range>, Pic const&) -> IrqLineRange {
         return IrqLineRange(IrqLine(0), IrqLine(16));
     }
 };

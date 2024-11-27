@@ -10,7 +10,7 @@ namespace detail {
     struct HoldsAlternativeFunction {
         template<concepts::VariantLike Var, typename List = meta::VariantTypes<Var>>
         requires(meta::UniqueType<T, List>)
-        constexpr bool operator()(Var const& variant) const {
+        constexpr auto operator()(Var const& variant) const -> bool {
             constexpr auto expected_index = meta::Lookup<T, List>;
             return variant_index(variant) == expected_index;
         }

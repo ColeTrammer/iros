@@ -6,12 +6,12 @@ namespace di::util {
 namespace detail {
     struct UnwrapReferenceFunction {
         template<typename T>
-        constexpr T& operator()(T& value) const {
+        constexpr auto operator()(T& value) const -> T& {
             return value;
         }
 
         template<typename T>
-        constexpr T& operator()(ReferenceWrapper<T> value) const {
+        constexpr auto operator()(ReferenceWrapper<T> value) const -> T& {
             return value.get();
         }
     };

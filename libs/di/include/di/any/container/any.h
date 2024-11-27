@@ -35,7 +35,7 @@ namespace detail {
 
             template<typename X>
             requires(concepts::DerivedFrom<meta::RemoveCVRef<X>, E>)
-            constexpr friend R tag_invoke(Tag, X&& self_in, BArgs... bargs) {
+            constexpr friend auto tag_invoke(Tag, X&& self_in, BArgs... bargs) -> R {
                 auto&& self = static_cast<meta::Like<Self, E>>(self_in);
                 auto const& vtable = Type::vtable(self);
                 auto* storage = util::voidify(util::addressof(Type::storage(self)));
@@ -186,26 +186,18 @@ struct AnyT {
             Storage::destroy(m_vtable, this);
         }
 
-        Type& operator=(Type const&)
-        requires(is_trivially_copyable)
-        = default;
+        auto operator=(Type const&) -> Type& requires(is_trivially_copyable) = default;
 
-        Type& operator=(Type&&)
-        requires(is_trivially_moveable)
-        = default;
+        auto operator=(Type&&) -> Type& requires(is_trivially_moveable) = default;
 
-        constexpr Type& operator=(Type const& other)
-        requires(is_copyable)
-        {
+        constexpr auto operator=(Type const& other) -> Type& requires(is_copyable) {
             if (this != di::addressof(other)) {
                 Storage::copy_assign(m_vtable, this, other.m_vtable, util::addressof(other));
             }
             return *this;
         }
 
-        constexpr Type& operator=(Type&& other)
-        requires(is_moveable)
-        {
+        constexpr auto operator=(Type&& other) -> Type& requires(is_moveable) {
             if (this != di::addressof(other)) {
                 Storage::move_assign(m_vtable, this, other.m_vtable, util::addressof(other));
             }
@@ -216,7 +208,7 @@ struct AnyT {
         requires(!concepts::DerivedFrom<meta::RemoveCVRef<U>, Type> &&
                  !concepts::InstanceOf<meta::RemoveCVRef<U>, InPlaceType> &&
                  concepts::AnyStorableInfallibly<VU, Storage> && concepts::ConstructibleFrom<VU, U>)
-        constexpr Type& operator=(U&& value) {
+        constexpr auto operator=(U&& value) -> Type& {
             if constexpr (!is_trivially_destructible) {
                 Storage::destroy(m_vtable, this);
             }
@@ -225,7 +217,7 @@ struct AnyT {
             return *this;
         }
 
-        constexpr bool has_value() const
+        constexpr auto has_value() const -> bool
         requires(!is_reference)
         {
             return !m_vtable.empty();

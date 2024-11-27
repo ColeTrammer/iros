@@ -5,9 +5,9 @@
 namespace dius::filesystem {
 namespace detail {
     struct IsBlockFileFunction {
-        constexpr bool operator()(FileStatus status) const { return status.type() == FileType::Block; }
+        constexpr auto operator()(FileStatus status) const -> bool { return status.type() == FileType::Block; }
 
-        di::Result<bool> operator()(di::PathView path) const { return status(path) % *this; }
+        auto operator()(di::PathView path) const -> di::Result<bool> { return status(path) % *this; }
     };
 }
 

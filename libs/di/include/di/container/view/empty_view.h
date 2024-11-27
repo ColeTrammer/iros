@@ -13,24 +13,26 @@ class EmptyView
     : public ViewInterface<EmptyView<T>>
     , public meta::EnableBorrowedContainer<EmptyView<T>> {
 public:
-    constexpr static T* begin() { return nullptr; }
-    constexpr static T* end() { return nullptr; }
-    constexpr static T* data() { return nullptr; }
-    constexpr static types::size_t size() { return 0; }
-    constexpr static bool empty() { return true; }
+    constexpr static auto begin() -> T* { return nullptr; }
+    constexpr static auto end() -> T* { return nullptr; }
+    constexpr static auto data() -> T* { return nullptr; }
+    constexpr static auto size() -> types::size_t { return 0; }
+    constexpr static auto empty() -> bool { return true; }
 
 private:
-    constexpr friend EmptyView tag_invoke(types::Tag<container::reconstruct>, InPlaceType<EmptyView>, T*, T*) {
+    constexpr friend auto tag_invoke(types::Tag<container::reconstruct>, InPlaceType<EmptyView>, T*, T*) -> EmptyView {
         return EmptyView {};
     }
-    constexpr friend EmptyView tag_invoke(types::Tag<container::reconstruct>, InPlaceType<EmptyView>, nullptr_t, T*) {
+    constexpr friend auto tag_invoke(types::Tag<container::reconstruct>, InPlaceType<EmptyView>, nullptr_t, T*)
+        -> EmptyView {
         return EmptyView {};
     }
-    constexpr friend EmptyView tag_invoke(types::Tag<container::reconstruct>, InPlaceType<EmptyView>, T*, nullptr_t) {
+    constexpr friend auto tag_invoke(types::Tag<container::reconstruct>, InPlaceType<EmptyView>, T*, nullptr_t)
+        -> EmptyView {
         return EmptyView {};
     }
-    constexpr friend EmptyView tag_invoke(types::Tag<container::reconstruct>, InPlaceType<EmptyView>, nullptr_t,
-                                          nullptr_t) {
+    constexpr friend auto tag_invoke(types::Tag<container::reconstruct>, InPlaceType<EmptyView>, nullptr_t, nullptr_t)
+        -> EmptyView {
         return EmptyView {};
     }
 };

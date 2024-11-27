@@ -27,7 +27,7 @@ static inline void load_tr(u16 selector) {
     asm("ltr %0" : : "m"(selector));
 }
 
-static inline u64 read_cr0() {
+static inline auto read_cr0() -> u64 {
     u64 cr0;
     asm volatile("mov %%cr0, %0" : "=r"(cr0));
     return cr0;
@@ -37,13 +37,13 @@ static inline void load_cr0(u64 cr0) {
     asm volatile("mov %0, %%cr0" : : "r"(cr0));
 }
 
-static inline u64 read_cr2() {
+static inline auto read_cr2() -> u64 {
     u64 cr2;
     asm volatile("mov %%cr2, %0" : "=r"(cr2));
     return cr2;
 }
 
-static inline u64 read_cr3() {
+static inline auto read_cr3() -> u64 {
     u64 cr3;
     asm volatile("mov %%cr3, %0" : "=r"(cr3));
     return cr3;
@@ -53,7 +53,7 @@ static inline void load_cr3(u64 cr3) {
     asm volatile("mov %0, %%cr3" : : "r"(cr3) : "memory");
 }
 
-static inline u64 read_cr4() {
+static inline auto read_cr4() -> u64 {
     u64 cr4;
     asm volatile("mov %%cr4, %0" : "=r"(cr4));
     return cr4;

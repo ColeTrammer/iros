@@ -15,12 +15,12 @@ struct BitEnum {
     }
 
     template<size_t bit_size>
-    constexpr static T bits_into_value(BitSet<bit_size> const& bit_set) {
+    constexpr static auto bits_into_value(BitSet<bit_size> const& bit_set) -> T {
         return static_cast<T>(BitField<index, bit_count>::bits_into_value(bit_set));
     }
 
     constexpr BitEnum(T value) : m_value(value) {}
-    constexpr T get() const { return m_value; }
+    constexpr auto get() const -> T { return m_value; }
 
 private:
     T m_value;

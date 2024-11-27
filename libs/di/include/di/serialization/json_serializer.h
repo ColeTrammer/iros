@@ -37,20 +37,20 @@ class JsonSerializerConfig {
 public:
     JsonSerializerConfig() = default;
 
-    constexpr JsonSerializerConfig pretty() const {
+    constexpr auto pretty() const -> JsonSerializerConfig {
         auto config = *this;
         config.m_pretty = true;
         return config;
     }
 
-    constexpr JsonSerializerConfig indent_width(int width) const {
+    constexpr auto indent_width(int width) const -> JsonSerializerConfig {
         auto config = *this;
         config.m_indent_width = width;
         return config;
     }
 
-    constexpr bool is_pretty() const { return m_pretty; }
-    constexpr int indent_width() const { return m_indent_width; }
+    constexpr auto is_pretty() const -> bool { return m_pretty; }
+    constexpr auto indent_width() const -> int { return m_indent_width; }
 
 private:
     bool m_pretty { false };
@@ -70,48 +70,48 @@ private:
     public:
         constexpr explicit ObjectSerializerProxy(JsonSerializer& serializer) : m_serializer(serializer) {}
 
-        constexpr meta::WriterResult<void, Writer> serialize_bool(container::StringView key, bool value) {
+        constexpr auto serialize_bool(container::StringView key, bool value) -> meta::WriterResult<void, Writer> {
             DI_TRY(m_serializer.get().serialize_key(key));
             auto guard = util::ScopeValueChange(m_serializer.get().m_state, State::Value);
             return m_serializer.get().serialize_bool(value);
         }
 
-        constexpr meta::WriterResult<void, Writer> serialize_null(container::StringView key) {
+        constexpr auto serialize_null(container::StringView key) -> meta::WriterResult<void, Writer> {
             DI_TRY(m_serializer.get().serialize_key(key));
             auto guard = util::ScopeValueChange(m_serializer.get().m_state, State::Value);
             return m_serializer.get().serialize_null();
         }
 
-        constexpr meta::WriterResult<void, Writer> serialize_string(container::StringView key,
-                                                                    container::StringView view) {
+        constexpr auto serialize_string(container::StringView key, container::StringView view)
+            -> meta::WriterResult<void, Writer> {
             DI_TRY(m_serializer.get().serialize_key(key));
             auto guard = util::ScopeValueChange(m_serializer.get().m_state, State::Value);
             return m_serializer.get().serialize_string(view);
         }
 
-        constexpr meta::WriterResult<void, Writer> serialize_number(container::StringView key,
-                                                                    concepts::Integral auto number) {
+        constexpr auto serialize_number(container::StringView key, concepts::Integral auto number)
+            -> meta::WriterResult<void, Writer> {
             DI_TRY(m_serializer.get().serialize_key(key));
             auto guard = util::ScopeValueChange(m_serializer.get().m_state, State::Value);
             return m_serializer.get().serialize_number(number);
         }
 
         template<concepts::InvocableTo<meta::WriterResult<void, Writer>, JsonSerializer&> F>
-        constexpr meta::WriterResult<void, Writer> serialize_array(container::StringView key, F&& function) {
+        constexpr auto serialize_array(container::StringView key, F&& function) -> meta::WriterResult<void, Writer> {
             DI_TRY(m_serializer.get().serialize_key(key));
             auto guard = util::ScopeValueChange(m_serializer.get().m_state, State::Value);
             return m_serializer.get().serialize_array(util::forward<F>(function));
         }
 
         template<concepts::InvocableTo<meta::WriterResult<void, Writer>, ObjectSerializerProxy&> F>
-        constexpr meta::WriterResult<void, Writer> serialize_object(container::StringView key, F&& function) {
+        constexpr auto serialize_object(container::StringView key, F&& function) -> meta::WriterResult<void, Writer> {
             DI_TRY(m_serializer.get().serialize_key(key));
             auto guard = util::ScopeValueChange(m_serializer.get().m_state, State::Value);
             return m_serializer.get().serialize_object(util::forward<F>(function));
         }
 
         template<concepts::Serializable<JsonSerializer> T>
-        constexpr meta::WriterResult<void, Writer> serialize(container::StringView key, T&& value) {
+        constexpr auto serialize(container::StringView key, T&& value) -> meta::WriterResult<void, Writer> {
             DI_TRY(m_serializer.get().serialize_key(key));
             auto guard = util::ScopeValueChange(m_serializer.get().m_state, State::Value);
             return serialization::serialize(m_serializer.get(), value);
@@ -129,21 +129,21 @@ public:
     constexpr explicit JsonSerializer(T&& writer, JsonSerializerConfig config = {})
         : m_writer(util::forward<T>(writer)), m_config(config) {}
 
-    constexpr meta::WriterResult<void, Writer> serialize_null() {
+    constexpr auto serialize_null() -> meta::WriterResult<void, Writer> {
         DI_TRY(serialize_comma());
 
         DI_TRY(io::write_exactly(m_writer, "null"_sv));
         return {};
     }
 
-    constexpr meta::WriterResult<void, Writer> serialize_bool(bool value) {
+    constexpr auto serialize_bool(bool value) -> meta::WriterResult<void, Writer> {
         if (value) {
             return serialize_true();
         }
         return serialize_false();
     }
 
-    constexpr meta::WriterResult<void, Writer> serialize_string(container::StringView view) {
+    constexpr auto serialize_string(container::StringView view) -> meta::WriterResult<void, Writer> {
         DI_TRY(serialize_comma());
 
         DI_TRY(io::write_exactly(m_writer, '"'));
@@ -153,7 +153,7 @@ public:
         return {};
     }
 
-    constexpr meta::WriterResult<void, Writer> serialize_number(concepts::Integral auto number) {
+    constexpr auto serialize_number(concepts::Integral auto number) -> meta::WriterResult<void, Writer> {
         DI_TRY(serialize_comma());
 
         using Enc = container::string::Utf8Encoding;
@@ -168,7 +168,7 @@ public:
     }
 
     template<concepts::InvocableTo<meta::WriterResult<void, Writer>, JsonSerializer&> F>
-    constexpr meta::WriterResult<void, Writer> serialize_array(F&& function) {
+    constexpr auto serialize_array(F&& function) -> meta::WriterResult<void, Writer> {
         DI_TRY(serialize_array_begin());
         auto guard = util::ScopeValueChange(m_state, State::First);
         DI_TRY(function::invoke(util::forward<F>(function), *this));
@@ -176,7 +176,7 @@ public:
     }
 
     template<concepts::InvocableTo<meta::WriterResult<void, Writer>, ObjectSerializerProxy&> F>
-    constexpr meta::WriterResult<void, Writer> serialize_object(F&& function) {
+    constexpr auto serialize_object(F&& function) -> meta::WriterResult<void, Writer> {
         DI_TRY(serialize_object_begin());
         auto guard = util::ScopeValueChange(m_state, State::First);
         auto proxy = ObjectSerializerProxy(*this);
@@ -185,7 +185,7 @@ public:
     }
 
     template<typename T, concepts::InstanceOf<reflection::Fields> M>
-    constexpr meta::WriterResult<void, Writer> serialize(T&& value, M) {
+    constexpr auto serialize(T&& value, M) -> meta::WriterResult<void, Writer> {
         return serialize_object([&](auto& serializer) -> meta::WriterResult<void, Writer> {
             return vocab::tuple_sequence<meta::WriterResult<void, Writer>>(
                 [&](auto field) -> meta::WriterResult<void, Writer> {
@@ -206,13 +206,13 @@ public:
     }
 
     template<typename T, concepts::InstanceOf<reflection::Enumerators> M>
-    constexpr meta::WriterResult<void, Writer> serialize(T value, M) {
+    constexpr auto serialize(T value, M) -> meta::WriterResult<void, Writer> {
         return serialize_string(reflection::enum_to_string(value));
     }
 
     template<typename T, concepts::InstanceOf<reflection::Atom> M>
     requires(M::is_bool() || M::is_string() || M::is_integer())
-    constexpr meta::WriterResult<void, Writer> serialize(T&& value, M) {
+    constexpr auto serialize(T&& value, M) -> meta::WriterResult<void, Writer> {
         if constexpr (M::is_bool()) {
             return serialize_bool(M::get(value));
         } else if constexpr (M::is_string()) {
@@ -224,7 +224,7 @@ public:
 
     template<typename T, concepts::InstanceOf<reflection::Atom> M>
     requires(M::is_list() && concepts::Serializable<meta::ContainerReference<T>, JsonSerializer>)
-    constexpr meta::WriterResult<void, Writer> serialize(T&& value, M) {
+    constexpr auto serialize(T&& value, M) -> meta::WriterResult<void, Writer> {
         return serialize_array([&](auto& serializer) {
             return container::sequence(M::get(value), [&](auto&& element) {
                 return serialization::serialize(serializer, element);
@@ -236,7 +236,7 @@ public:
     requires(M::is_map() && concepts::detail::ConstantString<meta::TupleElement<meta::ContainerValue<T>, 0>> &&
              concepts::Serializable<meta::TupleValue<decltype(util::declval<meta::ContainerReference<T>>()), 1>,
                                     JsonSerializer>)
-    constexpr meta::WriterResult<void, Writer> serialize(T&& value, M) {
+    constexpr auto serialize(T&& value, M) -> meta::WriterResult<void, Writer> {
         return serialize_object([&](auto& serializer) {
             return container::sequence(M::get(value), [&](concepts::TupleLike auto&& element) {
                 return serializer.serialize(util::get<0>(element), util::get<1>(element));
@@ -244,26 +244,26 @@ public:
         });
     }
 
-    constexpr Writer& writer() & { return m_writer; }
-    constexpr Writer const& writer() const& { return m_writer; }
-    constexpr Writer&& writer() && { return util::move(*this).m_writer; }
+    constexpr auto writer() & -> Writer& { return m_writer; }
+    constexpr auto writer() const& -> Writer const& { return m_writer; }
+    constexpr auto writer() && -> Writer&& { return util::move(*this).m_writer; }
 
 private:
-    constexpr meta::WriterResult<void, Writer> serialize_true() {
+    constexpr auto serialize_true() -> meta::WriterResult<void, Writer> {
         DI_TRY(serialize_comma());
 
         DI_TRY(io::write_exactly(m_writer, "true"_sv));
         return {};
     }
 
-    constexpr meta::WriterResult<void, Writer> serialize_false() {
+    constexpr auto serialize_false() -> meta::WriterResult<void, Writer> {
         DI_TRY(serialize_comma());
 
         DI_TRY(io::write_exactly(m_writer, "false"_sv));
         return {};
     }
 
-    constexpr meta::WriterResult<void, Writer> serialize_comma() {
+    constexpr auto serialize_comma() -> meta::WriterResult<void, Writer> {
         if (m_state == State::Value) {
             return {};
         }
@@ -278,14 +278,14 @@ private:
         return {};
     }
 
-    constexpr meta::WriterResult<void, Writer> serialize_object_begin() {
+    constexpr auto serialize_object_begin() -> meta::WriterResult<void, Writer> {
         DI_TRY(serialize_comma());
         DI_TRY(io::write_exactly(m_writer, '{'));
         ++m_indent;
         return {};
     }
 
-    constexpr meta::WriterResult<void, Writer> serialize_object_end() {
+    constexpr auto serialize_object_end() -> meta::WriterResult<void, Writer> {
         --m_indent;
         if (m_state != State::First) {
             DI_TRY(serialize_newline());
@@ -295,14 +295,14 @@ private:
         return {};
     }
 
-    constexpr meta::WriterResult<void, Writer> serialize_array_begin() {
+    constexpr auto serialize_array_begin() -> meta::WriterResult<void, Writer> {
         DI_TRY(serialize_comma());
         DI_TRY(io::write_exactly(m_writer, '['));
         ++m_indent;
         return {};
     }
 
-    constexpr meta::WriterResult<void, Writer> serialize_array_end() {
+    constexpr auto serialize_array_end() -> meta::WriterResult<void, Writer> {
         --m_indent;
         if (m_state != State::First) {
             DI_TRY(serialize_newline());
@@ -312,7 +312,7 @@ private:
         return {};
     }
 
-    constexpr meta::WriterResult<void, Writer> serialize_key(container::StringView key) {
+    constexpr auto serialize_key(container::StringView key) -> meta::WriterResult<void, Writer> {
         DI_TRY(serialize_string(key));
         DI_TRY(io::write_exactly(m_writer, ':'));
         if (pretty_print()) {
@@ -321,14 +321,14 @@ private:
         return {};
     }
 
-    constexpr meta::WriterResult<void, Writer> serialize_newline() {
+    constexpr auto serialize_newline() -> meta::WriterResult<void, Writer> {
         if (!pretty_print()) {
             return {};
         }
         return io::write_exactly(m_writer, '\n');
     }
 
-    constexpr meta::WriterResult<void, Writer> serialize_indent() {
+    constexpr auto serialize_indent() -> meta::WriterResult<void, Writer> {
         if (!pretty_print()) {
             return {};
         }
@@ -337,7 +337,7 @@ private:
                });
     }
 
-    constexpr bool pretty_print() const { return m_config.is_pretty(); }
+    constexpr auto pretty_print() const -> bool { return m_config.is_pretty(); }
 
     Writer m_writer;
     JsonSerializerConfig m_config {};

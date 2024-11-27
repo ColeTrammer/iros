@@ -11,7 +11,7 @@ namespace di::container::view {
 namespace detail {
     struct DropFunction {
         template<concepts::ViewableContainer Con, concepts::ConvertibleTo<meta::ContainerSSizeType<Con>> Diff>
-        constexpr concepts::View auto operator()(Con&& container, Diff&& difference) const {
+        constexpr auto operator()(Con&& container, Diff&& difference) const -> concepts::View auto {
             if constexpr (concepts::TagInvocable<DropFunction, Con, Diff>) {
                 return function::tag_invoke(*this, util::forward<Con>(container), util::forward<Diff>(difference));
             } else if constexpr (concepts::SizedContainer<Con> && concepts::RandomAccessContainer<Con> &&

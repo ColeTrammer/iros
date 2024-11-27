@@ -24,7 +24,7 @@ private:
 
     template<typename U>
     requires(detail::Equal<U, Self>)
-    constexpr friend bool operator==(Self const& sent, U const& it) {
+    constexpr friend auto operator==(Self const& sent, U const& it) -> bool {
         return sent.equals(it);
     }
 };

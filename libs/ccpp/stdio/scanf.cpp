@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 // https://pubs.opengroup.org/onlinepubs/9699919799/functions/scanf.html
-extern "C" int scanf(char const* __restrict format, ...) {
+extern "C" auto scanf(char const* __restrict format, ...) -> int {
     va_list args;
     va_start(args, format);
     auto result = vscanf(format, args);

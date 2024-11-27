@@ -6,7 +6,7 @@
 
 namespace di::container::detail {
 template<concepts::InputContainer Con>
-constexpr auto& possibly_const_container(Con& container) {
+constexpr auto possibly_const_container(Con& container) -> auto& {
     if constexpr (concepts::ConstantContainer<Con const> && !concepts::ConstantContainer<Con>) {
         return util::as_const(container);
     } else {

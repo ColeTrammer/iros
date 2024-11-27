@@ -7,12 +7,12 @@
 namespace di {
 inline namespace literals {
     inline namespace integral_literals {
-#define DI_INTEGER_LITERAL(Type)                                 \
-    consteval Type operator""_##Type(unsigned long long value) { \
-        if (!math::representable_as<Type>(value)) {              \
-            util::compile_time_fail<>();                         \
-        }                                                        \
-        return Type(value);                                      \
+#define DI_INTEGER_LITERAL(Type)                                       \
+    consteval auto operator""_##Type(unsigned long long value)->Type { \
+        if (!math::representable_as<Type>(value)) {                    \
+            util::compile_time_fail<>();                               \
+        }                                                              \
+        return Type(value);                                            \
     }
 
         DI_INTEGER_LITERAL(i8)
@@ -37,14 +37,14 @@ inline namespace literals {
 
 #undef DI_INTEGER_LITERAL
 
-        consteval Byte operator""_b(unsigned long long value) {
+        consteval auto operator""_b(unsigned long long value) -> Byte {
             if (!math::representable_as<u8>(value)) {
                 util::compile_time_fail<>();
             }
             return Byte(value);
         }
 
-        consteval Byte operator""_b(char value) {
+        consteval auto operator""_b(char value) -> Byte {
             if (!math::representable_as<u8>(value)) {
                 util::compile_time_fail<>();
             }

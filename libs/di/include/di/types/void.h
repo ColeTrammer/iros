@@ -4,8 +4,8 @@
 
 namespace di::types {
 struct Void {
-    constexpr friend bool operator==(Void, Void) { return true; }
-    constexpr friend types::strong_ordering operator<=>(Void, Void) { return types::strong_ordering::equal; }
+    constexpr friend auto operator==(Void, Void) -> bool { return true; }
+    constexpr friend auto operator<=>(Void, Void) -> types::strong_ordering { return types::strong_ordering::equal; }
 };
 }
 

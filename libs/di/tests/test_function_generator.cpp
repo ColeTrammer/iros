@@ -2,7 +2,7 @@
 #include <dius/test/prelude.h>
 
 namespace function_generator {
-di::Generator<int> f() {
+auto f() -> di::Generator<int> {
     co_yield 1;
     co_yield 2;
     co_yield 3;

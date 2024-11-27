@@ -13,7 +13,7 @@ struct Args {
     }
 };
 
-di::Result<void> main([[maybe_unused]] Args& args) {
+auto main([[maybe_unused]] Args& args) -> di::Result<void> {
     auto path = di::create<di::Path>(args.path);
     auto iterator =
         TRY(di::create<dius::fs::RecursiveDirectoryIterator>(di::move(path)) | di::if_error([](auto&& error) {

@@ -12,7 +12,7 @@ namespace detail {
     struct UninitializedDefaultConstructFunction {
         template<concepts::UninitForwardIterator Out, concepts::UninitSentinelFor<Out> OutSent>
         requires(concepts::DefaultInitializable<meta::IteratorValue<Out>>)
-        constexpr Out operator()(Out out, OutSent out_last) const {
+        constexpr auto operator()(Out out, OutSent out_last) const -> Out {
             if constexpr (concepts::TriviallyDefaultConstructible<meta::IteratorValue<Out>>) {
                 return container::next(out, out_last);
             }
@@ -25,7 +25,7 @@ namespace detail {
 
         template<concepts::UninitForwardContainer Out>
         requires(concepts::DefaultInitializable<meta::ContainerValue<Out>>)
-        constexpr meta::BorrowedIterator<Out> operator()(Out&& out) const {
+        constexpr auto operator()(Out&& out) const -> meta::BorrowedIterator<Out> {
             return (*this)(container::begin(out), container::end(out));
         }
     };

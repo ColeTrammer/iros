@@ -10,19 +10,19 @@ namespace di::container::vector {
 template<concepts::detail::ConstantVector Vec, typename Iter = meta::detail::VectorIterator<Vec>,
          typename CIter = meta::detail::VectorConstIterator<Vec>>
 requires(!concepts::Const<Vec>)
-constexpr Iter iterator(Vec&, CIter iterator) {
+constexpr auto iterator(Vec&, CIter iterator) -> Iter {
     return const_cast<Iter>(iterator);
 }
 
 template<concepts::detail::ConstantVector Vec, typename Iter = meta::detail::VectorIterator<Vec>>
 requires(!concepts::Const<Vec>)
-constexpr Iter iterator(Vec& vector, size_t index) {
+constexpr auto iterator(Vec& vector, size_t index) -> Iter {
     DI_ASSERT(index <= vector::size(vector));
     return vector::begin(vector) + index;
 }
 
 template<concepts::detail::ConstantVector Vec, typename CIter = meta::detail::VectorConstIterator<Vec>>
-constexpr CIter iterator(Vec const& vector, size_t index) {
+constexpr auto iterator(Vec const& vector, size_t index) -> CIter {
     DI_ASSERT(index <= vector::size(vector));
     return vector::begin(vector) + index;
 }

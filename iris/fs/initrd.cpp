@@ -21,7 +21,9 @@ public:
 
     explicit DirentIterator(byte const* data, bool at_end = false) : m_data(data), m_at_end(at_end) {}
 
-    initrd::DirectoryEntry const& operator*() const { return *reinterpret_cast<initrd::DirectoryEntry const*>(m_data); }
+    auto operator*() const -> initrd::DirectoryEntry const& {
+        return *reinterpret_cast<initrd::DirectoryEntry const*>(m_data);
+    }
 
     void advance_one() {
         if ((**this).next_entry == 0) {
@@ -32,9 +34,9 @@ public:
         }
     }
 
-    bool operator==(di::DefaultSentinel) const { return m_at_end; }
+    auto operator==(di::DefaultSentinel) const -> bool { return m_at_end; }
 
-    byte const* data() const { return m_data; }
+    auto data() const -> byte const* { return m_data; }
 
 private:
     byte const* m_data;
@@ -50,8 +52,8 @@ struct InitrdInodeImpl {
     // FIXME: this really should use a kernel-level inode cache.
     di::TreeMap<di::TransparentString, di::Arc<Inode>> inodes;
 
-    friend di::AnySenderOf<mm::PhysicalAddress> tag_invoke(di::Tag<inode_read>, InitrdInodeImpl& self,
-                                                           mm::BackingObject& object, u64 page_number) {
+    friend auto tag_invoke(di::Tag<inode_read>, InitrdInodeImpl& self, mm::BackingObject& object, u64 page_number)
+        -> di::AnySenderOf<mm::PhysicalAddress> {
         auto virtual_address = di::to_uintptr(self.data.data() + page_number * 4096);
         virtual_address -= global_state().virtual_to_physical_offset.raw_value();
         auto physical_address = mm::PhysicalAddress(virtual_address);
@@ -60,8 +62,8 @@ struct InitrdInodeImpl {
         return physical_address;
     }
 
-    friend di::AnySenderOf<usize> tag_invoke(di::Tag<inode_read_directory>, InitrdInodeImpl& self, mm::BackingObject&,
-                                             u64& offset, UserspaceBuffer<byte> buffer) {
+    friend auto tag_invoke(di::Tag<inode_read_directory>, InitrdInodeImpl& self, mm::BackingObject&, u64& offset,
+                           UserspaceBuffer<byte> buffer) -> di::AnySenderOf<usize> {
         auto it = DirentIterator(self.data.data() + offset, offset == self.data.size());
         if (it == di::default_sentinel) {
             return 0;
@@ -93,8 +95,8 @@ struct InitrdInodeImpl {
         return effective_size;
     }
 
-    friend di::AnySenderOf<di::Arc<TNode>> tag_invoke(di::Tag<inode_lookup>, InitrdInodeImpl& self,
-                                                      di::Arc<TNode> parent, di::TransparentStringView name) {
+    friend auto tag_invoke(di::Tag<inode_lookup>, InitrdInodeImpl& self, di::Arc<TNode> parent,
+                           di::TransparentStringView name) -> di::AnySenderOf<di::Arc<TNode>> {
         auto result = self.inodes.find(name);
         if (result == self.inodes.end()) {
             return di::Unexpected(Error::NoSuchFileOrDirectory);
@@ -103,27 +105,28 @@ struct InitrdInodeImpl {
         return di::make_arc<TNode>(di::move(parent), di::get<1>(*result), TRY(name | di::to<di::TransparentString>()));
     }
 
-    friend di::AnySenderOf<Metadata> tag_invoke(di::Tag<inode_metadata>, InitrdInodeImpl& self) {
+    friend auto tag_invoke(di::Tag<inode_metadata>, InitrdInodeImpl& self) -> di::AnySenderOf<Metadata> {
         return Metadata { .type = MetadataType(di::to_underlying(self.type)), .size = self.data.size() };
     }
 
-    friend di::AnySenderOf<di::Arc<TNode>> tag_invoke(di::Tag<inode_create_node>, InitrdInodeImpl&,
-                                                      di::Arc<TNode> const&, di::TransparentStringView, MetadataType) {
+    friend auto tag_invoke(di::Tag<inode_create_node>, InitrdInodeImpl&, di::Arc<TNode> const&,
+                           di::TransparentStringView, MetadataType) -> di::AnySenderOf<di::Arc<TNode>> {
         return di::Unexpected(Error::ReadOnlyFileSystem);
     }
 
-    friend di::AnySenderOf<void> tag_invoke(di::Tag<inode_truncate>, InitrdInodeImpl&, u64) {
+    friend auto tag_invoke(di::Tag<inode_truncate>, InitrdInodeImpl&, u64) -> di::AnySenderOf<void> {
         return di::Unexpected(Error::ReadOnlyFileSystem);
     }
 
-    friend di::AnySenderOf<di::Span<byte const>> tag_invoke(di::Tag<inode_hack_raw_data>, InitrdInodeImpl& self) {
+    friend auto tag_invoke(di::Tag<inode_hack_raw_data>, InitrdInodeImpl& self)
+        -> di::AnySenderOf<di::Span<byte const>> {
         return self.data;
     }
 };
 
 static_assert(di::Impl<InitrdInodeImpl, InodeInterface>);
 
-Expected<void> init_initrd() {
+auto init_initrd() -> Expected<void> {
     auto& global_state = global_state_in_boot();
     auto initrd = global_state.initrd;
     auto const& super_block = *initrd.typed_pointer_unchecked<initrd::SuperBlock>(0);

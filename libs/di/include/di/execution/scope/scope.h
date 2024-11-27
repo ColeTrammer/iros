@@ -23,7 +23,7 @@ namespace request_stop_ns {
     struct Function {
         template<typename Scope>
         requires(MemberInvocable<Scope> || concepts::TagInvocable<Function, meta::UnwrapReference<Scope>&>)
-        bool operator()(Scope& scope) const {
+        auto operator()(Scope& scope) const -> bool {
             if constexpr (MemberInvocable<Scope>) {
                 static_assert(concepts::BooleanTestable<decltype(unwrap_reference(scope).request_stop())>,
                               "request_stop() member function must return a boolean.");

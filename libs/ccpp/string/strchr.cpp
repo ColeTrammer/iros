@@ -1,6 +1,6 @@
 #include <string.h>
 
-extern "C" char* strchr(char const* str, int ch) {
+extern "C" auto strchr(char const* str, int ch) -> char* {
     auto needle = (char) ch;
     auto* str_typed = (unsigned char*) str;
 

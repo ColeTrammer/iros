@@ -12,8 +12,8 @@ public:
     constexpr explicit GuardedReference(T& value, Args&&... args)
         : m_guard(util::forward<Args>(args)...), m_value(&value) {}
 
-    constexpr T& operator*() const { return *m_value; }
-    constexpr T* operator->() const { return m_value; }
+    constexpr auto operator*() const -> T& { return *m_value; }
+    constexpr auto operator->() const -> T* { return m_value; }
 
 private:
     Guard m_guard;

@@ -41,11 +41,11 @@ private:
         constexpr Iterator(FilterView& parent, Iter base)
             : m_parent(util::addressof(parent)), m_base(util::move(base)) {}
 
-        constexpr Iter const& base() const& { return m_base; }
-        constexpr Iter base() && { return util::move(m_base); }
+        constexpr auto base() const& -> Iter const& { return m_base; }
+        constexpr auto base() && -> Iter { return util::move(m_base); }
 
-        constexpr decltype(auto) operator*() const { return *m_base; }
-        constexpr Iter operator->() const
+        constexpr auto operator*() const -> decltype(auto) { return *m_base; }
+        constexpr auto operator->() const -> Iter
         requires(concepts::ForwardIterator<Iter> &&
                  (concepts::Pointer<Iter> || requires(Iter iter) { iter.operator->(); }) && concepts::Copyable<Iter>)
         {
@@ -66,9 +66,9 @@ private:
         }
 
     private:
-        constexpr friend bool operator==(Iterator const& a, Iterator const& b) { return a.base() == b.base(); }
+        constexpr friend auto operator==(Iterator const& a, Iterator const& b) -> bool { return a.base() == b.base(); }
 
-        constexpr friend meta::IteratorRValue<Iter> tag_invoke(types::Tag<iterator_move>, Iterator const& a) {
+        constexpr friend auto tag_invoke(types::Tag<iterator_move>, Iterator const& a) -> meta::IteratorRValue<Iter> {
             return container::iterator_move(a);
         }
 
@@ -98,16 +98,16 @@ public:
     constexpr explicit FilterView(View base, Pred predicate)
         : m_base(util::move(base)), m_predicate(util::move(predicate)) {}
 
-    constexpr View base() const&
+    constexpr auto base() const& -> View
     requires(concepts::CopyConstructible<View>)
     {
         return m_base;
     }
-    constexpr View base() && { return util::move(m_base); }
+    constexpr auto base() && -> View { return util::move(m_base); }
 
-    constexpr Pred const& pred() const { return m_predicate.value(); }
+    constexpr auto pred() const -> Pred const& { return m_predicate.value(); }
 
-    constexpr Iterator begin() {
+    constexpr auto begin() -> Iterator {
         if constexpr (!concepts::ForwardContainer<View>) {
             return Iterator(*this, container::find_if(m_base, util::ref(m_predicate.value())));
         } else {

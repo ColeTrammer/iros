@@ -12,17 +12,17 @@ public:
                                 TestCaseFunction function)
         : m_suite_name(di::move(suite_name)), m_case_name(di::move(case_name)), m_function(function) {}
 
-    constexpr di::TransparentStringView suite_name() const { return m_suite_name; }
-    constexpr di::TransparentStringView case_name() const { return m_case_name; }
+    constexpr auto suite_name() const -> di::TransparentStringView { return m_suite_name; }
+    constexpr auto case_name() const -> di::TransparentStringView { return m_case_name; }
 
     constexpr void execute() const { m_function(); }
 
 private:
-    constexpr friend bool operator==(TestCase const& a, TestCase const& b) {
+    constexpr friend auto operator==(TestCase const& a, TestCase const& b) -> bool {
         return di::make_tuple(a.suite_name(), a.case_name()) == di::make_tuple(b.suite_name(), b.case_name());
     }
 
-    constexpr friend di::strong_ordering operator<=>(TestCase const& a, TestCase const& b) {
+    constexpr friend auto operator<=>(TestCase const& a, TestCase const& b) -> di::strong_ordering {
         return di::make_tuple(a.suite_name(), a.case_name()) <=> di::make_tuple(b.suite_name(), b.case_name());
     }
 

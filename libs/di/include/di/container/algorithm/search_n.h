@@ -13,8 +13,8 @@ namespace detail {
                  typename Pred = function::Equal, typename Proj = function::Identity,
                  typename SSizeType = meta::IteratorSSizeType<It>>
         requires(concepts::IndirectlyComparable<It, T const*, Pred, Proj>)
-        constexpr View<It> operator()(It first, Sent last, meta::TypeIdentity<SSizeType> n, T const& value,
-                                      Pred pred = {}, Proj proj = {}) const {
+        constexpr auto operator()(It first, Sent last, meta::TypeIdentity<SSizeType> n, T const& value, Pred pred = {},
+                                  Proj proj = {}) const -> View<It> {
             if (n <= 0) {
                 return { first, first };
             }
@@ -44,8 +44,8 @@ namespace detail {
         template<concepts::ForwardContainer Con, typename T, typename Pred = function::Equal,
                  typename Proj = function::Identity>
         requires(concepts::IndirectlyComparable<meta::ContainerIterator<Con>, T const*, Pred, Proj>)
-        constexpr meta::BorrowedView<Con> operator()(Con&& container, meta::ContainerSSizeType<Con> n, T const& needle,
-                                                     Pred pred = {}, Proj proj = {}) const {
+        constexpr auto operator()(Con&& container, meta::ContainerSSizeType<Con> n, T const& needle, Pred pred = {},
+                                  Proj proj = {}) const -> meta::BorrowedView<Con> {
             return (*this)(container::begin(container), container::end(container), n, needle, util::ref(pred),
                            util::ref(proj));
         }

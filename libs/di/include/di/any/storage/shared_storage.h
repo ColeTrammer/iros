@@ -55,7 +55,7 @@ namespace detail {
         template<typename... Args>
         constexpr ObjectWithRefCount(Args&&... args) : object(util::forward<Args>(args)...) {}
 
-        constexpr T* to_object_pointer() { return util::addressof(object); }
+        constexpr auto to_object_pointer() -> T* { return util::addressof(object); }
 
         T object;
     };
@@ -71,10 +71,10 @@ public:
     using Manage = meta::Type<detail::SharedStorageManage<SharedStorage, Alloc>>;
     using Interface = meta::List<Manage>;
 
-    constexpr static StorageCategory storage_category() { return StorageCategory::Copyable; }
+    constexpr static auto storage_category() -> StorageCategory { return StorageCategory::Copyable; }
 
     template<typename T>
-    constexpr static bool creation_is_fallible(InPlaceType<T>) {
+    constexpr static auto creation_is_fallible(InPlaceType<T>) -> bool {
         return concepts::FallibleAllocator<Alloc>;
     }
 
@@ -111,7 +111,7 @@ public:
     SharedStorage() = default;
 
     SharedStorage(SharedStorage const&) = default;
-    SharedStorage& operator=(SharedStorage const&) = default;
+    auto operator=(SharedStorage const&) -> SharedStorage& = default;
 
     ~SharedStorage() = default;
 
@@ -164,24 +164,24 @@ public:
     }
 
     template<typename T>
-    constexpr T* down_cast() {
+    constexpr auto down_cast() -> T* {
         return static_cast<detail::ObjectWithRefCount<T>*>(m_pointer)->to_object_pointer();
     }
 
     template<typename T>
-    constexpr T const* down_cast() const {
+    constexpr auto down_cast() const -> T const* {
         return static_cast<detail::ObjectWithRefCount<T> const*>(m_pointer)->to_object_pointer();
     }
 
 private:
     constexpr explicit SharedStorage(void* pointer) : m_pointer(pointer) {}
 
-    constexpr usize fetch_sub_ref_count() {
+    constexpr auto fetch_sub_ref_count() -> usize {
         auto& ref_count = static_cast<detail::RefCount*>(m_pointer)->ref_count;
         return ref_count.fetch_sub(1, sync::MemoryOrder::Relaxed);
     }
 
-    constexpr usize fetch_add_ref_count() {
+    constexpr auto fetch_add_ref_count() -> usize {
         auto& ref_count = static_cast<detail::RefCount*>(m_pointer)->ref_count;
         return ref_count.fetch_add(1, sync::MemoryOrder::AcquireRelease);
     }

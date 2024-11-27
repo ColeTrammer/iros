@@ -5,7 +5,7 @@
 
 namespace di::vocab {
 template<typename... Args>
-constexpr Tuple<Args&&...> forward_as_tuple(Args&&... args) {
+constexpr auto forward_as_tuple(Args&&... args) -> Tuple<Args&&...> {
     return Tuple<Args&&...>(util::forward<Args>(args)...);
 }
 }

@@ -5,12 +5,12 @@
 
 namespace di::util {
 template<types::size_t index, typename T>
-constexpr decltype(auto) get(T&& value) {
+constexpr auto get(T&& value) -> decltype(auto) {
     return util::get_in_place(c_<index>, util::forward<T>(value));
 }
 
 template<typename Type, typename T>
-constexpr decltype(auto) get(T&& value) {
+constexpr auto get(T&& value) -> decltype(auto) {
     return util::get_in_place(types::in_place_type<Type>, util::forward<T>(value));
 }
 }

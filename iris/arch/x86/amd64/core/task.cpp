@@ -58,7 +58,7 @@ FpuState::~FpuState() {
     }
 }
 
-Expected<void> FpuState::setup_fpu_state() {
+auto FpuState::setup_fpu_state() -> Expected<void> {
     fpu_state = TRY(allocate_fpu_state());
 
     auto* clean_fpu_state = global_state().initial_fpu_state.fpu_state;
@@ -68,7 +68,7 @@ Expected<void> FpuState::setup_fpu_state() {
     return {};
 }
 
-Expected<void> FpuState::setup_initial_fpu_state() {
+auto FpuState::setup_initial_fpu_state() -> Expected<void> {
     global_state_in_boot().boot_processor.arch_processor().setup_fpu_support_for_processor();
 
     fpu_state = TRY(allocate_fpu_state());
@@ -77,7 +77,7 @@ Expected<void> FpuState::setup_initial_fpu_state() {
     return {};
 }
 
-Expected<di::Byte*> FpuState::allocate_fpu_state() {
+auto FpuState::allocate_fpu_state() -> Expected<di::Byte*> {
     auto fpu_size = global_state().processor_info.fpu_max_state_size;
 
     // NOTE: 64 byte alignment is required when using SSE extensions.

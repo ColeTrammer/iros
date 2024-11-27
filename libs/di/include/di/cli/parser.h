@@ -63,7 +63,7 @@ namespace detail {
             return di::move(*this);
         }
 
-        constexpr Result<Base> parse(Span<TransparentStringView> args) {
+        constexpr auto parse(Span<TransparentStringView> args) -> Result<Base> {
             using namespace di::string_literals;
 
             if (args.empty()) {
@@ -280,37 +280,38 @@ namespace detail {
         }
 
     private:
-        constexpr bool option_required(usize index) const { return m_options[index].required(); }
-        constexpr bool option_boolean(usize index) const { return m_options[index].boolean(); }
-        constexpr bool option_always_succeeds(usize index) const { return m_options[index].always_succeeds(); }
+        constexpr auto option_required(usize index) const -> bool { return m_options[index].required(); }
+        constexpr auto option_boolean(usize index) const -> bool { return m_options[index].boolean(); }
+        constexpr auto option_always_succeeds(usize index) const -> bool { return m_options[index].always_succeeds(); }
 
-        constexpr Result<void> option_parse(usize index, Span<bool> seen_arguments, Base* output,
-                                            Optional<TransparentStringView> input) const {
+        constexpr auto option_parse(usize index, Span<bool> seen_arguments, Base* output,
+                                    Optional<TransparentStringView> input) const -> Result<void> {
             DI_TRY(m_options[index].parse(output, input));
             seen_arguments[index] = true;
             return {};
         }
 
-        constexpr bool argument_variadic(usize index) const { return m_arguments[index].variadic(); }
+        constexpr auto argument_variadic(usize index) const -> bool { return m_arguments[index].variadic(); }
 
-        constexpr Result<void> argument_parse(usize index, Base* output, Span<TransparentStringView> input) const {
+        constexpr auto argument_parse(usize index, Base* output, Span<TransparentStringView> input) const
+            -> Result<void> {
             return m_arguments[index].parse(output, input);
         }
 
-        constexpr usize minimum_required_argument_count() const {
+        constexpr auto minimum_required_argument_count() const -> usize {
             return di::sum(m_arguments | di::transform(&Argument::required_argument_count));
         }
 
-        constexpr usize argument_count() const { return m_arguments.size(); }
+        constexpr auto argument_count() const -> usize { return m_arguments.size(); }
 
-        constexpr Optional<usize> lookup_short_name(char short_name) const {
+        constexpr auto lookup_short_name(char short_name) const -> Optional<usize> {
             auto it = di::find(m_options, short_name, &Option::short_name);
             return lift_bool(it != m_options.end()) % [&] {
                 return usize(it - m_options.begin());
             };
         }
 
-        constexpr Optional<usize> lookup_long_name(TransparentStringView long_name) const {
+        constexpr auto lookup_long_name(TransparentStringView long_name) const -> Optional<usize> {
             auto it = di::find(m_options, long_name, &Option::long_name);
             return lift_bool(it != m_options.end()) % [&] {
                 return usize(it - m_options.begin());

@@ -69,20 +69,18 @@ private:
         Iterator(Iterator const&) = default;
         Iterator(Iterator&&) = default;
 
-        Iterator& operator=(Iterator const&) = default;
-        Iterator& operator=(Iterator&&) = default;
+        auto operator=(Iterator const&) -> Iterator& = default;
+        auto operator=(Iterator&&) -> Iterator& = default;
 
         Iterator(Iterator const&)
         requires(!concepts::ForwardIterator<Iter<is_const>>)
         = delete;
-        Iterator& operator=(Iterator const&)
-        requires(!concepts::ForwardIterator<Iter<is_const>>)
-        = delete;
+        auto operator=(Iterator const&) -> Iterator& requires(!concepts::ForwardIterator<Iter<is_const>>) = delete;
 
-        constexpr Iter<is_const> base() && { return util::move(m_base); }
-        constexpr Iter<is_const> const& base() const& { return m_base; }
+        constexpr auto base() && -> Iter<is_const> { return util::move(m_base); }
+        constexpr auto base() const& -> Iter<is_const> const& { return m_base; }
 
-        constexpr decltype(auto) operator*() const { return *m_base; }
+        constexpr auto operator*() const -> decltype(auto) { return *m_base; }
 
         constexpr void advance_one() { m_missing = container::advance(m_base, m_stride, m_end); }
 
@@ -108,8 +106,10 @@ private:
         template<bool other_is_const>
         friend class Iterator;
 
-        constexpr friend bool operator==(Iterator const& self, DefaultSentinel) { return self.m_base == self.m_end; }
-        constexpr friend bool operator==(Iterator const& a, Iterator const& b)
+        constexpr friend auto operator==(Iterator const& self, DefaultSentinel) -> bool {
+            return self.m_base == self.m_end;
+        }
+        constexpr friend auto operator==(Iterator const& a, Iterator const& b) -> bool
         requires(concepts::EqualityComparable<Iter<is_const>>)
         {
             return a.m_base == b.m_base;
@@ -121,7 +121,7 @@ private:
             return a.m_base <=> b.m_base;
         }
 
-        constexpr friend SSizeType<is_const> operator-(Iterator const& a, Iterator const& b)
+        constexpr friend auto operator-(Iterator const& a, Iterator const& b) -> SSizeType<is_const>
         requires(concepts::SizedSentinelFor<Iter<is_const>, Iter<is_const>>)
         {
             auto n = a.m_base - b.m_base;
@@ -134,15 +134,15 @@ private:
             }
         }
 
-        constexpr friend SSizeType<is_const> operator-(DefaultSentinel, Iterator const& b) {
+        constexpr friend auto operator-(DefaultSentinel, Iterator const& b) -> SSizeType<is_const> {
             return math::divide_round_up(b.m_base - b.m_current, b.m_stride);
         }
-        constexpr friend SSizeType<is_const> operator-(Iterator const& a, DefaultSentinel) {
+        constexpr friend auto operator-(Iterator const& a, DefaultSentinel) -> SSizeType<is_const> {
             return -(default_sentinel - a);
         }
 
-        constexpr friend meta::ContainerRValue<meta::MaybeConst<is_const, View>>
-        tag_invoke(types::Tag<container::iterator_move>, Iterator const& a) {
+        constexpr friend auto tag_invoke(types::Tag<container::iterator_move>, Iterator const& a)
+            -> meta::ContainerRValue<meta::MaybeConst<is_const, View>> {
             return container::iterator_move(a);
         }
 
@@ -163,12 +163,12 @@ public:
         DI_ASSERT(stride > 0);
     }
 
-    constexpr View base() const&
+    constexpr auto base() const& -> View
     requires(concepts::CopyConstructible<View>)
     {
         return m_base;
     }
-    constexpr View base() && { return util::move(m_base); }
+    constexpr auto base() && -> View { return util::move(m_base); }
 
     constexpr auto stride() const { return m_stride; }
 

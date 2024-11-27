@@ -8,25 +8,25 @@
 namespace di::container {
 struct NextFunction {
     template<concepts::Iterator Iter>
-    constexpr Iter operator()(Iter iterator) const {
+    constexpr auto operator()(Iter iterator) const -> Iter {
         ++iterator;
         return iterator;
     }
 
     template<concepts::Iterator Iter>
-    constexpr Iter operator()(Iter iterator, meta::IteratorSSizeType<Iter> n) const {
+    constexpr auto operator()(Iter iterator, meta::IteratorSSizeType<Iter> n) const -> Iter {
         container::advance(iterator, n);
         return iterator;
     }
 
     template<concepts::Iterator Iter, concepts::SentinelFor<Iter> Sent>
-    constexpr Iter operator()(Iter iterator, Sent bound) const {
+    constexpr auto operator()(Iter iterator, Sent bound) const -> Iter {
         container::advance(iterator, bound);
         return iterator;
     }
 
     template<concepts::Iterator Iter, concepts::SentinelFor<Iter> Sent>
-    constexpr Iter operator()(Iter iterator, meta::IteratorSSizeType<Iter> n, Sent bound) const {
+    constexpr auto operator()(Iter iterator, meta::IteratorSSizeType<Iter> n, Sent bound) const -> Iter {
         container::advance(iterator, n, bound);
         return iterator;
     }

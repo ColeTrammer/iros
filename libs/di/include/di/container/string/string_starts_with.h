@@ -8,14 +8,14 @@
 
 namespace di::container::string {
 template<concepts::detail::ConstantString Str, typename Enc = meta::Encoding<Str>>
-constexpr bool starts_with(Str const& string, meta::EncodingCodePoint<Str> code_point) {
+constexpr auto starts_with(Str const& string, meta::EncodingCodePoint<Str> code_point) -> bool {
     return container::starts_with(View(string::begin(string), string::end(string)), view::single(code_point));
 }
 
 template<concepts::detail::ConstantString Str, typename Enc = meta::Encoding<Str>,
          concepts::ContainerCompatible<meta::EncodingCodePoint<Enc>> Con>
 requires(concepts::SameAs<Enc, meta::Encoding<Con>>)
-constexpr bool starts_with(Str const& string, Con&& container) {
+constexpr auto starts_with(Str const& string, Con&& container) -> bool {
     return container::starts_with(View(string::begin(string), string::end(string)), util::forward<Con>(container));
 }
 }

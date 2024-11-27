@@ -1,6 +1,6 @@
 #include <ccpp/bits/strtol_implementation.h>
 #include <stdlib.h>
 
-extern "C" long strtol(char const* __restrict string, char** __restrict end, int radix) {
+extern "C" auto strtol(char const* __restrict string, char** __restrict end, int radix) -> long {
     return ccpp::strtol<long>(string, end, radix);
 }

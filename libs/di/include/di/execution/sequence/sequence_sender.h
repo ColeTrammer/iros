@@ -116,7 +116,7 @@ struct DummySenderOf {
 
     using CompletionSignatures = Sigs;
 
-    friend DummyOperationState tag_invoke(types::Tag<execution::connect>, DummySenderOf, auto&&) { return {}; }
+    friend auto tag_invoke(types::Tag<execution::connect>, DummySenderOf, auto&&) -> DummyOperationState { return {}; }
 };
 
 template<concepts::ValidCompletionSignatures Sigs>

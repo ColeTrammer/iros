@@ -11,7 +11,7 @@ namespace detail {
         template<concepts::BidirectionalIterator It, concepts::SentinelFor<It> Sent,
                  concepts::BidirectionalIterator Out>
         requires(concepts::IndirectlyCopyable<It, Out>)
-        constexpr InOutResult<It, Out> operator()(It first, Sent last, Out output) const {
+        constexpr auto operator()(It first, Sent last, Out output) const -> InOutResult<It, Out> {
             // FIXME: use vectorized byte copy (::memcpy_backwards) when provided contiguous
             //        iterators to trivially copyable types.
             auto last_it = container::next(first, last);
@@ -23,7 +23,7 @@ namespace detail {
 
         template<concepts::BidirectionalContainer Con, concepts::BidirectionalIterator Out>
         requires(concepts::IndirectlyCopyable<meta::ContainerIterator<Con>, Out>)
-        constexpr InOutResult<meta::BorrowedIterator<Con>, Out> operator()(Con&& container, Out output) const {
+        constexpr auto operator()(Con&& container, Out output) const -> InOutResult<meta::BorrowedIterator<Con>, Out> {
             return (*this)(container::begin(container), container::end(container), util::move(output));
         }
     };

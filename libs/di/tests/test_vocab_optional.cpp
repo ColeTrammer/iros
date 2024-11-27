@@ -81,8 +81,8 @@ struct Z {
     constexpr Z(Z const&) = delete;
     constexpr Z(Z&&) = delete;
 
-    constexpr Z& operator&(Z const&) = delete;
-    constexpr Z& operator&(Z&&) = delete;
+    constexpr auto operator&(Z const&) -> Z& = delete;
+    constexpr auto operator&(Z&&) -> Z& = delete;
 };
 
 constexpr void trivial() {
@@ -117,8 +117,8 @@ struct M {
     constexpr M(M const&) = delete;
     constexpr M(M&&) = default;
 
-    constexpr M& operator=(M const&) = delete;
-    constexpr M& operator=(M&&) = default;
+    constexpr auto operator=(M const&) -> M& = delete;
+    constexpr auto operator=(M&&) -> M& = default;
 };
 
 constexpr void monad() {

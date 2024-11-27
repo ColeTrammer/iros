@@ -261,7 +261,7 @@ namespace ensure_started_ns {
                 }
             }
 
-            Type& operator=(Type&& other) {
+            auto operator=(Type&& other) -> Type& {
                 this->m_state = util::exchange(other.m_state, nullptr);
                 return *this;
             }

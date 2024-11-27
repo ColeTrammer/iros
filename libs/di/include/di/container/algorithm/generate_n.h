@@ -10,7 +10,7 @@ namespace detail {
         template<concepts::Iterator Out, typename SSizeType = meta::IteratorSSizeType<Out>,
                  concepts::CopyConstructible F>
         requires(concepts::Invocable<F&> && concepts::IndirectlyWritable<Out, meta::InvokeResult<F&>>)
-        constexpr Out operator()(Out output, meta::TypeIdentity<SSizeType> n, F gen) const {
+        constexpr auto operator()(Out output, meta::TypeIdentity<SSizeType> n, F gen) const -> Out {
             for (SSizeType i = 0; i < n; ++i, ++output) {
                 *output = function::invoke(gen);
             }

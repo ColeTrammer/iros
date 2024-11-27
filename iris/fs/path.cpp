@@ -10,8 +10,8 @@
 #include <iris/uapi/metadata.h>
 
 namespace iris {
-di::AnySenderOf<di::Arc<TNode>> lookup_path(di::Arc<TNode> root, di::Arc<TNode> relative_to, di::PathView path,
-                                            PathLookupFlags flags) {
+auto lookup_path(di::Arc<TNode> root, di::Arc<TNode> relative_to, di::PathView path, PathLookupFlags flags)
+    -> di::AnySenderOf<di::Arc<TNode>> {
     auto parent = path.is_absolute() ? di::move(root) : di::move(relative_to);
     for (auto it = path.begin(); it != path.end(); ++it) {
         auto component = *it;
@@ -60,8 +60,8 @@ di::AnySenderOf<di::Arc<TNode>> lookup_path(di::Arc<TNode> root, di::Arc<TNode> 
     co_return parent;
 }
 
-di::AnySenderOf<void> create_node(di::Arc<TNode> root, di::Arc<TNode> relative_to, di::PathView path,
-                                  MetadataType type) {
+auto create_node(di::Arc<TNode> root, di::Arc<TNode> relative_to, di::PathView path, MetadataType type)
+    -> di::AnySenderOf<void> {
     auto parent_path = path.parent_path();
     if (!parent_path) {
         co_return di::Unexpected(Error::InvalidArgument);
@@ -79,7 +79,8 @@ di::AnySenderOf<void> create_node(di::Arc<TNode> root, di::Arc<TNode> relative_t
     co_return {};
 }
 
-di::AnySenderOf<File> open_path(di::Arc<TNode> root, di::Arc<TNode> relative_to, di::PathView path, OpenMode mode) {
+auto open_path(di::Arc<TNode> root, di::Arc<TNode> relative_to, di::PathView path, OpenMode mode)
+    -> di::AnySenderOf<File> {
     auto flags = !!(mode & OpenMode::Create) ? PathLookupFlags::Create : PathLookupFlags::None;
     auto node = co_await lookup_path(di::move(root), di::move(relative_to), path, flags);
     co_return co_await File::create(InodeFile(di::move(node)));

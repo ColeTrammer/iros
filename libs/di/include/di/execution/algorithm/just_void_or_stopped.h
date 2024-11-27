@@ -52,7 +52,7 @@ namespace just_void_or_stopped_ns {
     using Sender = meta::Type<SenderT>;
 
     struct Function {
-        concepts::Sender auto operator()(bool should_stop) const { return Sender { should_stop }; }
+        auto operator()(bool should_stop) const -> concepts::Sender auto { return Sender { should_stop }; }
     };
 }
 

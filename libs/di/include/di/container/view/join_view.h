@@ -63,17 +63,15 @@ private:
         = default;
 
         Iterator(Iterator const&) = delete;
-        Iterator& operator=(Iterator const&) = delete;
+        auto operator=(Iterator const&) -> Iterator& = delete;
 
         Iterator(Iterator const&)
         requires(IsForward<Base<is_const>>)
         = default;
-        Iterator& operator=(Iterator const&)
-        requires(IsForward<Base<is_const>>)
-        = default;
+        auto operator=(Iterator const&) -> Iterator& requires(IsForward<Base<is_const>>) = default;
 
         Iterator(Iterator&&) = default;
-        Iterator& operator=(Iterator&&) = default;
+        auto operator=(Iterator&&) -> Iterator& = default;
 
         constexpr Iterator(Parent& parent, Outer outer)
             : m_parent(util::addressof(parent)), m_outer(util::move(outer)) {
@@ -85,15 +83,15 @@ private:
                  concepts::ConvertibleTo<meta::ContainerIterator<meta::ContainerReference<View>>, Inner>)
             : m_parent(other.m_parent), m_outer(util::move(other.m_outer)), m_inner(util::move(other.m_outer)) {}
 
-        constexpr decltype(auto) operator*() const { return *m_inner; }
+        constexpr auto operator*() const -> decltype(auto) { return *m_inner; }
 
-        constexpr Inner operator->() const
+        constexpr auto operator->() const -> Inner
         requires(requires(Inner const i) { i.operator->(); })
         {
             return m_inner;
         }
 
-        constexpr Outer const& outer() const { return m_outer; }
+        constexpr auto outer() const -> Outer const& { return m_outer; }
 
         constexpr void advance_one() {
             auto&& inner_container = [&]() -> auto&& {
@@ -148,13 +146,13 @@ private:
             }
         }
 
-        constexpr friend bool operator==(Iterator const& a, Iterator const& b)
+        constexpr friend auto operator==(Iterator const& a, Iterator const& b) -> bool
         requires(ref_is_glvalue && concepts::EqualityComparable<Inner> && concepts::EqualityComparable<Outer>)
         {
             return a.m_outer == b.m_outer && a.m_inner == b.m_inner;
         }
 
-        constexpr friend decltype(auto) tag_invoke(types::Tag<iterator_move>, Iterator const& a) {
+        constexpr friend auto tag_invoke(types::Tag<iterator_move>, Iterator const& a) -> decltype(auto) {
             return container::iterator_move(a.m_inner);
         }
 
@@ -186,7 +184,7 @@ private:
         constexpr auto base() const { return m_base; }
 
     private:
-        constexpr friend bool operator==(Iterator<is_const> const& a, Sentinel const& b) {
+        constexpr friend auto operator==(Iterator<is_const> const& a, Sentinel const& b) -> bool {
             return a.outer() == b.m_base;
         }
 
@@ -200,12 +198,12 @@ public:
 
     constexpr explicit JoinView(View base) : m_base(util::move(base)) {}
 
-    constexpr View base() const&
+    constexpr auto base() const& -> View
     requires(concepts::CopyConstructible<View>)
     {
         return m_base;
     }
-    constexpr View base() && { return util::move(m_base); }
+    constexpr auto base() && -> View { return util::move(m_base); }
 
     constexpr auto begin()
     requires(!concepts::SimpleView<View> || !concepts::Reference<meta::ContainerReference<View>>)

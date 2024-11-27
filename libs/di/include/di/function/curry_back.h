@@ -28,8 +28,8 @@ public:
     CurryBackImpl(CurryBackImpl const&) = default;
     CurryBackImpl(CurryBackImpl&&) = default;
 
-    CurryBackImpl& operator=(CurryBackImpl const&) = delete;
-    CurryBackImpl& operator=(CurryBackImpl&&) = delete;
+    auto operator=(CurryBackImpl const&) -> CurryBackImpl& = delete;
+    auto operator=(CurryBackImpl&&) -> CurryBackImpl& = delete;
 
     template<typename... Args>
     requires(concepts::Invocable<F&, Args...> || concepts::Callable<Base&, Args...>)
@@ -95,8 +95,8 @@ public:
     CurryBack(CurryBack const&) = default;
     CurryBack(CurryBack&&) = default;
 
-    CurryBack& operator=(CurryBack const&) = delete;
-    CurryBack& operator=(CurryBack&&) = delete;
+    auto operator=(CurryBack const&) -> CurryBack& = delete;
+    auto operator=(CurryBack&&) -> CurryBack& = delete;
 
     template<concepts::DecayConstructible... Args>
     requires(concepts::ConstructibleFrom<Self, Self&> && sizeof...(Args) < max_arity())

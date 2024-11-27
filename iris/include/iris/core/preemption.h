@@ -19,7 +19,7 @@ private:
 };
 
 template<di::concepts::Invocable F>
-decltype(auto) with_preemption_disabled(F&& function) {
+auto with_preemption_disabled(F&& function) -> decltype(auto) {
     auto guard = PreemptionDisabler {};
     return di::invoke(di::forward<F>(function));
 }

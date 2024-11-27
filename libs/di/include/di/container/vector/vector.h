@@ -36,8 +36,8 @@ public:
 
     constexpr ~Vector() { deallocate(); }
 
-    constexpr Vector& operator=(Vector const&) = delete;
-    constexpr Vector& operator=(Vector&& other) {
+    constexpr auto operator=(Vector const&) -> Vector& = delete;
+    constexpr auto operator=(Vector&& other) -> Vector& {
         deallocate();
         this->m_data = util::exchange(other.m_data, nullptr);
         this->m_size = util::exchange(other.m_size, 0);
@@ -46,13 +46,13 @@ public:
         return *this;
     }
 
-    constexpr Span<Value> span() { return { m_data, m_size }; }
-    constexpr Span<ConstValue> span() const { return { m_data, m_size }; }
+    constexpr auto span() -> Span<Value> { return { m_data, m_size }; }
+    constexpr auto span() const -> Span<ConstValue> { return { m_data, m_size }; }
 
-    constexpr usize capacity() const { return m_capacity; }
-    constexpr usize max_size() const { return static_cast<usize>(-1); }
+    constexpr auto capacity() const -> usize { return m_capacity; }
+    constexpr auto max_size() const -> usize { return static_cast<usize>(-1); }
 
-    constexpr meta::AllocatorResult<Alloc> reserve_from_nothing(usize n) {
+    constexpr auto reserve_from_nothing(usize n) -> meta::AllocatorResult<Alloc> {
         DI_ASSERT(capacity() == 0u);
 
         return as_fallible(di::allocate_many<T>(m_allocator, n)) % [&](AllocationResult<T> result) {
@@ -78,7 +78,7 @@ private:
 };
 
 template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>>
-Vector<T> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<Vector>, Con&&);
+auto tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<Vector>, Con&&) -> Vector<T>;
 }
 
 namespace di {

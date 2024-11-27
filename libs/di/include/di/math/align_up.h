@@ -8,7 +8,7 @@ namespace di::math {
 namespace detail {
     struct AlignUpFunction {
         template<concepts::Integer T>
-        constexpr T operator()(T a, meta::TypeIdentity<T> b) const {
+        constexpr auto operator()(T a, meta::TypeIdentity<T> b) const -> T {
             return (a + b - 1) / b * b;
         }
     };

@@ -7,7 +7,7 @@ namespace di::execution {
 namespace stopped_as_error_ns {
     struct Function {
         template<concepts::Sender Send, concepts::MovableValue Error>
-        concepts::Sender auto operator()(Send&& sender, Error&& error) const {
+        auto operator()(Send&& sender, Error&& error) const -> concepts::Sender auto {
             return execution::let_stopped(util::forward<Send>(sender), [error = util::forward<Error>(error)] {
                 return execution::just_error(util::move(error));
             });

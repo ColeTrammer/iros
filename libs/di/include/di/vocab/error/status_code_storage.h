@@ -18,7 +18,7 @@ public:
     using Domain = meta::StatusCodeDomain<T>;
     using Value = meta::StatusCodeDomainValue<T>;
 
-    constexpr Domain const& domain() const {
+    constexpr auto domain() const -> Domain const& {
         DI_ASSERT(!empty());
         return static_cast<Domain const&>(*m_domain);
     }
@@ -29,10 +29,10 @@ public:
         util::construct_at(util::addressof(m_value));
     }
 
-    constexpr Value& value() & { return m_value; }
-    constexpr Value const& value() const& { return m_value; }
-    constexpr Value&& value() && { return util::move(m_value); }
-    constexpr Value const&& value() const&& { return util::move(m_value); }
+    constexpr auto value() & -> Value& { return m_value; }
+    constexpr auto value() const& -> Value const& { return m_value; }
+    constexpr auto value() && -> Value&& { return util::move(m_value); }
+    constexpr auto value() const&& -> Value const&& { return util::move(m_value); }
 
 protected:
     StatusCodeStorage() = default;
@@ -47,8 +47,8 @@ protected:
     constexpr StatusCodeStorage(InPlace, StatusCodeDomain const* domain, Args&&... args)
         : Base(domain), m_value(util::forward<Args>(args)...) {}
 
-    StatusCodeStorage& operator=(StatusCodeStorage const&) = default;
-    constexpr StatusCodeStorage& operator=(StatusCodeStorage&& other) {
+    auto operator=(StatusCodeStorage const&) -> StatusCodeStorage& = default;
+    constexpr auto operator=(StatusCodeStorage&& other) -> StatusCodeStorage& {
         util::destroy_at(util::addressof(m_value));
         util::construct_at(util::addressof(m_value), util::move(other).value());
         return *this;

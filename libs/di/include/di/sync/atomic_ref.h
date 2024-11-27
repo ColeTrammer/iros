@@ -17,7 +17,7 @@ private:
 
     // NOTE: the builtin atomic operations treat pointer addition bytewise, so we
     //       must multiply by the sizeof(*T) if T is a pointer.
-    constexpr DeltaType adjust_delta(DeltaType value) {
+    constexpr auto adjust_delta(DeltaType value) -> DeltaType {
         if constexpr (concepts::Pointer<T>) {
             return value * sizeof(**m_pointer);
         } else {
@@ -30,7 +30,7 @@ public:
 
     constexpr explicit AtomicRef(T& value) : m_pointer(util::addressof(value)) {}
 
-    AtomicRef& operator=(AtomicRef const&) = delete;
+    auto operator=(AtomicRef const&) -> AtomicRef& = delete;
 
     constexpr void store(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) {
         if consteval {
@@ -40,21 +40,21 @@ public:
         }
     }
 
-    constexpr T load(MemoryOrder order = MemoryOrder::SequentialConsistency) const {
+    constexpr auto load(MemoryOrder order = MemoryOrder::SequentialConsistency) const -> T {
         if consteval {
             return *m_pointer;
         }
         return __atomic_load_n(m_pointer, util::to_underlying(order));
     }
 
-    constexpr T exchange(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) {
+    constexpr auto exchange(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) -> T {
         if consteval {
             return di::exchange(*m_pointer, value);
         }
         return __atomic_exchange_n(m_pointer, value, util::to_underlying(order));
     }
 
-    constexpr bool compare_exchange_weak(T& expected, T desired, MemoryOrder success, MemoryOrder failure) {
+    constexpr auto compare_exchange_weak(T& expected, T desired, MemoryOrder success, MemoryOrder failure) -> bool {
         if consteval {
             if (*m_pointer == expected) {
                 *m_pointer = desired;
@@ -67,15 +67,15 @@ public:
                                            util::to_underlying(success), util::to_underlying(failure));
     }
 
-    constexpr bool compare_exchange_weak(T& expected, T desired,
-                                         MemoryOrder order = MemoryOrder::SequentialConsistency) {
+    constexpr auto compare_exchange_weak(T& expected, T desired, MemoryOrder order = MemoryOrder::SequentialConsistency)
+        -> bool {
         if (order == MemoryOrder::AcquireRelease || order == MemoryOrder::Release) {
             return compare_exchange_weak(expected, desired, MemoryOrder::Release, MemoryOrder::Acquire);
         }
         return compare_exchange_weak(expected, desired, order, order);
     }
 
-    constexpr bool compare_exchange_strong(T& expected, T desired, MemoryOrder success, MemoryOrder failure) {
+    constexpr auto compare_exchange_strong(T& expected, T desired, MemoryOrder success, MemoryOrder failure) -> bool {
         if consteval {
             if (*m_pointer == expected) {
                 *m_pointer = desired;
@@ -88,15 +88,15 @@ public:
                                            util::to_underlying(success), util::to_underlying(failure));
     }
 
-    constexpr bool compare_exchange_strong(T& expected, T desired,
-                                           MemoryOrder order = MemoryOrder::SequentialConsistency) {
+    constexpr auto compare_exchange_strong(T& expected, T desired,
+                                           MemoryOrder order = MemoryOrder::SequentialConsistency) -> bool {
         if (order == MemoryOrder::AcquireRelease || order == MemoryOrder::Release) {
             return compare_exchange_strong(expected, desired, MemoryOrder::Release, MemoryOrder::Acquire);
         }
         return compare_exchange_strong(expected, desired, order, order);
     }
 
-    constexpr T fetch_add(DeltaType delta, MemoryOrder order = MemoryOrder::SequentialConsistency)
+    constexpr auto fetch_add(DeltaType delta, MemoryOrder order = MemoryOrder::SequentialConsistency) -> T
     requires(concepts::Integral<T> || concepts::Pointer<T>)
     {
         if consteval {
@@ -107,7 +107,7 @@ public:
         return __atomic_fetch_add(m_pointer, adjust_delta(delta), util::to_underlying(order));
     }
 
-    constexpr T fetch_sub(DeltaType delta, MemoryOrder order = MemoryOrder::SequentialConsistency)
+    constexpr auto fetch_sub(DeltaType delta, MemoryOrder order = MemoryOrder::SequentialConsistency) -> T
     requires(concepts::Integral<T> || concepts::Pointer<T>)
     {
         if consteval {
@@ -118,7 +118,7 @@ public:
         return __atomic_fetch_sub(m_pointer, adjust_delta(delta), util::to_underlying(order));
     }
 
-    constexpr T fetch_and(T value, MemoryOrder order = MemoryOrder::SequentialConsistency)
+    constexpr auto fetch_and(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) -> T
     requires(concepts::Integral<T>)
     {
         if consteval {
@@ -129,7 +129,7 @@ public:
         return __atomic_fetch_and(m_pointer, value, util::to_underlying(order));
     }
 
-    constexpr T fetch_or(T value, MemoryOrder order = MemoryOrder::SequentialConsistency)
+    constexpr auto fetch_or(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) -> T
     requires(concepts::Integral<T>)
     {
         if consteval {
@@ -140,7 +140,7 @@ public:
         return __atomic_fetch_or(m_pointer, value, util::to_underlying(order));
     }
 
-    constexpr T fetch_xor(T value, MemoryOrder order = MemoryOrder::SequentialConsistency)
+    constexpr auto fetch_xor(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) -> T
     requires(concepts::Integral<T>)
     {
         if consteval {

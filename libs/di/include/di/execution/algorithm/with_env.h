@@ -32,7 +32,7 @@ namespace with_env_ns {
             explicit Type(Rec reciever, Env env) : Base(util::move(reciever)), m_env(util::move(env)) {}
 
         private:
-            Env get_env() const& { return m_env; }
+            auto get_env() const& -> Env { return m_env; }
 
             Env m_env;
         };
@@ -63,7 +63,7 @@ namespace with_env_ns {
                                Receiver<Rec, Env> { util::move(receiver), util::forward<Self>(self).m_env });
             }
 
-            decltype(auto) tag_invoke(types::Tag<get_env>, Type const& self) { return get_env(self.m_sender); }
+            auto tag_invoke(types::Tag<get_env>, Type const& self) -> decltype(auto) { return get_env(self.m_sender); }
         };
     };
 

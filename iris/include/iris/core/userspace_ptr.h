@@ -21,31 +21,31 @@ private:
     explicit UserspacePtr(T* pointer) : m_pointer(pointer) {}
 
 public:
-    static Expected<UserspacePtr<T>> create(T* pointer) {
+    static auto create(T* pointer) -> Expected<UserspacePtr<T>> {
         if (!validate_user_region(mm::VirtualAddress(di::to_uintptr(pointer)), 1, sizeof(T))) {
             return di::Unexpected(Error::BadAddress);
         }
         return UserspacePtr<T>(pointer);
     }
 
-    Expected<Value> read() const {
+    auto read() const -> Expected<Value> {
         Uninit value;
         TRY(copy_from_user({ reinterpret_cast<byte const*>(m_pointer), sizeof(Value) },
                            reinterpret_cast<byte*>(&value.value)));
         return di::move(value.value);
     }
 
-    Expected<void> write(Value const& value) const {
+    auto write(Value const& value) const -> Expected<void> {
         return copy_to_user({ reinterpret_cast<byte const*>(&value), sizeof(Value) },
                             reinterpret_cast<byte*>(m_pointer));
     }
 
-    T* raw_userspace_pointer() const { return m_pointer; }
+    auto raw_userspace_pointer() const -> T* { return m_pointer; }
 
 private:
     T* m_pointer { nullptr };
 };
 
 template<typename T>
-UserspacePtr<T> tag_invoke(di::Tag<di::util::deduce_create>, di::InPlaceTemplate<UserspacePtr>, T*);
+auto tag_invoke(di::Tag<di::util::deduce_create>, di::InPlaceTemplate<UserspacePtr>, T*) -> UserspacePtr<T>;
 }

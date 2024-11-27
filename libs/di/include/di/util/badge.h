@@ -11,8 +11,8 @@ private:
     Badge(Badge const&) = delete;
     Badge(Badge&&) = delete;
 
-    Badge& operator=(Badge const&) = delete;
-    Badge& operator=(Badge&&) = delete;
+    auto operator=(Badge const&) -> Badge& = delete;
+    auto operator=(Badge&&) -> Badge& = delete;
 };
 }
 

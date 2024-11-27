@@ -36,7 +36,7 @@ enum class GetoptFunction {
     LongOnly,
 };
 
-static GetoptResult do_getopt(char const* short_options, di::Span<char const*> argv, GetoptFunction function) {
+static auto do_getopt(char const* short_options, di::Span<char const*> argv, GetoptFunction function) -> GetoptResult {
     auto result = GetoptResult {};
     auto opt = 0;
     auto longindex = 0;

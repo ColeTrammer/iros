@@ -15,7 +15,8 @@ namespace detail {
         requires((concepts::ForwardIterator<It> || concepts::RandomAccessIterator<Out>) &&
                  concepts::IndirectlyCopyable<It, Out> &&
                  concepts::UniformRandomBitGenerator<meta::RemoveReference<Gen>>)
-        constexpr Out operator()(It first, Sent last, Out out, meta::TypeIdentity<SSizeType> n, Gen&& generator) const {
+        constexpr auto operator()(It first, Sent last, Out out, meta::TypeIdentity<SSizeType> n, Gen&& generator) const
+            -> Out {
             using Distribution = random::UniformIntDistribution<SSizeType>;
             using Param = Distribution::Param;
 
@@ -64,7 +65,8 @@ namespace detail {
         requires((concepts::ForwardContainer<Con> || concepts::RandomAccessIterator<Out>) &&
                  concepts::IndirectlyCopyable<meta::ContainerIterator<Con>, Out> &&
                  concepts::UniformRandomBitGenerator<meta::RemoveReference<Gen>>)
-        constexpr Out operator()(Con&& container, Out out, meta::ContainerSSizeType<Con> n, Gen&& generator) const {
+        constexpr auto operator()(Con&& container, Out out, meta::ContainerSSizeType<Con> n, Gen&& generator) const
+            -> Out {
             return (*this)(container::begin(container), container::end(container), util::move(out), n, generator);
         }
     };

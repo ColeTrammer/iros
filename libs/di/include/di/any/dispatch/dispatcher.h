@@ -29,7 +29,7 @@ namespace detail {
         template<typename T>
         requires(concepts::TagInvocableTo<Tag, R, meta::Like<Self, T>, Args...> ||
                  (concepts::InvocableTo<Tags const&, R, meta::Like<Self, T>, Args...> || ...))
-        constexpr R operator()(T&& self, Args... args) const {
+        constexpr auto operator()(T&& self, Args... args) const -> R {
             if constexpr (concepts::TagInvocableTo<Tag, R, meta::Like<Self, T>, Args...>) {
                 auto const tag = Tag {};
                 return function::tag_invoke(tag, util::forward_like<Self>(self), util::forward<Args>(args)...);

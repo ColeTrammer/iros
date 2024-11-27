@@ -13,7 +13,7 @@ namespace detail {
     struct IsSortedUntilFunction {
         template<concepts::ForwardIterator Iter, concepts::SentinelFor<Iter> Sent, typename Proj = function::Identity,
                  concepts::IndirectStrictWeakOrder<meta::Projected<Iter, Proj>> Comp = function::Compare>
-        constexpr Iter operator()(Iter it, Sent last, Comp comp = {}, Proj proj = {}) const {
+        constexpr auto operator()(Iter it, Sent last, Comp comp = {}, Proj proj = {}) const -> Iter {
             if (it == last) {
                 return it;
             }
@@ -31,7 +31,8 @@ namespace detail {
         template<concepts::ForwardContainer Con, typename Proj = function::Identity,
                  concepts::IndirectStrictWeakOrder<meta::Projected<meta::ContainerIterator<Con>, Proj>> Comp =
                      function::Compare>
-        constexpr meta::BorrowedIterator<Con> operator()(Con&& container, Comp comp = {}, Proj proj = {}) const {
+        constexpr auto operator()(Con&& container, Comp comp = {}, Proj proj = {}) const
+            -> meta::BorrowedIterator<Con> {
             return (*this)(container::begin(container), container::end(container), util::ref(comp), util::ref(proj));
         }
     };

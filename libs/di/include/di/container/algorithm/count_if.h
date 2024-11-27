@@ -11,8 +11,8 @@ namespace detail {
     struct CountIfFunction {
         template<concepts::InputIterator Iter, concepts::SentinelFor<Iter> Sent, typename Proj = function::Identity,
                  concepts::IndirectUnaryPredicate<meta::Projected<Iter, Proj>> Pred>
-        constexpr meta::IteratorSSizeType<Iter> operator()(Iter first, Sent last, Pred pred,
-                                                           Proj projection = {}) const {
+        constexpr auto operator()(Iter first, Sent last, Pred pred, Proj projection = {}) const
+            -> meta::IteratorSSizeType<Iter> {
             auto result = meta::IteratorSSizeType<Iter> { 0 };
             for (; first != last; ++first) {
                 if (function::invoke(pred, function::invoke(projection, *first))) {
@@ -24,7 +24,7 @@ namespace detail {
 
         template<concepts::InputContainer Con, typename Proj = function::Identity,
                  concepts::IndirectUnaryPredicate<meta::Projected<meta::ContainerIterator<Con>, Proj>> Pred>
-        constexpr meta::ContainerSSizeType<Con> operator()(Con&& container, Pred pred, Proj proj = {}) const {
+        constexpr auto operator()(Con&& container, Pred pred, Proj proj = {}) const -> meta::ContainerSSizeType<Con> {
             return (*this)(container::begin(container), container::end(container), util::ref(pred), util::ref(proj));
         }
     };

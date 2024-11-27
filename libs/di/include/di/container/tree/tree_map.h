@@ -97,14 +97,14 @@ public:
 
 template<concepts::InputContainer Con, concepts::TupleLike T = meta::ContainerValue<Con>>
 requires(meta::TupleSize<T> == 2)
-TreeMap<meta::TupleElement<T, 0>, meta::TupleElement<T, 1>> tag_invoke(types::Tag<util::deduce_create>,
-                                                                       InPlaceTemplate<TreeMap>, Con&&);
+auto tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<TreeMap>, Con&&)
+    -> TreeMap<meta::TupleElement<T, 0>, meta::TupleElement<T, 1>>;
 
 template<concepts::InputContainer Con, concepts::TupleLike T = meta::ContainerValue<Con>,
          concepts::StrictWeakOrder<T> Comp>
 requires(meta::TupleSize<T> == 2)
-TreeMap<meta::TupleElement<T, 0>, meta::TupleElement<T, 1>, Comp> tag_invoke(types::Tag<util::deduce_create>,
-                                                                             InPlaceTemplate<TreeMap>, Con&&, Comp);
+auto tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<TreeMap>, Con&&, Comp)
+    -> TreeMap<meta::TupleElement<T, 0>, meta::TupleElement<T, 1>, Comp>;
 }
 
 namespace di {

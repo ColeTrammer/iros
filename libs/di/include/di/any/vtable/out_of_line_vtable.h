@@ -24,13 +24,13 @@ struct OutOfLineVTable {
 
     public:
         template<typename Storage, concepts::AnyStorable<Storage> T>
-        constexpr static Invoke create_for() {
+        constexpr static auto create_for() -> Invoke {
             return Invoke(util::addressof(method_table<Storage, T>));
         }
 
         constexpr Invoke() { reset(); }
 
-        constexpr bool empty() const { return m_storage == nullptr; }
+        constexpr auto empty() const -> bool { return m_storage == nullptr; }
         constexpr void reset() { m_storage = nullptr; }
 
         template<concepts::OneOf<meta::Type<Methods>...> Method>

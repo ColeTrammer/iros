@@ -15,18 +15,18 @@ private:
 
         constexpr explicit Iterator(T* base) : Base(base) {}
 
-        constexpr T& operator*() const { return *this->base(); }
+        constexpr auto operator*() const -> T& { return *this->base(); }
 
     private:
-        constexpr friend bool operator==(Iterator const& a, di::DefaultSentinel) { return *a == 0; }
+        constexpr friend auto operator==(Iterator const& a, di::DefaultSentinel) -> bool { return *a == 0; }
     };
 
 public:
     constexpr explicit ZStringImpl(T* data) : m_data(data) {}
 
-    constexpr T* data() const { return m_data; }
+    constexpr auto data() const -> T* { return m_data; }
 
-    constexpr Iterator begin() const { return Iterator(m_data); }
+    constexpr auto begin() const -> Iterator { return Iterator(m_data); }
     constexpr auto end() const { return di::default_sentinel; }
 
 private:

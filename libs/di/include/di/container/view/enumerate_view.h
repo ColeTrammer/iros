@@ -103,12 +103,12 @@ public:
 
     constexpr explicit EnumerateView(View base) : m_base(util::move(base)) {}
 
-    constexpr View base() const&
+    constexpr auto base() const& -> View
     requires(concepts::CopyConstructible<View>)
     {
         return m_base;
     }
-    constexpr View base() && { return util::move(m_base); }
+    constexpr auto base() && -> View { return util::move(m_base); }
 
     constexpr auto begin()
     requires(!concepts::SimpleView<View>)

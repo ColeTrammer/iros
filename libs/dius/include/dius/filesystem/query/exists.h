@@ -6,11 +6,11 @@
 namespace dius::filesystem {
 namespace detail {
     struct ExistsFunction {
-        constexpr bool operator()(FileStatus status) const {
+        constexpr auto operator()(FileStatus status) const -> bool {
             return status_known(status) && status.type() != FileType::NotFound;
         }
 
-        di::Result<bool> operator()(di::PathView path) const { return status(path) % *this; }
+        auto operator()(di::PathView path) const -> di::Result<bool> { return status(path) % *this; }
     };
 }
 

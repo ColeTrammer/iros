@@ -9,7 +9,7 @@
 
 namespace di::container {
 struct FailAllocator {
-    constexpr static vocab::Expected<AllocationResult<>, vocab::GenericCode> allocate(usize, usize) {
+    constexpr static auto allocate(usize, usize) -> vocab::Expected<AllocationResult<>, vocab::GenericCode> {
         return vocab::Unexpected(platform::BasicError::NotEnoughMemory);
     }
 

@@ -10,7 +10,7 @@ namespace di::io {
 namespace detail {
     struct WriteSomeMember {
         template<typename T>
-        constexpr Result<usize> operator()(T& writer, Span<Byte const> data) const
+        constexpr auto operator()(T& writer, Span<Byte const> data) const -> Result<usize>
         requires(requires {
             { writer.write_some(data) } -> concepts::ImplicitlyConvertibleTo<Result<usize>>;
         })
@@ -19,7 +19,7 @@ namespace detail {
         }
 
         template<typename T>
-        constexpr Result<usize> operator()(util::ReferenceWrapper<T> writer, Span<Byte const> data) const
+        constexpr auto operator()(util::ReferenceWrapper<T> writer, Span<Byte const> data) const -> Result<usize>
         requires(requires {
             { (*this)(writer.get(), data) };
         })
@@ -30,7 +30,7 @@ namespace detail {
 
     struct FlushMember {
         template<typename T>
-        constexpr Result<void> operator()(T& writer) const
+        constexpr auto operator()(T& writer) const -> Result<void>
         requires(requires {
             { writer.flush() } -> concepts::ImplicitlyConvertibleTo<Result<void>>;
         })
@@ -39,7 +39,7 @@ namespace detail {
         }
 
         template<typename T>
-        constexpr Result<void> operator()(util::ReferenceWrapper<T> writer) const
+        constexpr auto operator()(util::ReferenceWrapper<T> writer) const -> Result<void>
         requires(requires {
             { (*this)(writer.get()) };
         })

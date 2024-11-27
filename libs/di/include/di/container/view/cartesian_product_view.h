@@ -118,7 +118,7 @@ private:
         }
 
     private:
-        constexpr friend bool operator==(Iterator const& a, Iterator const& b) {
+        constexpr friend auto operator==(Iterator const& a, Iterator const& b) -> bool {
             return a.m_iterators == b.m_iterators;
         }
 
@@ -129,7 +129,7 @@ private:
             return a.m_iterators <=> b.m_iterators;
         }
 
-        constexpr friend ssize_t operator-(Iterator const& a, Iterator const& b)
+        constexpr friend auto operator-(Iterator const& a, Iterator const& b) -> ssize_t
         requires(concepts::SizedSentinelFor<meta::ContainerIterator<meta::MaybeConst<is_const, First>>,
                                             meta::ContainerIterator<meta::MaybeConst<is_const, First>>> &&
                  (concepts::SizedSentinelFor<meta::ContainerIterator<meta::MaybeConst<is_const, Rest>>,
@@ -139,9 +139,9 @@ private:
             return a.distance_from(b.m_iterators);
         }
 
-        constexpr friend bool operator==(Iterator const& a, DefaultSentinel) { return a.at_end(); }
+        constexpr friend auto operator==(Iterator const& a, DefaultSentinel) -> bool { return a.at_end(); }
 
-        constexpr bool at_end() const {
+        constexpr auto at_end() const -> bool {
             return function::unpack<meta::MakeIndexSequence<1 + sizeof...(Rest)>>([&]<size_t... indices>(
                                                                                       meta::ListV<indices...>) {
                 return ((util::get<indices>(m_iterators) == container::end(util::get<indices>(m_parent->m_bases))) ||
@@ -231,7 +231,7 @@ private:
         }
 
         template<size_t N = sizeof...(Rest), typename Tuple>
-        constexpr ssize_t distance_from(Tuple const& a) const {
+        constexpr auto distance_from(Tuple const& a) const -> ssize_t {
             auto distance = container::distance(util::get<N>(a), util::get<N>(m_iterators));
             if constexpr (N == 0) {
                 return distance;
@@ -257,7 +257,7 @@ public:
         return Iterator<false>(*this, tuple_transform(container::begin, m_bases));
     }
 
-    constexpr Iterator<true> begin() const
+    constexpr auto begin() const -> Iterator<true>
     requires(concepts::Container<First> && (concepts::Container<Rest> && ...))
     {
         return Iterator<true>(*this, tuple_transform(container::begin, m_bases));

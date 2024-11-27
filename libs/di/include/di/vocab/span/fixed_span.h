@@ -5,7 +5,7 @@
 
 namespace di::vocab {
 template<size_t count, typename T>
-constexpr Span<T, count> fixed_span(T* value) {
+constexpr auto fixed_span(T* value) -> Span<T, count> {
     return Span<T, count>(value, count);
 }
 }

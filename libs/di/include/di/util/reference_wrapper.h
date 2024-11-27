@@ -13,7 +13,7 @@ namespace di::util {
 template<typename T>
 class ReferenceWrapper {
 private:
-    constexpr static T* get_address(T& value) { return util::addressof(value); }
+    constexpr static auto get_address(T& value) -> T* { return util::addressof(value); }
 
 public:
     // Prevent creating reference wrapper's from rvalue (tempory) references.
@@ -29,23 +29,23 @@ public:
     constexpr ReferenceWrapper(U&& value) : m_pointer(get_address(value)) {}
 
     constexpr ReferenceWrapper(ReferenceWrapper const&) = default;
-    constexpr ReferenceWrapper& operator=(ReferenceWrapper const&) = default;
+    constexpr auto operator=(ReferenceWrapper const&) -> ReferenceWrapper& = default;
 
     constexpr operator T&() const { return get(); }
-    constexpr T& get() const { return *m_pointer; }
+    constexpr auto get() const -> T& { return *m_pointer; }
 
     template<typename... Args>
     requires(concepts::Invocable<T&, Args...>)
-    constexpr meta::InvokeResult<T&, Args...> operator()(Args&&... args) const {
+    constexpr auto operator()(Args&&... args) const -> meta::InvokeResult<T&, Args...> {
         return function::invoke(get(), util::forward<Args>(args)...);
     }
 
 private:
     // Implement di::vocab::OptionalStorage.
-    constexpr friend bool tag_invoke(types::Tag<vocab::is_nullopt>, ReferenceWrapper const& self) {
+    constexpr friend auto tag_invoke(types::Tag<vocab::is_nullopt>, ReferenceWrapper const& self) -> bool {
         return !self.m_pointer;
     }
-    constexpr friend T& tag_invoke(types::Tag<vocab::get_value>, ReferenceWrapper const& self) {
+    constexpr friend auto tag_invoke(types::Tag<vocab::get_value>, ReferenceWrapper const& self) -> T& {
         return *self.m_pointer;
     }
     constexpr friend void tag_invoke(types::Tag<vocab::set_nullopt>, ReferenceWrapper& self) {
@@ -64,12 +64,12 @@ ReferenceWrapper(T&) -> ReferenceWrapper<T>;
 namespace detail {
     struct RefFunction : function::pipeline::EnablePipeline {
         template<typename T>
-        constexpr ReferenceWrapper<T> operator()(T& value) const {
+        constexpr auto operator()(T& value) const -> ReferenceWrapper<T> {
             return ReferenceWrapper<T>(value);
         }
 
         template<typename T>
-        constexpr ReferenceWrapper<T> operator()(ReferenceWrapper<T> value) const {
+        constexpr auto operator()(ReferenceWrapper<T> value) const -> ReferenceWrapper<T> {
             return ReferenceWrapper<T>(value.get());
         }
 
@@ -80,12 +80,12 @@ namespace detail {
 
     struct CRefFunction : function::pipeline::EnablePipeline {
         template<typename T>
-        constexpr ReferenceWrapper<T const> operator()(T const& value) const {
+        constexpr auto operator()(T const& value) const -> ReferenceWrapper<T const> {
             return ReferenceWrapper<T const>(value);
         }
 
         template<typename T>
-        constexpr ReferenceWrapper<T const> operator()(ReferenceWrapper<T> value) const {
+        constexpr auto operator()(ReferenceWrapper<T> value) const -> ReferenceWrapper<T const> {
             return ReferenceWrapper<T const>(value.get());
         }
 

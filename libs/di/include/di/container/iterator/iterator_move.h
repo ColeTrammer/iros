@@ -25,7 +25,7 @@ namespace detail {
     struct IteratorMoveFunction {
         template<typename T>
         requires(CustomIterMove<T> || RegularIterMove<T> || DerefIterMove<T>)
-        constexpr decltype(auto) operator()(T&& value) const {
+        constexpr auto operator()(T&& value) const -> decltype(auto) {
             if constexpr (CustomIterMove<T>) {
                 return function::tag_invoke(*this, util::forward<T>(value));
             } else if constexpr (RegularIterMove<T>) {

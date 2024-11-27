@@ -6,5 +6,5 @@
 namespace iris::x86::amd64 {
 void init_sb16();
 
-iris::Expected<usize> sb16_write_audio(UserspaceBuffer<byte const> data);
+auto sb16_write_audio(UserspaceBuffer<byte const> data) -> iris::Expected<usize>;
 }

@@ -10,8 +10,8 @@
 namespace ccpp {
 static char* next_short_char = nullptr;
 
-static di::Optional<int> handle_short_options(int argc, di::Span<char*> argv, di::TransparentStringView opts,
-                                              bool strict_mode, bool print_errors) {
+static auto handle_short_options(int argc, di::Span<char*> argv, di::TransparentStringView opts, bool strict_mode,
+                                 bool print_errors) -> di::Optional<int> {
     // There are short options if next_short_char is set.
     if (!next_short_char) {
         return di::nullopt;
@@ -62,9 +62,9 @@ static di::Optional<int> handle_short_options(int argc, di::Span<char*> argv, di
     return short_name;
 }
 
-static di::Optional<int> handle_long_options(int argc, di::Span<char*> argv, di::TransparentStringView arg,
-                                             di::Span<option const> longopts, int* longindex, bool strict_mode,
-                                             bool print_errors, bool long_only) {
+static auto handle_long_options(int argc, di::Span<char*> argv, di::TransparentStringView arg,
+                                di::Span<option const> longopts, int* longindex, bool strict_mode, bool print_errors,
+                                bool long_only) -> di::Optional<int> {
     // A candidate long argument either starts with "--" or "-" if long_only is true.
     auto long_arg = [&] -> di::Optional<di::TransparentStringView> {
         if (arg.starts_with("--"_tsv)) {
@@ -158,8 +158,8 @@ static di::Optional<int> handle_long_options(int argc, di::Span<char*> argv, di:
 // This function implements both POSIX getopt and the GNU extension getopt_long.
 // https://pubs.opengroup.org/onlinepubs/009696799/functions/getopt.html
 // https://www.gnu.org/software/libc/manual/html_node/Getopt-Long-Options.html
-int getopt_implementation(int argc, char* const argv_in[], char const* optstring, const struct option* longopts_in,
-                          int* longindex, bool long_only) {
+auto getopt_implementation(int argc, char* const argv_in[], char const* optstring, const struct option* longopts_in,
+                           int* longindex, bool long_only) -> int {
     // NOTE: this const cast is required because the getopt interface is not const correct (at least not the GNU
     // extension).
     auto argv = di::Span { (char**) argv_in, (char**) argv_in + argc };

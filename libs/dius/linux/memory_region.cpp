@@ -4,7 +4,7 @@
 #include <dius/system/system_call.h>
 
 namespace dius {
-static di::Result<void> sys_munmap(di::Byte* data, size_t length) {
+static auto sys_munmap(di::Byte* data, size_t length) -> di::Result<void> {
     return system::system_call<int>(system::Number::munmap, data, length) % di::into_void;
 }
 

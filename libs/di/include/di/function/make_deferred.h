@@ -21,28 +21,28 @@ namespace detail {
         constexpr explicit MakeDeferredFunctor(InPlace, Values&&... values)
             : m_args(util::forward<Values>(values)...) {}
 
-        MakeDeferredFunctor& operator=(MakeDeferredFunctor const&) = delete;
-        MakeDeferredFunctor& operator=(MakeDeferredFunctor&&) = delete;
+        auto operator=(MakeDeferredFunctor const&) -> MakeDeferredFunctor& = delete;
+        auto operator=(MakeDeferredFunctor&&) -> MakeDeferredFunctor& = delete;
 
-        constexpr T operator()() &
+        constexpr auto operator()() & -> T
         requires concepts::ConstructibleFrom<T, Args&...>
         {
             return vocab::make_from_tuple<T>(m_args);
         }
 
-        constexpr T operator()() const&
+        constexpr auto operator()() const& -> T
         requires concepts::ConstructibleFrom<T, Args const&...>
         {
             return vocab::make_from_tuple<T>(m_args);
         }
 
-        constexpr T operator()() &&
+        constexpr auto operator()() && -> T
         requires concepts::ConstructibleFrom<T, Args&&...>
         {
             return vocab::make_from_tuple<T>(util::move(m_args));
         }
 
-        constexpr T operator()() const&&
+        constexpr auto operator()() const&& -> T
         requires concepts::ConstructibleFrom<T, Args const&&...>
         {
             return vocab::make_from_tuple<T>(util::move(m_args));

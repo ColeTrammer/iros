@@ -38,5 +38,5 @@ using IrqControllerInterface = di::meta::List<detail::SendEoiFunction, detail::E
                                               detail::ResponsibleIrqLineRange>;
 using IrqController = di::AnyInline<IrqControllerInterface>;
 
-Expected<di::Synchronized<IrqController>&> irq_controller_for_interrupt_number(GlobalIrqNumber number);
+auto irq_controller_for_interrupt_number(GlobalIrqNumber number) -> Expected<di::Synchronized<IrqController>&>;
 }

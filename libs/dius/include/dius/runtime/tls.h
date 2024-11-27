@@ -9,5 +9,5 @@ struct TlsInfo {
     usize tls_align;
 };
 
-TlsInfo get_tls_info();
+auto get_tls_info() -> TlsInfo;
 }

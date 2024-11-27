@@ -7,7 +7,7 @@
 #include <string.h>
 
 namespace ccpp {
-static int parseInt(char const* num, size_t length) {
+static auto parseInt(char const* num, size_t length) -> int {
     int n = 0;
     for (size_t i = 0; i < length; i++) {
         int digit = num[i] - '0';
@@ -19,9 +19,9 @@ static int parseInt(char const* num, size_t length) {
     return n;
 }
 
-di::Expected<int, di::GenericCode>
-printf_implementation(di::FunctionRef<di::Expected<void, di::GenericCode>(di::TransparentStringView)> write_exactly,
-                      char const* format, va_list args) {
+auto printf_implementation(
+    di::FunctionRef<di::Expected<void, di::GenericCode>(di::TransparentStringView)> write_exactly, char const* format,
+    va_list args) -> di::Expected<int, di::GenericCode> {
     int written = 0;
 
     void* obj = nullptr;

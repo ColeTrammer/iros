@@ -28,7 +28,7 @@ namespace detail {
         template<typename Sender, typename Receiver>
         requires(CustomConnect<Sender, Receiver> || AwaitableConnect<Sender, Receiver> ||
                  concepts::DebugEnv<meta::EnvOf<Receiver>>)
-        constexpr concepts::OperationState auto operator()(Sender&& sender, Receiver&& receiver) const {
+        constexpr auto operator()(Sender&& sender, Receiver&& receiver) const -> concepts::OperationState auto {
             if constexpr (CustomConnect<Sender, Receiver>) {
                 return function::tag_invoke(*this, util::forward<Sender>(sender), util::forward<Receiver>(receiver));
             } else if constexpr (AwaitableConnect<Sender, Receiver>) {

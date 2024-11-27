@@ -12,7 +12,7 @@ struct [[gnu::aligned(16)]] StackHead {
 
 constexpr auto clone_number = di::to_underlying(system::Number::clone3);
 
-[[gnu::naked]] static long do_spawn_thread(::clone_args*, usize) {
+[[gnu::naked]] static auto do_spawn_thread(::clone_args*, usize) -> long {
     // Do the system call, and then move the new stack pointer into the 1st argument passed to the entry. The general
     // idea is that we put the new thread entry point onto its new stack, so that when execute the `ret` instruction,
     // the processor will go there. But for the calling thread, the function will return normally.
@@ -25,7 +25,7 @@ constexpr auto clone_number = di::to_underlying(system::Number::clone3);
                  : DIUS_SYSTEM_CALL_CLOBBER);
 }
 
-di::Result<void> spawn_thread(PlatformThread& platform_thread) {
+auto spawn_thread(PlatformThread& platform_thread) -> di::Result<void> {
     auto* stack_data = platform_thread.stack.span().typed_pointer_unchecked<StackHead>(platform_thread.stack.size() -
                                                                                        sizeof(StackHead));
     stack_data->closure = static_cast<void*>(&platform_thread.entry);

@@ -7,20 +7,20 @@ namespace di::container {
 template<typename NodeType>
 struct IntrusiveTagBase {
     template<typename T>
-    constexpr static bool is_sized(InPlaceType<T>) {
+    constexpr static auto is_sized(InPlaceType<T>) -> bool {
         return false;
     }
 
     template<typename T>
-    constexpr static bool always_store_tail(InPlaceType<T>) {
+    constexpr static auto always_store_tail(InPlaceType<T>) -> bool {
         return true;
     }
 
     template<typename T>
-    constexpr static NodeType node_type(InPlaceType<T>);
+    constexpr static auto node_type(InPlaceType<T>) -> NodeType;
 
     template<typename T>
-    constexpr static T& down_cast(InPlaceType<T>, NodeType& node) {
+    constexpr static auto down_cast(InPlaceType<T>, NodeType& node) -> T& {
         return static_cast<T&>(node);
     }
 

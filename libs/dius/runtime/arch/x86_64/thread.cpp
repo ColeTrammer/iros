@@ -8,18 +8,18 @@ struct TlsIndex {
     unsigned long ti_offset;
 };
 
-extern "C" void* __tls_get_addr(TlsIndex*) {
+extern "C" auto __tls_get_addr(TlsIndex*) -> void* {
     ASSERT(false);
     di::unreachable();
 }
 
-ThreadId get_current_thread_id() {
+auto get_current_thread_id() -> ThreadId {
     return dius::PlatformThread::current().id();
 }
 }
 
 namespace dius {
-PlatformThread& PlatformThread::current() {
+auto PlatformThread::current() -> PlatformThread& {
     PlatformThread* result;
     asm volatile("mov %%fs:0, %0" : "=r"(result));
     return *result;

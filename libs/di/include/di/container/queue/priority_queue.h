@@ -48,12 +48,14 @@ private:
     public:
         Iterator() = default;
 
-        constexpr Value& operator*() const { return *m_base->top(); }
+        constexpr auto operator*() const -> Value& { return *m_base->top(); }
 
         constexpr void advance_one() { m_base->pop(); }
 
     private:
-        constexpr friend bool operator==(Iterator const& a, DefaultSentinel const&) { return a.m_base->empty(); }
+        constexpr friend auto operator==(Iterator const& a, DefaultSentinel const&) -> bool {
+            return a.m_base->empty();
+        }
 
         PriorityQueue* m_base { nullptr };
     };
@@ -68,22 +70,22 @@ public:
         container::make_heap(m_container, util::ref(m_comp));
     }
 
-    constexpr Optional<Value&> top() { return m_container.front(); }
-    constexpr Optional<Value const&> top() const { return m_container.front(); }
+    constexpr auto top() -> Optional<Value&> { return m_container.front(); }
+    constexpr auto top() const -> Optional<Value const&> { return m_container.front(); }
 
-    constexpr bool empty() const { return size() == 0u; }
+    constexpr auto empty() const -> bool { return size() == 0u; }
     constexpr auto size() const { return m_container.size(); }
 
-    constexpr decltype(auto) push(Value const& value)
+    constexpr auto push(Value const& value) -> decltype(auto)
     requires(concepts::CopyConstructible<Value>)
     {
         return emplace(value);
     }
-    constexpr decltype(auto) push(Value&& value) { return emplace(util::move(value)); }
+    constexpr auto push(Value&& value) -> decltype(auto) { return emplace(util::move(value)); }
 
     template<typename... Args>
     requires(concepts::ConstructibleFrom<Value, Args...>)
-    constexpr decltype(auto) emplace(Args&&... args) {
+    constexpr auto emplace(Args&&... args) -> decltype(auto) {
         return as_fallible(m_container.emplace_back(util::forward<Args>(args)...)) | if_success([&](auto&&...) {
                    container::push_heap(m_container, util::ref(m_comp));
                }) |
@@ -102,7 +104,7 @@ public:
         } | try_infallible;
     }
 
-    constexpr Optional<Value> pop() {
+    constexpr auto pop() -> Optional<Value> {
         if (empty()) {
             return nullopt;
         }
@@ -115,8 +117,8 @@ public:
     constexpr auto begin() { return Iterator(*this); }
     constexpr auto end() { return default_sentinel; }
 
-    constexpr Con const& base() const { return m_container; }
-    constexpr Comp const& comparator() const { return m_comp; }
+    constexpr auto base() const -> Con const& { return m_container; }
+    constexpr auto comparator() const -> Comp const& { return m_comp; }
 
     constexpr void clear() { m_container.clear(); }
 
@@ -139,11 +141,11 @@ requires(detail::PriorityQueueCompatible<Con, T>)
 PriorityQueue(Comp, Con) -> PriorityQueue<T, Con, Comp>;
 
 template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>>
-PriorityQueue<T> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<PriorityQueue>, Con&&);
+auto tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<PriorityQueue>, Con&&) -> PriorityQueue<T>;
 
 template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>, concepts::StrictWeakOrder<T> Comp>
-PriorityQueue<T, container::Vector<T>, Comp> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<PriorityQueue>,
-                                                        Con&&, Comp);
+auto tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<PriorityQueue>, Con&&, Comp)
+    -> PriorityQueue<T, container::Vector<T>, Comp>;
 }
 
 namespace di {

@@ -31,17 +31,19 @@ private:
         constexpr explicit Iterator(T const* value, IndexType current = IndexType())
             : m_value(value), m_current(current) {}
 
-        constexpr T const& operator*() const { return *m_value; }
+        constexpr auto operator*() const -> T const& { return *m_value; }
 
         constexpr void advance_one() { ++m_current; }
         constexpr void back_one() { --m_current; }
         constexpr void advance_n(SSizeType n) { m_current += n; }
 
     private:
-        constexpr friend bool operator==(Iterator const& a, Iterator const& b) { return a.m_current == b.m_current; }
+        constexpr friend auto operator==(Iterator const& a, Iterator const& b) -> bool {
+            return a.m_current == b.m_current;
+        }
         constexpr friend auto operator<=>(Iterator const& a, Iterator const& b) { return a.m_current <=> b.m_current; }
 
-        constexpr friend SSizeType operator-(Iterator const& a, Iterator const& b) {
+        constexpr friend auto operator-(Iterator const& a, Iterator const& b) -> SSizeType {
             return static_cast<SSizeType>(a.m_current) - static_cast<SSizeType>(b.m_current);
         }
 
@@ -60,10 +62,10 @@ public:
 
     constexpr explicit RepeatView(T&& value, Bound bound = Bound()) : m_value(util::move(value)), m_bound(bound) {}
 
-    constexpr Iterator begin() const { return Iterator(util::addressof(m_value)); }
+    constexpr auto begin() const -> Iterator { return Iterator(util::addressof(m_value)); }
 
-    constexpr Iterator end() const { return Iterator(util::addressof(m_value), m_bound); }
-    constexpr UnreachableSentinel end() const
+    constexpr auto end() const -> Iterator { return Iterator(util::addressof(m_value), m_bound); }
+    constexpr auto end() const -> UnreachableSentinel
     requires(!is_bounded)
     {
         return unreachable_sentinel;

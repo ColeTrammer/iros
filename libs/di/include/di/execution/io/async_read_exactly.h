@@ -12,8 +12,8 @@ namespace di::execution {
 namespace async_read_exactly_ns {
     struct Function {
         template<typename File>
-        concepts::SenderOf<SetValue()> auto operator()(File&& handle, Span<Byte> buffer,
-                                                       Optional<u64> offset = {}) const
+        auto operator()(File&& handle, Span<Byte> buffer, Optional<u64> offset = {}) const
+            -> concepts::SenderOf<SetValue()> auto
         requires(requires { async_read_some(util::forward<File>(handle), buffer, offset); })
         {
             if constexpr (concepts::TagInvocable<Function, File, Span<Byte>, Optional<u64>>) {

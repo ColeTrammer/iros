@@ -14,7 +14,7 @@ static inline void io_out(u16 port, di::concepts::OneOf<u8, u16, u32, byte> auto
 }
 
 template<di::concepts::OneOf<u8, u16, u32, byte> Out>
-static inline Out io_in(u16 port) {
+static inline auto io_in(u16 port) -> Out {
     Out value;
     if constexpr (sizeof(Out) == 1) {
         asm volatile("inb %1, %0" : "=a"(value) : "Nd"(port));

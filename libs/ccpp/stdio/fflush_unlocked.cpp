@@ -3,7 +3,7 @@
 
 // NOTE: this is an extension of fflush(), which does not lock file.
 // https://pubs.opengroup.org/onlinepubs/9699919799/functions/fflush.html
-extern "C" int fflush_unlocked(FILE* file) {
+extern "C" auto fflush_unlocked(FILE* file) -> int {
     auto& inner = file->get_unlocked();
 
     if (inner.buffer_size == 0) {

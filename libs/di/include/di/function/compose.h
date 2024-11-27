@@ -19,32 +19,32 @@ namespace detail {
         constexpr ComposeFunction(ComposeFunction const&) = default;
         constexpr ComposeFunction(ComposeFunction&&) = default;
 
-        constexpr ComposeFunction& operator=(ComposeFunction const&) = delete;
-        constexpr ComposeFunction& operator=(ComposeFunction&&) = delete;
+        constexpr auto operator=(ComposeFunction const&) -> ComposeFunction& = delete;
+        constexpr auto operator=(ComposeFunction&&) -> ComposeFunction& = delete;
 
         template<typename... Args>
         requires(concepts::Invocable<G&, Args...> && concepts::Invocable<F&, meta::InvokeResult<G&, Args...>>)
-        constexpr decltype(auto) operator()(Args&&... args) & {
+        constexpr auto operator()(Args&&... args) & -> decltype(auto) {
             return function::invoke(m_f, function::invoke(m_g, util::forward<Args>(args)...));
         }
 
         template<typename... Args>
         requires(concepts::Invocable<G const&, Args...> &&
                  concepts::Invocable<F const&, meta::InvokeResult<G const&, Args...>>)
-        constexpr decltype(auto) operator()(Args&&... args) const& {
+        constexpr auto operator()(Args&&... args) const& -> decltype(auto) {
             return function::invoke(m_f, function::invoke(m_g, util::forward<Args>(args)...));
         }
 
         template<typename... Args>
         requires(concepts::Invocable<G &&, Args...> && concepts::Invocable<F &&, meta::InvokeResult<G &&, Args...>>)
-        constexpr decltype(auto) operator()(Args&&... args) && {
+        constexpr auto operator()(Args&&... args) && -> decltype(auto) {
             return function::invoke(util::move(m_f), function::invoke(util::move(m_g), util::forward<Args>(args)...));
         }
 
         template<typename... Args>
         requires(concepts::Invocable<G const &&, Args...> &&
                  concepts::Invocable<F const &&, meta::InvokeResult<G const &&, Args...>>)
-        constexpr decltype(auto) operator()(Args&&... args) const&& {
+        constexpr auto operator()(Args&&... args) const&& -> decltype(auto) {
             return function::invoke(util::move(m_f), function::invoke(util::move(m_g), util::forward<Args>(args)...));
         }
 

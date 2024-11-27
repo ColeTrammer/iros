@@ -3,7 +3,7 @@
 
 namespace ccpp {
 // https://pubs.opengroup.org/onlinepubs/9699919799/functions/fseek.html
-extern "C" int fseek(FILE* file, long offset, int origin) {
+extern "C" auto fseek(FILE* file, long offset, int origin) -> int {
     return file->locked.with_lock([&](File& inner) {
         if (fflush_unlocked(file)) {
             return -1;

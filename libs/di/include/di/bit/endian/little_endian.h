@@ -8,7 +8,7 @@ namespace di::bit {
 namespace detail {
     struct HostToLittleEndianFunction {
         template<concepts::IntegralOrEnum T>
-        constexpr T operator()(T value) const {
+        constexpr auto operator()(T value) const -> T {
             if constexpr (Endian::Native == Endian::Little) {
                 return value;
             } else {
@@ -28,14 +28,14 @@ public:
 
     constexpr LittleEndian(T value) { *this = value; }
 
-    constexpr LittleEndian operator=(T value) {
+    constexpr auto operator=(T value) -> LittleEndian {
         m_value = host_to_little_endian(value);
         return *this;
     }
 
     constexpr operator T() const { return little_endian_to_host(m_value); }
 
-    constexpr T value() const { return *this; }
+    constexpr auto value() const -> T { return *this; }
 
 private:
     template<concepts::Encoding Enc>

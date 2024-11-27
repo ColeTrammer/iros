@@ -339,7 +339,7 @@ namespace when_all_ns {
     struct Function {
         template<concepts::Sender... Senders>
         requires(sizeof...(Senders) > 0)
-        concepts::Sender auto operator()(Senders&&... senders) const {
+        auto operator()(Senders&&... senders) const -> concepts::Sender auto {
             if constexpr (concepts::TagInvocable<Function, Senders...>) {
                 return function::tag_invoke(*this, util::forward<Senders>(senders)...);
             } else {
@@ -351,7 +351,7 @@ namespace when_all_ns {
     struct VariantFunction {
         template<concepts::Sender... Senders>
         requires(sizeof...(Senders) > 0)
-        concepts::Sender auto operator()(Senders&&... senders) const {
+        auto operator()(Senders&&... senders) const -> concepts::Sender auto {
             if constexpr (concepts::TagInvocable<VariantFunction, Senders...>) {
                 return function::tag_invoke(*this, util::forward<Senders>(senders)...);
             } else {
@@ -363,7 +363,7 @@ namespace when_all_ns {
     struct TransferFunction {
         template<concepts::Scheduler Sched, concepts::Sender... Senders>
         requires(sizeof...(Senders) > 0)
-        concepts::Sender auto operator()(Sched&& sched, Senders&&... senders) const {
+        auto operator()(Sched&& sched, Senders&&... senders) const -> concepts::Sender auto {
             if constexpr (concepts::TagInvocable<TransferFunction, Sched, Senders...>) {
                 return function::tag_invoke(*this, util::forward<Sched>(sched), util::forward<Senders>(senders)...);
             } else {
@@ -375,7 +375,7 @@ namespace when_all_ns {
     struct TransferVariantFunction {
         template<concepts::Scheduler Sched, concepts::Sender... Senders>
         requires(sizeof...(Senders) > 0)
-        concepts::Sender auto operator()(Sched&& sched, Senders&&... senders) const {
+        auto operator()(Sched&& sched, Senders&&... senders) const -> concepts::Sender auto {
             if constexpr (concepts::TagInvocable<TransferVariantFunction, Sched, Senders...>) {
                 return function::tag_invoke(*this, util::forward<Sched>(sched), util::forward<Senders>(senders)...);
             } else {

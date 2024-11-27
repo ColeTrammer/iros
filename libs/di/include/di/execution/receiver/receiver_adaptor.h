@@ -25,7 +25,7 @@ namespace receiver_interface_ns {
 
     template<typename T, typename U>
     requires(concepts::DecaysTo<T, T>)
-    meta::Like<U&&, T> c_style_cast(U&& u) noexcept {
+    auto c_style_cast(U&& u) noexcept -> meta::Like<U&&, T> {
         static_assert(concepts::BaseOf<T, meta::RemoveReference<U>>);
         return (meta::Like<U&&, T>) util::forward<U>(u);
     }
@@ -52,7 +52,7 @@ namespace receiver_interface_ns {
             // since it cannot be deduced (in the case where there is a member base()
             // function, since Self is currently incomplete).
             template<typename S>
-            static BaseType<S> get_base(S&& self) {
+            static auto get_base(S&& self) -> BaseType<S> {
                 if constexpr (!has_base) {
                     return util::forward<S>(self).base();
                 } else {
@@ -60,13 +60,15 @@ namespace receiver_interface_ns {
                 }
             }
 
-            Base& base() & requires(has_base) { return this->m_base.value; } Base const& base() const&
-                requires(has_base)
+            auto base() & -> Base& requires(has_base) { return this->m_base.value; } auto base() const& -> Base const&
+            requires(has_base)
             {
                 return this->m_base.value;
             }
-            Base&& base() && requires(has_base) { return util::move(this->m_base).value; } Base const&& base() const&&
-                requires(has_base)
+            auto base() && -> Base&& requires(has_base) {
+                return util::move(this->m_base).value;
+            } auto base() const&& -> Base const&&
+            requires(has_base)
             {
                 return util::move(this->m_base).value;
             }
@@ -100,23 +102,23 @@ namespace receiver_interface_ns {
             constexpr static int get_env = 1;
 
             template<typename S>
-            constexpr static bool missing_set_value() {
+            constexpr static auto missing_set_value() -> bool {
                 return requires { requires bool(int(S::set_value)); };
             }
             template<typename S>
-            constexpr static bool missing_set_error() {
+            constexpr static auto missing_set_error() -> bool {
                 return requires { requires bool(int(S::set_error)); };
             }
             template<typename S>
-            constexpr static bool missing_set_stopped() {
+            constexpr static auto missing_set_stopped() -> bool {
                 return requires { requires bool(int(S::set_stopped)); };
             }
             template<typename S>
-            constexpr static bool missing_set_next() {
+            constexpr static auto missing_set_next() -> bool {
                 return requires { requires bool(int(S::set_next)); };
             }
             template<typename S>
-            constexpr static bool missing_get_env() {
+            constexpr static auto missing_get_env() -> bool {
                 return requires { requires bool(int(S::get_env)); };
             }
 
@@ -194,7 +196,7 @@ namespace receiver_interface_ns {
             }
 
             template<concepts::SameAs<types::Tag<execution::set_next>> Tag, typename N, typename S = Self>
-            friend decltype(auto) tag_invoke(Tag, Self& self, N&& next)
+            friend auto tag_invoke(Tag, Self& self, N&& next) -> decltype(auto)
             requires(
                 requires { Type::do_set_next(self, util::forward<N>(next)); } ||
                 requires {
@@ -210,7 +212,7 @@ namespace receiver_interface_ns {
             }
 
             template<concepts::SameAs<types::Tag<execution::get_env>> Tag, typename S = Self>
-            friend decltype(auto) tag_invoke(Tag, Self const& self)
+            friend auto tag_invoke(Tag, Self const& self) -> decltype(auto)
             requires(
                 requires { Type::do_get_env(util::move(self)); } ||
                 requires {

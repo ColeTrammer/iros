@@ -32,7 +32,7 @@ public:
 
     constexpr PathViewImpl(View view) : m_view(view) { this->compute_first_component_end(); }
 
-    constexpr View data() const { return m_view; }
+    constexpr auto data() const -> View { return m_view; }
 
 private:
     View m_view;

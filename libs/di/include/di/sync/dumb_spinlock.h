@@ -15,7 +15,7 @@ public:
     DumbSpinlock() = default;
 
     DumbSpinlock(DumbSpinlock const&) = delete;
-    DumbSpinlock& operator=(DumbSpinlock const&) = delete;
+    auto operator=(DumbSpinlock const&) -> DumbSpinlock& = delete;
 
     void lock() {
         for (;;) {
@@ -27,7 +27,7 @@ public:
             }
         }
     }
-    bool try_lock() { return !m_state.exchange(true, MemoryOrder::Acquire); }
+    auto try_lock() -> bool { return !m_state.exchange(true, MemoryOrder::Acquire); }
     void unlock() { m_state.store(false, MemoryOrder::Release); }
 
 private:

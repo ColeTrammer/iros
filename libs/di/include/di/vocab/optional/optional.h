@@ -51,8 +51,8 @@ public:
     // be selected when the special member functions defined below are deleted.
     constexpr Optional(Optional const&) = default;
     constexpr Optional(Optional&&) = default;
-    constexpr Optional& operator=(Optional const&) = default;
-    constexpr Optional& operator=(Optional&&) = default;
+    constexpr auto operator=(Optional const&) -> Optional& = default;
+    constexpr auto operator=(Optional&&) -> Optional& = default;
     constexpr ~Optional() = default;
 
     constexpr Optional(Optional const& other)
@@ -113,23 +113,20 @@ public:
         reset();
     }
 
-    constexpr Optional& operator=(NullOpt) {
+    constexpr auto operator=(NullOpt) -> Optional& {
         reset();
         return *this;
     }
 
-    constexpr Optional& operator=(Optional const& other)
-    requires(concepts::Copyable<T> && !concepts::TriviallyCopyAssignable<Storage>)
-    {
-        if (other.has_value()) {
-            emplace(other.value());
+    constexpr auto operator=(Optional const& other)
+        -> Optional& requires(concepts::Copyable<T> && !concepts::TriviallyCopyAssignable<Storage>) {
+            if (other.has_value()) {
+                emplace(other.value());
+            }
+            return *this;
         }
-        return *this;
-    }
 
-    constexpr Optional& operator=(Optional&& other)
-    requires(!concepts::TriviallyMoveAssignable<Storage>)
-    {
+    constexpr auto operator=(Optional&& other) -> Optional& requires(!concepts::TriviallyMoveAssignable<Storage>) {
         if (other.has_value()) {
             emplace(util::move(other).value());
         }
@@ -139,14 +136,14 @@ public:
     template<typename U = T>
     requires(concepts::ConstructibleFrom<T, U> && !concepts::SameAs<meta::RemoveCVRef<U>, Optional> &&
              (!concepts::Scalar<T> || !concepts::SameAs<meta::Decay<U>, T>) )
-    constexpr Optional& operator=(U&& value) {
+    constexpr auto operator=(U&& value) -> Optional& {
         emplace(util::forward<U>(value));
         return *this;
     }
 
     template<typename U>
     requires(concepts::ConstructibleFrom<T, U const&> && !ConstructibleFromCRefOptional<T, Optional<U>>)
-    constexpr Optional& operator=(Optional<U> const& other) {
+    constexpr auto operator=(Optional<U> const& other) -> Optional& {
         if (other.has_value()) {
             emplace(other.value());
         }
@@ -155,7 +152,7 @@ public:
 
     template<typename U>
     requires(concepts::ConstructibleFrom<T, U &&> && !ConstructibleFromCRefOptional<T, Optional<U>>)
-    constexpr Optional& operator=(Optional<U>&& other) {
+    constexpr auto operator=(Optional<U>&& other) -> Optional& {
         if (other.has_value()) {
             emplace(util::move(other).value());
         }
@@ -163,7 +160,7 @@ public:
     }
 
     // Accessors
-    constexpr bool has_value() const { return !is_nullopt(m_storage); }
+    constexpr auto has_value() const -> bool { return !is_nullopt(m_storage); }
     constexpr explicit operator bool() const { return has_value(); }
 
     using Reference = decltype(get_value(util::declval<Storage&>()));
@@ -172,104 +169,104 @@ public:
     using Pointer = decltype(util::addressof(util::declval<Reference>()));
     using ConstPointer = decltype(util::addressof(util::declval<ConstReference>()));
 
-    constexpr Pointer operator->() { return util::addressof(value()); }
-    constexpr ConstPointer operator->() const { return util::addressof(value()); }
+    constexpr auto operator->() -> Pointer { return util::addressof(value()); }
+    constexpr auto operator->() const -> ConstPointer { return util::addressof(value()); }
 
-    constexpr decltype(auto) operator*() & { return value(); }
-    constexpr decltype(auto) operator*() const& { return value(); }
-    constexpr decltype(auto) operator*() && { return util::move(*this).value(); }
-    constexpr decltype(auto) operator*() const&& { return util::move(*this).value(); }
+    constexpr auto operator*() & -> decltype(auto) { return value(); }
+    constexpr auto operator*() const& -> decltype(auto) { return value(); }
+    constexpr auto operator*() && -> decltype(auto) { return util::move(*this).value(); }
+    constexpr auto operator*() const&& -> decltype(auto) { return util::move(*this).value(); }
 
-    constexpr decltype(auto) value() & {
+    constexpr auto value() & -> decltype(auto) {
         DI_ASSERT(has_value());
         return get_value(m_storage);
     }
-    constexpr decltype(auto) value() const& {
+    constexpr auto value() const& -> decltype(auto) {
         DI_ASSERT(has_value());
         return get_value(m_storage);
     }
-    constexpr decltype(auto) value() && {
+    constexpr auto value() && -> decltype(auto) {
         DI_ASSERT(has_value());
         return get_value(util::move(m_storage));
     }
-    constexpr decltype(auto) value() const&& {
+    constexpr auto value() const&& -> decltype(auto) {
         DI_ASSERT(has_value());
         return get_value(util::move(m_storage));
     }
 
     template<concepts::ConvertibleTo<T> U>
     requires(concepts::Copyable<T>)
-    constexpr T value_or(U&& fallback) const& {
+    constexpr auto value_or(U&& fallback) const& -> T {
         return has_value() ? value() : static_cast<T>(util::forward<U>(fallback));
     }
 
     template<concepts::ConvertibleTo<T> U>
-    constexpr T value_or(U&& fallback) && {
+    constexpr auto value_or(U&& fallback) && -> T {
         return has_value() ? util::move(*this).value() : static_cast<T>(util::forward<U>(fallback));
     }
 
     // Container interface
-    constexpr Pointer begin() {
+    constexpr auto begin() -> Pointer {
         if (!has_value()) {
             return nullptr;
         }
         return util::addressof(value());
     }
 
-    constexpr ConstPointer begin() const {
+    constexpr auto begin() const -> ConstPointer {
         if (!has_value()) {
             return nullptr;
         }
         return util::addressof(value());
     }
 
-    constexpr Pointer end() {
+    constexpr auto end() -> Pointer {
         if (!has_value()) {
             return nullptr;
         }
         return util::addressof(value()) + 1;
     }
 
-    constexpr ConstPointer end() const {
+    constexpr auto end() const -> ConstPointer {
         if (!has_value()) {
             return nullptr;
         }
         return util::addressof(value()) + 1;
     }
 
-    constexpr bool empty() const { return !has_value(); }
-    constexpr types::size_t size() const { return has_value(); }
+    constexpr auto empty() const -> bool { return !has_value(); }
+    constexpr auto size() const -> types::size_t { return has_value(); }
 
-    constexpr Pointer data() { return begin(); }
-    constexpr ConstPointer data() const { return begin(); }
+    constexpr auto data() -> Pointer { return begin(); }
+    constexpr auto data() const -> ConstPointer { return begin(); }
 
-    constexpr Optional<Reference> front() {
+    constexpr auto front() -> Optional<Reference> {
         if (!has_value()) {
             return nullopt;
         }
         return **this;
     }
-    constexpr Optional<ConstReference> front() const {
+    constexpr auto front() const -> Optional<ConstReference> {
         if (!has_value()) {
             return nullopt;
         }
         return **this;
     }
 
-    constexpr Optional<Reference> back() { return front(); }
-    constexpr Optional<ConstReference> back() const { return front(); }
+    constexpr auto back() -> Optional<Reference> { return front(); }
+    constexpr auto back() const -> Optional<ConstReference> { return front(); }
 
-    constexpr Reference operator[](types::ssize_t index) { return *at(index); }
-    constexpr ConstReference operator[](types::ssize_t index) const { return *at(index); }
+    constexpr auto operator[](types::ssize_t index) -> Reference { return *at(index); }
+    constexpr auto operator[](types::ssize_t index) const -> ConstReference { return *at(index); }
 
-    constexpr Optional<Reference> at(types::ssize_t index) {
+    constexpr auto at(types::ssize_t index) -> Optional<Reference> {
         if (index != 0) {
             return nullopt;
         }
         return front();
     }
 
-    constexpr Optional<ConstReference> at(types::ssize_t index) const {
+    constexpr auto at(types::ssize_t index) const -> Optional<ConstReference> {
         if (index != 0) {
             return nullopt;
         }
@@ -279,7 +276,7 @@ public:
     constexpr void reset() { set_nullopt(m_storage); }
 
     template<typename... Args>
-    constexpr decltype(auto) emplace(Args&&... args) {
+    constexpr auto emplace(Args&&... args) -> decltype(auto) {
         reset();
         set_value(m_storage, util::forward<Args>(args)...);
         return **this;
@@ -304,7 +301,7 @@ private:
     template<concepts::DecaySameAs<Optional> Self, concepts::Invocable<meta::Like<Self, Value>> F,
              typename R = meta::InvokeResult<F, meta::Like<Self, Value>>>
     requires(concepts::Optional<R>)
-    constexpr friend R tag_invoke(types::Tag<function::monad::bind>, Self&& self, F&& f) {
+    constexpr friend auto tag_invoke(types::Tag<function::monad::bind>, Self&& self, F&& f) -> R {
         if (self.has_value()) {
             return function::invoke(util::forward<F>(f), util::forward<Self>(self).value());
         } else {
@@ -314,7 +311,7 @@ private:
 
     template<concepts::DecaySameAs<Optional> Self, concepts::Invocable<meta::Like<Self, Value>> F,
              typename R = meta::UnwrapRefDecay<meta::InvokeResult<F, meta::Like<Self, Value>>>>
-    constexpr friend Optional<R> tag_invoke(types::Tag<function::monad::fmap>, Self&& self, F&& f) {
+    constexpr friend auto tag_invoke(types::Tag<function::monad::fmap>, Self&& self, F&& f) -> Optional<R> {
         if (self.has_value()) {
             if constexpr (concepts::LanguageVoid<R>) {
                 function::invoke(util::forward<F>(f), util::forward<Self>(self).value());
@@ -330,7 +327,7 @@ private:
 
     template<concepts::DecaySameAs<Optional> Self, concepts::InvocableTo<Optional> F>
     requires(concepts::ConstructibleFrom<Optional, Self>)
-    constexpr friend Optional tag_invoke(types::Tag<function::monad::fail>, Self&& self, F&& f) {
+    constexpr friend auto tag_invoke(types::Tag<function::monad::fail>, Self&& self, F&& f) -> Optional {
         return self.has_value() ? util::forward<Self>(self) : function::invoke(util::forward<F>(f));
     }
 
@@ -338,23 +335,23 @@ private:
 };
 
 template<typename T, concepts::EqualityComparableWith<T> U>
-constexpr bool operator==(Optional<T> const& a, Optional<U> const& b) {
+constexpr auto operator==(Optional<T> const& a, Optional<U> const& b) -> bool {
     return (!a && !b) || (a && b && *a == *b);
 }
 
 template<typename T>
-constexpr bool operator==(Optional<T> const& a, NullOpt) {
+constexpr auto operator==(Optional<T> const& a, NullOpt) -> bool {
     return !a;
 }
 
 template<typename T, typename U>
 requires((meta::OptionalRank<T> >= meta::OptionalRank<U>) && concepts::EqualityComparableWith<T, U>)
-constexpr bool operator==(Optional<T> const& a, U const& b) {
+constexpr auto operator==(Optional<T> const& a, U const& b) -> bool {
     return a.has_value() && *a == b;
 }
 
 template<typename T, concepts::ThreeWayComparableWith<T> U>
-constexpr meta::CompareThreeWayResult<T, U> operator<=>(Optional<T> const& a, Optional<U> const& b) {
+constexpr auto operator<=>(Optional<T> const& a, Optional<U> const& b) -> meta::CompareThreeWayResult<T, U> {
     if (!a && !b) {
         return types::strong_ordering::equal;
     }
@@ -365,13 +362,13 @@ constexpr meta::CompareThreeWayResult<T, U> operator<=>(Optional<T> const& a, Op
 }
 
 template<typename T>
-constexpr types::strong_ordering operator<=>(Optional<T> const& a, NullOpt) {
+constexpr auto operator<=>(Optional<T> const& a, NullOpt) -> types::strong_ordering {
     return a.has_value() <=> false;
 }
 
 template<typename T, typename U>
 requires((meta::OptionalRank<T> >= meta::OptionalRank<U>) && concepts::ThreeWayComparableWith<T, U>)
-constexpr meta::CompareThreeWayResult<T, U> operator<=>(Optional<T> const& a, U const& b) {
+constexpr auto operator<=>(Optional<T> const& a, U const& b) -> meta::CompareThreeWayResult<T, U> {
     if (!a.has_value()) {
         return types::strong_ordering::less;
     }

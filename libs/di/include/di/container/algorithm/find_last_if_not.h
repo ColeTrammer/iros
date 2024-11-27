@@ -7,7 +7,7 @@ namespace detail {
     struct FindLastIfNotFunction {
         template<concepts::InputIterator Iter, concepts::SentinelFor<Iter> Sent, typename Proj = function::Identity,
                  concepts::IndirectUnaryPredicate<meta::Projected<Iter, Proj>> Pred>
-        constexpr View<Iter> operator()(Iter first, Sent last, Pred pred, Proj proj = {}) const {
+        constexpr auto operator()(Iter first, Sent last, Pred pred, Proj proj = {}) const -> View<Iter> {
             if constexpr (concepts::BidirectionalIterator<Iter> && concepts::SameAs<Iter, Sent>) {
                 auto rlast = make_reverse_iterator(first);
                 auto it = container::find_if_not(make_reverse_iterator(last), rlast, util::ref(pred), util::ref(proj));
@@ -28,7 +28,7 @@ namespace detail {
 
         template<concepts::InputContainer Con, typename Proj = function::Identity,
                  concepts::IndirectUnaryPredicate<meta::Projected<meta::ContainerIterator<Con>, Proj>> Pred>
-        constexpr meta::BorrowedIterator<Con> operator()(Con&& container, Pred pred, Proj proj = {}) const {
+        constexpr auto operator()(Con&& container, Pred pred, Proj proj = {}) const -> meta::BorrowedIterator<Con> {
             return (*this)(container::begin(container), container::end(container), util::ref(pred), util::ref(proj));
         }
     };

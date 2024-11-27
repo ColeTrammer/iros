@@ -10,8 +10,8 @@ namespace detail {
     struct ClampFunction {
         template<typename T, typename Proj = function::Identity,
                  concepts::IndirectStrictWeakOrder<meta::Projected<T const*, Proj>> Comp = function::Compare>
-        constexpr T const& operator()(T const& value, T const& min, T const& max, Comp comp = {},
-                                      Proj proj = {}) const {
+        constexpr auto operator()(T const& value, T const& min, T const& max, Comp comp = {}, Proj proj = {}) const
+            -> T const& {
             auto&& projected_value = function::invoke(proj, value);
             if (function::invoke(comp, projected_value, function::invoke(proj, min)) < 0) {
                 return min;

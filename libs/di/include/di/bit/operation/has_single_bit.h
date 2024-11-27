@@ -6,7 +6,7 @@ namespace di::bit {
 namespace detail {
     struct HasSingleBitFunction {
         template<concepts::UnsignedInteger T>
-        constexpr bool operator()(T value) const {
+        constexpr auto operator()(T value) const -> bool {
             return popcount(value) == 1;
         }
     };

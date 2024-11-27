@@ -82,7 +82,7 @@ private:
     template<typename, concepts::Encoding>
     friend class ConstantPathInterface;
 
-    constexpr friend bool operator==(PathIterator const& a, PathIterator const& b) {
+    constexpr friend auto operator==(PathIterator const& a, PathIterator const& b) -> bool {
         return a.m_current == b.m_current;
     }
     constexpr friend auto operator<=>(PathIterator const& a, PathIterator const& b) {

@@ -16,28 +16,30 @@ class AddressSpace;
 
 class LockedAddressSpace {
 public:
-    Expected<void> map_physical_page_early(VirtualAddress location, PhysicalAddress physical_address,
-                                           RegionFlags flags);
-    Expected<void> map_physical_page(VirtualAddress location, PhysicalAddress physical_address, RegionFlags flags);
+    auto map_physical_page_early(VirtualAddress location, PhysicalAddress physical_address, RegionFlags flags)
+        -> Expected<void>;
+    auto map_physical_page(VirtualAddress location, PhysicalAddress physical_address, RegionFlags flags)
+        -> Expected<void>;
 
-    Expected<VirtualAddress> allocate_region(di::Arc<BackingObject> backing_object, di::Box<Region> region);
-    Expected<void> allocate_region_at(di::Arc<BackingObject> backing_object, di::Box<Region> region);
+    auto allocate_region(di::Arc<BackingObject> backing_object, di::Box<Region> region) -> Expected<VirtualAddress>;
+    auto allocate_region_at(di::Arc<BackingObject> backing_object, di::Box<Region> region) -> Expected<void>;
 
-    Expected<void> destroy_region(VirtualAddress start, usize length);
+    auto destroy_region(VirtualAddress start, usize length) -> Expected<void>;
 
-    Expected<void> create_low_identity_mapping(VirtualAddress base, usize page_aligned_length);
-    Expected<void> remove_low_identity_mapping(VirtualAddress base, usize page_aligned_length);
+    auto create_low_identity_mapping(VirtualAddress base, usize page_aligned_length) -> Expected<void>;
+    auto remove_low_identity_mapping(VirtualAddress base, usize page_aligned_length) -> Expected<void>;
 
-    Expected<void> setup_physical_memory_map(PhysicalAddress start, PhysicalAddress end, VirtualAddress virtual_start);
-    Expected<void> setup_kernel_region(PhysicalAddress kernel_physical_start, VirtualAddress kernel_virtual_start,
-                                       VirtualAddress kernel_virtual_end, RegionFlags flags);
+    auto setup_physical_memory_map(PhysicalAddress start, PhysicalAddress end, VirtualAddress virtual_start)
+        -> Expected<void>;
+    auto setup_kernel_region(PhysicalAddress kernel_physical_start, VirtualAddress kernel_virtual_start,
+                             VirtualAddress kernel_virtual_end, RegionFlags flags) -> Expected<void>;
 
-    Expected<void> bootstrap_kernel_page_tracking();
+    auto bootstrap_kernel_page_tracking() -> Expected<void>;
 
     void flush_tlb_global(VirtualAddress base) { flush_tlb_global(base, 1); }
     void flush_tlb_global(VirtualAddress base, usize byte_length);
 
-    AddressSpace& base();
+    auto base() -> AddressSpace&;
 
 private:
     friend class AddressSpace;
@@ -55,21 +57,21 @@ public:
 
     ~AddressSpace();
 
-    PhysicalAddress architecture_page_table_base() const { return m_architecture_page_table_base; }
+    auto architecture_page_table_base() const -> PhysicalAddress { return m_architecture_page_table_base; }
     void set_architecture_page_table_base(PhysicalAddress value) { m_architecture_page_table_base = value; }
 
     void set_kernel() { m_kernel = true; }
-    bool is_kernel() const { return m_kernel; }
+    auto is_kernel() const -> bool { return m_kernel; }
 
     void load();
 
-    u64 resident_pages() const { return m_resident_pages.load(di::MemoryOrder::Relaxed); }
-    u64 structure_pages() const { return m_structure_pages.load(di::MemoryOrder::Relaxed); }
+    auto resident_pages() const -> u64 { return m_resident_pages.load(di::MemoryOrder::Relaxed); }
+    auto structure_pages() const -> u64 { return m_structure_pages.load(di::MemoryOrder::Relaxed); }
 
-    Expected<VirtualAddress> allocate_region(di::Arc<BackingObject> backing_object, usize page_aligned_length,
-                                             RegionFlags flags);
-    Expected<void> allocate_region_at(di::Arc<BackingObject> backing_object, VirtualAddress location,
-                                      usize page_aligned_length, RegionFlags flags);
+    auto allocate_region(di::Arc<BackingObject> backing_object, usize page_aligned_length, RegionFlags flags)
+        -> Expected<VirtualAddress>;
+    auto allocate_region_at(di::Arc<BackingObject> backing_object, VirtualAddress location, usize page_aligned_length,
+                            RegionFlags flags) -> Expected<void>;
 
 private:
     PhysicalAddress m_architecture_page_table_base { 0 };
@@ -78,9 +80,9 @@ private:
     bool m_kernel { false };
 };
 
-Expected<void> init_and_load_initial_kernel_address_space(PhysicalAddress kernel_physical_start,
-                                                          VirtualAddress kernel_virtual_start,
-                                                          PhysicalAddress max_physical_address);
+auto init_and_load_initial_kernel_address_space(PhysicalAddress kernel_physical_start,
+                                                VirtualAddress kernel_virtual_start,
+                                                PhysicalAddress max_physical_address) -> Expected<void>;
 
-Expected<di::Arc<AddressSpace>> create_empty_user_address_space();
+auto create_empty_user_address_space() -> Expected<di::Arc<AddressSpace>>;
 }

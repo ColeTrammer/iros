@@ -9,7 +9,7 @@ namespace detail {
     struct VariantSizeFunction {
         template<typename T>
         requires(concepts::TagInvocableTo<VariantSizeFunction, size_t, InPlaceType<T>>)
-        constexpr size_t operator()(InPlaceType<T>) const {
+        constexpr auto operator()(InPlaceType<T>) const -> size_t {
             return function::tag_invoke(*this, in_place_type<T>);
         }
     };

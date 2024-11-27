@@ -13,7 +13,7 @@ constexpr static auto pit_frequency = 1193182;
 
 class PitTimer {
 private:
-    Expected<void> register_irq() {
+    auto register_irq() -> Expected<void> {
         if (m_irq_id) {
             return {};
         }
@@ -26,18 +26,18 @@ private:
         return {};
     }
 
-    friend di::StringView tag_invoke(di::Tag<timer_name>, PitTimer const&) { return "PIT"_sv; }
+    friend auto tag_invoke(di::Tag<timer_name>, PitTimer const&) -> di::StringView { return "PIT"_sv; }
 
-    friend TimerCapabilities tag_invoke(di::Tag<timer_capabilities>, PitTimer const&) {
+    friend auto tag_invoke(di::Tag<timer_capabilities>, PitTimer const&) -> TimerCapabilities {
         return TimerCapabilities::SingleShot | TimerCapabilities::Periodic;
     }
 
-    friend TimerResolution tag_invoke(di::Tag<timer_resolution>, PitTimer const&) {
+    friend auto tag_invoke(di::Tag<timer_resolution>, PitTimer const&) -> TimerResolution {
         return TimerResolution(1_s) / pit_frequency;
     }
 
-    friend Expected<void> tag_invoke(di::Tag<timer_set_single_shot>, PitTimer& self, TimerResolution duration,
-                                     di::Function<void(IrqContext&)> callback) {
+    friend auto tag_invoke(di::Tag<timer_set_single_shot>, PitTimer& self, TimerResolution duration,
+                           di::Function<void(IrqContext&)> callback) -> Expected<void> {
         auto divisor = duration.count() * pit_frequency / TimerResolution(1_s).count();
 
         return with_interrupts_disabled([&] -> Expected<void> {
@@ -51,8 +51,8 @@ private:
         });
     }
 
-    friend Expected<void> tag_invoke(di::Tag<timer_set_interval>, PitTimer& self, TimerResolution duration,
-                                     di::Function<void(IrqContext&)> callback) {
+    friend auto tag_invoke(di::Tag<timer_set_interval>, PitTimer& self, TimerResolution duration,
+                           di::Function<void(IrqContext&)> callback) -> Expected<void> {
         auto divisor = duration.count() * pit_frequency / TimerResolution(1_s).count();
 
         return with_interrupts_disabled([&] -> Expected<void> {

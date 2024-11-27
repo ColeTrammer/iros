@@ -71,7 +71,7 @@ protected:
 
     using Key = meta::Type<detail::NodeHashTableKey<Value, is_map>>;
 
-    constexpr decltype(auto) down_cast_self() {
+    constexpr auto down_cast_self() -> decltype(auto) {
         if constexpr (concepts::SameAs<Void, Self>) {
             return *this;
         } else {
@@ -84,7 +84,7 @@ protected:
 public:
     NodeHashTable() = default;
     NodeHashTable(NodeHashTable const&) = delete;
-    NodeHashTable& operator=(NodeHashTable const&) = delete;
+    auto operator=(NodeHashTable const&) -> NodeHashTable& = delete;
 
     constexpr explicit NodeHashTable(Eq eq, Hasher hasher = {}) : m_eq(util::move(eq)), m_hasher(util::move(hasher)) {}
 
@@ -94,7 +94,7 @@ public:
         , m_eq(util::move(other.m_eq))
         , m_hasher(util::move(other.m_hasher)) {}
 
-    constexpr NodeHashTable& operator=(NodeHashTable&& other) {
+    constexpr auto operator=(NodeHashTable&& other) -> NodeHashTable& {
         this->clear();
         m_buckets = util::move(other.m_buckets);
         m_size = util::exchange(other.m_size, 0);
@@ -105,12 +105,12 @@ public:
 
     constexpr ~NodeHashTable() { this->clear(); }
 
-    constexpr usize size() const { return m_size; }
-    constexpr bool empty() const { return m_size == 0; }
-    constexpr usize bucket_count() const { return vector::size(m_buckets); }
+    constexpr auto size() const -> usize { return m_size; }
+    constexpr auto empty() const -> bool { return m_size == 0; }
+    constexpr auto bucket_count() const -> usize { return vector::size(m_buckets); }
 
-    constexpr Iterator begin() { return unconst_iterator(util::as_const(*this).begin()); }
-    constexpr ConstIterator begin() const {
+    constexpr auto begin() -> Iterator { return unconst_iterator(util::as_const(*this).begin()); }
+    constexpr auto begin() const -> ConstIterator {
         auto const buckets = m_buckets.span();
         auto it = container::find_if(m_buckets, function::not_fn(container::empty));
         if (it == m_buckets.end()) {
@@ -119,10 +119,10 @@ public:
         auto const bucket_index = it - buckets.begin();
         return Iterator(buckets, bucket_index);
     }
-    constexpr Iterator end() { return unconst_iterator(util::as_const(*this).end()); }
-    constexpr ConstIterator end() const { return Iterator(m_buckets.span(), m_buckets.size()); }
+    constexpr auto end() -> Iterator { return unconst_iterator(util::as_const(*this).end()); }
+    constexpr auto end() const -> ConstIterator { return Iterator(m_buckets.span(), m_buckets.size()); }
 
-    constexpr Iterator unconst_iterator(ConstIterator it) { return it.base(); }
+    constexpr auto unconst_iterator(ConstIterator it) -> Iterator { return it.base(); }
 
     constexpr auto insert_node(Node& node)
     requires(!allow_rehashing_in_insert)
@@ -140,7 +140,7 @@ public:
         }
     }
 
-    constexpr Iterator erase_impl(ConstIterator it) {
+    constexpr auto erase_impl(ConstIterator it) -> Iterator {
         auto bucket_index = it.base().bucket_index();
         auto& bucket = m_buckets[bucket_index];
         auto& node = static_cast<ConcreteNode&>(it.base().node());
@@ -199,7 +199,7 @@ public:
 
     template<typename U>
     requires(concepts::Predicate<Eq&, Key const&, U const&> && concepts::HashSame<Key, U>)
-    constexpr ConstIterator find_impl(U&& needle) const {
+    constexpr auto find_impl(U&& needle) const -> ConstIterator {
         if (empty()) {
             return end();
         }
@@ -274,10 +274,10 @@ public:
     }
 
 protected:
-    constexpr Value& node_value(Node& node) const {
+    constexpr auto node_value(Node& node) const -> Value& {
         return Tag::down_cast(in_place_type<Value>, static_cast<ConcreteNode&>(node));
     }
-    constexpr Value const& node_value(Node const& node) const {
+    constexpr auto node_value(Node const& node) const -> Value const& {
         return const_cast<NodeHashTable&>(*this).node_value(const_cast<Node&>(node));
     }
 
@@ -337,12 +337,12 @@ protected:
     }
 
     template<typename U>
-    constexpr u64 hash(U const& value) const {
+    constexpr auto hash(U const& value) const -> u64 {
         auto hasher = m_hasher;
         return container::hash(hasher, value);
     }
 
-    constexpr u64 hash(Value const& value) const {
+    constexpr auto hash(Value const& value) const -> u64 {
         auto hasher = m_hasher;
         if constexpr (is_map) {
             return container::hash(hasher, util::get<0>(value));
@@ -352,12 +352,12 @@ protected:
     }
 
     template<typename T, typename U>
-    constexpr bool equal(T const& a, U const& b) const {
+    constexpr auto equal(T const& a, U const& b) const -> bool {
         return m_eq(a, b);
     }
 
     template<typename T>
-    constexpr bool equal(T const& a, Value const& b) const {
+    constexpr auto equal(T const& a, Value const& b) const -> bool {
         if constexpr (is_map) {
             return m_eq(a, util::get<0>(b));
         } else {
@@ -366,7 +366,7 @@ protected:
     }
 
     template<typename T>
-    constexpr bool equal(Value const& a, T const& b) const {
+    constexpr auto equal(Value const& a, T const& b) const -> bool {
         if constexpr (is_map) {
             return m_eq(util::get<0>(a), b);
         } else {
@@ -374,7 +374,7 @@ protected:
         }
     }
 
-    constexpr bool equal(Value const& a, Value const& b) const {
+    constexpr auto equal(Value const& a, Value const& b) const -> bool {
         if constexpr (is_map) {
             return m_eq(util::get<0>(a), util::get<0>(b));
         } else {

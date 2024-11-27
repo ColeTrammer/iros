@@ -13,7 +13,7 @@ static auto s_envp = static_cast<char**>(nullptr);
     s_envp = envp;
 }
 
-di::Result<ProcessResult> Process::spawn_and_wait() && {
+auto Process::spawn_and_wait() && -> di::Result<ProcessResult> {
     // NOTE: TransparentString objects are guaranteed to be null-terminated on Linux.
     auto null_terminated_args =
         di::concat(m_arguments | di::transform(di::cdata), di::single(nullptr)) | di::to<di::Vector>();

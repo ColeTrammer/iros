@@ -12,7 +12,7 @@ struct Atom {
 
     template<typename U>
     requires(concepts::ConstructibleFrom<T, U> || concepts::RemoveCVRefSameAs<T, U>)
-    constexpr static decltype(auto) get(U&& value) {
+    constexpr static auto get(U&& value) -> decltype(auto) {
         if constexpr (concepts::RemoveCVRefSameAs<T, U>) {
             return (util::forward<U>(value));
         } else {
@@ -20,23 +20,23 @@ struct Atom {
         }
     }
 
-    constexpr static bool is_fields() { return false; }
-    constexpr static bool is_field() { return false; }
-    constexpr static bool is_enumerator() { return false; }
-    constexpr static bool is_enumerators() { return false; }
-    constexpr static bool is_atom() { return true; }
-    constexpr static bool is_integer() { return concepts::Integer<T>; }
-    constexpr static bool is_bool() { return concepts::SameAs<T, bool>; }
-    constexpr static bool is_string() { return concepts::detail::ConstantString<T>; }
-    constexpr static bool is_list() { return concepts::Container<T> && !is_string() && !is_map(); }
-    constexpr static bool is_map() {
+    constexpr static auto is_fields() -> bool { return false; }
+    constexpr static auto is_field() -> bool { return false; }
+    constexpr static auto is_enumerator() -> bool { return false; }
+    constexpr static auto is_enumerators() -> bool { return false; }
+    constexpr static auto is_atom() -> bool { return true; }
+    constexpr static auto is_integer() -> bool { return concepts::Integer<T>; }
+    constexpr static auto is_bool() -> bool { return concepts::SameAs<T, bool>; }
+    constexpr static auto is_string() -> bool { return concepts::detail::ConstantString<T>; }
+    constexpr static auto is_list() -> bool { return concepts::Container<T> && !is_string() && !is_map(); }
+    constexpr static auto is_map() -> bool {
         return requires {
             requires concepts::Container<T> && concepts::TupleLike<meta::ContainerValue<T>> &&
                          meta::TupleSize<meta::ContainerValue<T>> == 2;
         };
     }
 
-    bool operator==(Atom const&) const = default;
+    auto operator==(Atom const&) const -> bool = default;
     auto operator<=>(Atom const&) const = default;
 };
 

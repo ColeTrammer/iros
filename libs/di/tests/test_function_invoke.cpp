@@ -4,7 +4,7 @@
 namespace function_invoke {
 struct X {
     int y;
-    constexpr int z(int p) const { return y + p; }
+    constexpr auto z(int p) const -> int { return y + p; }
 };
 
 struct Y : X {};

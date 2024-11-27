@@ -15,8 +15,8 @@ namespace async_read_some_ns {
     struct Function {
         template<typename File>
         requires(concepts::TagInvocable<Function, File, Span<Byte>, Optional<u64>>)
-        concepts::SenderOf<SetValue(usize)> auto operator()(File&& handle, Span<Byte> buffer,
-                                                            Optional<u64> offset = {}) const {
+        auto operator()(File&& handle, Span<Byte> buffer, Optional<u64> offset = {}) const
+            -> concepts::SenderOf<SetValue(usize)> auto {
             return function::tag_invoke(*this, util::forward<File>(handle), buffer, offset);
         }
 

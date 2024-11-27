@@ -13,7 +13,7 @@ public:
 
     ~MemoryRegion();
 
-    constexpr MemoryRegion& operator=(MemoryRegion&& other) {
+    constexpr auto operator=(MemoryRegion&& other) -> MemoryRegion& {
         m_data = di::exchange(other.m_data, {});
         return *this;
     }
@@ -26,7 +26,7 @@ public:
     constexpr auto span() { return m_data; }
     constexpr auto span() const { return m_data; }
 
-    constexpr bool empty() const { return m_data.empty(); }
+    constexpr auto empty() const -> bool { return m_data.empty(); }
 
 private:
     di::Span<di::Byte> m_data;

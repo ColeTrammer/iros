@@ -6,7 +6,7 @@ namespace di::bit {
 namespace detail {
     struct BitWidthFunction {
         template<concepts::UnsignedInteger T>
-        constexpr T operator()(T value) const {
+        constexpr auto operator()(T value) const -> T {
             return math::NumericLimits<T>::digits - countl_zero(value);
         }
     };

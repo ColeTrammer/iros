@@ -28,7 +28,7 @@ private:
 
     constexpr static bool is_sized = Tag::is_sized(in_place_type<T>);
 
-    constexpr decltype(auto) down_cast_self() {
+    constexpr auto down_cast_self() -> decltype(auto) {
         if constexpr (concepts::SameAs<Void, Self>) {
             return *this;
         } else {
@@ -46,16 +46,18 @@ private:
         constexpr Iterator(Node* node) : m_node(node) {}
         constexpr Iterator(Node& node) : m_node(util::addressof(node)) {}
 
-        constexpr T& operator*() const { return Tag::down_cast(in_place_type<T>, static_cast<ConcreteNode&>(*m_node)); }
-        constexpr T* operator->() const { return util::addressof(**this); }
+        constexpr auto operator*() const -> T& {
+            return Tag::down_cast(in_place_type<T>, static_cast<ConcreteNode&>(*m_node));
+        }
+        constexpr auto operator->() const -> T* { return util::addressof(**this); }
 
         constexpr void advance_one() { m_node = m_node->next; }
         constexpr void back_one() { m_node = m_node->prev; }
 
     private:
-        constexpr friend bool operator==(Iterator const& a, Iterator const& b) { return a.m_node == b.m_node; }
+        constexpr friend auto operator==(Iterator const& a, Iterator const& b) -> bool { return a.m_node == b.m_node; }
 
-        constexpr Node* node() const { return m_node; }
+        constexpr auto node() const -> Node* { return m_node; }
 
         Node* m_node { nullptr };
     };
@@ -69,9 +71,9 @@ public:
 
     constexpr IntrusiveList(IntrusiveList&& other) : IntrusiveList() { *this = util::move(other); }
 
-    IntrusiveList& operator=(IntrusiveList const&) = delete;
+    auto operator=(IntrusiveList const&) -> IntrusiveList& = delete;
 
-    constexpr IntrusiveList& operator=(IntrusiveList&& other) {
+    constexpr auto operator=(IntrusiveList&& other) -> IntrusiveList& {
         if (this != &other) {
             clear();
             m_head.value().next = other.m_head.value().next;
@@ -92,19 +94,19 @@ public:
 
     constexpr ~IntrusiveList() { clear(); }
 
-    constexpr bool empty() const { return head() == util::addressof(m_head.value()); }
-    constexpr usize size() const
+    constexpr auto empty() const -> bool { return head() == util::addressof(m_head.value()); }
+    constexpr auto size() const -> usize
     requires(is_sized)
     {
         return m_size.value;
     }
-    constexpr usize max_size() const { return math::NumericLimits<usize>::max; }
+    constexpr auto max_size() const -> usize { return math::NumericLimits<usize>::max; }
 
-    constexpr Iterator begin() { return Iterator(head()); }
-    constexpr Iterator end() { return Iterator(util::addressof(m_head.value())); }
+    constexpr auto begin() -> Iterator { return Iterator(head()); }
+    constexpr auto end() -> Iterator { return Iterator(util::addressof(m_head.value())); }
 
-    constexpr Iterator begin() const { return Iterator(head()); }
-    constexpr Iterator end() const { return Iterator(const_cast<Node*>(util::addressof(m_head.value()))); }
+    constexpr auto begin() const -> Iterator { return Iterator(head()); }
+    constexpr auto end() const -> Iterator { return Iterator(const_cast<Node*>(util::addressof(m_head.value()))); }
 
     constexpr auto front() {
         return lift_bool(!empty()) % [&] {
@@ -149,7 +151,7 @@ public:
 
     constexpr void clear() { erase(begin(), end()); }
 
-    constexpr Iterator insert(ConstIterator position, Node& node_ref) {
+    constexpr auto insert(ConstIterator position, Node& node_ref) -> Iterator {
         auto* node = util::addressof(node_ref);
         auto* next = position.base().node();
         auto* prev = next->prev;
@@ -169,8 +171,8 @@ public:
         return Iterator(node);
     }
 
-    constexpr Iterator erase(ConstIterator position) { return erase(position, container::next(position)); }
-    constexpr Iterator erase(ConstIterator first, ConstIterator last) {
+    constexpr auto erase(ConstIterator position) -> Iterator { return erase(position, container::next(position)); }
+    constexpr auto erase(ConstIterator first, ConstIterator last) -> Iterator {
         if (first == last) {
             return last.base();
         }
@@ -245,7 +247,7 @@ public:
     }
 
 private:
-    constexpr friend bool operator==(IntrusiveList const& a, IntrusiveList const& b)
+    constexpr friend auto operator==(IntrusiveList const& a, IntrusiveList const& b) -> bool
     requires(concepts::EqualityComparable<T>)
     {
         return container::equal(a, b);
@@ -259,7 +261,7 @@ private:
 
     template<typename F>
     requires(concepts::Predicate<F&, T const&>)
-    constexpr friend usize tag_invoke(di::Tag<erase_if>, ConcreteSelf& self, F&& function) {
+    constexpr friend auto tag_invoke(di::Tag<erase_if>, ConcreteSelf& self, F&& function) -> usize {
         auto it = self.begin();
         auto result = 0zu;
         while (it != self.end()) {
@@ -273,7 +275,7 @@ private:
         return result;
     }
 
-    constexpr Node* head() const { return m_head.value().next; }
+    constexpr auto head() const -> Node* { return m_head.value().next; }
     constexpr void set_head(Node* head) { m_head.value().next = head; }
 
     constexpr void reset_head() {

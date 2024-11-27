@@ -681,8 +681,8 @@ static void split() {
         NoncopyableI32(NoncopyableI32 const&) = delete;
         NoncopyableI32(NoncopyableI32&&) = default;
 
-        NoncopyableI32& operator=(NoncopyableI32 const&) = delete;
-        NoncopyableI32& operator=(NoncopyableI32&&) = default;
+        auto operator=(NoncopyableI32 const&) -> NoncopyableI32& = delete;
+        auto operator=(NoncopyableI32&&) -> NoncopyableI32& = default;
 
         i32 x;
     };

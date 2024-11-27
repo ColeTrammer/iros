@@ -14,7 +14,7 @@ namespace detail {
     struct VariantIndexFunction {
         template<typename T>
         requires(concepts::TagInvocableTo<VariantIndexFunction, size_t, T const&> || MemberVariantIndex<T>)
-        constexpr size_t operator()(T const& variant) const {
+        constexpr auto operator()(T const& variant) const -> size_t {
             if constexpr (concepts::TagInvocableTo<VariantIndexFunction, size_t, T const&>) {
                 return function::tag_invoke(*this, variant);
             } else {

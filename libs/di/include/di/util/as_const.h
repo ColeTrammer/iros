@@ -7,12 +7,12 @@
 #else
 namespace std {
 template<typename T>
-constexpr di::meta::AddConst<T>& as_const(T& value) noexcept {
+constexpr auto as_const(T& value) noexcept -> di::meta::AddConst<T>& {
     return value;
 }
 
 template<typename T>
-constexpr void as_const(T const&&) = delete;
+constexpr auto as_const(T const&&) -> di::meta::AddConst<T>& = delete;
 }
 #endif
 

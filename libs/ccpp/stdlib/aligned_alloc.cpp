@@ -5,7 +5,7 @@
 
 #include "malloc_block.h"
 
-extern "C" void* aligned_alloc(size_t alignment, size_t size) {
+extern "C" auto aligned_alloc(size_t alignment, size_t size) -> void* {
     auto true_align = di::max(alignment, alignof(ccpp::MallocBlock));
     auto true_block_size = di::align_up(sizeof(ccpp::MallocBlock), true_align);
     auto true_size = size + true_block_size;

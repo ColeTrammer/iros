@@ -14,14 +14,14 @@ namespace detail {
         template<concepts::RandomAccessIterator Iter, concepts::SentinelFor<Iter> Sent,
                  typename Proj = function::Identity,
                  concepts::IndirectStrictWeakOrder<meta::Projected<Iter, Proj>> Comp = function::Compare>
-        constexpr bool operator()(Iter first, Sent last, Comp comp = {}, Proj proj = {}) const {
+        constexpr auto operator()(Iter first, Sent last, Comp comp = {}, Proj proj = {}) const -> bool {
             return container::is_heap_until(util::move(first), last, util::ref(comp), util::ref(proj)) == last;
         }
 
         template<concepts::RandomAccessContainer Con, typename Proj = function::Identity,
                  concepts::IndirectStrictWeakOrder<meta::Projected<meta::ContainerIterator<Con>, Proj>> Comp =
                      function::Compare>
-        constexpr bool operator()(Con&& container, Comp comp = {}, Proj proj = {}) const {
+        constexpr auto operator()(Con&& container, Comp comp = {}, Proj proj = {}) const -> bool {
             return (*this)(container::begin(container), container::end(container), util::ref(comp), util::ref(proj));
         }
     };

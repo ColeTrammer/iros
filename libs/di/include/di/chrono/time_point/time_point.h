@@ -23,16 +23,16 @@ public:
     template<concepts::ImplicitlyConvertibleTo<Duration> D>
     constexpr TimePoint(TimePoint<Clock, D> const& other) : m_duration(other.time_since_epoch()) {}
 
-    constexpr Duration time_since_epoch() const { return m_duration; }
+    constexpr auto time_since_epoch() const -> Duration { return m_duration; }
 
-    constexpr TimePoint& operator+=(Duration const& other) { return m_duration += other, *this; }
-    constexpr TimePoint& operator-=(Duration const& other) { return m_duration -= other, *this; }
+    constexpr auto operator+=(Duration const& other) -> TimePoint& { return m_duration += other, *this; }
+    constexpr auto operator-=(Duration const& other) -> TimePoint& { return m_duration -= other, *this; }
 
-    constexpr TimePoint& operator++() { return ++m_duration, *this; }
-    constexpr TimePoint operator++(int) { return TimePoint(m_duration++); }
+    constexpr auto operator++() -> TimePoint& { return ++m_duration, *this; }
+    constexpr auto operator++(int) -> TimePoint { return TimePoint(m_duration++); }
 
-    constexpr TimePoint& operator--() { return --m_duration, *this; }
-    constexpr TimePoint operator--(int) { return TimePoint(m_duration--); }
+    constexpr auto operator--() -> TimePoint& { return --m_duration, *this; }
+    constexpr auto operator--(int) -> TimePoint { return TimePoint(m_duration--); }
 
 private:
     Duration m_duration {};
@@ -40,29 +40,29 @@ private:
 
 template<typename C, typename D1, typename R2, typename P2,
          typename CT = TimePoint<C, meta::CommonType<D1, Duration<R2, P2>>>>
-constexpr CT operator+(TimePoint<C, D1> const& a, Duration<R2, P2> const& b) {
+constexpr auto operator+(TimePoint<C, D1> const& a, Duration<R2, P2> const& b) -> CT {
     return CT(a.time_since_epoch() + b);
 }
 
 template<typename R1, typename P1, typename C, typename D2,
          typename CT = TimePoint<C, meta::CommonType<Duration<R1, P1>, D2>>>
-constexpr CT operator+(Duration<R1, P1> const& a, TimePoint<C, D2> const& b) {
+constexpr auto operator+(Duration<R1, P1> const& a, TimePoint<C, D2> const& b) -> CT {
     return CT(b.time_since_epoch() + a);
 }
 
 template<typename C, typename D1, typename R2, typename P2,
          typename CT = TimePoint<C, meta::CommonType<D1, Duration<R2, P2>>>>
-constexpr CT operator-(TimePoint<C, D1> const& a, Duration<R2, P2> const& b) {
+constexpr auto operator-(TimePoint<C, D1> const& a, Duration<R2, P2> const& b) -> CT {
     return CT(a.time_since_epoch() - b);
 }
 
 template<typename C, typename D1, typename D2, typename CT = meta::CommonType<D1, D2>>
-constexpr CT operator-(TimePoint<C, D1> const& a, TimePoint<C, D2> const& b) {
+constexpr auto operator-(TimePoint<C, D1> const& a, TimePoint<C, D2> const& b) -> CT {
     return CT(a.time_since_epoch() - b.time_since_epoch());
 }
 
 template<typename C, typename D1, concepts::EqualityComparableWith<D1> D2>
-constexpr bool operator==(TimePoint<C, D1> const& a, TimePoint<C, D2> const& b) {
+constexpr auto operator==(TimePoint<C, D1> const& a, TimePoint<C, D2> const& b) -> bool {
     return a.time_since_epoch() == b.time_since_epoch();
 }
 

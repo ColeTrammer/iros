@@ -1,7 +1,7 @@
 #include <ccpp/bits/file_implementation.h>
 
 // https://pubs.opengroup.org/onlinepubs/9699919799/functions/fclose.html
-extern "C" int fclose(FILE* file) {
+extern "C" auto fclose(FILE* file) -> int {
     // No need to lock here, as it is undefined behavior to try to use a FILE after it has been closed.
     bool error = false;
     if (fflush_unlocked(file)) {

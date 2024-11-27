@@ -77,7 +77,7 @@ namespace just_or_error_ns {
     using Sender = meta::Type<SenderT<R>>;
 
     struct Function {
-        concepts::Sender auto operator()(concepts::Expected auto value) const {
+        auto operator()(concepts::Expected auto value) const -> concepts::Sender auto {
             return Sender<decltype(value)> { util::move(value) };
         }
     };

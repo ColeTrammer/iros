@@ -86,7 +86,7 @@ private:
     private:
         friend auto tag_invoke(types::Tag<schedule>, Scheduler const& self) { return Sender { self.parent }; }
 
-        constexpr friend bool operator==(Scheduler const&, Scheduler const&) = default;
+        constexpr friend auto operator==(Scheduler const&, Scheduler const&) -> bool = default;
     };
 
     struct State {
@@ -98,7 +98,7 @@ public:
     RunLoop() = default;
     RunLoop(RunLoop&&) = delete;
 
-    Scheduler get_scheduler() { return Scheduler { this }; }
+    auto get_scheduler() -> Scheduler { return Scheduler { this }; }
 
     void run() {
         while (auto* operation = pop_front()) {
@@ -113,7 +113,7 @@ public:
     }
 
 private:
-    OperationStateBase* pop_front() {
+    auto pop_front() -> OperationStateBase* {
         // FIXME: block instead of busy polling the queue when it is empty.
         for (;;) {
             auto [operation, is_stopped] = m_state.with_lock([](State& state) -> Tuple<OperationStateBase*, bool> {

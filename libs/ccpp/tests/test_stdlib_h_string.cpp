@@ -5,37 +5,37 @@
 #include <string.h>
 
 namespace stdlib_h {
-[[gnu::noinline]] static int do_atoi(char const* s) {
+[[gnu::noinline]] static auto do_atoi(char const* s) -> int {
     return atoi(s);
 }
 
-[[gnu::noinline]] static long do_atol(char const* s) {
+[[gnu::noinline]] static auto do_atol(char const* s) -> long {
     return atol(s);
 }
 
-[[gnu::noinline]] static long do_atoll(char const* s) {
+[[gnu::noinline]] static auto do_atoll(char const* s) -> long {
     return atoll(s);
 }
 
-[[gnu::noinline]] static long do_strtol(char const* s, char** end, int radix) {
+[[gnu::noinline]] static auto do_strtol(char const* s, char** end, int radix) -> long {
     *end = nullptr;
     errno = 0;
     return strtol(s, end, radix);
 }
 
-[[gnu::noinline]] static long long do_strtoll(char const* s, char** end, int radix) {
+[[gnu::noinline]] static auto do_strtoll(char const* s, char** end, int radix) -> long long {
     *end = nullptr;
     errno = 0;
     return strtoll(s, end, radix);
 }
 
-[[gnu::noinline]] static unsigned long do_strtoul(char const* s, char** end, int radix) {
+[[gnu::noinline]] static auto do_strtoul(char const* s, char** end, int radix) -> unsigned long {
     *end = nullptr;
     errno = 0;
     return strtoul(s, end, radix);
 }
 
-[[gnu::noinline]] static unsigned long long do_strtoull(char const* s, char** end, int radix) {
+[[gnu::noinline]] static auto do_strtoull(char const* s, char** end, int radix) -> unsigned long long {
     *end = nullptr;
     errno = 0;
     return strtoull(s, end, radix);
@@ -74,7 +74,7 @@ static void atoll_() {
     ASSERT_EQ(do_atoll("-9223372036854775808"), (long long) -9223372036854775808u);
 }
 
-static di::TransparentStringView cstring_to_tsv(char const* ptr) {
+static auto cstring_to_tsv(char const* ptr) -> di::TransparentStringView {
     return di::TransparentStringView(ptr, strlen(ptr));
 }
 

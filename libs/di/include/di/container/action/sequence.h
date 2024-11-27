@@ -14,7 +14,7 @@ namespace detail {
     struct SequenceFunction {
         template<concepts::ViewableContainer Con, typename F, typename T = meta::ContainerReference<Con>,
                  typename R = meta::InvokeResult<F, T>, typename G = meta::LikeExpected<R, void>>
-        constexpr G operator()(Con&& container, F function) const {
+        constexpr auto operator()(Con&& container, F function) const -> G {
             auto view = view::all(util::forward<Con>(container));
             for (T value : view) {
                 if constexpr (concepts::Expected<R> && !concepts::LanguageVoid<meta::ExpectedError<R>>) {

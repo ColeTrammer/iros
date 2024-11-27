@@ -15,8 +15,8 @@ namespace async_write_some_ns {
     struct Function {
         template<typename File>
         requires(concepts::TagInvocable<Function, File, Span<Byte const>, Optional<u64>>)
-        concepts::SenderOf<SetValue(usize)> auto operator()(File&& handle, Span<Byte const> buffer,
-                                                            Optional<u64> offset = {}) const {
+        auto operator()(File&& handle, Span<Byte const> buffer, Optional<u64> offset = {}) const
+            -> concepts::SenderOf<SetValue(usize)> auto {
             return function::tag_invoke(*this, util::forward<File>(handle), buffer, offset);
         }
 

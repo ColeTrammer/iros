@@ -3,7 +3,7 @@
 
 // NOTE: this is an extension of feof(), which does not lock file.
 // https://pubs.opengroup.org/onlinepubs/9699919799/functions/feof.html
-extern "C" int feof_unlocked(FILE* file) {
+extern "C" auto feof_unlocked(FILE* file) -> int {
     auto& inner = file->get_unlocked();
     return inner.status == ccpp::Status::Eof ? 1 : 0;
 }

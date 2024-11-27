@@ -7,7 +7,7 @@
 namespace dius::filesystem {
 namespace detail {
     struct SymlinkStatusFunction {
-        di::Result<FileStatus> operator()(di::PathView path) const;
+        auto operator()(di::PathView path) const -> di::Result<FileStatus>;
     };
 }
 

@@ -33,16 +33,16 @@ public:
     StaticVector(StaticVector const&) = default;
     StaticVector(StaticVector&&) = default;
 
-    StaticVector& operator=(StaticVector const&) = default;
-    StaticVector& operator=(StaticVector&&) = default;
+    auto operator=(StaticVector const&) -> StaticVector& = default;
+    auto operator=(StaticVector&&) -> StaticVector& = default;
 
-    constexpr Span<T> span() { return { m_data, m_size }; }
-    constexpr Span<T const> span() const { return { m_data, m_size }; }
+    constexpr auto span() -> Span<T> { return { m_data, m_size }; }
+    constexpr auto span() const -> Span<T const> { return { m_data, m_size }; }
 
-    constexpr size_t capacity() const { return inline_capacity; }
-    constexpr size_t max_size() const { return inline_capacity; }
+    constexpr auto capacity() const -> size_t { return inline_capacity; }
+    constexpr auto max_size() const -> size_t { return inline_capacity; }
 
-    constexpr Expected<void, NoCapacityError> reserve_from_nothing(size_t n) {
+    constexpr auto reserve_from_nothing(size_t n) -> Expected<void, NoCapacityError> {
         DI_ASSERT(this->size() == 0u);
         if (n > inline_capacity) {
             return Unexpected(NoCapacityError {});

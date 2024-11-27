@@ -18,7 +18,7 @@ public:
     requires(concepts::ConstructibleFrom<T, Args...>)
     constexpr OwningRBTreeNode(InPlace, Args&&... args) : m_value(util::forward<Args>(args)...) {}
 
-    constexpr T& value() { return m_value; }
+    constexpr auto value() -> T& { return m_value; }
 
 private:
     T m_value;
@@ -28,8 +28,8 @@ template<typename Self, typename T>
 struct OwningRBTreeTag : IntrusiveTagBase<OwningRBTreeNode<T, Self>> {
     using Node = OwningRBTreeNode<T, Self>;
 
-    constexpr static bool is_sized(InPlaceType<T>) { return true; }
-    constexpr static T& down_cast(InPlaceType<T>, Node& node) { return node.value(); }
+    constexpr static auto is_sized(InPlaceType<T>) -> bool { return true; }
+    constexpr static auto down_cast(InPlaceType<T>, Node& node) -> T& { return node.value(); }
 
     constexpr static void did_remove(auto& self, auto& node) {
         util::destroy_at(util::addressof(node));
@@ -56,7 +56,7 @@ private:
 public:
     using Base::Base;
 
-    constexpr Alloc& allocator() { return m_allocator; }
+    constexpr auto allocator() -> Alloc& { return m_allocator; }
 
     template<typename U, concepts::Invocable F>
     requires(concepts::StrictWeakOrder<Comp&, Value, U> && concepts::MaybeFallible<meta::InvokeResult<F>, Value>)

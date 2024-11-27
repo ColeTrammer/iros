@@ -20,23 +20,23 @@ constexpr auto size_bytes(concepts::detail::ConstantRing auto& ring) {
     return ring.span().size_bytes();
 }
 
-constexpr bool empty(concepts::detail::ConstantRing auto& ring) {
+constexpr auto empty(concepts::detail::ConstantRing auto& ring) -> bool {
     return ring::size(ring) == 0;
 }
 
-constexpr auto* begin_pointer(concepts::detail::ConstantRing auto& ring) {
+constexpr auto begin_pointer(concepts::detail::ConstantRing auto& ring) -> auto* {
     return ring.span().data();
 }
 
-constexpr auto* end_pointer(concepts::detail::ConstantRing auto& ring) {
+constexpr auto end_pointer(concepts::detail::ConstantRing auto& ring) -> auto* {
     return ring::begin_pointer(ring) + ring.capacity();
 }
 
-constexpr auto* head_pointer(concepts::detail::ConstantRing auto& ring) {
+constexpr auto head_pointer(concepts::detail::ConstantRing auto& ring) -> auto* {
     return ring::begin_pointer(ring) + ring.head();
 }
 
-constexpr auto* tail_pointer(concepts::detail::ConstantRing auto& ring) {
+constexpr auto tail_pointer(concepts::detail::ConstantRing auto& ring) -> auto* {
     return ring::begin_pointer(ring) + ring.tail();
 }
 
@@ -52,7 +52,7 @@ constexpr auto end(Ring& ring) {
                                ring::begin_pointer(ring), ring::end_pointer(ring), true);
 }
 
-constexpr decltype(auto) lookup(concepts::detail::ConstantRing auto& ring, usize index) {
+constexpr auto lookup(concepts::detail::ConstantRing auto& ring, usize index) -> decltype(auto) {
     return ring::begin(ring)[index];
 }
 
@@ -100,7 +100,7 @@ constexpr void clear(concepts::detail::MutableRing auto& ring) {
 }
 
 template<concepts::detail::MutableRing Ring, typename R = meta::detail::RingAllocResult<Ring>>
-constexpr R reserve(Ring& ring, usize capacity) {
+constexpr auto reserve(Ring& ring, usize capacity) -> R {
     if (capacity <= ring.capacity()) {
         return util::create<R>();
     }
@@ -125,7 +125,7 @@ constexpr R reserve(Ring& ring, usize capacity) {
 
 template<concepts::detail::MutableRing Ring, typename... Args>
 requires(concepts::ConstructibleFrom<meta::detail::RingValue<Ring>, Args...>)
-constexpr decltype(auto) emplace_back(Ring& ring, Args&&... args) {
+constexpr auto emplace_back(Ring& ring, Args&&... args) -> decltype(auto) {
     auto size = ring::size(ring);
     return invoke_as_fallible([&] {
                return ring::reserve(ring, size + 1);
@@ -141,7 +141,7 @@ constexpr decltype(auto) emplace_back(Ring& ring, Args&&... args) {
 template<concepts::detail::MutableRing Ring, concepts::InputContainer Con, typename T = meta::detail::RingValue<Ring>,
          typename R = meta::detail::RingAllocResult<Ring>>
 requires(concepts::ContainerCompatible<Con, T>)
-constexpr R append_container(Ring& ring, Con&& container) {
+constexpr auto append_container(Ring& ring, Con&& container) -> R {
     return container::sequence(util::forward<Con>(container), [&]<typename X>(X&& value) {
         return as_fallible(ring::emplace_back(ring, util::forward<X>(value)));
     });
@@ -160,7 +160,7 @@ constexpr auto pop_back(concepts::detail::MutableRing auto& ring) {
 
 template<concepts::detail::MutableRing Ring, typename... Args>
 requires(concepts::ConstructibleFrom<meta::detail::RingValue<Ring>, Args...>)
-constexpr decltype(auto) emplace_front(Ring& ring, Args&&... args) {
+constexpr auto emplace_front(Ring& ring, Args&&... args) -> decltype(auto) {
     auto size = ring::size(ring);
     return invoke_as_fallible([&] {
                return ring::reserve(ring, size + 1);
@@ -179,7 +179,7 @@ constexpr decltype(auto) emplace_front(Ring& ring, Args&&... args) {
 template<concepts::detail::MutableRing Ring, concepts::InputContainer Con, typename T = meta::detail::RingValue<Ring>,
          typename R = meta::detail::RingAllocResult<Ring>>
 requires(concepts::ContainerCompatible<Con, T>)
-constexpr R prepend_container(Ring& ring, Con&& container) {
+constexpr auto prepend_container(Ring& ring, Con&& container) -> R {
     return container::sequence(util::forward<Con>(container), [&]<typename X>(X&& value) {
         return as_fallible(ring::emplace_front(ring, util::forward<X>(value)));
     });

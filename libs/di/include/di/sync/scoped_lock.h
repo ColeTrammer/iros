@@ -17,7 +17,7 @@ public:
     }
 
     ScopedLock(ScopedLock const&) = delete;
-    ScopedLock& operator=(ScopedLock const&) = delete;
+    auto operator=(ScopedLock const&) -> ScopedLock& = delete;
 
     constexpr ~ScopedLock() {
         tuple_for_each(

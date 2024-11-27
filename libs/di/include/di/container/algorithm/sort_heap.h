@@ -13,7 +13,7 @@ namespace detail {
         template<concepts::RandomAccessIterator It, concepts::SentinelFor<It> Sent, typename Comp = function::Compare,
                  typename Proj = function::Identity>
         requires(concepts::Sortable<It, Comp, Proj>)
-        constexpr It operator()(It first, Sent last, Comp comp = {}, Proj proj = {}) const {
+        constexpr auto operator()(It first, Sent last, Comp comp = {}, Proj proj = {}) const -> It {
             if (first == last) {
                 return first;
             }
@@ -28,7 +28,8 @@ namespace detail {
         template<concepts::RandomAccessContainer Con, typename Comp = function::Compare,
                  typename Proj = function::Identity>
         requires(concepts::Sortable<meta::ContainerIterator<Con>, Comp, Proj>)
-        constexpr meta::BorrowedIterator<Con> operator()(Con&& container, Comp comp = {}, Proj proj = {}) const {
+        constexpr auto operator()(Con&& container, Comp comp = {}, Proj proj = {}) const
+            -> meta::BorrowedIterator<Con> {
             return (*this)(container::begin(container), container::end(container), util::ref(comp), util::ref(proj));
         }
     };

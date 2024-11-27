@@ -31,25 +31,25 @@ public:
         m_count = Representation(other.count()) * Representation(conversion_factor.numerator());
     }
 
-    Duration& operator=(Duration const&) = default;
+    auto operator=(Duration const&) -> Duration& = default;
 
-    constexpr Representation count() const { return m_count; }
+    constexpr auto count() const -> Representation { return m_count; }
 
     constexpr auto operator+() const { return meta::CommonType<Duration> { count() }; }
     constexpr auto operator-() const { return meta::CommonType<Duration> { -count() }; }
 
-    constexpr Duration& operator++() { return ++m_count, *this; }
-    constexpr Duration operator++(int) { return Duration(m_count++); }
+    constexpr auto operator++() -> Duration& { return ++m_count, *this; }
+    constexpr auto operator++(int) -> Duration { return Duration(m_count++); }
 
-    constexpr Duration& operator--() { return --m_count, *this; }
-    constexpr Duration operator--(int) { return Duration(m_count--); }
+    constexpr auto operator--() -> Duration& { return --m_count, *this; }
+    constexpr auto operator--(int) -> Duration { return Duration(m_count--); }
 
-    constexpr Duration& operator+=(Duration const& other) { return m_count += other.count(), *this; }
-    constexpr Duration& operator-=(Duration const& other) { return m_count -= other.count(), *this; }
-    constexpr Duration& operator*=(Representation const& other) { return m_count *= other, *this; }
-    constexpr Duration& operator/=(Representation const& other) { return m_count /= other, *this; }
-    constexpr Duration& operator%=(Representation const& other) { return m_count %= other, *this; }
-    constexpr Duration& operator%=(Duration const& other) { return m_count %= other.count(), *this; }
+    constexpr auto operator+=(Duration const& other) -> Duration& { return m_count += other.count(), *this; }
+    constexpr auto operator-=(Duration const& other) -> Duration& { return m_count -= other.count(), *this; }
+    constexpr auto operator*=(Representation const& other) -> Duration& { return m_count *= other, *this; }
+    constexpr auto operator/=(Representation const& other) -> Duration& { return m_count /= other, *this; }
+    constexpr auto operator%=(Representation const& other) -> Duration& { return m_count %= other, *this; }
+    constexpr auto operator%=(Duration const& other) -> Duration& { return m_count %= other.count(), *this; }
 
 private:
     Representation m_count;
@@ -105,7 +105,7 @@ constexpr auto operator%(Duration<Rep1, Period1> const& a, Duration<Rep2, Period
 }
 
 template<typename Rep1, math::detail::IsRatio Period1, concepts::CommonWith<Rep1> Rep2, math::detail::IsRatio Period2>
-constexpr bool operator==(Duration<Rep1, Period1> const& a, Duration<Rep2, Period2> const& b) {
+constexpr auto operator==(Duration<Rep1, Period1> const& a, Duration<Rep2, Period2> const& b) -> bool {
     using D = meta::CommonType<Duration<Rep1, Period1>, Duration<Rep2, Period2>>;
     return D(a).count() == D(b).count();
 }

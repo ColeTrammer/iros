@@ -31,7 +31,7 @@ private:
 
         constexpr auto base() const { return m_base; }
 
-        constexpr Value operator*() const {
+        constexpr auto operator*() const -> Value {
             return container::reconstruct(in_place_type<View>, m_base, container::begin(m_next));
         }
 
@@ -53,7 +53,7 @@ private:
     private:
         friend struct Sentinel;
 
-        constexpr friend bool operator==(Iterator const& a, Iterator const& b) {
+        constexpr friend auto operator==(Iterator const& a, Iterator const& b) -> bool {
             return a.m_base == b.m_base && a.m_trailing_empty == b.m_trailing_empty;
         }
 
@@ -70,7 +70,7 @@ private:
         constexpr explicit Sentinel(SplitView& parent) : m_base(container::end(parent.m_base)) {}
 
     private:
-        constexpr friend bool operator==(Iterator const& a, Sentinel const& b) {
+        constexpr friend auto operator==(Iterator const& a, Sentinel const& b) -> bool {
             return a.m_base == b.m_base && !a.m_trailing_empty;
         }
 
@@ -90,14 +90,14 @@ public:
     constexpr SplitView(Con&& container, meta::ContainerValue<Con> value)
         : m_base(view::all(util::forward<Con>(container))), m_pattern(SingleView { util::move(value) }) {}
 
-    constexpr View base() const&
+    constexpr auto base() const& -> View
     requires(concepts::CopyConstructible<View>)
     {
         return m_base;
     }
-    constexpr View base() && { return util::move(m_base); }
+    constexpr auto base() && -> View { return util::move(m_base); }
 
-    constexpr Iterator begin() {
+    constexpr auto begin() -> Iterator {
         if (!m_cached_begin) {
             m_cached_begin = this->find_next(container::begin(m_base));
         }
@@ -115,7 +115,7 @@ public:
     }
 
 private:
-    constexpr Value find_next(meta::ContainerIterator<View> it) {
+    constexpr auto find_next(meta::ContainerIterator<View> it) -> Value {
         auto [start, end] = container::search(container::View(it, container::end(m_base)), m_pattern);
         if (start != container::end(m_base) && container::empty(m_pattern)) {
             ++start;

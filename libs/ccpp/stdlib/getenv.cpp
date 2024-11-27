@@ -1,5 +1,5 @@
 #include <stdlib.h>
 
-extern "C" char* getenv(char const*) {
+extern "C" auto getenv(char const*) -> char* {
     return nullptr;
 }

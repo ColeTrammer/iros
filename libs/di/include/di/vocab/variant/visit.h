@@ -22,7 +22,7 @@ namespace detail {
         } -> concepts::ImplicitlyConvertibleTo<R>;
     })
     struct VisitHelper<meta::List<Constexpr<indices>...>, R, Vis, Vars...> {
-        constexpr static R call(Vis&& visitor, Vars&&... variants) {
+        constexpr static auto call(Vis&& visitor, Vars&&... variants) -> R {
             return function::invoke_r<R>(util::forward<Vis>(visitor),
                                          util::get<indices>(util::forward<Vars>(variants))...);
         }
@@ -36,7 +36,7 @@ requires(requires {
         return Array { (&detail::VisitHelper<Idx, R, Vis, Vars...>::call)... };
     }(Indices {});
 })
-constexpr R visit(Vis&& visitor, Vars&&... variants) {
+constexpr auto visit(Vis&& visitor, Vars&&... variants) -> R {
     auto table = []<concepts::TypeList... Idx>(meta::List<Idx...>) {
         return Array { (&detail::VisitHelper<Idx, R, Vis, Vars...>::call)... };
     }(Indices {});
@@ -57,7 +57,7 @@ constexpr R visit(Vis&& visitor, Vars&&... variants) {
 
 template<typename Vis, concepts::VariantLike... Vars,
          typename R = decltype(function::invoke(util::declval<Vis>(), util::get<0>(util::declval<Vars>())...))>
-constexpr decltype(auto) visit(Vis&& visitor, Vars&&... variants)
+constexpr auto visit(Vis&& visitor, Vars&&... variants) -> decltype(auto)
 requires(requires { visit<R>(util::forward<Vis>(visitor), util::forward<Vars>(variants)...); })
 {
     return visit<R>(util::forward<Vis>(visitor), util::forward<Vars>(variants)...);

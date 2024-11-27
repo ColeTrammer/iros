@@ -1,6 +1,6 @@
 #include <ccpp/bits/file_implementation.h>
 
 // https://pubs.opengroup.org/onlinepubs/9699919799/functions/getchar.html
-extern "C" int getchar(void) {
+extern "C" auto getchar(void) -> int {
     return getc(stdin);
 }

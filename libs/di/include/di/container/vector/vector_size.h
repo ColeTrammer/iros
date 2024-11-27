@@ -4,7 +4,7 @@
 #include <di/types/prelude.h>
 
 namespace di::container::vector {
-constexpr size_t size(concepts::detail::ConstantVector auto const& vector) {
+constexpr auto size(concepts::detail::ConstantVector auto const& vector) -> size_t {
     return vector.span().size();
 }
 }

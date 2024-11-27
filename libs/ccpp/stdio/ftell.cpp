@@ -3,7 +3,7 @@
 
 namespace ccpp {
 // https://pubs.opengroup.org/onlinepubs/9699919799/functions/ftell.html
-extern "C" long ftell(FILE* file) {
+extern "C" auto ftell(FILE* file) -> long {
     return file->locked.with_lock([](File& file) {
         auto result = lseek(file.file.file_descriptor(), 0, SEEK_CUR);
         if (result == -1) {

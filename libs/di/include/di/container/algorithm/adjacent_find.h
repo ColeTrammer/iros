@@ -11,7 +11,7 @@ namespace detail {
     struct AdjacentFindFunction {
         template<concepts::ForwardIterator Iter, concepts::SentinelFor<Iter> Sent, typename Proj = function::Identity,
                  concepts::IndirectBinaryPredicate<meta::Projected<Iter, Proj>> Pred = function::Equal>
-        constexpr Iter operator()(Iter fast, Sent last, Pred pred = {}, Proj proj = {}) const {
+        constexpr auto operator()(Iter fast, Sent last, Pred pred = {}, Proj proj = {}) const -> Iter {
             if (fast == last) {
                 return fast;
             }
@@ -27,7 +27,8 @@ namespace detail {
         template<concepts::ForwardContainer Con, typename Proj = function::Identity,
                  concepts::IndirectBinaryPredicate<meta::Projected<meta::ContainerIterator<Con>, Proj>> Pred =
                      function::Equal>
-        constexpr meta::BorrowedIterator<Con> operator()(Con&& container, Pred pred = {}, Proj proj = {}) const {
+        constexpr auto operator()(Con&& container, Pred pred = {}, Proj proj = {}) const
+            -> meta::BorrowedIterator<Con> {
             return (*this)(container::begin(container), container::end(container), util::ref(pred), util::ref(proj));
         }
     };

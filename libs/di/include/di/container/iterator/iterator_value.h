@@ -10,6 +10,6 @@ constexpr inline struct IteratorValueFunction {
     constexpr auto operator()(types::InPlaceType<T> x) const -> decltype(function::tag_invoke(*this, x));
 
     template<typename T>
-    constexpr InPlaceType<meta::RemoveCV<T>> operator()(types::InPlaceType<T*>) const;
+    constexpr auto operator()(types::InPlaceType<T*>) const -> InPlaceType<meta::RemoveCV<T>>;
 } iterator_value;
 }

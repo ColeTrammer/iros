@@ -37,7 +37,7 @@ struct DataFunction : function::pipeline::EnablePipeline {
     template<typename T>
     requires(enable_borrowed_container(types::in_place_type<meta::RemoveCV<T>>) &&
              (detail::CustomData<T> || detail::MemberData<T> || detail::BeginData<T>) )
-    constexpr meta::AddPointer<meta::ContainerReference<T>> operator()(T&& container) const {
+    constexpr auto operator()(T&& container) const -> meta::AddPointer<meta::ContainerReference<T>> {
         if constexpr (detail::CustomData<T>) {
             return function::tag_invoke(*this, util::forward<T>(container));
         } else if constexpr (detail::MemberData<T>) {

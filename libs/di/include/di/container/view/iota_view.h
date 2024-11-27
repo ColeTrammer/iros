@@ -83,18 +83,16 @@ private:
         Iterator(Iterator const&) = default;
         Iterator(Iterator&&) = default;
 
-        Iterator& operator=(Iterator const&) = default;
-        Iterator& operator=(Iterator&&) = default;
+        auto operator=(Iterator const&) -> Iterator& = default;
+        auto operator=(Iterator&&) -> Iterator& = default;
 
         Iterator(Iterator const&)
         requires(!detail::IotaIncrementable<T>)
         = delete;
 
-        Iterator& operator=(Iterator const&)
-        requires(!detail::IotaIncrementable<T>)
-        = delete;
+        auto operator=(Iterator const&) -> Iterator& requires(!detail::IotaIncrementable<T>) = delete;
 
-        constexpr T operator*() const { return m_value; }
+        constexpr auto operator*() const -> T { return m_value; }
 
         constexpr void advance_one() { ++m_value; }
 
@@ -122,7 +120,7 @@ private:
         friend class IotaView;
         friend class Sentinel;
 
-        constexpr friend bool operator==(Iterator const& a, Iterator const& b)
+        constexpr friend auto operator==(Iterator const& a, Iterator const& b) -> bool
         requires(concepts::EqualityComparable<T>)
         {
             return a.m_value == b.m_value;
@@ -134,7 +132,7 @@ private:
             return a.m_value <=> b.m_value;
         }
 
-        constexpr friend SSizeType operator-(Iterator const& a, Iterator const& b)
+        constexpr friend auto operator-(Iterator const& a, Iterator const& b) -> SSizeType
         requires(detail::IotaAdvancable<T>)
         {
             if constexpr (concepts::SignedInteger<T>) {
@@ -156,12 +154,14 @@ private:
         constexpr Sentinel() = default;
         constexpr explicit Sentinel(Bound bound) : m_bound(bound) {}
 
-        constexpr SSizeType difference(Iterator const& a) const { return -(a.m_value - this->m_bound); }
+        constexpr auto difference(Iterator const& a) const -> SSizeType { return -(a.m_value - this->m_bound); }
 
     private:
         friend class IotaView;
 
-        constexpr friend bool operator==(Iterator const& a, Sentinel const& b) { return a.m_value == b.m_bound; }
+        constexpr friend auto operator==(Iterator const& a, Sentinel const& b) -> bool {
+            return a.m_value == b.m_bound;
+        }
 
         Bound m_bound;
     };
@@ -187,7 +187,7 @@ public:
     requires(!is_bounded)
         : m_value(first.m_value) {}
 
-    constexpr Iterator begin() const { return Iterator(m_value); }
+    constexpr auto begin() const -> Iterator { return Iterator(m_value); }
 
     constexpr auto end() const {
         if constexpr (is_bounded) {
@@ -197,7 +197,7 @@ public:
         }
     }
 
-    constexpr Iterator end() const
+    constexpr auto end() const -> Iterator
     requires(concepts::SameAs<T, Bound>)
     {
         return Iterator(m_bound);

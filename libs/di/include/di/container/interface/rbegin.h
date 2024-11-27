@@ -36,7 +36,7 @@ struct RBeginFunction : function::pipeline::EnablePipeline {
     template<typename T>
     requires(enable_borrowed_container(types::in_place_type<meta::RemoveCV<T>>) &&
              (detail::CustomRBegin<T> || detail::MemberRBegin<T> || detail::ReverseIteratorRBegin<T>) )
-    constexpr concepts::Iterator auto operator()(T&& container) const {
+    constexpr auto operator()(T&& container) const -> concepts::Iterator auto {
         if constexpr (detail::CustomRBegin<T>) {
             return function::tag_invoke(*this, util::forward<T>(container));
         } else if constexpr (detail::MemberRBegin<T>) {

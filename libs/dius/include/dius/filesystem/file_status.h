@@ -14,14 +14,14 @@ public:
     constexpr explicit FileStatus(FileType type, Perms permissions = Perms::Unknown)
         : m_type(type), m_permsissions(permissions) {}
 
-    FileStatus& operator=(FileStatus const&) = default;
-    FileStatus& operator=(FileStatus&&) = default;
+    auto operator=(FileStatus const&) -> FileStatus& = default;
+    auto operator=(FileStatus&&) -> FileStatus& = default;
 
-    constexpr FileType type() const { return m_type; }
-    constexpr Perms permissions() const { return m_permsissions; }
+    constexpr auto type() const -> FileType { return m_type; }
+    constexpr auto permissions() const -> Perms { return m_permsissions; }
 
 private:
-    constexpr friend bool operator==(FileStatus const& a, FileStatus const& b) {
+    constexpr friend auto operator==(FileStatus const& a, FileStatus const& b) -> bool {
         return a.type() == b.type() && a.permissions() == b.permissions();
     }
 

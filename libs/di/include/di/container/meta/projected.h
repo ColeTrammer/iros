@@ -22,15 +22,16 @@ struct Projected {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wundefined-internal"
 #endif
-    Reference operator*() const;
+    auto operator*() const -> Reference;
 #ifdef DI_CLANG
 #pragma GCC diagnostic pop
 #endif
 
-    constexpr friend InPlaceType<Value> tag_invoke(types::Tag<container::iterator_value>, InPlaceType<Projected>) {
+    constexpr friend auto tag_invoke(types::Tag<container::iterator_value>, InPlaceType<Projected>)
+        -> InPlaceType<Value> {
         return in_place_type<Value>;
     }
-    constexpr friend SSizeType tag_invoke(types::Tag<container::iterator_ssize_type>, InPlaceType<Projected>) {
+    constexpr friend auto tag_invoke(types::Tag<container::iterator_ssize_type>, InPlaceType<Projected>) -> SSizeType {
         return util::declval<SSizeType>();
     }
 };

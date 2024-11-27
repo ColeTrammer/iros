@@ -14,7 +14,7 @@ namespace detail {
     public:
         template<typename T, typename U>
         requires(concepts::Invocable<F&, U, T>)
-        meta::InvokeResult<F&, U, T> operator()(T&&, U&&);
+        auto operator()(T&&, U&&) -> meta::InvokeResult<F&, U, T>;
     };
 }
 

@@ -27,15 +27,13 @@ public:
     CountedIterator(CountedIterator const&) = default;
     CountedIterator(CountedIterator&&) = default;
 
-    CountedIterator& operator=(CountedIterator const&) = default;
-    CountedIterator& operator=(CountedIterator&&) = default;
+    auto operator=(CountedIterator const&) -> CountedIterator& = default;
+    auto operator=(CountedIterator&&) -> CountedIterator& = default;
 
     CountedIterator(CountedIterator const&)
     requires(!concepts::ForwardIterator<Iter>)
     = delete;
-    CountedIterator& operator=(CountedIterator const&)
-    requires(!concepts::ForwardIterator<Iter>)
-    = delete;
+    auto operator=(CountedIterator const&) -> CountedIterator& requires(!concepts::ForwardIterator<Iter>) = delete;
 
     constexpr CountedIterator(Iter iterator, SSizeType n) : m_iterator(util::move(iterator)), m_count(n) {}
 
@@ -43,16 +41,16 @@ public:
     requires(concepts::ConvertibleTo<It const&, Iter>)
     constexpr CountedIterator(CountedIterator<It> const& other) : m_iterator(other.base()), m_count(other.count()) {}
 
-    constexpr Iter const& base() const& { return m_iterator; }
-    constexpr Iter base() && { return util::move(m_iterator); }
+    constexpr auto base() const& -> Iter const& { return m_iterator; }
+    constexpr auto base() && -> Iter { return util::move(m_iterator); }
 
-    constexpr SSizeType count() const { return m_count; }
+    constexpr auto count() const -> SSizeType { return m_count; }
 
-    constexpr decltype(auto) operator*() {
+    constexpr auto operator*() -> decltype(auto) {
         DI_ASSERT(count() > 0);
         return *m_iterator;
     }
-    constexpr decltype(auto) operator*() const
+    constexpr auto operator*() const -> decltype(auto)
     requires(concepts::Dereferenceable<Iter const>)
     {
         DI_ASSERT(count() > 0);
@@ -85,25 +83,25 @@ public:
     }
 
 private:
-    constexpr friend bool operator==(CountedIterator const& a, CountedIterator const& b) {
+    constexpr friend auto operator==(CountedIterator const& a, CountedIterator const& b) -> bool {
         return a.count() == b.count();
     }
 
-    constexpr friend bool operator==(CountedIterator const& a, DefaultSentinel) { return a.count() == 0; }
+    constexpr friend auto operator==(CountedIterator const& a, DefaultSentinel) -> bool { return a.count() == 0; }
 
-    constexpr friend strong_ordering operator<=>(CountedIterator const& a, CountedIterator const& b) {
+    constexpr friend auto operator<=>(CountedIterator const& a, CountedIterator const& b) -> strong_ordering {
         return a.count() <=> b.count();
     }
 
-    constexpr friend SSizeType operator-(CountedIterator const& a, CountedIterator const& b) {
+    constexpr friend auto operator-(CountedIterator const& a, CountedIterator const& b) -> SSizeType {
         return b.count() - a.count();
     }
 
-    constexpr friend SSizeType operator-(CountedIterator const& a, DefaultSentinel) { return -a.count(); }
+    constexpr friend auto operator-(CountedIterator const& a, DefaultSentinel) -> SSizeType { return -a.count(); }
 
-    constexpr friend SSizeType operator-(DefaultSentinel, CountedIterator const& b) { return b.count(); }
+    constexpr friend auto operator-(DefaultSentinel, CountedIterator const& b) -> SSizeType { return b.count(); }
 
-    constexpr friend decltype(auto) tag_invoke(types::Tag<iterator_move>, CountedIterator const& self)
+    constexpr friend auto tag_invoke(types::Tag<iterator_move>, CountedIterator const& self) -> decltype(auto)
     requires(concepts::InputIterator<Iter>)
     {
         DI_ASSERT(self.count() > 0);

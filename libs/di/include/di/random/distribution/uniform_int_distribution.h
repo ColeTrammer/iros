@@ -17,11 +17,13 @@ public:
         constexpr Param() : Param(0) {}
         constexpr explicit Param(T a, T b = math::NumericLimits<T>::max) : m_a(a), m_b(b) {}
 
-        constexpr T a() const { return m_a; }
-        constexpr T b() const { return m_b; }
+        constexpr auto a() const -> T { return m_a; }
+        constexpr auto b() const -> T { return m_b; }
 
     private:
-        constexpr friend bool operator==(Param const& a, Param const& b) { return a.a() == b.a() && a.b() == b.b(); }
+        constexpr friend auto operator==(Param const& a, Param const& b) -> bool {
+            return a.a() == b.a() && a.b() == b.b();
+        }
 
         T m_a { 0 };
         T m_b { 0 };
@@ -35,13 +37,13 @@ public:
 
     template<typename Gen>
     requires(concepts::UniformRandomBitGenerator<meta::RemoveReference<Gen>>)
-    constexpr T operator()(Gen&& generator) const {
+    constexpr auto operator()(Gen&& generator) const -> T {
         return (*this)(generator, param());
     }
 
     template<typename Gen>
     requires(concepts::UniformRandomBitGenerator<meta::RemoveReference<Gen>>)
-    constexpr T operator()(Gen&& generator, Param const& param) const {
+    constexpr auto operator()(Gen&& generator, Param const& param) const -> T {
         using U = meta::CommonType<meta::MakeUnsigned<T>, typename meta::RemoveReference<Gen>::Result>;
 
         // TODO: adopt a more sophisticated approach for implementing this function
@@ -112,17 +114,17 @@ public:
         }
     }
 
-    constexpr T a() const { return m_param.a(); }
-    constexpr T b() const { return m_param.b(); }
+    constexpr auto a() const -> T { return m_param.a(); }
+    constexpr auto b() const -> T { return m_param.b(); }
 
-    constexpr Param param() const { return m_param; }
+    constexpr auto param() const -> Param { return m_param; }
     constexpr void param(Param const& param) const { m_param = param; }
 
-    constexpr T min() const { return a(); }
-    constexpr T max() const { return b(); }
+    constexpr auto min() const -> T { return a(); }
+    constexpr auto max() const -> T { return b(); }
 
 private:
-    constexpr friend bool operator==(UniformIntDistribution const& a, UniformIntDistribution const& b) {
+    constexpr friend auto operator==(UniformIntDistribution const& a, UniformIntDistribution const& b) -> bool {
         return a.param() == b.param();
     }
 

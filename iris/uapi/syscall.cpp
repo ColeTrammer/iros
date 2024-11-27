@@ -12,7 +12,7 @@
 #include <iris/uapi/metadata.h>
 
 namespace iris {
-Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
+auto do_syscall(Task& current_task, arch::TaskState& task_state) -> Expected<u64> {
     auto number = task_state.syscall_number();
     switch (number) {
         case SystemCall::debug_print: {

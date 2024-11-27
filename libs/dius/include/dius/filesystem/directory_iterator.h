@@ -17,25 +17,25 @@ class DirectoryIterator
     friend class RecursiveDirectoryIterator;
 
 public:
-    static di::Expected<DirectoryIterator, di::GenericCode> create(di::Path path,
-                                                                   DirectoryOptions options = DirectoryOptions::None);
+    static auto create(di::Path path, DirectoryOptions options = DirectoryOptions::None)
+        -> di::Expected<DirectoryIterator, di::GenericCode>;
 
     DirectoryIterator() = default;
 
     DirectoryIterator(DirectoryIterator const&) = delete;
     DirectoryIterator(DirectoryIterator&&) = default;
 
-    DirectoryIterator& operator=(DirectoryIterator const&) = delete;
-    DirectoryIterator& operator=(DirectoryIterator&&) = default;
+    auto operator=(DirectoryIterator const&) -> DirectoryIterator& = delete;
+    auto operator=(DirectoryIterator&&) -> DirectoryIterator& = default;
 
-    di::Expected<DirectoryEntry const&, di::GenericCode> operator*() const {
+    auto operator*() const -> di::Expected<DirectoryEntry const&, di::GenericCode> {
         return m_current.transform([](auto const& value) {
             return di::cref(value);
         });
     }
 
-    DirectoryIterator begin() { return di::move(*this); }
-    DirectoryIterator end() const { return {}; }
+    auto begin() -> DirectoryIterator { return di::move(*this); }
+    auto end() const -> DirectoryIterator { return {}; }
 
     void advance_one();
 
@@ -48,7 +48,7 @@ private:
         , m_directory_handle(di::move(directory_handle))
         , m_at_end(false) {}
 
-    constexpr friend bool operator==(DirectoryIterator const& a, DirectoryIterator const& b) {
+    constexpr friend auto operator==(DirectoryIterator const& a, DirectoryIterator const& b) -> bool {
         return a.m_at_end == b.m_at_end;
     }
 

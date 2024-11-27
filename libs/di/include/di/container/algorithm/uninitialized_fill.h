@@ -11,7 +11,7 @@ namespace detail {
     struct UninitializedFillFunction {
         template<concepts::UninitForwardIterator Out, concepts::UninitSentinelFor<Out> OutSent, typename T>
         requires(concepts::ConstructibleFrom<meta::IteratorValue<Out>, T const&>)
-        constexpr Out operator()(Out out, OutSent out_last, T const& value) const {
+        constexpr auto operator()(Out out, OutSent out_last, T const& value) const -> Out {
             for (; out != out_last; ++out) {
                 util::construct_at(util::addressof(*out), value);
             }
@@ -20,7 +20,7 @@ namespace detail {
 
         template<concepts::UninitForwardContainer Out, typename T>
         requires(concepts::ConstructibleFrom<meta::ContainerValue<Out>, T const&>)
-        constexpr meta::BorrowedIterator<Out> operator()(Out&& out, T const& value) const {
+        constexpr auto operator()(Out&& out, T const& value) const -> meta::BorrowedIterator<Out> {
             return (*this)(container::begin(out), container::end(out), value);
         }
     };

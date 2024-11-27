@@ -6,7 +6,7 @@
 namespace di::vocab {
 namespace detail {
     struct LiftBoolFunction : function::pipeline::EnablePipeline {
-        constexpr Optional<void> operator()(bool value) const { return Optional<void>(value); }
+        constexpr auto operator()(bool value) const -> Optional<void> { return Optional<void>(value); }
     };
 }
 

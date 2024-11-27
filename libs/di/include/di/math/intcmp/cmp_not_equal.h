@@ -6,7 +6,7 @@ namespace di::math {
 namespace detail {
     struct CmpNotEqualFunction {
         template<concepts::Integer T, concepts::Integer U>
-        constexpr bool operator()(T a, U b) const {
+        constexpr auto operator()(T a, U b) const -> bool {
             return !cmp_equal(a, b);
         }
     };

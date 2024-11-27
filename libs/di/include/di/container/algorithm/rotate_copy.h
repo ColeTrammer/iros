@@ -11,7 +11,7 @@ namespace detail {
     struct RotateCopyFunction {
         template<concepts::ForwardIterator It, concepts::SentinelFor<It> Sent, concepts::WeaklyIncrementable Out>
         requires(concepts::IndirectlyCopyable<It, Out>)
-        constexpr InOutResult<It, Out> operator()(It first, It middle, Sent last, Out output) const {
+        constexpr auto operator()(It first, It middle, Sent last, Out output) const -> InOutResult<It, Out> {
             auto copy_left = container::copy(middle, last, util::move(output));
             auto copy_right = container::copy(util::move(first), util::move(middle), util::move(copy_left.out));
             return { util::move(copy_left.in), util::move(copy_right.out) };
@@ -19,8 +19,8 @@ namespace detail {
 
         template<concepts::ForwardContainer Con, concepts::WeaklyIncrementable Out>
         requires(concepts::IndirectlyCopyable<meta::ContainerIterator<Con>, Out>)
-        constexpr InOutResult<meta::BorrowedIterator<Con>, Out>
-        operator()(Con&& container, meta::ContainerIterator<Con> middle, Out output) const {
+        constexpr auto operator()(Con&& container, meta::ContainerIterator<Con> middle, Out output) const
+            -> InOutResult<meta::BorrowedIterator<Con>, Out> {
             return (*this)(container::begin(container), util::move(middle), container::end(container),
                            util::move(output));
         }

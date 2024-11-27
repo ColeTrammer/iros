@@ -10,7 +10,7 @@ public:
     explicit SuperBlock(di::Arc<Inode> root_inode);
     ~SuperBlock();
 
-    di::Arc<Inode> root_inode() const;
+    auto root_inode() const -> di::Arc<Inode>;
 
 private:
     di::Arc<Inode> m_root_inode;

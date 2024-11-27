@@ -7,5 +7,5 @@
 #include <iris/uapi/metadata.h>
 
 namespace iris {
-Expected<void> init_initrd();
+auto init_initrd() -> Expected<void>;
 }

@@ -14,7 +14,7 @@ namespace detail {
     struct IsHeapUntilFunction {
         template<concepts::RandomAccessIterator It, concepts::SentinelFor<It> Sent, typename Proj = function::Identity,
                  concepts::IndirectStrictWeakOrder<meta::Projected<It, Proj>> Comp = function::Compare>
-        constexpr It operator()(It it, Sent last, Comp comp = {}, Proj proj = {}) const {
+        constexpr auto operator()(It it, Sent last, Comp comp = {}, Proj proj = {}) const -> It {
             auto n = container::distance(it, last);
             return is_heap_until_with_size(util::move(it), util::ref(comp), util::ref(proj), n);
         }
@@ -22,14 +22,15 @@ namespace detail {
         template<concepts::RandomAccessContainer Con, typename Proj = function::Identity,
                  concepts::IndirectStrictWeakOrder<meta::Projected<meta::ContainerIterator<Con>, Proj>> Comp =
                      function::Compare>
-        constexpr meta::BorrowedIterator<Con> operator()(Con&& container, Comp comp = {}, Proj proj = {}) const {
+        constexpr auto operator()(Con&& container, Comp comp = {}, Proj proj = {}) const
+            -> meta::BorrowedIterator<Con> {
             return is_heap_until_with_size(container::begin(container), util::ref(comp), util::ref(proj),
                                            container::distance(container));
         }
 
     private:
         template<typename It, typename Comp, typename Proj, typename SSizeType>
-        constexpr static It is_heap_until_with_size(It first, Comp comp, Proj proj, SSizeType n) {
+        constexpr static auto is_heap_until_with_size(It first, Comp comp, Proj proj, SSizeType n) -> It {
             SSizeType parent = 0;
             for (SSizeType child = 1; child != n; ++child) {
                 // If the parent is less than the child, the range is longer a max heap.

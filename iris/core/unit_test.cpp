@@ -3,7 +3,7 @@
 #include <iris/hw/power.h>
 
 namespace iris::test {
-TestManager& TestManager::the() {
+auto TestManager::the() -> TestManager& {
     return global_state_in_boot().unit_test_manager;
 }
 

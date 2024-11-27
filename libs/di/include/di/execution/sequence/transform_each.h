@@ -41,14 +41,14 @@ namespace transform_each_ns {
         public:
             explicit Type(Data<Fun, Rec>* data) : m_data(data) {}
 
-            Rec& base() & { return m_data->receiver; }
-            Rec const& base() const& { return m_data->receiver; }
-            Rec&& base() && { return util::move(m_data->receiver); }
+            auto base() & -> Rec& { return m_data->receiver; }
+            auto base() const& -> Rec const& { return m_data->receiver; }
+            auto base() && -> Rec&& { return util::move(m_data->receiver); }
 
         private:
             template<concepts::Sender Next>
             requires(concepts::Invocable<Fun&, Next>)
-            concepts::NextSender auto set_next(Next&& next) & {
+            auto set_next(Next&& next) & -> concepts::NextSender auto {
                 return execution::set_next(this->base(),
                                            function::invoke(m_data->transformer, util::forward<Next>(next)));
             }
@@ -119,7 +119,7 @@ namespace transform_each_ns {
 
     struct Function {
         template<concepts::Sender Seq, concepts::MovableValue Fun>
-        concepts::SequenceSender auto operator()(Seq&& sequence, Fun&& transformer) const {
+        auto operator()(Seq&& sequence, Fun&& transformer) const -> concepts::SequenceSender auto {
             if constexpr (concepts::TagInvocable<Function, Seq, Fun>) {
                 static_assert(concepts::SequenceSender<meta::InvokeResult<Function, Seq, Fun>>,
                               "The return type of the transform_each function must be a sequence sender.");

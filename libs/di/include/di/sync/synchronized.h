@@ -32,17 +32,17 @@ public:
     Synchronized(Synchronized&&) = delete;
 
     template<concepts::Invocable<Value&> Fun>
-    constexpr meta::InvokeResult<Fun, Value&> with_lock(Fun&& function) {
+    constexpr auto with_lock(Fun&& function) -> meta::InvokeResult<Fun, Value&> {
         auto guard = ScopedLock(m_lock);
         return function::invoke(util::forward<Fun>(function), m_value);
     }
 
     constexpr auto lock() { return LockedReference<Value, Lock>(m_value, m_lock); }
 
-    constexpr Value& get_assuming_no_concurrent_accesses() { return m_value; }
-    constexpr Value const& get_const_assuming_no_concurrent_mutations() const { return m_value; }
+    constexpr auto get_assuming_no_concurrent_accesses() -> Value& { return m_value; }
+    constexpr auto get_const_assuming_no_concurrent_mutations() const -> Value const& { return m_value; }
 
-    Lock& get_lock() { return m_lock; }
+    auto get_lock() -> Lock& { return m_lock; }
 
 private:
     Value m_value {};

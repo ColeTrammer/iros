@@ -148,8 +148,8 @@ namespace first_value_ns {
             explicit Type(NextData<Seq, Rec, Next, R>* next_data, Data<Seq, Rec>* data)
                 : m_next_data(next_data), m_data(data) {}
 
-            R const& base() const& { return m_next_data->next_receiver; }
-            R&& base() && { return util::move(m_next_data->next_receiver); }
+            auto base() const& -> R const& { return m_next_data->next_receiver; }
+            auto base() && -> R&& { return util::move(m_next_data->next_receiver); }
 
         private:
             template<typename... Args>

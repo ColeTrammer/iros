@@ -67,12 +67,12 @@ public:
 
     constexpr ~TupleImpl() = default;
 
-    constexpr TupleImpl& operator=(TupleImpl const&) = default;
-    constexpr TupleImpl& operator=(TupleImpl&&) = default;
+    constexpr auto operator=(TupleImpl const&) -> TupleImpl& = default;
+    constexpr auto operator=(TupleImpl&&) -> TupleImpl& = default;
 
 protected:
     template<concepts::DecaySameAs<TupleImpl> Self>
-    constexpr static meta::Like<Self, T>&& static_get(Self&& self) {
+    constexpr static auto static_get(Self&& self) -> meta::Like<Self, T>&& {
         return static_cast<meta::Like<Self, T>&&>(self.m_value);
     }
 
@@ -111,8 +111,8 @@ public:
     requires(meta::TupleSize<T> == 0)
     constexpr TupleImpl(ConstructTupleImplFromTuplelike, T&&) {}
 
-    constexpr TupleImpl& operator=(TupleImpl const&) = default;
-    constexpr TupleImpl& operator=(TupleImpl&&) = default;
+    constexpr auto operator=(TupleImpl const&) -> TupleImpl& = default;
+    constexpr auto operator=(TupleImpl&&) -> TupleImpl& = default;
 
 protected:
     template<concepts::DecaySameAs<TupleImpl> Self, concepts::TupleLike Tup>

@@ -45,14 +45,14 @@ public:
     requires(concepts::ConstructibleFrom<Reader, T>)
     constexpr explicit JsonDeserializer(T&& reader) : m_reader(util::forward<T>(reader)) {}
 
-    constexpr Result<json::Value> deserialize(InPlaceType<json::Value>) {
+    constexpr auto deserialize(InPlaceType<json::Value>) -> Result<json::Value> {
         auto result = DI_TRY(deserialize_value());
         DI_TRY(skip_whitespace());
         return result;
     }
 
     template<typename T, concepts::InstanceOf<reflection::Fields> M>
-    constexpr Result<T> deserialize(InPlaceType<T>, M fields) {
+    constexpr auto deserialize(InPlaceType<T>, M fields) -> Result<T> {
         // NOTE: for now, this requires T be default constructible.
         auto result = T {};
 
@@ -103,7 +103,7 @@ public:
     }
 
     template<typename T, concepts::InstanceOf<reflection::Enumerators> M>
-    constexpr Result<T> deserialize(InPlaceType<T>, M enumerators) {
+    constexpr auto deserialize(InPlaceType<T>, M enumerators) -> Result<T> {
         DI_TRY(skip_whitespace());
         auto string = DI_TRY(deserialize_string());
         DI_TRY(skip_whitespace());
@@ -127,7 +127,7 @@ public:
 
     template<typename T, concepts::InstanceOf<reflection::Atom> M>
     requires(M::is_bool() || M::is_integer() || M::is_string())
-    constexpr Result<T> deserialize(InPlaceType<T>, M) {
+    constexpr auto deserialize(InPlaceType<T>, M) -> Result<T> {
         if constexpr (M::is_bool()) {
             auto result = DI_TRY(deserialize_bool());
             DI_TRY(skip_whitespace());
@@ -145,7 +145,7 @@ public:
 
     template<typename T, concepts::InstanceOf<reflection::Atom> M>
     requires(M::is_list() && concepts::Deserializable<meta::ContainerValue<T>, JsonDeserializer>)
-    constexpr Result<T> deserialize(InPlaceType<T>, M) {
+    constexpr auto deserialize(InPlaceType<T>, M) -> Result<T> {
         auto result = T {};
 
         DI_TRY(skip_whitespace());
@@ -174,7 +174,7 @@ public:
     template<typename T, concepts::InstanceOf<reflection::Atom> M>
     requires(M::is_map() && concepts::SameAs<json::String, meta::TupleElement<meta::ContainerValue<T>, 0>> &&
              concepts::Deserializable<meta::TupleElement<meta::ContainerValue<T>, 1>, JsonDeserializer>)
-    constexpr Result<T> deserialize(InPlaceType<T>, M) {
+    constexpr auto deserialize(InPlaceType<T>, M) -> Result<T> {
         auto result = T {};
 
         DI_TRY(skip_whitespace());
@@ -205,22 +205,22 @@ public:
         return result;
     }
 
-    constexpr Result<json::Null> deserialize(InPlaceType<json::Null>) {
+    constexpr auto deserialize(InPlaceType<json::Null>) -> Result<json::Null> {
         auto result = DI_TRY(deserialize_null());
         DI_TRY(skip_whitespace());
         return result;
     }
 
-    constexpr Reader& reader() & { return m_reader; }
-    constexpr Reader const& reader() const& { return m_reader; }
-    constexpr Reader&& reader() && { return util::move(*this).m_reader; }
+    constexpr auto reader() & -> Reader& { return m_reader; }
+    constexpr auto reader() const& -> Reader const& { return m_reader; }
+    constexpr auto reader() && -> Reader&& { return util::move(*this).m_reader; }
 
 private:
-    constexpr static bool is_whitespace(c32 code_point) {
+    constexpr static auto is_whitespace(c32 code_point) -> bool {
         return code_point == ' ' || code_point == '\t' || code_point == '\n' || code_point == '\r';
     }
 
-    constexpr Result<void> expect(c32 expected) {
+    constexpr auto expect(c32 expected) -> Result<void> {
         auto code_point = DI_TRY(next_code_point());
         if (!code_point || *code_point != expected) {
             return vocab::Unexpected(BasicError::InvalidArgument);
@@ -228,7 +228,7 @@ private:
         return {};
     }
 
-    constexpr Result<void> fill_next_code_point() {
+    constexpr auto fill_next_code_point() -> Result<void> {
         // FIXME: handle UTF-8.
         auto byte = vocab::Array<types::byte, 1> {};
         auto nread = DI_TRY(io::read_some(m_reader, byte));
@@ -239,7 +239,7 @@ private:
         return {};
     }
 
-    constexpr Result<vocab::Optional<c32>> peek_next_code_point() {
+    constexpr auto peek_next_code_point() -> Result<vocab::Optional<c32>> {
         if (m_at_end) {
             return vocab::nullopt;
         }
@@ -254,7 +254,7 @@ private:
 
     constexpr void consume() { m_next_code_point = vocab::nullopt; }
 
-    constexpr Result<vocab::Optional<c32>> next_code_point() {
+    constexpr auto next_code_point() -> Result<vocab::Optional<c32>> {
         if (m_at_end) {
             return vocab::nullopt;
         }
@@ -267,7 +267,7 @@ private:
         return *util::exchange(m_next_code_point, vocab::nullopt);
     }
 
-    constexpr Result<c32> require_next_code_point() {
+    constexpr auto require_next_code_point() -> Result<c32> {
         auto code_point = DI_TRY(next_code_point());
         if (!code_point) {
             return vocab::Unexpected(BasicError::InvalidArgument);
@@ -275,7 +275,7 @@ private:
         return *code_point;
     }
 
-    constexpr Result<void> skip_whitespace() {
+    constexpr auto skip_whitespace() -> Result<void> {
         for (;;) {
             auto code_point = DI_TRY(peek_next_code_point());
             if (!code_point || !is_whitespace(*code_point)) {
@@ -285,7 +285,7 @@ private:
         }
     }
 
-    constexpr Result<json::Value> deserialize_value() {
+    constexpr auto deserialize_value() -> Result<json::Value> {
         DI_TRY(skip_whitespace());
 
         auto code_point = DI_TRY(peek_next_code_point());
@@ -323,7 +323,7 @@ private:
         }
     }
 
-    constexpr Result<json::Null> deserialize_null() {
+    constexpr auto deserialize_null() -> Result<json::Null> {
         DI_TRY(skip_whitespace());
 
         DI_TRY(expect(U'n'));
@@ -333,7 +333,7 @@ private:
         return json::null;
     }
 
-    constexpr Result<json::Bool> deserialize_bool() {
+    constexpr auto deserialize_bool() -> Result<json::Bool> {
         DI_TRY(skip_whitespace());
 
         auto code_point = DI_TRY(require_next_code_point());
@@ -354,7 +354,7 @@ private:
         }
     }
 
-    constexpr Result<json::Bool> deserialize_true() {
+    constexpr auto deserialize_true() -> Result<json::Bool> {
         DI_TRY(skip_whitespace());
         DI_TRY(expect(U't'));
         DI_TRY(expect(U'r'));
@@ -363,7 +363,7 @@ private:
         return true;
     }
 
-    constexpr Result<json::Bool> deserialize_false() {
+    constexpr auto deserialize_false() -> Result<json::Bool> {
         DI_TRY(skip_whitespace());
         DI_TRY(expect(U'f'));
         DI_TRY(expect(U'a'));
@@ -373,7 +373,7 @@ private:
         return false;
     }
 
-    constexpr Result<json::String> deserialize_string() {
+    constexpr auto deserialize_string() -> Result<json::String> {
         DI_TRY(skip_whitespace());
         DI_TRY(expect(U'"'));
 
@@ -393,7 +393,7 @@ private:
     }
 
     template<concepts::Integer T>
-    constexpr Result<json::Number> deserialize_number(InPlaceType<T>) {
+    constexpr auto deserialize_number(InPlaceType<T>) -> Result<json::Number> {
         DI_TRY(skip_whitespace());
         auto first_code_point = DI_TRY(require_next_code_point());
 
@@ -433,7 +433,7 @@ private:
         return *result;
     }
 
-    constexpr Result<json::Array> deserialize_array() {
+    constexpr auto deserialize_array() -> Result<json::Array> {
         DI_TRY(skip_whitespace());
         DI_TRY(expect(U'['));
 
@@ -457,7 +457,7 @@ private:
         return array;
     }
 
-    constexpr Result<json::Object> deserialize_object() {
+    constexpr auto deserialize_object() -> Result<json::Object> {
         DI_TRY(skip_whitespace());
         DI_TRY(expect(U'{'));
 
@@ -531,7 +531,7 @@ inline namespace literals {
     inline namespace json_literals {
         namespace detail {
             template<container::FixedString string>
-            consteval bool valid_json_literal() {
+            consteval auto valid_json_literal() -> bool {
                 // NOTE: GCC does not think that the following is a constant expression, but clang does.
 #ifdef DI_CLANG
                 auto string_view = container::fixed_string_to_utf8_string_view<string>();

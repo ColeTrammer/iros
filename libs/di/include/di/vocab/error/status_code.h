@@ -40,8 +40,8 @@ public:
 
     constexpr explicit StatusCode(Value&& value) : Base(in_place, util::addressof(Domain::get()), util::move(value)) {}
 
-    StatusCode& operator=(StatusCode const&) = default;
-    StatusCode& operator=(StatusCode&&) = default;
+    auto operator=(StatusCode const&) -> StatusCode& = default;
+    auto operator=(StatusCode&&) -> StatusCode& = default;
 
     ~StatusCode() = default;
 

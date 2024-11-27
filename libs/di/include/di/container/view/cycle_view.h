@@ -66,7 +66,7 @@ private:
         constexpr auto base() const& { return m_base; }
         constexpr auto base() && { return util::move(m_base); }
 
-        constexpr decltype(auto) operator*() const { return *m_base; }
+        constexpr auto operator*() const -> decltype(auto) { return *m_base; }
 
         constexpr void advance_one() {
             if (++m_base == get_end()) {
@@ -105,7 +105,7 @@ private:
         template<bool>
         friend class Iterator;
 
-        constexpr friend bool operator==(Iterator const& a, Iterator const& b) {
+        constexpr friend auto operator==(Iterator const& a, Iterator const& b) -> bool {
             return a.m_cycle_number == b.m_cycle_number && a.m_base == b.m_base;
         }
 
@@ -119,7 +119,7 @@ private:
             return a.m_base <=> b.m_base;
         }
 
-        constexpr friend SSizeType<is_const> operator-(Iterator const& a, Iterator const& b)
+        constexpr friend auto operator-(Iterator const& a, Iterator const& b) -> SSizeType<is_const>
         requires(concepts::RandomAccessIterator<Iter<is_const>>)
         {
             auto start = container::begin(a.m_parent->base_ref());
@@ -140,18 +140,20 @@ public:
 
     constexpr CycleView(View view) : m_base(util::move(view)) {}
 
-    constexpr View base() const&
+    constexpr auto base() const& -> View
     requires(concepts::CopyConstructible<View>)
     {
         return m_base;
     }
 
-    constexpr View base() && requires(concepts::CopyConstructible<View>) { return util::move(m_base); }
-
-        constexpr View& base_ref() {
-        return m_base;
+    constexpr auto base() && -> View
+    requires(concepts::CopyConstructible<View>)
+    {
+        return util::move(m_base);
     }
-    constexpr View const& base_ref() const { return m_base; }
+
+    constexpr auto base_ref() -> View& { return m_base; }
+    constexpr auto base_ref() const -> View const& { return m_base; }
 
     constexpr auto begin()
     requires(!concepts::SimpleView<View> || !concepts::CommonContainer<View const>)

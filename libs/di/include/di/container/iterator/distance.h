@@ -17,7 +17,7 @@ namespace detail {
     struct DistanceFunction {
         template<concepts::Iterator Iter, concepts::SentinelFor<Iter> Sent>
         requires(!concepts::SizedSentinelFor<Sent, Iter>)
-        constexpr meta::IteratorSSizeType<Iter> operator()(Iter iter, Sent sent) const {
+        constexpr auto operator()(Iter iter, Sent sent) const -> meta::IteratorSSizeType<Iter> {
             auto distance = meta::IteratorSSizeType<Iter> { 0 };
             for (; iter != sent; ++iter) {
                 ++distance;
@@ -31,7 +31,7 @@ namespace detail {
         }
 
         template<concepts::Container Con>
-        constexpr meta::ContainerSSizeType<Con> operator()(Con&& container) const {
+        constexpr auto operator()(Con&& container) const -> meta::ContainerSSizeType<Con> {
             if constexpr (concepts::SizedContainer<Con>) {
                 return container::ssize(container);
             } else {

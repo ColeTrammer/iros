@@ -18,22 +18,22 @@ struct Field {
 
     template<typename T>
     requires(concepts::Invocable<decltype(pointer), T>)
-    constexpr static decltype(auto) get(T&& object) {
+    constexpr static auto get(T&& object) -> decltype(auto) {
         return function::invoke(pointer, util::forward<T>(object));
     }
 
-    constexpr static bool is_fields() { return false; }
-    constexpr static bool is_field() { return true; }
-    constexpr static bool is_enumerator() { return false; }
-    constexpr static bool is_enumerators() { return false; }
-    constexpr static bool is_atom() { return false; }
-    constexpr static bool is_integer() { return false; }
-    constexpr static bool is_bool() { return false; }
-    constexpr static bool is_string() { return false; }
-    constexpr static bool is_list() { return false; }
-    constexpr static bool is_map() { return false; }
+    constexpr static auto is_fields() -> bool { return false; }
+    constexpr static auto is_field() -> bool { return true; }
+    constexpr static auto is_enumerator() -> bool { return false; }
+    constexpr static auto is_enumerators() -> bool { return false; }
+    constexpr static auto is_atom() -> bool { return false; }
+    constexpr static auto is_integer() -> bool { return false; }
+    constexpr static auto is_bool() -> bool { return false; }
+    constexpr static auto is_string() -> bool { return false; }
+    constexpr static auto is_list() -> bool { return false; }
+    constexpr static auto is_map() -> bool { return false; }
 
-    bool operator==(Field const&) const = default;
+    auto operator==(Field const&) const -> bool = default;
     auto operator<=>(Field const&) const = default;
 };
 
@@ -52,16 +52,16 @@ concept Field = requires {
 namespace di::reflection {
 template<concepts::Field... Fs>
 struct Fields : vocab::Tuple<Fs...> {
-    constexpr static bool is_fields() { return true; }
-    constexpr static bool is_field() { return false; }
-    constexpr static bool is_enumerator() { return false; }
-    constexpr static bool is_enumerators() { return false; }
-    constexpr static bool is_atom() { return false; }
-    constexpr static bool is_integer() { return false; }
-    constexpr static bool is_bool() { return false; }
-    constexpr static bool is_string() { return false; }
-    constexpr static bool is_list() { return false; }
-    constexpr static bool is_map() { return false; }
+    constexpr static auto is_fields() -> bool { return true; }
+    constexpr static auto is_field() -> bool { return false; }
+    constexpr static auto is_enumerator() -> bool { return false; }
+    constexpr static auto is_enumerators() -> bool { return false; }
+    constexpr static auto is_atom() -> bool { return false; }
+    constexpr static auto is_integer() -> bool { return false; }
+    constexpr static auto is_bool() -> bool { return false; }
+    constexpr static auto is_string() -> bool { return false; }
+    constexpr static auto is_list() -> bool { return false; }
+    constexpr static auto is_map() -> bool { return false; }
 };
 
 namespace detail {

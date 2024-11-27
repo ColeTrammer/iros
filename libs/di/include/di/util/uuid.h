@@ -36,21 +36,21 @@ public:
 
     constexpr explicit UUID(ByteArray bytes) { *this = util::bit_cast<UUID>(bytes); }
 
-    constexpr bool null() const { return *this == UUID(); }
+    constexpr auto null() const -> bool { return *this == UUID(); }
     constexpr void clear() { *this = UUID(); }
 
 private:
     friend struct detail::GenerateUUIDFunction;
 
-    constexpr friend bool operator==(UUID a, UUID b) {
+    constexpr friend auto operator==(UUID a, UUID b) -> bool {
         return util::bit_cast<ByteArray>(a) == util::bit_cast<ByteArray>(b);
     }
-    constexpr friend strong_ordering operator<=>(UUID a, UUID b) {
+    constexpr friend auto operator<=>(UUID a, UUID b) -> strong_ordering {
         return util::bit_cast<ByteArray>(a) <=> util::bit_cast<ByteArray>(b);
     }
 
-    constexpr Variant variant() const { return Variant(m_clock_seq_hi_and_res >> 5); }
-    constexpr Version version() const { return Version(m_time_hi_and_version >> 4); }
+    constexpr auto variant() const -> Variant { return Variant(m_clock_seq_hi_and_res >> 5); }
+    constexpr auto version() const -> Version { return Version(m_time_hi_and_version >> 4); }
 
     constexpr void set_to_standard_variant() {
         m_clock_seq_hi_and_res &= 0b11000000;
@@ -62,7 +62,7 @@ private:
         m_time_hi_and_version |= util::to_underlying(type) << 4;
     }
 
-    constexpr bool is_little_endian() const { return variant() == Variant::LittleEndian; }
+    constexpr auto is_little_endian() const -> bool { return variant() == Variant::LittleEndian; }
 
     template<concepts::Encoding Enc>
     constexpr friend auto tag_invoke(types::Tag<format::formatter_in_place>, InPlaceType<UUID>,
@@ -210,7 +210,7 @@ private:
 namespace detail {
     struct GenerateUUIDFunction {
         template<concepts::UniformRandomBitGenerator RNG>
-        constexpr UUID operator()(RNG&& rng) const {
+        constexpr auto operator()(RNG&& rng) const -> UUID {
             auto distribution = random::UniformIntDistribution(0, 255);
             auto bytes = UUID::ByteArray {};
             for (auto& byte : bytes) {
@@ -231,7 +231,7 @@ constexpr inline auto generate_uuid = detail::GenerateUUIDFunction {};
 namespace di {
 inline namespace literals {
     inline namespace uuid_literals {
-        consteval util::UUID operator""_uuid(char const* data, usize size) {
+        consteval auto operator""_uuid(char const* data, usize size) -> util::UUID {
             auto view = di::TransparentStringView { data, size };
             return parser::parse_unchecked<util::UUID>(view);
         }

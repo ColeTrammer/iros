@@ -1,7 +1,7 @@
 #include <ctype.h>
 #include <stdio.h>
 
-extern "C" int ispunct(int ch) {
+extern "C" auto ispunct(int ch) -> int {
     if (ch == EOF) {
         return 0;
     }

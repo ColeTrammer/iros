@@ -27,7 +27,8 @@ namespace detail {
 
         auto encoding() const { return Encoding {}; }
 
-        di::Result<void> with_style(di::format::Style style, di::concepts::InvocableTo<di::Result<void>> auto inner) {
+        auto with_style(di::format::Style style, di::concepts::InvocableTo<di::Result<void>> auto inner)
+            -> di::Result<void> {
             auto [before, after] = style.render_to_ansi_escapes<Encoding>();
             for (auto code_point : before) {
                 output(code_point);

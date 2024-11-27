@@ -8,7 +8,7 @@ namespace di::math {
 namespace detail {
     struct AbsDiffFunction {
         template<concepts::Integral T, typename U = meta::MakeUnsigned<T>>
-        constexpr U operator()(T a, T b) const {
+        constexpr auto operator()(T a, T b) const -> U {
             if (a < b) {
                 return U(b) - U(a);
             } else {
@@ -18,7 +18,7 @@ namespace detail {
 
         template<concepts::Pointer T>
         requires(concepts::Object<meta::RemovePointer<T>>)
-        constexpr uptr operator()(T a, T b) const {
+        constexpr auto operator()(T a, T b) const -> uptr {
             if (a < b) {
                 return b - a;
             } else {

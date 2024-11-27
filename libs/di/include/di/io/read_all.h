@@ -8,7 +8,7 @@
 namespace di::io {
 namespace detail {
     struct ReadAll {
-        constexpr Result<Vector<Byte>> operator()(Impl<Reader> auto& reader) const {
+        constexpr auto operator()(Impl<Reader> auto& reader) const -> Result<Vector<Byte>> {
             constexpr auto block_size = 16384zu;
 
             auto buffer = Vector<Byte> {};

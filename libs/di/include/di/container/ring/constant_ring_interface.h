@@ -8,13 +8,13 @@ namespace di::container {
 template<typename Self, typename Value>
 class ConstantRingInterface {
 private:
-    constexpr Self& self() { return static_cast<Self&>(*this); }
-    constexpr Self const& self() const { return static_cast<Self const&>(*this); }
+    constexpr auto self() -> Self& { return static_cast<Self&>(*this); }
+    constexpr auto self() const -> Self const& { return static_cast<Self const&>(*this); }
 
 public:
-    constexpr usize size() const { return ring::size(self()); }
-    constexpr usize size_bytes() const { return ring::size_bytes(self()); }
-    [[nodiscard]] constexpr bool empty() const { return ring::empty(self()); }
+    constexpr auto size() const -> usize { return ring::size(self()); }
+    constexpr auto size_bytes() const -> usize { return ring::size_bytes(self()); }
+    [[nodiscard]] constexpr auto empty() const -> bool { return ring::empty(self()); }
 
     constexpr auto begin() { return ring::begin(self()); }
     constexpr auto end() { return ring::end(self()); }
@@ -31,15 +31,15 @@ public:
     constexpr auto at(usize index) { return ring::at(self(), index); }
     constexpr auto at(usize index) const { return ring::at(self(), index); }
 
-    constexpr decltype(auto) operator[](usize index) { return ring::lookup(self(), index); }
-    constexpr decltype(auto) operator[](usize index) const { return ring::lookup(self(), index); }
+    constexpr auto operator[](usize index) -> decltype(auto) { return ring::lookup(self(), index); }
+    constexpr auto operator[](usize index) const -> decltype(auto) { return ring::lookup(self(), index); }
 
     constexpr auto iterator(usize index) { return ring::iterator(self(), index); }
     constexpr auto iterator(usize index) const { return ring::iterator(self(), index); }
     constexpr auto citerator(usize index) const { return ring::iterator(self(), index); }
 
 private:
-    constexpr friend bool operator==(Self const& a, Self const& b)
+    constexpr friend auto operator==(Self const& a, Self const& b) -> bool
     requires(concepts::EqualityComparable<Value>)
     {
         return container::equal(a, b);

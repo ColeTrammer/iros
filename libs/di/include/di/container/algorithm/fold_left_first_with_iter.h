@@ -33,10 +33,9 @@ namespace detail {
         template<concepts::InputContainer Con,
                  concepts::IndirectlyBinaryLeftFoldable<meta::ContainerValue<Con>, meta::ContainerIterator<Con>> Op>
         requires(concepts::ConstructibleFrom<meta::ContainerValue<Con>, meta::ContainerReference<Con>>)
-        constexpr InValueResult<
+        constexpr auto operator()(Con&& container, Op op) const -> InValueResult<
             meta::BorrowedIterator<Con>,
-            Optional<meta::Decay<meta::InvokeResult<Op&, meta::ContainerReference<Con>, meta::ContainerValue<Con>>>>>
-        operator()(Con&& container, Op op) const {
+            Optional<meta::Decay<meta::InvokeResult<Op&, meta::ContainerReference<Con>, meta::ContainerValue<Con>>>>> {
             return (*this)(container::begin(container), container::end(container), util::ref(op));
         }
     };

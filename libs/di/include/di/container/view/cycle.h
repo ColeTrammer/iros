@@ -16,7 +16,7 @@ namespace detail {
     struct CycleFunction : function::pipeline::EnablePipeline {
         template<concepts::ViewableContainer Con>
         requires(CustomCycle<Con> || ViewCycle<Con>)
-        constexpr concepts::View auto operator()(Con&& container) const {
+        constexpr auto operator()(Con&& container) const -> concepts::View auto {
             if constexpr (CustomCycle<Con>) {
                 return function::tag_invoke(*this, util::forward<Con>(container));
             } else {

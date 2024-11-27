@@ -5,16 +5,16 @@
 #include <dius/runtime/allocate.h>
 #include <dius/system/prelude.h>
 
-[[gnu::weak]] void* operator new(std::size_t size) {
+[[gnu::weak]] auto operator new(std::size_t size) -> void* {
     return ::operator new(size, std::align_val_t { alignof(void*) });
 }
-[[gnu::weak]] void* operator new(std::size_t size, std::align_val_t alignment) {
+[[gnu::weak]] auto operator new(std::size_t size, std::align_val_t alignment) -> void* {
     auto* result = ::operator new(size, alignment, std::nothrow);
     ASSERT(result);
     return result;
 }
 
-[[gnu::weak]] void* operator new(std::size_t size, std::nothrow_t const&) noexcept {
+[[gnu::weak]] auto operator new(std::size_t size, std::nothrow_t const&) noexcept -> void* {
     return ::operator new(size, std::align_val_t { alignof(void*) }, std::nothrow);
 }
 
@@ -26,17 +26,17 @@
 }
 
 // Array allocating new.
-[[nodiscard]] [[gnu::weak]] void* operator new[](std::size_t size) {
+[[nodiscard]] [[gnu::weak]] auto operator new[](std::size_t size) -> void* {
     return ::operator new(size);
 }
-[[nodiscard]] [[gnu::weak]] void* operator new[](std::size_t size, std::align_val_t alignment) {
+[[nodiscard]] [[gnu::weak]] auto operator new[](std::size_t size, std::align_val_t alignment) -> void* {
     return ::operator new(size, alignment);
 }
-[[nodiscard]] [[gnu::weak]] void* operator new[](std::size_t size, std::nothrow_t const&) noexcept {
+[[nodiscard]] [[gnu::weak]] auto operator new[](std::size_t size, std::nothrow_t const&) noexcept -> void* {
     return ::operator new(size, std::nothrow);
 }
-[[nodiscard]] [[gnu::weak]] void* operator new[](std::size_t size, std::align_val_t alignment,
-                                                 std::nothrow_t const&) noexcept {
+[[nodiscard]] [[gnu::weak]] auto operator new[](std::size_t size, std::align_val_t alignment,
+                                                std::nothrow_t const&) noexcept -> void* {
     return ::operator new(size, alignment, std::nothrow);
 }
 
@@ -60,7 +60,7 @@
     return ::operator delete(pointer, alignment, std::nothrow);
 }
 
-[[gnu::weak]] void* operator new(std::size_t size, std::align_val_t align, std::nothrow_t const&) noexcept {
+[[gnu::weak]] auto operator new(std::size_t size, std::align_val_t align, std::nothrow_t const&) noexcept -> void* {
     auto result = dius::runtime::Heap::the().allocate(size, usize(align));
     if (!result) {
         return nullptr;

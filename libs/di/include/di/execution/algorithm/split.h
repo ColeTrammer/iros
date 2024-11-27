@@ -277,7 +277,7 @@ namespace split_ns {
             }
 
             // NOLINTNEXTLINE(bugprone-unhandled-self-assignment,cert-oop54-cpp)
-            Type& operator=(Type const& other) {
+            auto operator=(Type const& other) -> Type& {
                 if (m_state != other.m_state) {
                     auto state = util::exchange(m_state, other.m_state);
                     if (state) {
@@ -289,7 +289,7 @@ namespace split_ns {
                 }
                 return *this;
             }
-            Type& operator=(Type&& other) {
+            auto operator=(Type&& other) -> Type& {
                 this->m_state = util::exchange(other.m_state, nullptr);
                 return *this;
             }

@@ -17,7 +17,7 @@ struct ErasedCallImpl;
 template<typename Tag, typename Storage, typename R, concepts::RemoveCVRefSameAs<This> Self, typename... BArgs,
          typename T>
 struct ErasedCallImpl<Method<Tag, R(Self, BArgs...)>, Storage, T> {
-    constexpr static R call(void* storage, BArgs... bargs) {
+    constexpr static auto call(void* storage, BArgs... bargs) -> R {
         using M = Method<Tag, R(Self, BArgs...)>;
 
         static_assert(concepts::AnyStorable<T, Storage>,

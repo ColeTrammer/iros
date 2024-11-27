@@ -20,8 +20,8 @@ namespace detail {
                  concepts::UninitBidirectionalIterator Out, concepts::UninitSentinelFor<Out> OutSent>
         requires(concepts::ConstructibleFrom<meta::IteratorValue<Out>, meta::IteratorValue<In>> &&
                  concepts::Destructible<meta::IteratorValue<In>>)
-        constexpr UninitializedRelocateBackwardsResult<In, Out> operator()(In input, Sent in_sent, Out output,
-                                                                           OutSent out_sent) const {
+        constexpr auto operator()(In input, Sent in_sent, Out output, OutSent out_sent) const
+            -> UninitializedRelocateBackwardsResult<In, Out> {
             auto in = container::next(input, in_sent);
             auto out = container::next(output, out_sent);
 
@@ -35,8 +35,8 @@ namespace detail {
         template<concepts::BidirectionalContainer Con, concepts::UninitBidirectionalContainer Out>
         requires(concepts::ConstructibleFrom<meta::ContainerValue<Out>, meta::ContainerValue<Con>> &&
                  concepts::Destructible<meta::ContainerValue<Con>>)
-        constexpr UninitializedRelocateBackwardsResult<meta::BorrowedIterator<Con>, meta::BorrowedIterator<Out>>
-        operator()(Con&& in, Out&& out) const {
+        constexpr auto operator()(Con&& in, Out&& out) const
+            -> UninitializedRelocateBackwardsResult<meta::BorrowedIterator<Con>, meta::BorrowedIterator<Out>> {
             return (*this)(container::begin(in), container::end(in), container::begin(out), container::end(out));
         }
     };

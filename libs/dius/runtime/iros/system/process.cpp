@@ -3,7 +3,7 @@
 #include <dius/system/system_call.h>
 
 namespace dius::system {
-di::Result<ProcessResult> Process::spawn_and_wait() && {
+auto Process::spawn_and_wait() && -> di::Result<ProcessResult> {
     auto arguments_as_view = m_arguments | di::transform([](di::TransparentString const& arg) {
                                  return arg.view();
                              }) |

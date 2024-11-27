@@ -36,7 +36,7 @@ class BackgroundColor {
 public:
     constexpr explicit BackgroundColor(Color color) : m_color(color) {}
 
-    constexpr Color color() const { return m_color; }
+    constexpr auto color() const -> Color { return m_color; }
 
 private:
     Color m_color { Color::Default };
@@ -53,9 +53,9 @@ public:
     constexpr explicit Style(Color foreground, BackgroundColor background, Effect effect)
         : m_foreground(foreground), m_background(background), m_effect(effect) {}
 
-    constexpr Color foreground() const { return m_foreground; }
-    constexpr Color background() const { return m_background.color(); }
-    constexpr Effect effect() const { return m_effect; }
+    constexpr auto foreground() const -> Color { return m_foreground; }
+    constexpr auto background() const -> Color { return m_background.color(); }
+    constexpr auto effect() const -> Effect { return m_effect; }
 
     template<concepts::Encoding Enc>
     constexpr auto render_to_ansi_escapes() const {

@@ -12,7 +12,7 @@ namespace detail {
     template<size_t N>
     struct AdjacentTransformFunction {
         template<concepts::ViewableContainer Con, typename F>
-        constexpr concepts::View auto operator()(Con&& container, F&& function) const {
+        constexpr auto operator()(Con&& container, F&& function) const -> concepts::View auto {
             if constexpr (N == 0) {
                 return zip_transform(util::forward<F>(function));
             } else {

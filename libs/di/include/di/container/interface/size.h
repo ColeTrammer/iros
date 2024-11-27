@@ -38,7 +38,7 @@ namespace detail {
 struct SizeFunction : function::pipeline::EnablePipeline {
     template<typename T>
     requires(detail::ArraySize<T> || detail::CustomSize<T> || detail::MemberSize<T> || detail::IteratorSize<T>)
-    constexpr meta::IteratorSizeType<meta::ContainerIterator<T>> operator()(T&& container) const {
+    constexpr auto operator()(T&& container) const -> meta::IteratorSizeType<meta::ContainerIterator<T>> {
         if constexpr (detail::ArraySize<T>) {
             return meta::Extent<meta::RemoveReference<T>>;
         } else if constexpr (detail::CustomSize<T>) {

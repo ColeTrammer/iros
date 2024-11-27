@@ -20,18 +20,18 @@ private:
     template<typename T>
     constexpr static bool valid = ValidForLookup<T>::value;
 
-    constexpr Self& self() { return static_cast<Self&>(*this); }
-    constexpr Self const& self() const { return static_cast<Self const&>(*this); }
+    constexpr auto self() -> Self& { return static_cast<Self&>(*this); }
+    constexpr auto self() const -> Self const& { return static_cast<Self const&>(*this); }
 
-    constexpr Iterator unconst_iterator(ConstIterator it) { return self().unconst_iterator(util::move(it)); }
+    constexpr auto unconst_iterator(ConstIterator it) -> Iterator { return self().unconst_iterator(util::move(it)); }
 
-    constexpr Iterator begin() { return self().begin(); }
-    constexpr Iterator end() { return self().end(); }
+    constexpr auto begin() -> Iterator { return self().begin(); }
+    constexpr auto end() -> Iterator { return self().end(); }
 
-    constexpr ConstIterator begin() const { return self().begin(); }
-    constexpr ConstIterator end() const { return self().end(); }
+    constexpr auto begin() const -> ConstIterator { return self().begin(); }
+    constexpr auto end() const -> ConstIterator { return self().end(); }
 
-    constexpr size_t size() const { return self().size(); }
+    constexpr auto size() const -> size_t { return self().size(); }
 
     template<concepts::ContainerCompatible<Value> Con, typename... Args>
     requires(concepts::ConstructibleFrom<Self, Args...>)
@@ -43,7 +43,7 @@ private:
     }
 
 public:
-    constexpr bool empty() const { return size() == 0; }
+    constexpr auto empty() const -> bool { return size() == 0; }
 
     constexpr void clear() { erase(this->begin(), this->end()); }
 
@@ -143,14 +143,14 @@ public:
 
     constexpr auto erase(Iterator position) { return self().erase_impl(util::move(position)); }
 
-    constexpr Iterator erase(Iterator first, Iterator last) {
+    constexpr auto erase(Iterator first, Iterator last) -> Iterator {
         while (first != last) {
             first = self().erase_impl(first);
         }
         return last;
     }
 
-    constexpr size_t erase(Value const& needle) {
+    constexpr auto erase(Value const& needle) -> size_t {
         if constexpr (!is_multi) {
             auto it = this->find(needle);
             if (it == end()) {
@@ -170,7 +170,7 @@ public:
 
     template<typename U>
     requires(valid<U>)
-    constexpr size_t erase(U&& needle) {
+    constexpr auto erase(U&& needle) -> size_t {
         if constexpr (!is_multi) {
             auto it = this->find(needle);
             if (it == end()) {
@@ -188,35 +188,35 @@ public:
         }
     }
 
-    constexpr Optional<Value&> front() {
+    constexpr auto front() -> Optional<Value&> {
         return lift_bool(!empty()) % [&] {
             return util::ref(*begin());
         };
     }
-    constexpr Optional<Value const&> front() const {
+    constexpr auto front() const -> Optional<Value const&> {
         return lift_bool(!empty()) % [&] {
             return util::cref(*begin());
         };
     }
 
-    constexpr Optional<Value&> back() {
+    constexpr auto back() -> Optional<Value&> {
         return lift_bool(!empty()) % [&] {
             return util::ref(*container::prev(end()));
         };
     }
-    constexpr Optional<Value const&> back() const {
+    constexpr auto back() const -> Optional<Value const&> {
         return lift_bool(!empty()) % [&] {
             return util::cref(*container::prev(end()));
         };
     }
 
-    constexpr Optional<Value&> at(Value const& needle) {
+    constexpr auto at(Value const& needle) -> Optional<Value&> {
         auto it = this->find(needle);
         return lift_bool(it != end()) % [&] {
             return util::ref(*it);
         };
     }
-    constexpr Optional<Value const&> at(Value const& needle) const {
+    constexpr auto at(Value const& needle) const -> Optional<Value const&> {
         auto it = this->find(needle);
         return lift_bool(it != end()) % [&] {
             return util::cref(*it);
@@ -225,7 +225,7 @@ public:
 
     template<typename U>
     requires(valid<U>)
-    constexpr Optional<Value&> at(U&& needle) {
+    constexpr auto at(U&& needle) -> Optional<Value&> {
         auto it = this->find(needle);
         return lift_bool(it != end()) % [&] {
             return util::ref(*it);
@@ -233,35 +233,35 @@ public:
     }
     template<typename U>
     requires(valid<U>)
-    constexpr Optional<Value const&> at(U&& needle) const {
+    constexpr auto at(U&& needle) const -> Optional<Value const&> {
         auto it = this->find(needle);
         return lift_bool(it != end()) % [&] {
             return util::cref(*it);
         };
     }
 
-    constexpr Iterator find(Value const& needle) { return unconst_iterator(self().find_impl(needle)); }
-    constexpr ConstIterator find(Value const& needle) const { return self().find_impl(needle); }
+    constexpr auto find(Value const& needle) -> Iterator { return unconst_iterator(self().find_impl(needle)); }
+    constexpr auto find(Value const& needle) const -> ConstIterator { return self().find_impl(needle); }
 
     template<typename U>
     requires(valid<U>)
-    constexpr Iterator find(U&& needle) {
+    constexpr auto find(U&& needle) -> Iterator {
         return unconst_iterator(self().find_impl(needle));
     }
     template<typename U>
     requires(valid<U>)
-    constexpr ConstIterator find(U&& needle) const {
+    constexpr auto find(U&& needle) const -> ConstIterator {
         return self().find_impl(needle);
     }
 
-    constexpr bool contains(Value const& needle) const { return this->find(needle) != end(); }
+    constexpr auto contains(Value const& needle) const -> bool { return this->find(needle) != end(); }
     template<typename U>
     requires(valid<U>)
-    constexpr bool contains(U&& needle) const {
+    constexpr auto contains(U&& needle) const -> bool {
         return this->find(needle) != end();
     }
 
-    constexpr size_t count(Value const& needle) const {
+    constexpr auto count(Value const& needle) const -> size_t {
         if constexpr (!is_multi) {
             return this->contains(needle) ? 1 : 0;
         } else {
@@ -271,7 +271,7 @@ public:
 
     template<typename U>
     requires(valid<U>)
-    constexpr size_t count(U&& needle) const {
+    constexpr auto count(U&& needle) const -> size_t {
         if constexpr (!is_multi) {
             return this->contains(needle) ? 1 : 0;
         } else {
@@ -279,7 +279,7 @@ public:
         }
     }
 
-    constexpr View<Iterator> equal_range(Value const& needle) {
+    constexpr auto equal_range(Value const& needle) -> View<Iterator> {
         if constexpr (!is_multi) {
             auto it = this->find(needle);
             return { it, container::next(it, 1, end()) };
@@ -290,7 +290,7 @@ public:
     }
     template<typename U>
     requires(valid<U>)
-    constexpr View<Iterator> equal_range(U&& needle) {
+    constexpr auto equal_range(U&& needle) -> View<Iterator> {
         if constexpr (!is_multi) {
             auto it = this->find(needle);
             return { it, container::next(it, 1, end()) };
@@ -299,7 +299,7 @@ public:
         }
     }
 
-    constexpr View<ConstIterator> equal_range(Value const& needle) const {
+    constexpr auto equal_range(Value const& needle) const -> View<ConstIterator> {
         if constexpr (!is_multi) {
             auto it = this->find(needle);
             return { it, container::next(it, 1, end()) };
@@ -309,7 +309,7 @@ public:
     }
     template<typename U>
     requires(valid<U>)
-    constexpr View<ConstIterator> equal_range(U&& needle) const {
+    constexpr auto equal_range(U&& needle) const -> View<ConstIterator> {
         if constexpr (!is_multi) {
             auto it = this->find(needle);
             return { it, container::next(it, 1, end()) };
@@ -318,14 +318,14 @@ public:
         }
     }
 
-    constexpr Iterator lower_bound(Value const& needle)
+    constexpr auto lower_bound(Value const& needle) -> Iterator
     requires(requires {
         { self().lower_bound_impl(needle) } -> concepts::SameAs<ConstIterator>;
     })
     {
         return unconst_iterator(self().lower_bound_impl(needle));
     }
-    constexpr ConstIterator lower_bound(Value const& needle) const
+    constexpr auto lower_bound(Value const& needle) const -> ConstIterator
     requires(requires {
         { self().lower_bound_impl(needle) } -> concepts::SameAs<ConstIterator>;
     })
@@ -335,7 +335,7 @@ public:
 
     template<typename U>
     requires(valid<U>)
-    constexpr Iterator lower_bound(U&& needle)
+    constexpr auto lower_bound(U&& needle) -> Iterator
     requires(requires {
         { self().lower_bound_impl(needle) } -> concepts::SameAs<ConstIterator>;
     })
@@ -344,7 +344,7 @@ public:
     }
     template<typename U>
     requires(valid<U>)
-    constexpr ConstIterator lower_bound(U&& needle) const
+    constexpr auto lower_bound(U&& needle) const -> ConstIterator
     requires(requires {
         { self().lower_bound_impl(needle) } -> concepts::SameAs<ConstIterator>;
     })
@@ -352,14 +352,14 @@ public:
         return self().lower_bound_impl(needle);
     }
 
-    constexpr Iterator upper_bound(Value const& needle)
+    constexpr auto upper_bound(Value const& needle) -> Iterator
     requires(requires {
         { self().upper_bound_impl(needle) } -> concepts::SameAs<ConstIterator>;
     })
     {
         return unconst_iterator(self().upper_bound_impl(needle));
     }
-    constexpr ConstIterator upper_bound(Value const& needle) const
+    constexpr auto upper_bound(Value const& needle) const -> ConstIterator
     requires(requires {
         { self().upper_bound_impl(needle) } -> concepts::SameAs<ConstIterator>;
     })
@@ -369,7 +369,7 @@ public:
 
     template<typename U>
     requires(valid<U>)
-    constexpr Iterator upper_bound(U&& needle)
+    constexpr auto upper_bound(U&& needle) -> Iterator
     requires(requires {
         { self().upper_bound_impl(needle) } -> concepts::SameAs<ConstIterator>;
     })
@@ -378,7 +378,7 @@ public:
     }
     template<typename U>
     requires(valid<U>)
-    constexpr ConstIterator upper_bound(U&& needle) const
+    constexpr auto upper_bound(U&& needle) const -> ConstIterator
     requires(requires {
         { self().upper_bound_impl(needle) } -> concepts::SameAs<ConstIterator>;
     })
@@ -424,7 +424,7 @@ private:
                try_infallible;
     }
 
-    constexpr friend decltype(auto) operator|=(Self& a, Self&& b) {
+    constexpr friend auto operator|=(Self& a, Self&& b) -> decltype(auto) {
         return invoke_as_fallible([&] {
                    return a.merge(util::move(b));
                }) |
@@ -442,9 +442,7 @@ private:
         return util::move(a);
     }
 
-    constexpr friend Self& operator&=(Self& a, Self const& b)
-    requires(!is_multi)
-    {
+    constexpr friend auto operator&=(Self& a, Self const& b) -> Self& requires(!is_multi) {
         a.intersect(b);
         return a;
     }
@@ -457,16 +455,14 @@ private:
         return util::move(a);
     }
 
-    constexpr friend Self& operator-=(Self& a, Self const& b)
-    requires(!is_multi)
-    {
+    constexpr friend auto operator-=(Self& a, Self const& b) -> Self& requires(!is_multi) {
         a.subtract(b);
         return a;
     }
 
     template<typename F, SameAs<Tag<erase_if>> T = Tag<erase_if>>
     requires(concepts::Predicate<F&, Value const&>)
-    constexpr friend usize tag_invoke(T, Self& self, F&& function) {
+    constexpr friend auto tag_invoke(T, Self& self, F&& function) -> usize {
         auto it = self.begin();
         auto result = 0zu;
         while (it != self.end()) {

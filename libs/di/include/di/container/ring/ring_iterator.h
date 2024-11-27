@@ -30,8 +30,8 @@ public:
         , m_end(other.m_end)
         , m_at_end(other.m_at_end) {}
 
-    RingIterator& operator=(RingIterator const&) = default;
-    RingIterator& operator=(RingIterator&&) = default;
+    auto operator=(RingIterator const&) -> RingIterator& = default;
+    auto operator=(RingIterator&&) -> RingIterator& = default;
 
     constexpr auto unconst_unsafe() const
     requires(is_const)
@@ -42,11 +42,11 @@ public:
             const_cast<meta::RemoveConst<T>*>(m_end), m_at_end);
     }
 
-    constexpr T& operator*() const {
+    constexpr auto operator*() const -> T& {
         DI_ASSERT(!m_at_end);
         return *m_current;
     }
-    constexpr T* operator->() const {
+    constexpr auto operator->() const -> T* {
         DI_ASSERT(!m_at_end);
         return m_current;
     }
@@ -107,7 +107,7 @@ public:
     }
 
 private:
-    constexpr friend bool operator==(RingIterator const& a, RingIterator const& b) {
+    constexpr friend auto operator==(RingIterator const& a, RingIterator const& b) -> bool {
         DI_ASSERT(a.m_head == b.m_head);
         DI_ASSERT(a.m_tail == b.m_tail);
         DI_ASSERT(a.m_begin == b.m_begin);
@@ -135,7 +135,7 @@ private:
         return a.m_current <=> b.m_current;
     }
 
-    constexpr isize distance_to_tail() const {
+    constexpr auto distance_to_tail() const -> isize {
         if (m_at_end) {
             return 0;
         }
@@ -145,7 +145,7 @@ private:
         return m_end - m_current + (m_tail - m_begin);
     }
 
-    constexpr friend isize operator-(RingIterator const& a, RingIterator const& b) {
+    constexpr friend auto operator-(RingIterator const& a, RingIterator const& b) -> isize {
         DI_ASSERT(a.m_head == b.m_head);
         DI_ASSERT(a.m_tail == b.m_tail);
         DI_ASSERT(a.m_begin == b.m_begin);

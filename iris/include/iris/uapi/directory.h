@@ -12,7 +12,7 @@ struct DirectoryRecord {
     MetadataType type;
     u8 name_length;
 
-    di::TransparentStringView name() const {
+    auto name() const -> di::TransparentStringView {
         return di::TransparentStringView { reinterpret_cast<char const*>(this + 1), name_length };
     }
 };

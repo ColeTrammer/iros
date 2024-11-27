@@ -10,7 +10,7 @@ namespace detail {
     struct RelocateFunction {
         template<concepts::Destructible T>
         requires(concepts::MoveConstructible<T>)
-        constexpr T operator()(T& reference) const {
+        constexpr auto operator()(T& reference) const -> T {
             auto result = util::move(reference);
             destroy_at(util::addressof(reference));
             return result;

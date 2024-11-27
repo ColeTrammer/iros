@@ -14,8 +14,8 @@
 namespace di::format {
 namespace detail {
     template<concepts::Encoding Enc, typename Var>
-    constexpr Result<void> do_format(Var&& variant, FormatParseContext<Enc>& parse_context,
-                                     concepts::FormatContext auto& context, bool debug = false) {
+    constexpr auto do_format(Var&& variant, FormatParseContext<Enc>& parse_context,
+                             concepts::FormatContext auto& context, bool debug = false) -> Result<void> {
         return di::visit<Result<void>>(
             [&]<typename T>(T&& value) -> Result<void> {
                 if constexpr (concepts::InstanceOf<meta::RemoveCVRef<T>, ErasedArg>) {
@@ -33,8 +33,8 @@ namespace detail {
         using View = container::string::StringViewImpl<Enc>;
 
         template<concepts::FormatArg Arg>
-        constexpr Result<void> operator()(View format, FormatArgs<Arg> args,
-                                          concepts::FormatContext auto& context) const {
+        constexpr auto operator()(View format, FormatArgs<Arg> args, concepts::FormatContext auto& context) const
+            -> Result<void> {
             auto parse_context = FormatParseContext<Enc> { format, args.size() };
 
             for (auto value : parse_context) {

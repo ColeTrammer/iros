@@ -16,7 +16,7 @@ namespace dius::runtime {
 namespace detail {
     struct SizedTag : di::IntrusiveListTag<SizedTag> {
         template<typename U>
-        constexpr static bool is_sized(di::InPlaceType<U>) {
+        constexpr static auto is_sized(di::InPlaceType<U>) -> bool {
             return true;
         }
     };

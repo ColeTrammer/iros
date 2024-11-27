@@ -21,7 +21,7 @@ template<concepts::detail::MutableVector Vec, typename... Args, typename CIter =
          typename R = meta::detail::VectorIterator<Vec>,
          typename G = meta::LikeExpected<meta::detail::VectorAllocResult<Vec>, R>>
 requires(concepts::ConstructibleFrom<meta::detail::VectorValue<Vec>, Args...>)
-constexpr G emplace(Vec& vector, CIter cposition, Args&&... args) {
+constexpr auto emplace(Vec& vector, CIter cposition, Args&&... args) -> G {
     auto size = vector::size(vector);
     auto new_size = size + 1;
     auto end = vector::end(vector);

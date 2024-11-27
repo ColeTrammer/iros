@@ -7,19 +7,19 @@
 namespace di::container {
 struct PrevFunction {
     template<concepts::BidirectionalIterator Iter>
-    constexpr Iter operator()(Iter iterator) const {
+    constexpr auto operator()(Iter iterator) const -> Iter {
         --iterator;
         return iterator;
     }
 
     template<concepts::BidirectionalIterator Iter>
-    constexpr Iter operator()(Iter iterator, meta::IteratorSSizeType<Iter> n) const {
+    constexpr auto operator()(Iter iterator, meta::IteratorSSizeType<Iter> n) const -> Iter {
         container::advance(iterator, -n);
         return iterator;
     }
 
     template<concepts::BidirectionalIterator Iter>
-    constexpr Iter operator()(Iter iterator, meta::IteratorSSizeType<Iter> n, Iter bound) const {
+    constexpr auto operator()(Iter iterator, meta::IteratorSSizeType<Iter> n, Iter bound) const -> Iter {
         container::advance(iterator, -n, bound);
         return iterator;
     }

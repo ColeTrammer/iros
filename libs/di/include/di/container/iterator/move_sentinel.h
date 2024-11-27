@@ -17,12 +17,12 @@ public:
 
     template<concepts::Semiregular Other>
     requires(concepts::AssignableFrom<Sent&, Other const&>)
-    constexpr MoveSentinel& operator=(MoveSentinel<Other> const& other) {
+    constexpr auto operator=(MoveSentinel<Other> const& other) -> MoveSentinel& {
         this->m_sentinel = other.base();
         return *this;
     }
 
-    constexpr Sent base() const { return m_sentinel; }
+    constexpr auto base() const -> Sent { return m_sentinel; }
 
     template<typename It>
     requires(concepts::SizedSentinelFor<Sent, It>)
@@ -33,7 +33,7 @@ public:
 private:
     template<typename It>
     requires(concepts::SentinelFor<Sent, It>)
-    constexpr friend bool operator==(MoveSentinel const& a, MoveIterator<It> const& b) {
+    constexpr friend auto operator==(MoveSentinel const& a, MoveIterator<It> const& b) -> bool {
         return a.base() == b.base();
     }
 

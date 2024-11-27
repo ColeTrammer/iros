@@ -10,7 +10,7 @@ namespace detail {
         template<concepts::ForwardIterator It, concepts::SentinelFor<It> Sent, typename T,
                  typename Proj = function::Identity,
                  concepts::IndirectStrictWeakOrder<T const*, meta::Projected<It, Proj>> Comp = function::Compare>
-        constexpr It operator()(It first, Sent last, T const& needle, Comp comp = {}, Proj proj = {}) const {
+        constexpr auto operator()(It first, Sent last, T const& needle, Comp comp = {}, Proj proj = {}) const -> It {
             auto const distance = container::distance(first, last);
             return lower_bound_with_size(util::move(first), needle, util::ref(comp), util::ref(proj), distance);
         }
@@ -18,8 +18,8 @@ namespace detail {
         template<concepts::ForwardContainer Con, typename T, typename Proj = function::Identity,
                  concepts::IndirectStrictWeakOrder<T const*, meta::Projected<meta::ContainerIterator<Con>, Proj>> Comp =
                      function::Compare>
-        constexpr meta::BorrowedIterator<Con> operator()(Con&& container, T const& needle, Comp comp = {},
-                                                         Proj proj = {}) const {
+        constexpr auto operator()(Con&& container, T const& needle, Comp comp = {}, Proj proj = {}) const
+            -> meta::BorrowedIterator<Con> {
             auto const distance = container::distance(container);
             return lower_bound_with_size(container::begin(container), needle, util::ref(comp), util::ref(proj),
                                          distance);
@@ -30,8 +30,8 @@ namespace detail {
 
         template<typename It, typename T, typename Proj, typename Comp,
                  typename SSizeType = meta::IteratorSSizeType<It>>
-        constexpr static It lower_bound_with_size(It first, T const& needle, Comp comp, Proj proj,
-                                                  meta::TypeIdentity<SSizeType> n) {
+        constexpr static auto lower_bound_with_size(It first, T const& needle, Comp comp, Proj proj,
+                                                    meta::TypeIdentity<SSizeType> n) -> It {
             while (n != 0) {
                 SSizeType left_length = n >> 1;
                 auto mid = container::next(first, left_length);

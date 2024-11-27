@@ -201,9 +201,9 @@ namespace function_ref_ns {
 
         template<typename T>
         requires(!concepts::SameAs<T, FunctionRef> && !concepts::Pointer<T> && is_invocable<Qualified<T>>)
-        FunctionRef& operator=(T) = delete;
+        auto operator=(T) -> FunctionRef& = delete;
 
-        constexpr R operator()(Args... args) const noexcept(is_noexcept) {
+        constexpr auto operator()(Args... args) const noexcept(is_noexcept) -> R {
             return m_impl(m_storage, util::forward<Args>(args)...);
         }
 

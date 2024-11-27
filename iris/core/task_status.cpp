@@ -9,7 +9,7 @@ void TaskStatus::set_exited() {
     });
 }
 
-Expected<void> TaskStatus::wait_until_exited() {
+auto TaskStatus::wait_until_exited() -> Expected<void> {
     return m_wait_queue.wait([&] {
         return m_exited;
     });

@@ -15,7 +15,7 @@ static inline void raw_disable_interrupts() {
     asm volatile("cli");
 }
 
-static inline bool interrupts_disabled() {
+static inline auto interrupts_disabled() -> bool {
     di::u64 rflags;
     asm volatile("pushfq\n"
                  "pop %0\n"
@@ -25,7 +25,7 @@ static inline bool interrupts_disabled() {
     return (rflags & arch::interrupt_enable_flag) == 0u;
 }
 
-static inline bool raw_disable_interrupts_and_save_previous_state() {
+static inline auto raw_disable_interrupts_and_save_previous_state() -> bool {
     di::u64 rflags;
     asm volatile("pushfq\n"
                  "pop %0\n"

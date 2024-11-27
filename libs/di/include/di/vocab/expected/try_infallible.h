@@ -14,7 +14,7 @@ namespace detail {
         template<concepts::Expected T>
         requires(concepts::LanguageVoid<meta::ExpectedError<T>> &&
                  concepts::ConstructibleFrom<meta::ExpectedValue<T>, meta::Like<T, meta::ExpectedValue<T>>>)
-        constexpr meta::ExpectedValue<T> operator()(T&& value) const {
+        constexpr auto operator()(T&& value) const -> meta::ExpectedValue<T> {
             return util::forward<T>(value).value();
         }
 
@@ -22,7 +22,7 @@ namespace detail {
 
         template<concepts::Expected T>
         requires(!concepts::LanguageVoid<meta::ExpectedError<T>> && concepts::ConstructibleFrom<meta::Decay<T>, T>)
-        constexpr meta::Decay<T> operator()(T&& value) const {
+        constexpr auto operator()(T&& value) const -> meta::Decay<T> {
             return util::forward<T>(value);
         }
     };

@@ -111,7 +111,7 @@ struct M {
 
     int x;
 
-    constexpr friend bool operator==(M const& a, M const& b) { return a.x == b.x; }
+    constexpr friend auto operator==(M const& a, M const& b) -> bool { return a.x == b.x; }
 };
 
 constexpr void move_only() {

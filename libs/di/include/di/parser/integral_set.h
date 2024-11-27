@@ -10,14 +10,16 @@
 namespace di::parser {
 template<concepts::Integral T>
 struct MatchOne {
-    constexpr bool operator()(concepts::ThreeWayComparableWith<T> auto const& other) const { return value == other; }
+    constexpr auto operator()(concepts::ThreeWayComparableWith<T> auto const& other) const -> bool {
+        return value == other;
+    }
 
     T value;
 };
 
 template<concepts::Integral T>
 struct MatchRange {
-    constexpr bool operator()(concepts::ThreeWayComparableWith<T> auto const& other) const {
+    constexpr auto operator()(concepts::ThreeWayComparableWith<T> auto const& other) const -> bool {
         return lower <= other && other <= upper_inclusive;
     }
 
@@ -27,7 +29,7 @@ struct MatchRange {
 
 template<concepts::Integral T, size_t N>
 struct IntegralSet {
-    constexpr bool operator()(concepts::ThreeWayComparableWith<T> auto const& other) const {
+    constexpr auto operator()(concepts::ThreeWayComparableWith<T> auto const& other) const -> bool {
         return container::any_of(ranges, [&](auto const& range) {
             return range(other);
         });
@@ -38,7 +40,9 @@ struct IntegralSet {
 
 template<concepts::Integral T, size_t N>
 struct InvertedIntegralSet {
-    constexpr bool operator()(concepts::ThreeWayComparableWith<T> auto const& other) const { return !set(other); }
+    constexpr auto operator()(concepts::ThreeWayComparableWith<T> auto const& other) const -> bool {
+        return !set(other);
+    }
 
     IntegralSet<T, N> set;
 };

@@ -1,7 +1,7 @@
 #include <ctype.h>
 #include <stdio.h>
 
-extern "C" int isupper(int ch) {
+extern "C" auto isupper(int ch) -> int {
     if (ch == EOF) {
         return 0;
     }

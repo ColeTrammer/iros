@@ -3,7 +3,7 @@
 
 namespace ccpp {
 // https://pubs.opengroup.org/onlinepubs/9699919799/functions/tmpfile.html
-extern "C" FILE* tmpfile(void) {
+extern "C" auto tmpfile(void) -> FILE* {
     auto file = STDIO_TRY_OR_NULL(dius::open_tempory_file());
 
     auto permissions = Permissions::Readable | Permissions::Writable;

@@ -18,7 +18,7 @@ namespace detail {
     struct SlideFunction {
         template<concepts::ViewableContainer Con, typename SSizeType>
         requires(CustomSlide<Con, SSizeType> || ViewSlide<Con, SSizeType>)
-        constexpr concepts::View auto operator()(Con&& container, SSizeType&& predicate) const {
+        constexpr auto operator()(Con&& container, SSizeType&& predicate) const -> concepts::View auto {
             if constexpr (CustomSlide<Con, SSizeType>) {
                 return function::tag_invoke(*this, util::forward<Con>(container), util::forward<SSizeType>(predicate));
             } else {

@@ -18,30 +18,30 @@ namespace detail {
         constexpr FlipFunction(FlipFunction const&) = default;
         constexpr FlipFunction(FlipFunction&&) = default;
 
-        constexpr FlipFunction& operator=(FlipFunction const&) = delete;
-        constexpr FlipFunction& operator=(FlipFunction&&) = delete;
+        constexpr auto operator=(FlipFunction const&) -> FlipFunction& = delete;
+        constexpr auto operator=(FlipFunction&&) -> FlipFunction& = delete;
 
         template<typename T, typename U>
         requires(concepts::Invocable<F&, T, U>)
-        constexpr decltype(auto) operator()(U&& a, T&& b) & {
+        constexpr auto operator()(U&& a, T&& b) & -> decltype(auto) {
             return function::invoke(m_function, util::forward<U>(b), util::forward<T>(a));
         }
 
         template<typename T, typename U>
         requires(concepts::Invocable<F const&, T, U>)
-        constexpr decltype(auto) operator()(U&& a, T&& b) const& {
+        constexpr auto operator()(U&& a, T&& b) const& -> decltype(auto) {
             return function::invoke(m_function, util::forward<U>(b), util::forward<T>(a));
         }
 
         template<typename T, typename U>
         requires(concepts::Invocable<F &&, T, U>)
-        constexpr decltype(auto) operator()(U&& a, T&& b) && {
+        constexpr auto operator()(U&& a, T&& b) && -> decltype(auto) {
             return function::invoke(util::move(m_function), util::forward<U>(b), util::forward<T>(a));
         }
 
         template<typename T, typename U>
         requires(concepts::Invocable<F const &&, T, U>)
-        constexpr decltype(auto) operator()(U&& a, T&& b) const&& {
+        constexpr auto operator()(U&& a, T&& b) const&& -> decltype(auto) {
             return function::invoke(util::move(m_function), util::forward<U>(b), util::forward<T>(a));
         }
 

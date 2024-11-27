@@ -68,20 +68,14 @@ public:
 
     constexpr ~Expected() = default;
 
-    constexpr Expected& operator=(Expected const&)
-    requires(!concepts::CopyConstructible<T>)
-    = delete;
-    constexpr Expected& operator=(Expected const&)
-    requires(concepts::CopyConstructible<T>)
-    = default;
+    constexpr auto operator=(Expected const&) -> Expected& requires(!concepts::CopyConstructible<T>) = delete;
+    constexpr auto operator=(Expected const&) -> Expected& requires(concepts::CopyConstructible<T>) = default;
 
-    constexpr Expected& operator=(Expected&&)
-    requires(concepts::MoveConstructible<T>)
-    = default;
+    constexpr auto operator=(Expected&&) -> Expected& requires(concepts::MoveConstructible<T>) = default;
 
     template<typename U = T>
     requires(!concepts::RemoveCVRefSameAs<Expected, U> && !concepts::Unexpected<U> && concepts::ConstructibleFrom<T, U>)
-    constexpr Expected& operator=(U&& value) {
+    constexpr auto operator=(U&& value) -> Expected& {
         m_value = util::forward<U>(value);
         return *this;
     }
@@ -89,31 +83,31 @@ public:
     constexpr auto operator->() { return util::addressof(m_value.value()); }
     constexpr auto operator->() const { return util::addressof(m_value.value()); }
 
-    constexpr T& operator*() & { return m_value.value(); }
-    constexpr T const& operator*() const& { return m_value.value(); }
-    constexpr T&& operator*() && { return util::move(m_value).value(); }
-    constexpr T const&& operator*() const&& { return util::move(m_value).value(); }
+    constexpr auto operator*() & -> T& { return m_value.value(); }
+    constexpr auto operator*() const& -> T const& { return m_value.value(); }
+    constexpr auto operator*() && -> T&& { return util::move(m_value).value(); }
+    constexpr auto operator*() const&& -> T const&& { return util::move(m_value).value(); }
 
     constexpr explicit operator bool() const { return true; }
-    constexpr bool has_value() const { return true; }
+    constexpr auto has_value() const -> bool { return true; }
 
-    constexpr T& value() & { return m_value.value(); }
-    constexpr T const& value() const& { return m_value.value(); }
-    constexpr T&& value() && { return util::move(m_value).value(); }
-    constexpr T const&& value() const&& { return util::move(m_value).value(); }
+    constexpr auto value() & -> T& { return m_value.value(); }
+    constexpr auto value() const& -> T const& { return m_value.value(); }
+    constexpr auto value() && -> T&& { return util::move(m_value).value(); }
+    constexpr auto value() const&& -> T const&& { return util::move(m_value).value(); }
 
     constexpr void error() const& {}
     constexpr void error() && {}
 
     template<concepts::ConvertibleTo<T> U>
     requires(concepts::CopyConstructible<T>)
-    constexpr T value_or(U&&) const& {
+    constexpr auto value_or(U&&) const& -> T {
         return **this;
     }
 
     template<concepts::ConvertibleTo<T> U>
     requires(concepts::MoveConstructible<T>)
-    constexpr T value_or(U&&) && {
+    constexpr auto value_or(U&&) && -> T {
         return *util::move(*this);
     }
 
@@ -121,19 +115,19 @@ public:
 
     template<typename... Args>
     requires(concepts::ConstructibleFrom<T, Args...>)
-    constexpr T& emplace(Args&&... args) {
+    constexpr auto emplace(Args&&... args) -> T& {
         return m_value.emplace(util::forward<Args>(args)...);
     }
 
     template<typename U, typename... Args>
     requires(concepts::ConstructibleFrom<T, std::initializer_list<U>, Args...>)
-    constexpr T& emplace(std::initializer_list<U> list, Args&&... args) {
+    constexpr auto emplace(std::initializer_list<U> list, Args&&... args) -> T& {
         return m_value.emplace(list, util::forward<Args>(args)...);
     }
 
-    Expected __try_did_fail() && { util::unreachable(); }
-    constexpr Expected __try_did_succeed() && { return Expected { in_place, util::move(*this).value() }; }
-    constexpr T&& __try_move_out() && { return util::move(*this).value(); }
+    auto __try_did_fail() && -> Expected { util::unreachable(); }
+    constexpr auto __try_did_succeed() && -> Expected { return Expected { in_place, util::move(*this).value() }; }
+    constexpr auto __try_move_out() && -> T&& { return util::move(*this).value(); }
 
 private:
     template<typename U, typename G>
@@ -146,24 +140,25 @@ private:
     }
 
     template<concepts::EqualityComparableWith<T> U, typename G>
-    constexpr friend bool operator==(Expected const& a, Expected<U, G> const& b) {
+    constexpr friend auto operator==(Expected const& a, Expected<U, G> const& b) -> bool {
         return b.has_value() && *a == *b;
     }
 
     template<typename U>
     requires(meta::ExpectedRank<U> < meta::ExpectedRank<Expected> && concepts::EqualityComparableWith<T, U>)
-    constexpr friend bool operator==(Expected const& a, U const& b) {
+    constexpr friend auto operator==(Expected const& a, U const& b) -> bool {
         return a.value() == b;
     }
 
     template<typename G>
-    constexpr friend bool operator==(Expected const&, Unexpected<G> const&) {
+    constexpr friend auto operator==(Expected const&, Unexpected<G> const&) -> bool {
         return false;
     }
 
     template<concepts::RemoveCVRefSameAs<Expected> Self, typename F,
              typename U = meta::UnwrapRefDecay<meta::InvokeResult<F, meta::Like<Self, T>>>>
-    constexpr friend Expected<U, void> tag_invoke(types::Tag<function::monad::fmap>, Self&& self, F&& function) {
+    constexpr friend auto tag_invoke(types::Tag<function::monad::fmap>, Self&& self, F&& function)
+        -> Expected<U, void> {
         if constexpr (concepts::LanguageVoid<U>) {
             function::invoke(util::forward<F>(function), util::forward<Self>(self).value());
             return {};
@@ -176,19 +171,19 @@ private:
     template<concepts::RemoveCVRefSameAs<Expected> Self, typename F,
              typename R = meta::InvokeResult<F, meta::Like<Self, T>>>
     requires(concepts::Expected<R>)
-    constexpr friend R tag_invoke(types::Tag<function::monad::bind>, Self&& self, F&& function) {
+    constexpr friend auto tag_invoke(types::Tag<function::monad::bind>, Self&& self, F&& function) -> R {
         return function::invoke(util::forward<F>(function), util::forward<Self>(self).value());
     }
 
     template<concepts::RemoveCVRefSameAs<Expected> Self, typename F>
     requires(concepts::ConstructibleFrom<Expected, Self>)
-    constexpr friend Expected tag_invoke(types::Tag<function::monad::fail>, Self&& self, F&&) {
+    constexpr friend auto tag_invoke(types::Tag<function::monad::fail>, Self&& self, F&&) -> Expected {
         return util::forward<Self>(self);
     }
 
     template<concepts::RemoveCVRefSameAs<Expected> Self, typename F>
     requires(concepts::ConstructibleFrom<Expected, Self>)
-    constexpr friend Expected tag_invoke(types::Tag<function::monad::fmap_right>, Self&& self, F&&) {
+    constexpr friend auto tag_invoke(types::Tag<function::monad::fmap_right>, Self&& self, F&&) -> Expected {
         return util::forward<Self>(self);
     }
 

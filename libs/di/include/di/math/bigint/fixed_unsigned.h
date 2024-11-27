@@ -25,14 +25,14 @@ public:
 
     constexpr FixedUnsigned(bigint::StorageType value) { m_storage[0] = value; }
 
-    constexpr FixedUnsigned operator/(FixedUnsigned const& divisor) const {
+    constexpr auto operator/(FixedUnsigned const& divisor) const -> FixedUnsigned {
         auto division_result = FixedUnsigned();
         auto modulo_result = FixedUnsigned();
         Ops::div_mod(this->span(), divisor.span(), division_result.span(), modulo_result.span());
         return division_result;
     }
 
-    constexpr FixedUnsigned operator%(FixedUnsigned const& divisor) const {
+    constexpr auto operator%(FixedUnsigned const& divisor) const -> FixedUnsigned {
         auto division_result = FixedUnsigned();
         auto modulo_result = FixedUnsigned();
         Ops::div_mod(this->span(), divisor.span(), division_result.span(), modulo_result.span());
@@ -40,7 +40,7 @@ public:
     }
 
 private:
-    constexpr friend bool operator==(FixedUnsigned const& a, FixedUnsigned const& b) {
+    constexpr friend auto operator==(FixedUnsigned const& a, FixedUnsigned const& b) -> bool {
         return Ops::compare(a.span(), b.span()) == 0;
     }
 

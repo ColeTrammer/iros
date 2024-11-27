@@ -41,13 +41,13 @@ private:
         constexpr auto base() const { return m_sentinel; }
 
     private:
-        constexpr friend bool operator==(CountedIterator<Iter<is_const>> const& a, Sentinel const& b) {
+        constexpr friend auto operator==(CountedIterator<Iter<is_const>> const& a, Sentinel const& b) -> bool {
             return a.count() == 0 || a.base() == b.base();
         }
 
         template<bool other_is_const = !is_const>
         requires(concepts::SentinelFor<Sent<is_const>, Iter<other_is_const>>)
-        constexpr friend bool operator==(CountedIterator<Iter<other_is_const>> const& a, Sentinel const& b) {
+        constexpr friend auto operator==(CountedIterator<Iter<other_is_const>> const& a, Sentinel const& b) -> bool {
             return a.count() == 0 || a.base() == b.base();
         }
 
@@ -61,12 +61,12 @@ public:
 
     constexpr TakeView(View base, SSizeType<false> count) : m_base(util::move(base)), m_count(count) {}
 
-    constexpr View base() const&
+    constexpr auto base() const& -> View
     requires(concepts::CopyConstructible<View>)
     {
         return m_base;
     }
-    constexpr View base() && { return util::move(m_base); }
+    constexpr auto base() && -> View { return util::move(m_base); }
 
     constexpr auto begin()
     requires(!concepts::SimpleView<View>)

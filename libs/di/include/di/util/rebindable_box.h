@@ -85,33 +85,33 @@ public:
 
     constexpr ~RebindableBox() = default;
 
-    constexpr RebindableBox& operator=(RebindableBox const&) = default;
-    constexpr RebindableBox& operator=(RebindableBox&&) = default;
+    constexpr auto operator=(RebindableBox const&) -> RebindableBox& = default;
+    constexpr auto operator=(RebindableBox&&) -> RebindableBox& = default;
 
-    constexpr RebindableBox& operator=(RebindableBox const& other)
-    requires(!concepts::TriviallyCopyAssignable<Storage> && concepts::CopyConstructible<Storage>)
-    {
-        rebind(other.value());
-        return *this;
-    }
+    constexpr auto operator=(RebindableBox const& other)
+        -> RebindableBox& requires(!concepts::TriviallyCopyAssignable<Storage> &&
+                                   concepts::CopyConstructible<Storage>) {
+            rebind(other.value());
+            return *this;
+        }
 
-    constexpr RebindableBox& operator=(RebindableBox const& other)
-    requires(!concepts::TriviallyMoveAssignable<Storage> && concepts::MoveConstructible<Storage>)
-    {
-        rebind(util::move(other).value());
-        return *this;
-    }
+    constexpr auto operator=(RebindableBox const& other)
+        -> RebindableBox& requires(!concepts::TriviallyMoveAssignable<Storage> &&
+                                   concepts::MoveConstructible<Storage>) {
+            rebind(util::move(other).value());
+            return *this;
+        }
 
     template<typename U>
     requires(concepts::ConstructibleFrom<Storage, U const&>)
-    constexpr RebindableBox& operator=(RebindableBox<U> const& other) {
+    constexpr auto operator=(RebindableBox<U> const& other) -> RebindableBox& {
         rebind(other.value());
         return *this;
     }
 
     template<typename U>
     requires(concepts::ConstructibleFrom<Storage, U>)
-    constexpr RebindableBox& operator=(RebindableBox<U>&& other) {
+    constexpr auto operator=(RebindableBox<U>&& other) -> RebindableBox& {
         rebind(util::move(other).value());
         return *this;
     }
@@ -119,19 +119,19 @@ public:
     template<typename U = T>
     requires(!concepts::RemoveCVRefSameAs<U, RebindableBox> && !detail::IsRebindableBox<U> &&
              concepts::ConstructibleFrom<Storage, U>)
-    constexpr RebindableBox& operator=(U&& value) {
+    constexpr auto operator=(U&& value) -> RebindableBox& {
         rebind(util::forward<U>(value));
         return *this;
     }
 
-    constexpr T& value() & { return m_storage; }
-    constexpr T const& value() const& { return m_storage; }
-    constexpr T&& value() && { return util::move(m_storage); }
-    constexpr T const&& value() const&& { return util::move(m_storage); }
+    constexpr auto value() & -> T& { return m_storage; }
+    constexpr auto value() const& -> T const& { return m_storage; }
+    constexpr auto value() && -> T&& { return util::move(m_storage); }
+    constexpr auto value() const&& -> T const&& { return util::move(m_storage); }
 
     template<typename... Args>
     requires(concepts::ConstructibleFrom<T, Args...>)
-    constexpr T& emplace(Args&&... args) {
+    constexpr auto emplace(Args&&... args) -> T& {
         util::destroy_at(util::addressof(m_storage));
         util::construct_at(util::addressof(m_storage), util::forward<Args>(args)...);
         return value();
@@ -139,7 +139,7 @@ public:
 
     template<typename U, typename... Args>
     requires(concepts::ConstructibleFrom<T, std::initializer_list<U>, Args...>)
-    constexpr T& emplace(std::initializer_list<U> list, Args&&... args) {
+    constexpr auto emplace(std::initializer_list<U> list, Args&&... args) -> T& {
         util::destroy_at(util::addressof(m_storage));
         util::construct_at(util::addressof(m_storage), list, util::forward<Args>(args)...);
         return value();

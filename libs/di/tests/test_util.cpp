@@ -57,7 +57,7 @@ constexpr void strong_int() {
         struct Mixin {
             using Self = di::StrongInt<XTag>;
 
-            constexpr i32 foo() const { return static_cast<Self const&>(*this).raw_value() + 1; }
+            constexpr auto foo() const -> i32 { return static_cast<Self const&>(*this).raw_value() + 1; }
         };
     };
 
@@ -87,7 +87,7 @@ Baz(T&&) -> Baz<T>;
 
 template<typename... Args>
 requires(di::ValidNamedArguments<di::meta::List<Foo, Bar, di::InPlaceTemplate<Baz>>, Args...>)
-constexpr i32 f(Args&&... args) {
+constexpr auto f(Args&&... args) -> i32 {
     auto named = di::NamedArguments(di::forward<Args>(args)...);
 
     auto foo_value = di::get_named_argument_or<Foo>(di::move(named), 1);

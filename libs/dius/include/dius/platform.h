@@ -17,13 +17,13 @@ namespace di::platform {
 #ifndef DIUS_USE_RUNTIME
 using ThreadId = pthread_t;
 
-inline ThreadId get_current_thread_id() {
+inline auto get_current_thread_id() -> ThreadId {
     return pthread_self();
 }
 #else
 using ThreadId = i32;
 
-ThreadId get_current_thread_id();
+auto get_current_thread_id() -> ThreadId;
 #endif
 
 using DefaultLock = sync::DumbSpinlock;

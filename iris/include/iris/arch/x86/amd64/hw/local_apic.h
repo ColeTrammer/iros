@@ -151,21 +151,23 @@ class LocalApic {
 public:
     explicit LocalApic(mm::PhysicalAddress base);
 
-    u32 direct_read(ApicOffset offset) const { return m_base[di::to_underlying(offset) / sizeof(u32)]; }
+    auto direct_read(ApicOffset offset) const -> u32 { return m_base[di::to_underlying(offset) / sizeof(u32)]; }
     void direct_write(ApicOffset offset, u32 value) { m_base[di::to_underlying(offset) / sizeof(u32)] = value; }
 
     /// @brief Read the Local APIC ID
     ///
     /// See AMD64 Programmer's Manual; Volume 2; Section 16.3.3 Figure 16-3.
-    u16 id() const { return direct_read(ApicOffset::Id) >> 24; }
+    auto id() const -> u16 { return direct_read(ApicOffset::Id) >> 24; }
 
-    ApicVersionRegister version() const { return di::bit_cast<ApicVersionRegister>(direct_read(ApicOffset::Version)); }
+    auto version() const -> ApicVersionRegister {
+        return di::bit_cast<ApicVersionRegister>(direct_read(ApicOffset::Version));
+    }
 
-    ApicExtendedFeatureRegister extended_feature() const {
+    auto extended_feature() const -> ApicExtendedFeatureRegister {
         return di::bit_cast<ApicExtendedFeatureRegister>(direct_read(ApicOffset::ExtendedFeature));
     }
 
-    ApicExtendedControlRegister extended_control() const {
+    auto extended_control() const -> ApicExtendedControlRegister {
         return di::bit_cast<ApicExtendedControlRegister>(direct_read(ApicOffset::ExtendedControl));
     }
     void write_extended_control(ApicExtendedControlRegister value) {
@@ -174,23 +176,23 @@ public:
 
     void write_spurious_interrupt_vector(u32 value) { direct_write(ApicOffset::SpuriousInterruptVector, value); }
 
-    ApicLvtEntry lvt_entry(ApicOffset offset) const { return di::bit_cast<ApicLvtEntry>(direct_read(offset)); }
+    auto lvt_entry(ApicOffset offset) const -> ApicLvtEntry { return di::bit_cast<ApicLvtEntry>(direct_read(offset)); }
     void write_lvt_entry(ApicOffset offset, ApicLvtEntry value) { direct_write(offset, di::bit_cast<u32>(value)); }
 
-    u32 timer_initial_count() const { return direct_read(ApicOffset::TimerInitialCount); }
+    auto timer_initial_count() const -> u32 { return direct_read(ApicOffset::TimerInitialCount); }
     void write_timer_initial_count(u32 value) { direct_write(ApicOffset::TimerInitialCount, value); }
 
-    u32 timer_current_count() const { return direct_read(ApicOffset::TimerCurrentCount); }
+    auto timer_current_count() const -> u32 { return direct_read(ApicOffset::TimerCurrentCount); }
     void write_timer_current_count(u32 value) { direct_write(ApicOffset::TimerCurrentCount, value); }
 
-    ApicTimerDivideConfiguration timer_divide_configuration() const {
+    auto timer_divide_configuration() const -> ApicTimerDivideConfiguration {
         return ApicTimerDivideConfiguration(direct_read(ApicOffset::TimerDivideConfiguration));
     }
     void write_timer_divide_configuration(ApicTimerDivideConfiguration value) {
         direct_write(ApicOffset::TimerDivideConfiguration, di::to_underlying(value));
     }
 
-    ApicInterruptCommandRegister interrupt_command_register() const {
+    auto interrupt_command_register() const -> ApicInterruptCommandRegister {
         auto high = direct_read(ApicOffset::InterruptCommandHigh);
         auto low = direct_read(ApicOffset::InterruptCommandLow);
         return di::bit_cast<ApicInterruptCommandRegister>((u64(high) << 32) | low);

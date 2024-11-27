@@ -7,7 +7,7 @@ namespace di::function {
 struct Multiplies {
     template<typename T, typename U>
     requires(requires(T&& a, U&& b) { util::forward<T>(a) * util::forward<U>(b); })
-    constexpr decltype(auto) operator()(T&& a, U&& b) const {
+    constexpr auto operator()(T&& a, U&& b) const -> decltype(auto) {
         return util::forward<T>(a) * util::forward<U>(b);
     }
 };

@@ -23,13 +23,13 @@ public:
 
     constexpr explicit AsConstView(View view) : m_view(util::move(view)) {}
 
-    constexpr View base() const&
+    constexpr auto base() const& -> View
     requires(concepts::CopyConstructible<View>)
     {
         return m_view;
     }
 
-    constexpr View base() && { return util::move(m_view); }
+    constexpr auto base() && -> View { return util::move(m_view); }
 
     constexpr auto begin() const
     requires(!concepts::SimpleView<View>)

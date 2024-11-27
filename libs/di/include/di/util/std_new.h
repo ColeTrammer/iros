@@ -20,16 +20,16 @@ struct nothrow_t {
 constexpr inline auto nothrow = nothrow_t {};
 
 template<typename T>
-[[nodiscard]] constexpr T* launder(T* pointer) noexcept {
+[[nodiscard]] constexpr auto launder(T* pointer) noexcept -> T* {
     return __builtin_launder(pointer);
 }
 }
 
 // Allocating new.
-[[nodiscard]] void* operator new(std::size_t size);
-[[nodiscard]] void* operator new(std::size_t size, std::align_val_t alignment);
-[[nodiscard]] void* operator new(std::size_t size, std::nothrow_t const&) noexcept;
-[[nodiscard]] void* operator new(std::size_t size, std::align_val_t alignment, std::nothrow_t const&) noexcept;
+[[nodiscard]] auto operator new(std::size_t size) -> void*;
+[[nodiscard]] auto operator new(std::size_t size, std::align_val_t alignment) -> void*;
+[[nodiscard]] auto operator new(std::size_t size, std::nothrow_t const&) noexcept -> void*;
+[[nodiscard]] auto operator new(std::size_t size, std::align_val_t alignment, std::nothrow_t const&) noexcept -> void*;
 
 // Deallocating delete.
 void operator delete(void* pointer) noexcept;
@@ -40,10 +40,11 @@ void operator delete(void* pointer, std::nothrow_t const&) noexcept;
 void operator delete(void* pointer, std::align_val_t alignment, std::nothrow_t const&) noexcept;
 
 // Array allocating new.
-[[nodiscard]] void* operator new[](std::size_t size);
-[[nodiscard]] void* operator new[](std::size_t size, std::align_val_t alignment);
-[[nodiscard]] void* operator new[](std::size_t size, std::nothrow_t const&) noexcept;
-[[nodiscard]] void* operator new[](std::size_t size, std::align_val_t alignment, std::nothrow_t const&) noexcept;
+[[nodiscard]] auto operator new[](std::size_t size) -> void*;
+[[nodiscard]] auto operator new[](std::size_t size, std::align_val_t alignment) -> void*;
+[[nodiscard]] auto operator new[](std::size_t size, std::nothrow_t const&) noexcept -> void*;
+[[nodiscard]] auto operator new[](std::size_t size, std::align_val_t alignment, std::nothrow_t const&) noexcept
+    -> void*;
 
 // Array deallocating delete.
 void operator delete[](void* pointer) noexcept;
@@ -54,10 +55,10 @@ void operator delete[](void* pointer, std::nothrow_t const&) noexcept;
 void operator delete[](void* pointer, std::align_val_t alignment, std::nothrow_t const&) noexcept;
 
 // Placement new.
-[[nodiscard]] inline void* operator new(std::size_t, void* p) noexcept {
+[[nodiscard]] inline auto operator new(std::size_t, void* p) noexcept -> void* {
     return p;
 }
-[[nodiscard]] inline void* operator new[](std::size_t, void* p) noexcept {
+[[nodiscard]] inline auto operator new[](std::size_t, void* p) noexcept -> void* {
     return p;
 }
 

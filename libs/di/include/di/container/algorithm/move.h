@@ -20,7 +20,7 @@ namespace detail {
     struct MoveFunction {
         template<concepts::InputIterator In, concepts::SentinelFor<In> Sent, concepts::WeaklyIncrementable Out>
         requires(concepts::IndirectlyMovable<In, Out>)
-        constexpr MoveResult<In, Out> operator()(In first, Sent last, Out output) const {
+        constexpr auto operator()(In first, Sent last, Out output) const -> MoveResult<In, Out> {
             for (; first != last; ++first, ++output) {
                 *output = iterator_move(first);
             }
@@ -29,7 +29,7 @@ namespace detail {
 
         template<concepts::InputContainer Con, concepts::WeaklyIncrementable Out>
         requires(concepts::IndirectlyMovable<meta::ContainerIterator<Con>, Out>)
-        constexpr MoveResult<meta::BorrowedIterator<Con>, Out> operator()(Con&& container, Out output) const {
+        constexpr auto operator()(Con&& container, Out output) const -> MoveResult<meta::BorrowedIterator<Con>, Out> {
             return (*this)(begin(container), end(container), util::move(output));
         }
     };

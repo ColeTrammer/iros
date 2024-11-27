@@ -54,7 +54,7 @@ public:
     InlineScheduler() = default;
 
 private:
-    friend bool operator==(InlineScheduler const&, InlineScheduler const&) = default;
+    friend auto operator==(InlineScheduler const&, InlineScheduler const&) -> bool = default;
     friend auto tag_invoke(types::Tag<schedule>, InlineScheduler const&) { return Sender {}; }
 };
 }

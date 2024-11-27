@@ -13,7 +13,7 @@
 #endif
 
 namespace di::assert::detail {
-static di::TransparentStringView zstring_to_string_view(char const* s) {
+static auto zstring_to_string_view(char const* s) -> di::TransparentStringView {
     return di::TransparentStringView(s, di::to_unsigned(di::distance(di::ZCString(s))));
 }
 

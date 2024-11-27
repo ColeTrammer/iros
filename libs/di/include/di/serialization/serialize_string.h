@@ -12,7 +12,7 @@ namespace detail {
         template<typename Format, typename T, typename... Args,
                  typename S = meta::Serializer<Format, StringWriter<>, Args...>,
                  typename R = meta::LikeExpected<meta::SerializeResult<S>, container::String>>
-        constexpr R operator()(Format format, T&& value, Args&&... args) const {
+        constexpr auto operator()(Format format, T&& value, Args&&... args) const -> R {
             auto serializer = serialization::serializer(format, StringWriter<> {}, util::forward<Args>(args)...);
             DI_TRY(serialization::serialize(serializer, value));
             return util::move(serializer).writer().output();

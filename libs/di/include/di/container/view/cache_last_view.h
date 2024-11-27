@@ -23,7 +23,7 @@
 namespace di::container {
 namespace detail {
     template<typename T>
-    constexpr T& as_lvalue(T&& value) {
+    constexpr auto as_lvalue(T&& value) -> T& {
         return value;
     }
 }
@@ -47,12 +47,12 @@ private:
 
     public:
         Iterator(Iterator&&) = default;
-        Iterator& operator=(Iterator&&) = default;
+        auto operator=(Iterator&&) -> Iterator& = default;
 
-        constexpr It const& base() const& { return m_iterator; }
-        constexpr It base() && { return di::move(m_iterator); }
+        constexpr auto base() const& -> It const& { return m_iterator; }
+        constexpr auto base() && -> It { return di::move(m_iterator); }
 
-        constexpr Reference& operator*() const {
+        constexpr auto operator*() const -> Reference& {
             if constexpr (concepts::Reference<Reference>) {
                 if (!m_parent->m_last_value) {
                     m_parent->m_last_value = di::addressof(detail::as_lvalue(*m_iterator));
@@ -72,7 +72,7 @@ private:
         }
 
     private:
-        constexpr friend meta::ContainerRValue<Con> tag_invoke(di::Tag<iterator_move>, Iterator const& self) {
+        constexpr friend auto tag_invoke(di::Tag<iterator_move>, Iterator const& self) -> meta::ContainerRValue<Con> {
             return iterator_move(self.m_iterator);
         }
 
@@ -95,9 +95,9 @@ private:
     public:
         Sentinel() = default;
 
-        constexpr Sent base() const { return m_sentinel; }
+        constexpr auto base() const -> Sent { return m_sentinel; }
 
-        constexpr bool equals(Iterator const& it) const { return m_sentinel == it.base(); }
+        constexpr auto equals(Iterator const& it) const -> bool { return m_sentinel == it.base(); }
 
     private:
         Sent m_sentinel {};
@@ -110,12 +110,12 @@ public:
 
     constexpr explicit CacheLastView(Con container) : m_container { di::move(container) } {}
 
-    constexpr Con base() const&
+    constexpr auto base() const& -> Con
     requires(concepts::CopyConstructible<Con>)
     {
         return m_container;
     }
-    constexpr Con base() && { return di::move(m_container); }
+    constexpr auto base() && -> Con { return di::move(m_container); }
 
     constexpr auto begin() { return Iterator(*this); }
 

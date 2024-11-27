@@ -45,7 +45,7 @@ concept TriviallyDestructible = Destructible<T> && __has_trivial_destructor(T);
 namespace detail {
     struct TriviallyRelocatableFunction {
         template<typename T>
-        constexpr bool operator()(InPlaceType<T>) const {
+        constexpr auto operator()(InPlaceType<T>) const -> bool {
             if constexpr (TagInvocableTo<TriviallyRelocatableFunction, InPlaceType<T>>) {
                 return function::tag_invoke(*this, in_place_type<T>);
             } else {

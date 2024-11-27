@@ -12,7 +12,7 @@ namespace detail {
     struct DestroyFunction {
         template<concepts::UninitInputIterator It, concepts::UninitSentinelFor<It> Sent>
         requires(concepts::Destructible<meta::IteratorValue<It>>)
-        constexpr It operator()(It it, Sent sent) const {
+        constexpr auto operator()(It it, Sent sent) const -> It {
             if constexpr (concepts::TriviallyDestructible<meta::IteratorValue<It>>) {
                 container::advance(it, sent);
                 return it;
@@ -26,7 +26,7 @@ namespace detail {
 
         template<concepts::UninitInputContainer Con>
         requires(concepts::Destructible<meta::ContainerValue<Con>>)
-        constexpr meta::BorrowedIterator<Con> operator()(Con&& container) const {
+        constexpr auto operator()(Con&& container) const -> meta::BorrowedIterator<Con> {
             return (*this)(container::begin(container), container::end(container));
         }
     };

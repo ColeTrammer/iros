@@ -19,8 +19,8 @@ namespace detail {
                  concepts::UninitSentinelFor<Out> OutSent>
         requires(concepts::ConstructibleFrom<meta::IteratorValue<Out>, meta::IteratorValue<In>> &&
                  concepts::Destructible<meta::IteratorValue<In>>)
-        constexpr UninitializedRelocateResult<In, Out> operator()(In input, Sent in_sent, Out output,
-                                                                  OutSent out_sent) const {
+        constexpr auto operator()(In input, Sent in_sent, Out output, OutSent out_sent) const
+            -> UninitializedRelocateResult<In, Out> {
             // FIXME: add specical support for trivially relocatable types when not in constexpr context.
             for (; input != in_sent && output != out_sent; ++input, ++output) {
                 util::construct_at(util::addressof(*output), util::relocate(*input));
@@ -31,8 +31,8 @@ namespace detail {
         template<concepts::InputContainer Con, concepts::UninitForwardContainer Out>
         requires(concepts::ConstructibleFrom<meta::ContainerValue<Out>, meta::ContainerValue<Con>> &&
                  concepts::Destructible<meta::ContainerValue<Con>>)
-        constexpr UninitializedRelocateResult<meta::BorrowedIterator<Con>, meta::BorrowedIterator<Out>>
-        operator()(Con&& in, Out&& out) const {
+        constexpr auto operator()(Con&& in, Out&& out) const
+            -> UninitializedRelocateResult<meta::BorrowedIterator<Con>, meta::BorrowedIterator<Out>> {
             return (*this)(container::begin(in), container::end(in), container::begin(out), container::end(out));
         }
     };

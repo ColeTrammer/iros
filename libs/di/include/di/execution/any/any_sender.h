@@ -61,10 +61,10 @@ struct AnySenderT {
         using CompletionSignatures = detail::AnySigs<Sigs>;
 
         Type(Type const&) = delete;
-        Type& operator=(Type const&) = delete;
+        auto operator=(Type const&) -> Type& = delete;
 
         Type(Type&&) = default;
-        Type& operator=(Type&&) = default;
+        auto operator=(Type&&) -> Type& = default;
 
         template<typename E>
         requires(concepts::ConstructibleFrom<vocab::Error, E>)
@@ -133,7 +133,7 @@ namespace detail {
              concepts::Receiver Rec = meta::At<meta::AsList<meta::MethodSignature<M>>, 1>,
              concepts::OperationState R = meta::LanguageFunctionReturn<meta::MethodSignature<M>>>
     requires(concepts::SenderTo<Send, Rec>)
-    R tag_invoke(detail::ConnectFunction, M, Send&& sender, meta::TypeIdentity<Rec&&> receiver) {
+    auto tag_invoke(detail::ConnectFunction, M, Send&& sender, meta::TypeIdentity<Rec&&> receiver) -> R {
         auto operation_state = R();
 
         using Op = meta::ConnectResult<Send, Rec>;

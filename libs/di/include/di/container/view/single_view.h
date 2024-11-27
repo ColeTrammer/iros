@@ -28,13 +28,13 @@ public:
     requires(concepts::ConstructibleFrom<T, Args...>)
     constexpr explicit SingleView(types::InPlace, Args&&... args) : m_value(util::forward<Args>(args)...) {}
 
-    constexpr T* begin() { return util::addressof(m_value); }
-    constexpr T const* begin() const { return util::addressof(m_value); }
+    constexpr auto begin() -> T* { return util::addressof(m_value); }
+    constexpr auto begin() const -> T const* { return util::addressof(m_value); }
 
     constexpr auto end() { return begin() + 1; }
     constexpr auto end() const { return begin() + 1; }
 
-    constexpr static types::size_t size() { return 1; }
+    constexpr static auto size() -> types::size_t { return 1; }
 
     constexpr auto data() { return begin(); }
     constexpr auto data() const { return begin(); }

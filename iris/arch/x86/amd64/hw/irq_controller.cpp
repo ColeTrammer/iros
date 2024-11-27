@@ -3,7 +3,7 @@
 #include <iris/core/global_state.h>
 
 namespace iris {
-Expected<di::Synchronized<IrqController>&> irq_controller_for_interrupt_number(GlobalIrqNumber irq_number) {
+auto irq_controller_for_interrupt_number(GlobalIrqNumber irq_number) -> Expected<di::Synchronized<IrqController>&> {
     if (irq_number < global_state().arch_readonly_state.external_irq_offset) {
         return di::Unexpected(Error::ArgumentOutOfDomain);
     }

@@ -36,8 +36,8 @@ public:
 
     constexpr ~Ring() { deallocate(); }
 
-    constexpr Ring& operator=(Ring const&) = delete;
-    constexpr Ring& operator=(Ring&& other) {
+    constexpr auto operator=(Ring const&) -> Ring& = delete;
+    constexpr auto operator=(Ring&& other) -> Ring& {
         deallocate();
         this->m_data = util::exchange(other.m_data, nullptr);
         this->m_size = util::exchange(other.m_size, 0);
@@ -48,11 +48,11 @@ public:
         return *this;
     }
 
-    constexpr Span<Value> span() { return { m_data, m_size }; }
-    constexpr Span<ConstValue> span() const { return { m_data, m_size }; }
+    constexpr auto span() -> Span<Value> { return { m_data, m_size }; }
+    constexpr auto span() const -> Span<ConstValue> { return { m_data, m_size }; }
 
-    constexpr usize capacity() const { return m_capacity; }
-    constexpr usize max_size() const { return static_cast<usize>(-1); }
+    constexpr auto capacity() const -> usize { return m_capacity; }
+    constexpr auto max_size() const -> usize { return static_cast<usize>(-1); }
 
     constexpr auto reserve_from_nothing(usize n) {
         DI_ASSERT(capacity() == 0u);
@@ -65,8 +65,8 @@ public:
     }
     constexpr void assume_size(usize size) { m_size = size; }
 
-    constexpr usize head() const { return m_head; }
-    constexpr usize tail() const { return m_tail; }
+    constexpr auto head() const -> usize { return m_head; }
+    constexpr auto tail() const -> usize { return m_tail; }
 
     constexpr void assume_head(usize head) { m_head = head; }
     constexpr void assume_tail(usize tail) { m_tail = tail; }
@@ -88,7 +88,7 @@ private:
 };
 
 template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>>
-Ring<T> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<Ring>, Con&&);
+auto tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<Ring>, Con&&) -> Ring<T>;
 }
 
 namespace di {

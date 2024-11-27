@@ -20,7 +20,7 @@ namespace detail {
     struct FilterFunction {
         template<concepts::ViewableContainer Con, typename Pred>
         requires(CustomFilter<Con, Pred> || ViewFilter<Con, Pred>)
-        constexpr concepts::View auto operator()(Con&& container, Pred&& predicate) const {
+        constexpr auto operator()(Con&& container, Pred&& predicate) const -> concepts::View auto {
             if constexpr (CustomFilter<Con, Pred>) {
                 return function::tag_invoke(*this, util::forward<Con>(container), util::forward<Pred>(predicate));
             } else {

@@ -13,7 +13,7 @@ namespace detail {
     template<typename T>
     struct AllocateOneFunction {
         template<concepts::Allocator Alloc>
-        constexpr meta::AllocatorResult<Alloc, T*> operator()(Alloc& allocator) const {
+        constexpr auto operator()(Alloc& allocator) const -> meta::AllocatorResult<Alloc, T*> {
             if consteval {
                 return std::allocator<T>().allocate(1);
             }

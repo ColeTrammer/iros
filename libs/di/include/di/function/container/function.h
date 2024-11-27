@@ -226,8 +226,8 @@ namespace function_ns {
             alignas(2 * sizeof(void*)) di::Array<di::Byte, 2 * sizeof(void*)> byte_storage;
         };
 
-        void* address() { return util::addressof(byte_storage[0]); }
-        void const* address() const { return util::addressof(byte_storage[0]); }
+        auto address() -> void* { return util::addressof(byte_storage[0]); }
+        auto address() const -> void const* { return util::addressof(byte_storage[0]); }
     };
 
     template<typename F>
@@ -288,8 +288,8 @@ namespace function_ns {
 
         constexpr ~ErasedObject() { reset(); }
 
-        ErasedObject& operator=(ErasedObject const&) = delete;
-        constexpr ErasedObject& operator=(ErasedObject&& other) {
+        auto operator=(ErasedObject const&) -> ErasedObject& = delete;
+        constexpr auto operator=(ErasedObject&& other) -> ErasedObject& {
             reset();
             if ((m_thunk = util::exchange(other.m_thunk, nullptr))) {
                 m_thunk(util::addressof(m_storage), util::addressof(other.m_storage), m_allocator);
@@ -297,7 +297,7 @@ namespace function_ns {
             return *this;
         }
 
-        constexpr bool empty() const { return m_thunk != nullptr; }
+        constexpr auto empty() const -> bool { return m_thunk != nullptr; }
         constexpr void reset() {
             if (auto* old_thunk = util::exchange(m_thunk, nullptr)) {
                 old_thunk(util::addressof(m_storage), nullptr, m_allocator);
@@ -305,7 +305,7 @@ namespace function_ns {
         }
 
         template<typename T>
-        constexpr T* down_cast() {
+        constexpr auto down_cast() -> T* {
             if consteval {
                 return static_cast<T*>(m_storage.pointer);
             }
@@ -317,7 +317,7 @@ namespace function_ns {
         }
 
         template<typename T>
-        constexpr T* down_cast() const {
+        constexpr auto down_cast() const -> T* {
             if consteval {
                 return static_cast<T*>(m_storage.pointer);
             }
@@ -401,8 +401,8 @@ namespace function_ns {
         using ErasedFunctionPointer = R (*)(meta::MaybeConst<is_const, ErasedObject>*, Args&&...) noexcept(is_noexcept);
 
         template<typename T>
-        constexpr static R concrete_impl(meta::MaybeConst<is_const, ErasedObject>* object,
-                                         Args&&... args) noexcept(is_noexcept) {
+        constexpr static auto concrete_impl(meta::MaybeConst<is_const, ErasedObject>* object,
+                                            Args&&... args) noexcept(is_noexcept) -> R {
             using CV = CVQualified<T>;
             using Inv = InvQualifed<T>;
             return function::invoke_r<R>(util::forward<Inv>(*object->template down_cast<CV>()),
@@ -410,14 +410,14 @@ namespace function_ns {
         }
 
         template<auto f>
-        constexpr static R concrete_impl_for_constexpr(meta::MaybeConst<is_const, ErasedObject>*,
-                                                       Args&&... args) noexcept(is_noexcept) {
+        constexpr static auto concrete_impl_for_constexpr(meta::MaybeConst<is_const, ErasedObject>*,
+                                                          Args&&... args) noexcept(is_noexcept) -> R {
             return function::invoke_r<R>(f, util::forward<Args>(args)...);
         }
 
         template<auto f, typename T>
-        constexpr static R concrete_impl_for_bound_constexpr(meta::MaybeConst<is_const, ErasedObject>* object,
-                                                             Args&&... args) {
+        constexpr static auto concrete_impl_for_bound_constexpr(meta::MaybeConst<is_const, ErasedObject>* object,
+                                                                Args&&... args) -> R {
             using CV = CVQualified<T>;
             using Inv = InvQualifed<T>;
             return function::invoke_r<R>(f, util::forward<Inv>(*object->template down_cast<CV>()),
@@ -491,13 +491,13 @@ namespace function_ns {
 
         ~Function() = default;
 
-        constexpr Function& operator=(nullptr_t) {
+        constexpr auto operator=(nullptr_t) -> Function& {
             m_object.reset();
             m_impl = nullptr;
             return *this;
         }
-        Function& operator=(Function const&) = delete;
-        constexpr Function& operator=(Function&& other) {
+        auto operator=(Function const&) -> Function& = delete;
+        constexpr auto operator=(Function&& other) -> Function& {
             m_object = util::move(other.m_object);
             m_impl = util::exchange(other.m_impl, nullptr);
             return *this;
@@ -505,48 +505,48 @@ namespace function_ns {
 
         template<typename F>
         requires(concepts::ConstructibleFrom<Function, F>)
-        constexpr Function& operator=(F&& value) {
+        constexpr auto operator=(F&& value) -> Function& {
             auto new_value = Function(util::forward<F>(value));
             util::swap(*this, new_value);
             return *this;
         }
 
-        constexpr R operator()(Args... args) noexcept(is_noexcept)
+        constexpr auto operator()(Args... args) noexcept(is_noexcept) -> R
         requires(!is_const && !is_lvalue && !is_rvalue)
         {
             DI_ASSERT(m_impl);
             return m_impl(util::addressof(m_object), util::forward<Args>(args)...);
         }
 
-        constexpr R operator()(Args... args) const noexcept(is_noexcept)
+        constexpr auto operator()(Args... args) const noexcept(is_noexcept) -> R
         requires(is_const && !is_lvalue && !is_rvalue)
         {
             DI_ASSERT(m_impl);
             return m_impl(util::addressof(m_object), util::forward<Args>(args)...);
         }
 
-        constexpr R operator()(Args... args) & noexcept(is_noexcept)
+        constexpr auto operator()(Args... args) & noexcept(is_noexcept) -> R
         requires(!is_const && is_lvalue)
         {
             DI_ASSERT(m_impl);
             return m_impl(util::addressof(m_object), util::forward<Args>(args)...);
         }
 
-        constexpr R operator()(Args... args) const& noexcept(is_noexcept)
+        constexpr auto operator()(Args... args) const& noexcept(is_noexcept) -> R
         requires(is_const && is_lvalue)
         {
             DI_ASSERT(m_impl);
             return m_impl(util::addressof(m_object), util::forward<Args>(args)...);
         }
 
-        constexpr R operator()(Args... args) && noexcept(is_noexcept)
+        constexpr auto operator()(Args... args) && noexcept(is_noexcept) -> R
         requires(!is_const && is_rvalue)
         {
             DI_ASSERT(m_impl);
             return m_impl(util::addressof(m_object), util::forward<Args>(args)...);
         }
 
-        constexpr R operator()(Args... args) const&& noexcept(is_noexcept)
+        constexpr auto operator()(Args... args) const&& noexcept(is_noexcept) -> R
         requires(is_const && is_rvalue)
         {
             DI_ASSERT(m_impl);
@@ -556,7 +556,7 @@ namespace function_ns {
         constexpr explicit operator bool() const { return m_impl != nullptr; }
 
     private:
-        constexpr friend bool operator==(Function const& a, nullptr_t) { return !bool(a); }
+        constexpr friend auto operator==(Function const& a, nullptr_t) -> bool { return !bool(a); }
 
         ErasedObject m_object {};
         ErasedFunctionPointer m_impl { nullptr };
@@ -571,7 +571,7 @@ namespace function_ns {
         template<typename F, typename VT = meta::Decay<F>>
         requires(!concepts::SameAs<meta::RemoveCVRef<F>, Function> &&
                  !concepts::InstanceOf<meta::RemoveCVRef<F>, InPlaceType> && Function::template is_callable_from<VT>)
-        constexpr meta::AllocatorResult<Alloc, Function> operator()(F&& object) const {
+        constexpr auto operator()(F&& object) const -> meta::AllocatorResult<Alloc, Function> {
             Function result;
             if constexpr (concepts::MemberPointer<VT> ||
                           concepts::InstanceOf<meta::RemoveCVRef<F>, function_ns::Function>) {
@@ -592,7 +592,7 @@ namespace function_ns {
 
         template<auto f, typename T, typename VT = meta::Decay<T>>
         requires(concepts::ConstructibleFrom<VT, T> && Function::template is_callable_as_if_from<f, VT>)
-        constexpr meta::AllocatorResult<Alloc, Function> operator()(Constexpr<f>, T&& object) const {
+        constexpr auto operator()(Constexpr<f>, T&& object) const -> meta::AllocatorResult<Alloc, Function> {
             Function result;
             if constexpr (StoredInline<VT>) {
                 result.m_object.template init_inline<VT>(util::forward<T>(object));
@@ -607,7 +607,7 @@ namespace function_ns {
 
         template<typename T, typename... Ts, typename VT = meta::Decay<T>>
         requires(concepts::ConstructibleFrom<T, Ts...> && Function::template is_callable_from<VT>)
-        constexpr meta::AllocatorResult<Alloc, Function> operator()(InPlaceType<T>, Ts&&... args) const {
+        constexpr auto operator()(InPlaceType<T>, Ts&&... args) const -> meta::AllocatorResult<Alloc, Function> {
             Function result;
             if constexpr (StoredInline<VT>) {
                 result.m_object.template init_inline<VT>(util::forward<Ts>(args)...);
@@ -623,8 +623,8 @@ namespace function_ns {
         template<typename T, typename U, typename... Ts, typename VT = meta::Decay<T>>
         requires(concepts::ConstructibleFrom<T, std::initializer_list<U>&, Ts...> &&
                  Function::template is_callable_from<VT>)
-        constexpr meta::AllocatorResult<Alloc, Function> operator()(InPlaceType<T>, std::initializer_list<U> list,
-                                                                    Ts&&... args) const {
+        constexpr auto operator()(InPlaceType<T>, std::initializer_list<U> list, Ts&&... args) const
+            -> meta::AllocatorResult<Alloc, Function> {
             Function result;
             if constexpr (StoredInline<VT>) {
                 result.m_object.template init_inline<VT>(list, util::forward<Ts>(args)...);
@@ -639,7 +639,8 @@ namespace function_ns {
 
         template<auto f, typename T, typename... Ts, typename VT = meta::Decay<T>>
         requires(concepts::ConstructibleFrom<T, Ts...> && Function::template is_callable_from<VT>)
-        constexpr meta::AllocatorResult<Alloc, Function> operator()(Constexpr<f>, InPlaceType<T>, Ts&&... args) const {
+        constexpr auto operator()(Constexpr<f>, InPlaceType<T>, Ts&&... args) const
+            -> meta::AllocatorResult<Alloc, Function> {
             Function result;
             if constexpr (StoredInline<VT>) {
                 result.m_object.template init_inline<VT>(util::forward<Ts>(args)...);
@@ -655,8 +656,8 @@ namespace function_ns {
         template<auto f, typename T, typename U, typename... Ts, typename VT = meta::Decay<T>>
         requires(concepts::ConstructibleFrom<T, std::initializer_list<U>&, Ts...> &&
                  Function::template is_callable_from<VT> && StoredInline<VT>)
-        constexpr meta::AllocatorResult<Alloc, Function> operator()(Constexpr<f>, InPlaceType<T>,
-                                                                    std::initializer_list<U> list, Ts&&... args) const {
+        constexpr auto operator()(Constexpr<f>, InPlaceType<T>, std::initializer_list<U> list, Ts&&... args) const
+            -> meta::AllocatorResult<Alloc, Function> {
             Function result;
             if constexpr (StoredInline<VT>) {
                 result.m_object.template init_inline<VT>(list, util::forward<Ts>(args)...);

@@ -8,14 +8,14 @@ namespace detail {
     struct NoneOfFunction {
         template<concepts::InputIterator Iter, concepts::SentinelFor<Iter> Sent, typename Proj = function::Identity,
                  concepts::IndirectUnaryPredicate<meta::Projected<Iter, Proj>> Pred = function::AsBool>
-        constexpr bool operator()(Iter first, Sent last, Pred pred = {}, Proj proj = {}) const {
+        constexpr auto operator()(Iter first, Sent last, Pred pred = {}, Proj proj = {}) const -> bool {
             return container::find_if(util::move(first), last, util::ref(pred), util::ref(proj)) == last;
         }
 
         template<concepts::InputContainer Con, typename Proj = function::Identity,
                  concepts::IndirectUnaryPredicate<meta::Projected<meta::ContainerIterator<Con>, Proj>> Pred =
                      function::AsBool>
-        constexpr bool operator()(Con&& container, Pred pred = {}, Proj proj = {}) const {
+        constexpr auto operator()(Con&& container, Pred pred = {}, Proj proj = {}) const -> bool {
             return (*this)(container::begin(container), container::end(container), util::ref(pred), util::ref(proj));
         }
     };

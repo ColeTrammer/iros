@@ -13,15 +13,15 @@ struct PlatformThread;
 struct PlatformThreadDeleter;
 
 struct PlatformThread : di::SelfPointer<PlatformThread> {
-    static di::Result<di::Box<PlatformThread, PlatformThreadDeleter>> create(runtime::TlsInfo);
-    static PlatformThread& current();
+    static auto create(runtime::TlsInfo) -> di::Result<di::Box<PlatformThread, PlatformThreadDeleter>>;
+    static auto current() -> PlatformThread&;
 
     PlatformThread() = default;
 
-    int id() const { return thread_id; }
-    di::Result<void> join();
+    auto id() const -> int { return thread_id; }
+    auto join() -> di::Result<void>;
 
-    di::Span<byte> thread_local_storage(usize tls_size) {
+    auto thread_local_storage(usize tls_size) -> di::Span<byte> {
         return { reinterpret_cast<byte*>(this) - tls_size, tls_size };
     }
 
@@ -34,6 +34,6 @@ struct PlatformThreadDeleter {
     void operator()(PlatformThread*) const;
 };
 
-di::Result<void> spawn_thread(PlatformThread&);
+auto spawn_thread(PlatformThread&) -> di::Result<void>;
 }
 #endif

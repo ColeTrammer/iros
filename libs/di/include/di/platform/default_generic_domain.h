@@ -31,35 +31,38 @@ public:
     GenericDomain(GenericDomain const&) = default;
     GenericDomain(GenericDomain&&) = default;
 
-    GenericDomain& operator=(GenericDomain const&) = default;
-    GenericDomain& operator=(GenericDomain&&) = default;
+    auto operator=(GenericDomain const&) -> GenericDomain& = default;
+    auto operator=(GenericDomain&&) -> GenericDomain& = default;
 
-    constexpr static inline GenericDomain const& get();
+    constexpr static inline auto get() -> GenericDomain const&;
 
-    virtual container::ErasedString name() const override { return container::ErasedString(u8"Generic Domain"); }
+    virtual auto name() const -> container::ErasedString override {
+        return container::ErasedString(u8"Generic Domain");
+    }
 
-    virtual PayloadInfo payload_info() const override {
+    virtual auto payload_info() const -> PayloadInfo override {
         return { sizeof(Value), sizeof(Value) + sizeof(StatusCodeDomain const*),
                  container::max(alignof(Value), alignof(StatusCodeDomain const*)) };
     }
 
 protected:
-    constexpr virtual bool do_failure(vocab::StatusCode<void> const& code) const override {
+    constexpr virtual auto do_failure(vocab::StatusCode<void> const& code) const -> bool override {
         return down_cast(code).value() != BasicError::Success;
     }
 
-    constexpr virtual bool do_equivalent(vocab::StatusCode<void> const& a,
-                                         vocab::StatusCode<void> const& b) const override {
+    constexpr virtual auto do_equivalent(vocab::StatusCode<void> const& a, vocab::StatusCode<void> const& b) const
+        -> bool override {
         DI_ASSERT(a.domain() == *this);
         return b.domain() == *this && down_cast(a).value() == down_cast(b).value();
     }
 
-    constexpr virtual vocab::GenericCode do_convert_to_generic(vocab::StatusCode<void> const& a) const override {
+    constexpr virtual auto do_convert_to_generic(vocab::StatusCode<void> const& a) const
+        -> vocab::GenericCode override {
         DI_ASSERT(a.domain() == *this);
         return vocab::GenericCode(di::in_place, down_cast(a).value());
     }
 
-    constexpr virtual container::ErasedString do_message(vocab::StatusCode<void> const& code) const override {
+    constexpr virtual auto do_message(vocab::StatusCode<void> const& code) const -> container::ErasedString override {
         auto value = down_cast(code).value();
         switch (value) {
             case BasicError::Success:
@@ -79,7 +82,7 @@ private:
     template<typename Domain>
     friend class StatusCode;
 
-    constexpr vocab::GenericCode const& down_cast(vocab::StatusCode<void> const& code) const {
+    constexpr auto down_cast(vocab::StatusCode<void> const& code) const -> vocab::GenericCode const& {
         DI_ASSERT(code.domain() == *this);
         return static_cast<vocab::GenericCode const&>(code);
     }
@@ -105,13 +108,13 @@ constexpr auto generic_domain = GenericDomain {};
 constexpr inline auto generic_domain = GenericDomain {};
 #endif
 
-constexpr inline GenericDomain const& GenericDomain::get() {
+constexpr inline auto GenericDomain::get() -> GenericDomain const& {
     return generic_domain;
 }
 }
 
 namespace di::vocab {
-constexpr GenericCode StatusCode<void>::generic_code() const {
+constexpr auto StatusCode<void>::generic_code() const -> GenericCode {
     if (!this->empty()) {
         return this->domain().do_convert_to_generic(*this);
     }

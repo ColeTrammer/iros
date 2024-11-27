@@ -9,7 +9,7 @@ namespace detail {
     struct MidpointFunction {
         template<concepts::Integral T>
         requires(!concepts::SameAs<T, bool>)
-        constexpr T operator()(T a, T b) const {
+        constexpr auto operator()(T a, T b) const -> T {
             // Compute the midpoint without signed overflow.
             // The implementation is from this CppCon talk:
             // https://m.youtube.com/watch?v=sBtAGxBh-XI
@@ -27,7 +27,7 @@ namespace detail {
 
         template<concepts::Pointer T>
         requires(concepts::Object<meta::RemovePointer<T>>)
-        constexpr T operator()(T a, T b) const {
+        constexpr auto operator()(T a, T b) const -> T {
             return a + (b - a) / 2;
         }
     };

@@ -348,7 +348,7 @@ private:
             return di::make_deferred<AsyncFile>(self.parent, path, mode, create_mode);
         }
 
-        constexpr friend bool operator==(Scheduler const&, Scheduler const&) = default;
+        constexpr friend auto operator==(Scheduler const&, Scheduler const&) -> bool = default;
     };
 
     struct State {
@@ -358,14 +358,14 @@ private:
         bool stopped { false };
     };
 
-    di::Synchronized<State>& state() { return m_state.value(); }
+    auto state() -> di::Synchronized<State>& { return m_state.value(); }
 
 public:
-    static di::Result<IoContext> create() { return IoContext {}; }
+    static auto create() -> di::Result<IoContext> { return IoContext {}; }
 
     IoContext(IoContext&&) = default;
 
-    Scheduler get_scheduler() { return Scheduler { this }; }
+    auto get_scheduler() -> Scheduler { return Scheduler { this }; }
 
     void run() {
         while (auto* operation = pop_front()) {
@@ -382,7 +382,7 @@ public:
 private:
     IoContext() {}
 
-    OperationStateBase* pop_front() {
+    auto pop_front() -> OperationStateBase* {
         // FIXME: block instead of busy polling the queue when it is empty.
         for (;;) {
             auto [operation, is_stopped] = state().with_lock([](State& state) -> di::Tuple<OperationStateBase*, bool> {

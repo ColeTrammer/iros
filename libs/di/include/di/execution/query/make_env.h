@@ -72,7 +72,7 @@ namespace make_env_ns {
 
             template<concepts::ForwardingQuery Tag>
             requires(!HasTag<Tag, meta::List<Overrides...>> && concepts::Invocable<Tag, BaseEnv const&>)
-            constexpr friend decltype(auto) tag_invoke(Tag tag, Type const& self) {
+            constexpr friend auto tag_invoke(Tag tag, Type const& self) -> decltype(auto) {
                 return tag(self.m_base_env);
             }
 

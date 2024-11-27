@@ -3,7 +3,7 @@
 namespace ccpp {
 // NOTE: this is an extension of fgetc(), which does not lock file.
 // https://pubs.opengroup.org/onlinepubs/9699919799/functions/fgetc.html
-extern "C" int fgetc_unlocked(FILE* file) {
+extern "C" auto fgetc_unlocked(FILE* file) -> int {
     auto& inner = file->get_unlocked();
 
     // If we're are EOF or already error'ed, ignore.

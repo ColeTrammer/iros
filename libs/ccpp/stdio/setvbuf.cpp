@@ -4,7 +4,7 @@
 
 namespace ccpp {
 // https://pubs.opengroup.org/onlinepubs/9699919799/functions/setvbuf.html
-extern "C" int setvbuf(FILE* __restrict file, char* __restrict buffer, int mode, size_t size) {
+extern "C" auto setvbuf(FILE* __restrict file, char* __restrict buffer, int mode, size_t size) -> int {
     if (mode != _IONBF && mode != _IOLBF && mode != _IOFBF) {
         errno = EINVAL;
         return -1;

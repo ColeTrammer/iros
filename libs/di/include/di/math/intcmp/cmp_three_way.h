@@ -7,7 +7,7 @@ namespace di::math {
 namespace detail {
     struct CmpThreeWayFunction {
         template<concepts::Integer T, concepts::Integer U>
-        constexpr types::strong_ordering operator()(T a, U b) const {
+        constexpr auto operator()(T a, U b) const -> types::strong_ordering {
             using UT = meta::MakeUnsigned<T>;
             using UU = meta::MakeUnsigned<U>;
             if constexpr (concepts::Signed<T> == concepts::Signed<U>) {

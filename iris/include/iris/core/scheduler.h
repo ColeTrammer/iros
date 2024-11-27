@@ -14,9 +14,9 @@ public:
     [[noreturn]] void save_state_and_run_next(arch::TaskState* state);
     [[noreturn]] void exit_current_task();
 
-    Task& current_task() const { return *m_current_task; }
-    Task* current_task_null_if_during_boot() const { return m_current_task; }
-    mm::AddressSpace& current_address_space();
+    auto current_task() const -> Task& { return *m_current_task; }
+    auto current_task_null_if_during_boot() const -> Task* { return m_current_task; }
+    auto current_address_space() -> mm::AddressSpace&;
 
     /// @brief Block the currently running task on this scheduler.
     ///
@@ -24,7 +24,7 @@ public:
     ///
     /// @return Returns an error if the current task was interrupted by userspace, and otherwise returns success
     ///         once the task is unblocked.
-    Expected<void> block_current_task(di::FunctionRef<void()> before_yielding);
+    auto block_current_task(di::FunctionRef<void()> before_yielding) -> Expected<void>;
 
     void setup_idle_task();
 

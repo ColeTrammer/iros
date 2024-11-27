@@ -23,7 +23,7 @@ namespace detail {
     struct ZipTransformFunction {
         template<typename F, concepts::ViewableContainer... Cons>
         requires(CustomZipTransform<F, Cons...> || EmptyZipTransform<F, Cons...> || ViewZipTransform<F, Cons...>)
-        constexpr concepts::View auto operator()(F&& function, Cons&&... containers) const {
+        constexpr auto operator()(F&& function, Cons&&... containers) const -> concepts::View auto {
             if constexpr (CustomZipTransform<F, Cons...>) {
                 return function::tag_invoke(*this, util::forward<F>(function), util::forward<Cons>(containers)...);
             } else if constexpr (EmptyZipTransform<F, Cons...>) {

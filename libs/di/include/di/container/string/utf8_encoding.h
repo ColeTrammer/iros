@@ -10,32 +10,32 @@ namespace di::container::string {
 // NOTE: see https://www.unicode.org/versions/Unicode14.0.0/UnicodeStandard-14.0.pdf for details on the UTF-8 encoding.
 //       In particular, section 3.9, table 3-6, and table 3-7.
 namespace utf8 {
-    constexpr static bool is_start_of_one_byte_sequence(c8 byte) {
+    constexpr static auto is_start_of_one_byte_sequence(c8 byte) -> bool {
         return byte <= 0x7F;
     }
 
-    constexpr static bool is_start_of_two_byte_sequence(c8 byte) {
+    constexpr static auto is_start_of_two_byte_sequence(c8 byte) -> bool {
         return byte >= 0xC2 && byte <= 0xDF;
     }
 
-    constexpr static bool is_start_of_three_byte_sequence(c8 byte) {
+    constexpr static auto is_start_of_three_byte_sequence(c8 byte) -> bool {
         return byte >= 0xE0 && byte <= 0xEF;
     }
 
-    constexpr static bool is_start_of_four_byte_sequence(c8 byte) {
+    constexpr static auto is_start_of_four_byte_sequence(c8 byte) -> bool {
         return byte >= 0xF0 && byte <= 0xF4;
     }
 
-    constexpr static bool is_start_of_multi_byte_sequence(c8 byte) {
+    constexpr static auto is_start_of_multi_byte_sequence(c8 byte) -> bool {
         return is_start_of_two_byte_sequence(byte) || is_start_of_three_byte_sequence(byte) ||
                is_start_of_four_byte_sequence(byte);
     }
 
-    constexpr static bool is_valid_first_byte(c8 byte) {
+    constexpr static auto is_valid_first_byte(c8 byte) -> bool {
         return is_start_of_one_byte_sequence(byte) || is_start_of_multi_byte_sequence(byte);
     }
 
-    constexpr static bool is_valid_second_byte(c8 first_byte, c8 second_byte) {
+    constexpr static auto is_valid_second_byte(c8 first_byte, c8 second_byte) -> bool {
         switch (first_byte) {
             case 0xE0:
                 return second_byte >= 0xA0 && second_byte <= 0xBF;
@@ -50,15 +50,15 @@ namespace utf8 {
         }
     }
 
-    constexpr static bool is_valid_third_byte([[maybe_unused]] c8 first_byte, c8 third_byte) {
+    constexpr static auto is_valid_third_byte([[maybe_unused]] c8 first_byte, c8 third_byte) -> bool {
         return third_byte >= 0x80 && third_byte <= 0xBF;
     }
 
-    constexpr static bool is_valid_fourth_byte([[maybe_unused]] c8 first_byte, c8 fourth_byte) {
+    constexpr static auto is_valid_fourth_byte([[maybe_unused]] c8 first_byte, c8 fourth_byte) -> bool {
         return fourth_byte >= 0x80 && fourth_byte <= 0xBF;
     }
 
-    constexpr static u8 byte_sequence_length(c8 first_byte) {
+    constexpr static auto byte_sequence_length(c8 first_byte) -> u8 {
         return is_start_of_one_byte_sequence(first_byte)     ? 1
                : is_start_of_two_byte_sequence(first_byte)   ? 2
                : is_start_of_three_byte_sequence(first_byte) ? 3
@@ -70,7 +70,7 @@ namespace utf8 {
         Utf8Iterator() = default;
         constexpr explicit Utf8Iterator(c8 const* data) : m_data(data) {}
 
-        constexpr c32 operator*() const {
+        constexpr auto operator*() const -> c32 {
             auto length = byte_sequence_length(*m_data);
             auto first_byte_mask = 0b11111111 >> length;
             auto result = static_cast<c32>(*m_data & first_byte_mask);
@@ -88,12 +88,14 @@ namespace utf8 {
             } while (!is_valid_first_byte(*m_data));
         }
 
-        constexpr c8 const* data() const { return m_data; }
+        constexpr auto data() const -> c8 const* { return m_data; }
 
         constexpr explicit operator c8 const*() const { return data(); }
 
     private:
-        constexpr friend bool operator==(Utf8Iterator const& a, Utf8Iterator const& b) { return a.data() == b.data(); }
+        constexpr friend auto operator==(Utf8Iterator const& a, Utf8Iterator const& b) -> bool {
+            return a.data() == b.data();
+        }
         constexpr friend auto operator<=>(Utf8Iterator const& a, Utf8Iterator const& b) {
             return a.data() <=> b.data();
         }
@@ -110,7 +112,7 @@ public:
 
 private:
     template<typename = void>
-    constexpr friend bool tag_invoke(types::Tag<encoding::validate>, Utf8Encoding const&, Span<c8 const> data) {
+    constexpr friend auto tag_invoke(types::Tag<encoding::validate>, Utf8Encoding const&, Span<c8 const> data) -> bool {
         size_t i = 0;
         while (i < data.size()) {
             auto first_byte = data.data()[i];
@@ -142,8 +144,8 @@ private:
         return true;
     }
 
-    constexpr friend bool tag_invoke(types::Tag<encoding::valid_byte_offset>, Utf8Encoding const&, Span<c8 const> data,
-                                     size_t offset) {
+    constexpr friend auto tag_invoke(types::Tag<encoding::valid_byte_offset>, Utf8Encoding const&, Span<c8 const> data,
+                                     size_t offset) -> bool {
         // NOTE: this function can assume the underlying c8 data is valid UTF-8.
         if (offset >= data.size()) {
             return offset == data.size();

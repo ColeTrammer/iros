@@ -29,7 +29,7 @@ struct scanf_specifier_state {
 
 #define SCANF_NUMBER_BUFFER_MAX 30
 
-static int determine_base(int c) {
+static auto determine_base(int c) -> int {
     switch (c) {
         case 'i':
             return 0;
@@ -47,7 +47,7 @@ static int determine_base(int c) {
 }
 
 /* Determines the validity of any character for the given base (goes from digits to letters) (max base is 36) */
-static bool is_valid_char_for_base(char c, int base) {
+static auto is_valid_char_for_base(char c, int base) -> bool {
     if (isdigit(c)) {
         return (c - '0') < base;
     } else if (isalpha(c)) {
@@ -58,7 +58,7 @@ static bool is_valid_char_for_base(char c, int base) {
 }
 
 // Determines whether a character is in a given set
-static bool is_valid_char_for_set(char c, char const* set, int set_end, bool invert) {
+static auto is_valid_char_for_set(char c, char const* set, int set_end, bool invert) -> bool {
     for (int i = 0; i < set_end; i++) {
         // Handle `-` ranges
         if (i != 0 && i != set_end - 1 && set[i] == '-') {
@@ -88,9 +88,8 @@ static bool is_valid_char_for_set(char c, char const* set, int set_end, bool inv
     return invert;
 }
 
-di::Expected<int, di::GenericCode>
-scanf_implementation(di::FunctionRef<di::Expected<di::Optional<char>, di::GenericCode>()> read_next, char const* format,
-                     va_list args) {
+auto scanf_implementation(di::FunctionRef<di::Expected<di::Optional<char>, di::GenericCode>()> read_next,
+                          char const* format, va_list args) -> di::Expected<int, di::GenericCode> {
     void* state = nullptr;
     auto get_character = [&](void*) -> int {
         auto ch = read_next();

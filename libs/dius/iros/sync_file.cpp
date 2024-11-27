@@ -6,27 +6,27 @@
 #include <iris/uapi/open.h>
 
 namespace dius {
-di::Expected<usize, di::GenericCode> sys_read(int fd, u64 offset, di::Span<byte> data) {
+auto sys_read(int fd, u64 offset, di::Span<byte> data) -> di::Expected<usize, di::GenericCode> {
     return system::system_call<usize>(system::Number::read, fd, data.data(), data.size(), offset);
 }
 
-di::Expected<usize, di::GenericCode> sys_write(int fd, u64 offset, di::Span<byte const> data) {
+auto sys_write(int fd, u64 offset, di::Span<byte const> data) -> di::Expected<usize, di::GenericCode> {
     return system::system_call<usize>(system::Number::write, fd, data.data(), data.size(), offset);
 }
 
-di::Expected<void, di::GenericCode> sys_close(int fd) {
+auto sys_close(int fd) -> di::Expected<void, di::GenericCode> {
     return system::system_call<int>(system::Number::close, fd) % di::into_void;
 }
 
-di::Expected<void, di::GenericCode> sys_truncate(int fd, u64 size) {
+auto sys_truncate(int fd, u64 size) -> di::Expected<void, di::GenericCode> {
     return system::system_call<int>(system::Number::truncate, fd, size) % di::into_void;
 }
 
-di::Expected<int, di::GenericCode> sys_open(di::PathView path, iris::OpenMode mode) {
+auto sys_open(di::PathView path, iris::OpenMode mode) -> di::Expected<int, di::GenericCode> {
     return system::system_call<int>(system::Number::open, path.data().data(), path.data().size(), mode);
 }
 
-di::Expected<void, di::GenericCode> SyncFile::close() {
+auto SyncFile::close() -> di::Expected<void, di::GenericCode> {
     auto owned = di::exchange(m_owned, Owned::No);
     auto fd = di::exchange(m_fd, -1);
 
@@ -36,27 +36,27 @@ di::Expected<void, di::GenericCode> SyncFile::close() {
     return {};
 }
 
-di::Expected<usize, di::GenericCode> SyncFile::read_some(di::Span<byte> data) const {
+auto SyncFile::read_some(di::Span<byte> data) const -> di::Expected<usize, di::GenericCode> {
     return sys_read(m_fd, di::NumericLimits<u64>::max, data);
 }
 
-di::Expected<usize, di::GenericCode> SyncFile::read_some(u64 offset, di::Span<byte> data) const {
+auto SyncFile::read_some(u64 offset, di::Span<byte> data) const -> di::Expected<usize, di::GenericCode> {
     return sys_read(m_fd, offset, data);
 }
 
-di::Expected<usize, di::GenericCode> SyncFile::write_some(di::Span<byte const> data) const {
+auto SyncFile::write_some(di::Span<byte const> data) const -> di::Expected<usize, di::GenericCode> {
     return sys_write(m_fd, di::NumericLimits<u64>::max, data);
 }
 
-di::Expected<usize, di::GenericCode> SyncFile::write_some(u64 offset, di::Span<byte const> data) const {
+auto SyncFile::write_some(u64 offset, di::Span<byte const> data) const -> di::Expected<usize, di::GenericCode> {
     return sys_write(m_fd, offset, data);
 }
 
-di::Expected<void, di::GenericCode> SyncFile::resize_file(u64 size) const {
+auto SyncFile::resize_file(u64 size) const -> di::Expected<void, di::GenericCode> {
     return sys_truncate(m_fd, size);
 }
 
-di::Expected<SyncFile, di::GenericCode> open_sync(di::PathView path, OpenMode mode, u16) {
+auto open_sync(di::PathView path, OpenMode mode, u16) -> di::Expected<SyncFile, di::GenericCode> {
     auto iris_mode = [&] {
         switch (mode) {
             case OpenMode::WriteNew:
@@ -75,7 +75,7 @@ di::Expected<SyncFile, di::GenericCode> open_sync(di::PathView path, OpenMode mo
     return SyncFile { SyncFile::Owned::Yes, fd };
 }
 
-di::Expected<SyncFile, di::GenericCode> open_tempory_file() {
+auto open_tempory_file() -> di::Expected<SyncFile, di::GenericCode> {
     return di::Unexpected(PosixError::OperationNotSupported);
 }
 }

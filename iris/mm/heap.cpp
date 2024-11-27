@@ -16,11 +16,11 @@
 // void* operator new(std::size_t size);
 // void* operator new(std::size_t size, std::align_val_t alignment);
 
-void* operator new(std::size_t size, std::nothrow_t const&) noexcept {
+auto operator new(std::size_t size, std::nothrow_t const&) noexcept -> void* {
     return ::operator new(size, std::align_val_t { 16 }, std::nothrow);
 }
 
-void* operator new(std::size_t size, std::align_val_t alignment, std::nothrow_t const&) noexcept {
+auto operator new(std::size_t size, std::align_val_t alignment, std::nothrow_t const&) noexcept -> void* {
     auto const& global_state = iris::global_state();
     return global_state.kernel_address_space.with_lock([&](auto& address_space) -> void* {
         ASSERT(!iris::interrupts_disabled() || !iris::current_processor_unsafe().is_online());

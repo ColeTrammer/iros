@@ -4,21 +4,21 @@
 #include <dius/system/system_call.h>
 
 namespace dius::linux::io_uring {
-di::Result<int> sys_enter(unsigned int fd, unsigned int to_submit, unsigned int min_complete, unsigned int flags,
-                          void const* arg, size_t arg_size) {
+auto sys_enter(unsigned int fd, unsigned int to_submit, unsigned int min_complete, unsigned int flags, void const* arg,
+               size_t arg_size) -> di::Result<int> {
     return system::system_call<int>(system::Number::io_uring_enter, fd, to_submit, min_complete, flags, arg, arg_size);
 }
 
-di::Result<int> sys_register(unsigned int fd, unsigned int op_code, void* arg, unsigned int nr_args) {
+auto sys_register(unsigned int fd, unsigned int op_code, void* arg, unsigned int nr_args) -> di::Result<int> {
     return system::system_call<int>(system::Number::io_uring_register, fd, op_code, arg, nr_args);
 }
 
-di::Result<SyncFile> sys_setup(u32 entries, SetupParams* params) {
+auto sys_setup(u32 entries, SetupParams* params) -> di::Result<SyncFile> {
     int fd = TRY(system::system_call<int>(system::Number(__NR_io_uring_setup), entries, params));
     return SyncFile(SyncFile::Owned::Yes, fd);
 }
 
-di::Optional<SQE&> IoUringHandle::get_next_sqe() {
+auto IoUringHandle::get_next_sqe() -> di::Optional<SQE&> {
     if (sq_pending >= sq_entry_count) {
         return di::nullopt;
     }
@@ -32,7 +32,7 @@ di::Optional<SQE&> IoUringHandle::get_next_sqe() {
     return sqe;
 }
 
-di::Optional<CQE&> IoUringHandle::get_next_cqe() {
+auto IoUringHandle::get_next_cqe() -> di::Optional<CQE&> {
     auto tail = cq_tail->load(di::MemoryOrder::Acquire);
     auto head = cq_head->load(di::MemoryOrder::Relaxed);
 
@@ -45,7 +45,7 @@ di::Optional<CQE&> IoUringHandle::get_next_cqe() {
     return cqe;
 }
 
-di::Result<void> IoUringHandle::submit_and_wait() {
+auto IoUringHandle::submit_and_wait() -> di::Result<void> {
     auto to_submit = sq_pending;
     if (sq_pending > 0) {
         sq_pending = 0;
@@ -58,7 +58,7 @@ di::Result<void> IoUringHandle::submit_and_wait() {
     return {};
 }
 
-di::Result<IoUringHandle> IoUringHandle::create() {
+auto IoUringHandle::create() -> di::Result<IoUringHandle> {
     SetupParams params;
     di::fill_n(reinterpret_cast<di::Byte*>(&params), sizeof(params), 0_b);
 

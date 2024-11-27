@@ -9,7 +9,7 @@ namespace detail {
     struct ReverseFunction {
         template<concepts::BidirectionalIterator Iter, concepts::SentinelFor<Iter> Sent>
         requires(concepts::Permutable<Iter>)
-        constexpr Iter operator()(Iter first, Sent sentinel_last) const {
+        constexpr auto operator()(Iter first, Sent sentinel_last) const -> Iter {
             auto last = container::next(first, sentinel_last);
             for (auto it = first, jt = last; it != jt && it != --jt; ++it) {
                 container::iterator_swap(it, jt);
@@ -19,7 +19,7 @@ namespace detail {
 
         template<concepts::BidirectionalContainer Con>
         requires(concepts::Permutable<meta::ContainerIterator<Con>>)
-        constexpr meta::BorrowedIterator<Con> operator()(Con&& container) const {
+        constexpr auto operator()(Con&& container) const -> meta::BorrowedIterator<Con> {
             return (*this)(container::begin(container), container::end(container));
         }
     };

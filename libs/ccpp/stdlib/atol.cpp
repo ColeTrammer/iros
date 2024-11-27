@@ -1,6 +1,6 @@
 #include <ccpp/bits/atoi_implementation.h>
 #include <stdlib.h>
 
-extern "C" long atol(char const* string) {
+extern "C" auto atol(char const* string) -> long {
     return ccpp::atoi<long>(string);
 }

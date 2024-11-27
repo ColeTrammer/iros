@@ -6,7 +6,7 @@
 
 namespace di::vocab::detail {
 template<concepts::TriviallyRelocatable To, concepts::TriviallyRelocatable From>
-constexpr To erasure_cast(From const& from) {
+constexpr auto erasure_cast(From const& from) -> To {
     return util::bit_cast<To>(from);
 }
 }

@@ -26,7 +26,7 @@ namespace di::container::string::encoding {
 namespace detail {
     struct UniversalFunction {
         template<typename T>
-        constexpr bool operator()(InPlaceType<T>) const {
+        constexpr auto operator()(InPlaceType<T>) const -> bool {
             if constexpr (concepts::TagInvocable<UniversalFunction, InPlaceType<T>>) {
                 return function::tag_invoke(*this, in_place_type<T>);
             } else {
@@ -37,7 +37,7 @@ namespace detail {
 
     struct ContiguousFunction {
         template<typename T>
-        constexpr bool operator()(InPlaceType<T>) const {
+        constexpr auto operator()(InPlaceType<T>) const -> bool {
             if constexpr (concepts::TagInvocable<ContiguousFunction, InPlaceType<T>>) {
                 return function::tag_invoke(*this, in_place_type<T>);
             } else {
@@ -48,7 +48,7 @@ namespace detail {
 
     struct NullTerminatedFunction {
         template<typename T>
-        constexpr bool operator()(InPlaceType<T>) const {
+        constexpr auto operator()(InPlaceType<T>) const -> bool {
             if constexpr (concepts::TagInvocable<NullTerminatedFunction, InPlaceType<T>>) {
                 return function::tag_invoke(*this, in_place_type<T>);
             } else {
@@ -76,7 +76,7 @@ namespace detail {
         template<typename T>
         requires(Universal<T> ||
                  concepts::TagInvocableTo<ValidateFunction, bool, T const&, Span<meta::EncodingCodeUnit<T> const>>)
-        constexpr bool operator()(T const& encoding, Span<meta::EncodingCodeUnit<T> const> code_units) const {
+        constexpr auto operator()(T const& encoding, Span<meta::EncodingCodeUnit<T> const> code_units) const -> bool {
             if constexpr (universal(in_place_type<T>)) {
                 return true;
             } else {
@@ -89,7 +89,7 @@ namespace detail {
         template<typename T, typename U = meta::EncodingCodeUnit<T>>
         requires(Contiguous<T> ||
                  concepts::TagInvocableTo<ValidByteOffsetFunction, bool, T const&, Span<U const>, size_t>)
-        constexpr bool operator()(T const& encoding, Span<U const> code_units, size_t offset) const {
+        constexpr auto operator()(T const& encoding, Span<U const> code_units, size_t offset) const -> bool {
             if constexpr (Contiguous<T>) {
                 return offset <= code_units.size();
             } else {
@@ -102,7 +102,7 @@ namespace detail {
         template<typename T, typename U = meta::EncodingCodeUnit<T>, typename Iter = meta::EncodingIterator<T>>
         requires(concepts::TagInvocableTo<MakeIteratorFunction, Iter, T const&, Span<U const>, size_t> ||
                  concepts::ConstructibleFrom<Iter, U const*>)
-        constexpr Iter operator()(T const& encoding, Span<U const> code_units, size_t offset) const {
+        constexpr auto operator()(T const& encoding, Span<U const> code_units, size_t offset) const -> Iter {
             if constexpr (concepts::TagInvocableTo<MakeIteratorFunction, Iter, T const&, Span<U const>, size_t>) {
                 return function::tag_invoke(*this, encoding, code_units, offset);
             } else {
@@ -114,7 +114,7 @@ namespace detail {
     struct IteratorDataFunction {
         template<typename T, typename U = meta::EncodingCodeUnit<T>, typename Iter = meta::EncodingIterator<T>>
         requires(concepts::ExplicitlyConvertibleTo<Iter, U const*>)
-        constexpr U* operator()(T const&, Span<U>, Iter iterator) const {
+        constexpr auto operator()(T const&, Span<U>, Iter iterator) const -> U* {
             // NOTE: this is safe since we have a "mutable" storage to the underlying code units.
             return const_cast<U*>(static_cast<U const*>(iterator));
         }
@@ -123,7 +123,7 @@ namespace detail {
     struct ConvertToCodeUnitsFunction {
         template<typename T, typename U = meta::EncodingCodeUnit<T>, typename P = meta::EncodingCodePoint<T>>
         requires(concepts::TagInvocable<ConvertToCodeUnitsFunction, T const&, P> || concepts::SameAs<U, P>)
-        constexpr concepts::ContainerOf<U> auto operator()(T const& encoding, P code_point) const {
+        constexpr auto operator()(T const& encoding, P code_point) const -> concepts::ContainerOf<U> auto {
             if constexpr (concepts::TagInvocable<ConvertToCodeUnitsFunction, T const&, P>) {
                 return function::tag_invoke(*this, encoding, code_point);
             } else {
@@ -145,7 +145,7 @@ namespace detail {
 
     struct CodePointViewFunction {
         template<typename T, typename U = meta::EncodingCodeUnit<T>, typename P = meta::EncodingCodePoint<T>>
-        constexpr CodePointView<P> auto operator()(T const& encoding, Span<U const> code_units) const {
+        constexpr auto operator()(T const& encoding, Span<U const> code_units) const -> CodePointView<P> auto {
             if constexpr (concepts::TagInvocable<CodePointViewFunction, T const&, Span<U const>>) {
                 return function::tag_invoke(*this, encoding, code_units);
             } else {
@@ -166,7 +166,7 @@ namespace detail {
         template<typename T, typename U = meta::EncodingCodePoint<T>, typename P = meta::EncodingCodePoint<T>>
         requires(concepts::TagInvocable<UnicodeCodePointViewFunction, T const&, Span<U const>> ||
                  concepts::SameAs<P, c32> || concepts::ConstructibleFrom<c32, P>)
-        constexpr UnicodeCodePointView auto operator()(T const& encoding, Span<U const> code_units) const {
+        constexpr auto operator()(T const& encoding, Span<U const> code_units) const -> UnicodeCodePointView auto {
             if constexpr (concepts::TagInvocable<UnicodeCodePointViewFunction, T const&, Span<U const>>) {
                 return function::tag_invoke(*this, encoding, code_units);
             } else if constexpr (concepts::SameAs<P, c32>) {
@@ -184,7 +184,7 @@ namespace detail {
                  typename P = meta::EncodingCodePoint<T>>
         requires(concepts::TagInvocable<UnicodeCodePointUnwrapFunction, T const&, Input> || concepts::SameAs<P, c32> ||
                  concepts::ConstructibleFrom<c32, P>)
-        constexpr meta::EncodingIterator<T> operator()(T const& encoding, Input it) const {
+        constexpr auto operator()(T const& encoding, Input it) const -> meta::EncodingIterator<T> {
             if constexpr (concepts::TagInvocable<UnicodeCodePointViewFunction, T const&, Input>) {
                 return function::tag_invoke(*this, encoding, util::move(it));
             } else if constexpr (concepts::SameAs<P, c32>) {

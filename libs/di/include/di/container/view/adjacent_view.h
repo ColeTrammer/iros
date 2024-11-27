@@ -110,10 +110,10 @@ private:
                 m_iterators);
         }
 
-        constexpr Array<Iter<is_const>, N> const& iterators() const { return m_iterators; }
+        constexpr auto iterators() const -> Array<Iter<is_const>, N> const& { return m_iterators; }
 
     private:
-        constexpr friend bool operator==(Iterator const& a, Iterator const& b)
+        constexpr friend auto operator==(Iterator const& a, Iterator const& b) -> bool
         requires(concepts::EqualityComparable<Iter<is_const>>)
         {
             return a.m_iterators.back() == b.m_iterators.back();
@@ -125,7 +125,7 @@ private:
             return a.m_iterators.back() <=> b.m_iterators.back();
         }
 
-        constexpr friend SSizeType<is_const> operator-(Iterator const& a, Iterator const& b)
+        constexpr friend auto operator-(Iterator const& a, Iterator const& b) -> SSizeType<is_const>
         requires(concepts::SizedSentinelFor<Iter<is_const>, Iter<is_const>>)
         {
             return a.m_iterators.back() - b.m_iterators.back();
@@ -165,14 +165,14 @@ private:
 
         template<bool other_is_const>
         requires(concepts::SizedSentinelFor<Sent<is_const>, Iter<other_is_const>>)
-        constexpr SSizeType<is_const> difference(Iterator<other_is_const> const& a) const {
+        constexpr auto difference(Iterator<other_is_const> const& a) const -> SSizeType<is_const> {
             return base() - a.m_iterators.back();
         }
 
     private:
         template<bool other_is_const>
         requires(concepts::SentinelFor<Sent<is_const>, Iter<other_is_const>>)
-        constexpr friend bool operator==(Iterator<other_is_const> const& a, Sentinel const& b) {
+        constexpr friend auto operator==(Iterator<other_is_const> const& a, Sentinel const& b) -> bool {
             return a.m_iterators.back() == b.base();
         }
 
@@ -186,12 +186,12 @@ public:
 
     constexpr explicit AdjacentView(View base) : m_base(util::move(base)) {}
 
-    constexpr View base() const&
+    constexpr auto base() const& -> View
     requires(concepts::CopyConstructible<View>)
     {
         return m_base;
     }
-    constexpr View base() && { return util::move(m_base); }
+    constexpr auto base() && -> View { return util::move(m_base); }
 
     constexpr auto begin()
     requires(!concepts::SimpleView<View>)

@@ -11,8 +11,8 @@ struct TransparentIterator : IteratorBase<TransparentIterator, ContiguousIterato
 
     constexpr explicit TransparentIterator(char const* data) : m_data(data) {}
 
-    constexpr char const& operator*() const { return *m_data; }
-    constexpr char const* operator->() const { return m_data; }
+    constexpr auto operator*() const -> char const& { return *m_data; }
+    constexpr auto operator->() const -> char const* { return m_data; }
 
     constexpr explicit operator char const*() const { return m_data; }
 
@@ -21,7 +21,9 @@ struct TransparentIterator : IteratorBase<TransparentIterator, ContiguousIterato
     constexpr void advance_n(isize n) { m_data += n; }
 
 private:
-    constexpr friend bool operator==(TransparentIterator a, TransparentIterator b) { return a.m_data == b.m_data; }
+    constexpr friend auto operator==(TransparentIterator a, TransparentIterator b) -> bool {
+        return a.m_data == b.m_data;
+    }
     constexpr friend auto operator<=>(TransparentIterator a, TransparentIterator b) { return a.m_data <=> b.m_data; }
 
     constexpr friend auto operator-(TransparentIterator a, TransparentIterator b) { return a.m_data - b.m_data; }
@@ -36,11 +38,13 @@ public:
     using Iterator = TransparentIterator;
 
 private:
-    constexpr friend bool tag_invoke(types::Tag<encoding::universal>, InPlaceType<TransparentEncoding>) { return true; }
-    constexpr friend bool tag_invoke(types::Tag<encoding::contiguous>, InPlaceType<TransparentEncoding>) {
+    constexpr friend auto tag_invoke(types::Tag<encoding::universal>, InPlaceType<TransparentEncoding>) -> bool {
         return true;
     }
-    constexpr friend bool tag_invoke(types::Tag<encoding::null_terminated>, InPlaceType<TransparentEncoding>) {
+    constexpr friend auto tag_invoke(types::Tag<encoding::contiguous>, InPlaceType<TransparentEncoding>) -> bool {
+        return true;
+    }
+    constexpr friend auto tag_invoke(types::Tag<encoding::null_terminated>, InPlaceType<TransparentEncoding>) -> bool {
         return true;
     }
 };

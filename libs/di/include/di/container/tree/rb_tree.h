@@ -42,7 +42,7 @@ private:
     using ConcreteNode = decltype(Tag::node_type(in_place_type<Value>));
     using ConcreteSelf = meta::Conditional<concepts::SameAs<Void, Self>, RBTree, Self>;
 
-    constexpr decltype(auto) down_cast_self() {
+    constexpr auto down_cast_self() -> decltype(auto) {
         if constexpr (concepts::SameAs<Void, Self>) {
             return *this;
         } else {
@@ -53,7 +53,7 @@ private:
 public:
     RBTree() = default;
     RBTree(RBTree const&) = delete;
-    RBTree& operator=(RBTree const&) = delete;
+    auto operator=(RBTree const&) -> RBTree& = delete;
 
     constexpr explicit RBTree(Comp comparator) : m_comparator(comparator) {}
 
@@ -64,7 +64,7 @@ public:
         , m_size(util::exchange(other.m_size, 0))
         , m_comparator(other.m_comparator) {}
 
-    constexpr RBTree& operator=(RBTree&& other) {
+    constexpr auto operator=(RBTree&& other) -> RBTree& {
         this->clear();
         m_root = util::exchange(other.m_root, nullptr);
         m_minimum = util::exchange(other.m_minimum, nullptr);
@@ -76,15 +76,15 @@ public:
 
     constexpr ~RBTree() { this->clear(); }
 
-    constexpr usize size() const { return m_size; }
-    constexpr bool empty() const { return !m_root; }
+    constexpr auto size() const -> usize { return m_size; }
+    constexpr auto empty() const -> bool { return !m_root; }
 
-    constexpr Iterator begin() { return unconst_iterator(util::as_const(*this).begin()); }
-    constexpr ConstIterator begin() const { return Iterator(m_minimum, !m_root); }
-    constexpr Iterator end() { return unconst_iterator(util::as_const(*this).end()); }
-    constexpr ConstIterator end() const { return Iterator(m_maximum, true); }
+    constexpr auto begin() -> Iterator { return unconst_iterator(util::as_const(*this).begin()); }
+    constexpr auto begin() const -> ConstIterator { return Iterator(m_minimum, !m_root); }
+    constexpr auto end() -> Iterator { return unconst_iterator(util::as_const(*this).end()); }
+    constexpr auto end() const -> ConstIterator { return Iterator(m_maximum, true); }
 
-    constexpr Iterator unconst_iterator(ConstIterator it) { return it.base(); }
+    constexpr auto unconst_iterator(ConstIterator it) -> Iterator { return it.base(); }
 
     constexpr auto insert_node(Node& node) {
         auto position = this->insert_position(node_value(node));
@@ -114,7 +114,7 @@ public:
         return Iterator(util::addressof(node), false);
     }
 
-    constexpr Iterator erase_impl(ConstIterator position) {
+    constexpr auto erase_impl(ConstIterator position) -> Iterator {
         DI_ASSERT(position != end());
 
         auto result = container::next(position).base();
@@ -134,7 +134,7 @@ public:
 
     template<typename U>
     requires(concepts::StrictWeakOrder<Comp&, Value, U>)
-    constexpr ConstIterator lower_bound_impl(U&& needle) const {
+    constexpr auto lower_bound_impl(U&& needle) const -> ConstIterator {
         Node* result = nullptr;
         for (auto* node = m_root; node;) {
             if (compare(node_value(*node), needle) < 0) {
@@ -149,7 +149,7 @@ public:
 
     template<typename U>
     requires(concepts::StrictWeakOrder<Comp&, Value, U>)
-    constexpr ConstIterator upper_bound_impl(U&& needle) const {
+    constexpr auto upper_bound_impl(U&& needle) const -> ConstIterator {
         Node* result = nullptr;
         for (auto* node = m_root; node;) {
             if (compare(node_value(*node), needle) <= 0) {
@@ -164,7 +164,7 @@ public:
 
     template<typename U>
     requires(concepts::StrictWeakOrder<Comp&, Value, U>)
-    constexpr ConstIterator find_impl(U&& needle) const {
+    constexpr auto find_impl(U&& needle) const -> ConstIterator {
         for (auto* node = m_root; node;) {
             auto result = compare(needle, node_value(*node));
             if (result == 0) {
@@ -201,15 +201,15 @@ public:
     }
 
 protected:
-    constexpr Value& node_value(Node& node) const {
+    constexpr auto node_value(Node& node) const -> Value& {
         return Tag::down_cast(in_place_type<Value>, static_cast<ConcreteNode&>(node));
     }
-    constexpr Value const& node_value(Node const& node) const {
+    constexpr auto node_value(Node const& node) const -> Value const& {
         return const_cast<RBTree&>(*this).node_value(const_cast<Node&>(node));
     }
 
     // Compute the color of a node, defaulting to Black.
-    constexpr Node::Color node_color(Node* node) const {
+    constexpr auto node_color(Node* node) const -> Node::Color {
         if (!node) {
             return Node::Color::Black;
         }
@@ -265,7 +265,7 @@ protected:
 
     template<typename U>
     requires(concepts::StrictWeakOrder<Comp&, Value, U>)
-    constexpr InsertPosition insert_position(U&& needle) const {
+    constexpr auto insert_position(U&& needle) const -> InsertPosition {
         // Find the parent node to insert under.
         Node* y = nullptr;
         auto* x = m_root;
@@ -512,7 +512,7 @@ protected:
         return function::invoke(m_comparator, a, b);
     }
 
-    constexpr friend bool operator==(ConcreteSelf const& a, ConcreteSelf const& b)
+    constexpr friend auto operator==(ConcreteSelf const& a, ConcreteSelf const& b) -> bool
     requires(concepts::EqualityComparable<Value>)
     {
         return container::equal(a, b);

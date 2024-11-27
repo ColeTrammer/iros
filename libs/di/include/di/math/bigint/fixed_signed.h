@@ -25,7 +25,7 @@ public:
 
     constexpr FixedSigned(bigint::StorageType value) { m_storage[0] = value; }
 
-    constexpr FixedSigned operator/(FixedSigned const& divisor) const {
+    constexpr auto operator/(FixedSigned const& divisor) const -> FixedSigned {
         auto division_result = FixedSigned();
         auto modulo_result = FixedSigned();
         auto dividend_negative = Ops::twos_complement_negative(this->span());
@@ -65,7 +65,7 @@ public:
         return division_result;
     }
 
-    constexpr FixedSigned operator%(FixedSigned const& divisor) const {
+    constexpr auto operator%(FixedSigned const& divisor) const -> FixedSigned {
         auto division_result = FixedSigned();
         auto modulo_result = FixedSigned();
         auto dividend_negative = Ops::twos_complement_negative(this->span());
@@ -105,14 +105,14 @@ public:
         return modulo_result;
     }
 
-    constexpr FixedSigned operator-() const {
+    constexpr auto operator-() const -> FixedSigned {
         auto result = *this;
         Ops::negate(result.span());
         return result;
     }
 
 private:
-    constexpr friend bool operator==(FixedSigned const& a, FixedSigned const& b) {
+    constexpr friend auto operator==(FixedSigned const& a, FixedSigned const& b) -> bool {
         return Ops::compare(a.span(), b.span()) == 0;
     }
 

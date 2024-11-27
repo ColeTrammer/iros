@@ -21,7 +21,7 @@ public:
     requires(concepts::ConstructibleFrom<String, U>)
     constexpr explicit StringReader(U&& buffer) : m_buffer(util::forward<U>(buffer)) {}
 
-    constexpr usize read_some(vocab::Span<byte> data) {
+    constexpr auto read_some(vocab::Span<byte> data) -> usize {
         auto to_read = container::min(data.size(), m_buffer.size_bytes() - m_byte_offset);
 
         for (auto i : view::range(to_read)) {
@@ -32,7 +32,7 @@ public:
     }
 
 private:
-    constexpr byte read_byte() {
+    constexpr auto read_byte() -> byte {
         using CodeUnit = meta::EncodingCodeUnit<meta::Encoding<String>>;
         constexpr auto code_unit_size = sizeof(CodeUnit);
 

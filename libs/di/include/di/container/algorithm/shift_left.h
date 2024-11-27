@@ -11,7 +11,7 @@ namespace di::container {
 namespace detail {
     struct ShiftLeftFunction {
         template<concepts::Permutable It, concepts::SentinelFor<It> Sent>
-        constexpr View<It> operator()(It first, Sent last, meta::IteratorSSizeType<It> n) const {
+        constexpr auto operator()(It first, Sent last, meta::IteratorSSizeType<It> n) const -> View<It> {
             DI_ASSERT(n >= 0);
 
             if (n == 0) {
@@ -31,7 +31,7 @@ namespace detail {
 
         template<concepts::ForwardContainer Con>
         requires(concepts::Permutable<meta::ContainerIterator<Con>>)
-        constexpr meta::BorrowedView<Con> operator()(Con&& container, meta::ContainerSSizeType<Con> n) const {
+        constexpr auto operator()(Con&& container, meta::ContainerSSizeType<Con> n) const -> meta::BorrowedView<Con> {
             return (*this)(container::begin(container), container::end(container), n);
         }
     };

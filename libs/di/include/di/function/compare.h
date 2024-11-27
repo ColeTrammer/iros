@@ -7,7 +7,7 @@
 namespace di::function {
 struct Compare {
     template<typename T, concepts::ThreeWayComparableWith<T> U>
-    constexpr meta::CompareThreeWayResult<T, U> operator()(T const& a, U const& b) const {
+    constexpr auto operator()(T const& a, U const& b) const -> meta::CompareThreeWayResult<T, U> {
         if constexpr (concepts::Integer<T> && concepts::Integer<U>) {
             return math::cmp_three_way(a, b);
         } else {

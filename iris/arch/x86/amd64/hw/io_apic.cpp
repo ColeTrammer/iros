@@ -26,7 +26,7 @@ IoApic::IoApic(mm::PhysicalAddress access_base, u8 global_offset) : m_global_off
     }
 }
 
-u32 IoApic::direct_read(IoApicOffset offset) {
+auto IoApic::direct_read(IoApicOffset offset) -> u32 {
     m_access[di::to_underlying(IoApicAccessOffset::RegisterSelect) / sizeof(u32)] = di::to_underlying(offset);
     return m_access[di::to_underlying(IoApicAccessOffset::Window) / sizeof(u32)];
 }
@@ -100,11 +100,11 @@ void tag_invoke(di::Tag<enable_irq_line>, IoApic& self, IrqLine irq_line) {
     self.write_redirection_entry(relative_irq_line, redirection_entry);
 }
 
-IrqLineRange tag_invoke(di::Tag<responsible_irq_line_range>, IoApic const& self) {
+auto tag_invoke(di::Tag<responsible_irq_line_range>, IoApic const& self) -> IrqLineRange {
     return IrqLineRange(IrqLine(self.m_global_offset), IrqLine(self.m_global_offset + self.m_max_redirection_entry));
 }
 
-di::Tuple<u8, di::Optional<acpi::InterruptSourceOverrideStructure>> IoApic::resolve_irq_line(IrqLine irq_line) {
+auto IoApic::resolve_irq_line(IrqLine irq_line) -> di::Tuple<u8, di::Optional<acpi::InterruptSourceOverrideStructure>> {
     for (auto const& interrupt_source_override : global_state().acpi_info->interrupt_source_overrides) {
         if (interrupt_source_override.source == irq_line.raw_value()) {
             // FIXME: this code assumes that the interrupt source override doesn't cause the IRQ line to be remapped to

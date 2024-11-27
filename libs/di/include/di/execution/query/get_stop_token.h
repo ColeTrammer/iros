@@ -10,7 +10,7 @@ namespace di::execution {
 namespace detail {
     struct GetStopTokenFunction : ForwardingQuery {
         template<typename T>
-        constexpr concepts::StoppableToken auto operator()(T&& value) const {
+        constexpr auto operator()(T&& value) const -> concepts::StoppableToken auto {
             if constexpr (concepts::TagInvocable<GetStopTokenFunction, T const&>) {
                 return function::tag_invoke(*this, util::as_const(value));
             } else {

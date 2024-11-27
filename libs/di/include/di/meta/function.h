@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/meta/core.h>
+#include <di/platform/compiler.h>
 
 namespace di::concepts {
 template<template<typename...> typename Fun, typename... Args>
@@ -13,7 +14,9 @@ namespace detail {
     struct DeferHelper {};
 
 #pragma GCC diagnostic push
+#ifdef DI_GCC
 #pragma GCC diagnostic ignored "-Wsubobject-linkage"
+#endif
     template<template<typename...> typename Fun, typename... Args>
     requires(concepts::ValidInstantiation<Fun, Args...>)
     struct DeferHelper<Fun, Args...> : TypeConstant<Fun<Args...>> {};

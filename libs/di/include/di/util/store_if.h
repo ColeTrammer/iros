@@ -17,8 +17,8 @@ struct StoreIf<T, false> {
     StoreIf() = default;
     StoreIf(StoreIf const&) = default;
     StoreIf(StoreIf&&) = default;
-    StoreIf& operator=(StoreIf const&) = default;
-    StoreIf& operator=(StoreIf&&) = default;
+    auto operator=(StoreIf const&) -> StoreIf& = default;
+    auto operator=(StoreIf&&) -> StoreIf& = default;
 };
 }
 

@@ -9,12 +9,12 @@ namespace di::container::view {
 namespace detail {
     struct IotaFunction {
         template<typename T>
-        constexpr meta::TagInvokeResult<IotaFunction, T> operator()(T&& value) const {
+        constexpr auto operator()(T&& value) const -> meta::TagInvokeResult<IotaFunction, T> {
             return function::tag_invoke(*this, util::forward<T>(value));
         }
 
         template<typename T, typename Bound>
-        constexpr meta::TagInvokeResult<IotaFunction, T, Bound> operator()(T&& value, Bound&& bound) const {
+        constexpr auto operator()(T&& value, Bound&& bound) const -> meta::TagInvokeResult<IotaFunction, T, Bound> {
             return function::tag_invoke(*this, util::forward<T>(value), util::forward<Bound>(bound));
         }
 

@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 // https://pubs.opengroup.org/onlinepubs/9699919799/functions/printf.html
-extern "C" int printf(char const* __restrict format, ...) {
+extern "C" auto printf(char const* __restrict format, ...) -> int {
     va_list args;
     va_start(args, format);
     auto result = vprintf(format, args);

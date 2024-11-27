@@ -13,7 +13,7 @@
 
 namespace di::container::vector {
 template<concepts::detail::MutableVector Vec, typename R = meta::detail::VectorAllocResult<Vec>>
-constexpr R reserve(Vec& vector, size_t capacity) {
+constexpr auto reserve(Vec& vector, size_t capacity) -> R {
     if (capacity <= vector.capacity()) {
         return util::create<R>();
     }

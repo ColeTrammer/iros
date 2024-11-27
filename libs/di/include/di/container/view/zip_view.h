@@ -88,15 +88,13 @@ private:
         Iterator(Iterator const&) = default;
         Iterator(Iterator&&) = default;
 
-        Iterator& operator=(Iterator const&) = default;
-        Iterator& operator=(Iterator&&) = default;
+        auto operator=(Iterator const&) -> Iterator& = default;
+        auto operator=(Iterator&&) -> Iterator& = default;
 
         Iterator(Iterator const&)
         requires(!all_forward<is_const>)
         = delete;
-        Iterator& operator=(Iterator const&)
-        requires(!all_forward<is_const>)
-        = delete;
+        auto operator=(Iterator const&) -> Iterator& requires(!all_forward<is_const>) = delete;
 
         constexpr auto operator*() const {
             return tuple_transform(
@@ -134,10 +132,10 @@ private:
                 m_iterators);
         }
 
-        constexpr Storage const& iterators() const { return m_iterators; }
+        constexpr auto iterators() const -> Storage const& { return m_iterators; }
 
     private:
-        constexpr friend bool operator==(Iterator const& a, Iterator const& b)
+        constexpr friend auto operator==(Iterator const& a, Iterator const& b) -> bool
         requires(concepts::EqualityComparable<meta::ContainerIterator<meta::MaybeConst<is_const, Views>>> && ...)
         {
             if constexpr (all_bidirectional<is_const>) {
@@ -157,7 +155,7 @@ private:
             return a.m_iterators <=> b.m_iterators;
         }
 
-        constexpr friend SSizeType<is_const> operator-(Iterator const& a, Iterator const& b)
+        constexpr friend auto operator-(Iterator const& a, Iterator const& b) -> SSizeType<is_const>
         requires(concepts::SizedSentinelFor<meta::ContainerIterator<meta::MaybeConst<is_const, Views>>,
                                             meta::ContainerIterator<meta::MaybeConst<is_const, Views>>> &&
                  ...)
@@ -223,7 +221,7 @@ private:
         requires(concepts::SentinelFor<meta::ContainerSentinel<meta::MaybeConst<is_const, Views>>,
                                        meta::ContainerIterator<meta::MaybeConst<other_is_const, Views>>> &&
                  ...)
-        constexpr friend bool operator==(Iterator<other_is_const> const& a, Sentinel const& b) {
+        constexpr friend auto operator==(Iterator<other_is_const> const& a, Sentinel const& b) -> bool {
             return function::unpack<meta::MakeIndexSequence<sizeof...(Views)>>(
                 [&]<size_t... indices>(meta::ListV<indices...>) {
                     return ((util::get<indices>(a.m_iterators) == util::get<indices>(b.m_sentinels)) || ...);

@@ -20,7 +20,7 @@ namespace detail {
     struct TakeWhileFunction {
         template<concepts::ViewableContainer Con, typename Pred>
         requires(CustomTakeWhile<Con, Pred> || ViewTakeWhile<Con, Pred>)
-        constexpr concepts::View auto operator()(Con&& container, Pred&& predicate) const {
+        constexpr auto operator()(Con&& container, Pred&& predicate) const -> concepts::View auto {
             if constexpr (CustomTakeWhile<Con, Pred>) {
                 return function::tag_invoke(*this, util::forward<Con>(container), util::forward<Pred>(predicate));
             } else {

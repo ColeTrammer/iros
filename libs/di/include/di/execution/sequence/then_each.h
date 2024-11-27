@@ -7,7 +7,7 @@ namespace di::execution {
 namespace then_each_ns {
     struct Function {
         template<concepts::Sender Seq, concepts::MovableValue Fun>
-        concepts::SequenceSender auto operator()(Seq&& sequence, Fun&& transformer) const {
+        auto operator()(Seq&& sequence, Fun&& transformer) const -> concepts::SequenceSender auto {
             if constexpr (concepts::TagInvocable<Function, Seq, Fun>) {
                 return function::tag_invoke(*this, util::forward<Seq>(sequence), util::forward<Fun>(transformer));
             } else {
@@ -18,7 +18,7 @@ namespace then_each_ns {
 
     struct ErrorFunction {
         template<concepts::Sender Seq, concepts::MovableValue Fun>
-        concepts::SequenceSender auto operator()(Seq&& sequence, Fun&& transformer) const {
+        auto operator()(Seq&& sequence, Fun&& transformer) const -> concepts::SequenceSender auto {
             if constexpr (concepts::TagInvocable<Function, Seq, Fun>) {
                 return function::tag_invoke(*this, util::forward<Seq>(sequence), util::forward<Fun>(transformer));
             } else {
@@ -29,7 +29,7 @@ namespace then_each_ns {
 
     struct StoppedFunction {
         template<concepts::Sender Seq, concepts::MovableValue Fun>
-        concepts::SequenceSender auto operator()(Seq&& sequence, Fun&& transformer) const {
+        auto operator()(Seq&& sequence, Fun&& transformer) const -> concepts::SequenceSender auto {
             if constexpr (concepts::TagInvocable<Function, Seq, Fun>) {
                 return function::tag_invoke(*this, util::forward<Seq>(sequence), util::forward<Fun>(transformer));
             } else {

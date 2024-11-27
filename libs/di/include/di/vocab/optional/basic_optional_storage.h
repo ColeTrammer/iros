@@ -28,8 +28,8 @@ public:
     BasicOptionalStorage(BasicOptionalStorage const&) = default;
     BasicOptionalStorage(BasicOptionalStorage&&) = default;
 
-    BasicOptionalStorage& operator=(BasicOptionalStorage const&) = default;
-    BasicOptionalStorage& operator=(BasicOptionalStorage&&) = default;
+    auto operator=(BasicOptionalStorage const&) -> BasicOptionalStorage& = default;
+    auto operator=(BasicOptionalStorage&&) -> BasicOptionalStorage& = default;
 
     ~BasicOptionalStorage() = default;
 
@@ -38,13 +38,13 @@ public:
     {}
 
 private:
-    constexpr friend bool tag_invoke(types::Tag<is_nullopt>, BasicOptionalStorage const& self) {
+    constexpr friend auto tag_invoke(types::Tag<is_nullopt>, BasicOptionalStorage const& self) -> bool {
         return !self.m_has_value;
     }
 
     template<typename Self>
     requires(concepts::SameAs<meta::Decay<Self>, BasicOptionalStorage>)
-    constexpr friend decltype(auto) tag_invoke(types::Tag<get_value>, Self&& self) {
+    constexpr friend auto tag_invoke(types::Tag<get_value>, Self&& self) -> decltype(auto) {
         return util::forward_like<Self>(self.m_value);
     }
 

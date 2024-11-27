@@ -16,8 +16,8 @@ namespace detail {
                  typename Proj2 = function::Identity,
                  concepts::IndirectEquivalenceRelation<meta::Projected<It1, Sent1>, meta::Projected<It2, Sent2>> Pred =
                      function::Equal>
-        constexpr bool operator()(It1 first1, Sent1 sent1, It2 first2, Sent2 sent2, Pred pred = {}, Proj1 proj1 = {},
-                                  Proj2 proj2 = {}) const {
+        constexpr auto operator()(It1 first1, Sent1 sent1, It2 first2, Sent2 sent2, Pred pred = {}, Proj1 proj1 = {},
+                                  Proj2 proj2 = {}) const -> bool {
             if (container::distance(first1, sent1) != container::distance(first2, sent2)) {
                 return false;
             }
@@ -30,8 +30,8 @@ namespace detail {
                  concepts::IndirectEquivalenceRelation<meta::Projected<meta::ContainerIterator<Con1>, Proj1>,
                                                        meta::Projected<meta::ContainerIterator<Con2>, Proj2>>
                      Pred = function::Equal>
-        constexpr bool operator()(Con1&& container1, Con2&& container2, Pred pred = {}, Proj1 proj1 = {},
-                                  Proj2 proj2 = {}) const {
+        constexpr auto operator()(Con1&& container1, Con2&& container2, Pred pred = {}, Proj1 proj1 = {},
+                                  Proj2 proj2 = {}) const -> bool {
             if (container::distance(container1) != container::distance(container2)) {
                 return false;
             }
@@ -43,8 +43,8 @@ namespace detail {
     private:
         template<typename It1, typename Sent1, typename It2, typename Sent2, typename Proj1, typename Proj2,
                  typename Pred>
-        constexpr static bool is_permutation_same_sized(It1 first1, Sent1 sent1, It2 first2, Sent2 sent2, Pred pred,
-                                                        Proj1 proj1, Proj2 proj2) {
+        constexpr static auto is_permutation_same_sized(It1 first1, Sent1 sent1, It2 first2, Sent2 sent2, Pred pred,
+                                                        Proj1 proj1, Proj2 proj2) -> bool {
             // Skip any part where the 2 containers are identical.
             auto [left, right] = container::mismatch(util::move(first1), sent1, util::move(first2), sent2,
                                                      util::ref(pred), util::ref(proj1), util::ref(proj2));

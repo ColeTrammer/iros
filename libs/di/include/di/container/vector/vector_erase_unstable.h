@@ -10,7 +10,7 @@
 namespace di::container::vector {
 template<concepts::detail::MutableVector Vec, typename Iter = meta::detail::VectorIterator<Vec>,
          typename CIter = meta::detail::VectorConstIterator<Vec>>
-constexpr Iter erase_unstable(Vec& vector, CIter citerator) {
+constexpr auto erase_unstable(Vec& vector, CIter citerator) -> Iter {
     auto last = vector::end(vector) - 1;
     auto iterator = vector::iterator(vector, citerator);
     util::swap(*iterator, *last);

@@ -92,7 +92,7 @@ namespace let_value_with_ns {
         template<concepts::MovableValue... Factories, concepts::MovableValue Fun, typename DFun = meta::Decay<Fun>>
         requires(concepts::Sender<
                  meta::InvokeResult<DFun &&, meta::Decay<meta::InvokeResult<meta::Decay<Factories> &&>>&...>>)
-        concepts::Sender auto operator()(Fun&& function, Factories&&... factories) const {
+        auto operator()(Fun&& function, Factories&&... factories) const -> concepts::Sender auto {
             return Sender<Fun, Factories...> { util::forward<Fun>(function), util::forward<Factories>(factories)... };
         }
     };

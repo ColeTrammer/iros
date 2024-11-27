@@ -20,30 +20,30 @@ namespace detail {
         YCombinator(YCombinator const&) = default;
         YCombinator(YCombinator&&) = default;
 
-        YCombinator& operator=(YCombinator const&) = delete;
-        YCombinator& operator=(YCombinator&&) = delete;
+        auto operator=(YCombinator const&) -> YCombinator& = delete;
+        auto operator=(YCombinator&&) -> YCombinator& = delete;
 
         template<typename... Args>
         requires(concepts::Invocable<F&, YCombinator&, Args...>)
-        constexpr decltype(auto) operator()(Args&&... args) & {
+        constexpr auto operator()(Args&&... args) & -> decltype(auto) {
             return function::invoke(m_function, *this, util::forward<Args>(args)...);
         }
 
         template<typename... Args>
         requires(concepts::Invocable<F const&, YCombinator const&, Args...>)
-        constexpr decltype(auto) operator()(Args&&... args) const& {
+        constexpr auto operator()(Args&&... args) const& -> decltype(auto) {
             return function::invoke(m_function, *this, util::forward<Args>(args)...);
         }
 
         template<typename... Args>
         requires(concepts::Invocable<F &&, YCombinator &&, Args...>)
-        constexpr decltype(auto) operator()(Args&&... args) && {
+        constexpr auto operator()(Args&&... args) && -> decltype(auto) {
             return function::invoke(util::move(m_function), util::move(*this), util::forward<Args>(args)...);
         }
 
         template<typename... Args>
         requires(concepts::Invocable<F const &&, YCombinator const &&, Args...>)
-        constexpr decltype(auto) operator()(Args&&... args) const&& {
+        constexpr auto operator()(Args&&... args) const&& -> decltype(auto) {
             return function::invoke(util::move(m_function), util::move(*this), util::forward<Args>(args)...);
         }
 

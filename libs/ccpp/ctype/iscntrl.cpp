@@ -1,7 +1,7 @@
 #include <ctype.h>
 #include <stdio.h>
 
-extern "C" int iscntrl(int ch) {
+extern "C" auto iscntrl(int ch) -> int {
     if (ch == EOF) {
         return 0;
     }

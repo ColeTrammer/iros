@@ -13,10 +13,10 @@ class RefStorage {
 public:
     using Interface = meta::List<>;
 
-    constexpr static StorageCategory storage_category() { return StorageCategory::Reference; }
+    constexpr static auto storage_category() -> StorageCategory { return StorageCategory::Reference; }
 
     template<typename T>
-    constexpr static bool creation_is_fallible(InPlaceType<T>) {
+    constexpr static auto creation_is_fallible(InPlaceType<T>) -> bool {
         return false;
     }
 
@@ -26,7 +26,7 @@ public:
     constexpr RefStorage() : m_pointer(nullptr) {}
 
     RefStorage(RefStorage const&) = default;
-    RefStorage& operator=(RefStorage const&) = default;
+    auto operator=(RefStorage const&) -> RefStorage& = default;
 
     template<concepts::Object T, concepts::ConvertibleTo<T&> U>
     requires(!concepts::Const<T>)
@@ -47,7 +47,7 @@ public:
     ~RefStorage() = default;
 
     template<typename T>
-    constexpr T* down_cast() const {
+    constexpr auto down_cast() const -> T* {
         if constexpr (concepts::Const<T>) {
             return static_cast<T*>(m_const_pointer);
         } else if constexpr (concepts::Object<T>) {

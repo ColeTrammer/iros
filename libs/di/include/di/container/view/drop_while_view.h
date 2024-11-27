@@ -25,14 +25,14 @@ public:
     constexpr explicit DropWhileView(View base, Pred predicate)
         : m_base(util::move(base)), m_predicate(util::move(predicate)) {}
 
-    constexpr View base() const&
+    constexpr auto base() const& -> View
     requires(concepts::CopyConstructible<View>)
     {
         return m_base;
     }
-    constexpr View base() && { return util::move(m_base); }
+    constexpr auto base() && -> View { return util::move(m_base); }
 
-    constexpr Pred const& pred() const { return m_predicate.value(); }
+    constexpr auto pred() const -> Pred const& { return m_predicate.value(); }
 
     constexpr auto begin() {
         if constexpr (!concepts::ForwardContainer<View>) {

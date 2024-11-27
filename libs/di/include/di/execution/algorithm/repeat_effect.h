@@ -7,7 +7,7 @@ namespace di::execution {
 namespace repeat_effect_ns {
     struct Function : function::pipeline::EnablePipeline {
         template<concepts::SenderOf<SetValue()> Send>
-        concepts::SenderOf<SetValue()> auto operator()(Send&& sender) const {
+        auto operator()(Send&& sender) const -> concepts::SenderOf<SetValue()> auto {
             if constexpr (concepts::TagInvocable<Function, Send>) {
                 return function::tag_invoke(*this, util::forward<Send>(sender));
             } else {

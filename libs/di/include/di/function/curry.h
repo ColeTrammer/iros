@@ -29,8 +29,8 @@ public:
     CurryImpl(CurryImpl const&) = default;
     CurryImpl(CurryImpl&&) = default;
 
-    CurryImpl& operator=(CurryImpl const&) = delete;
-    CurryImpl& operator=(CurryImpl&&) = delete;
+    auto operator=(CurryImpl const&) -> CurryImpl& = delete;
+    auto operator=(CurryImpl&&) -> CurryImpl& = delete;
 
     template<typename... Args>
     requires(concepts::Invocable<F&, Args...> || concepts::Callable<Base&, Args...>)
@@ -94,8 +94,8 @@ struct Curry : pipeline::EnablePipeline {
     Curry(Curry const&) = default;
     Curry(Curry&&) = default;
 
-    Curry& operator=(Curry const&) = delete;
-    Curry& operator=(Curry&&) = delete;
+    auto operator=(Curry const&) -> Curry& = delete;
+    auto operator=(Curry&&) -> Curry& = delete;
 
     template<concepts::DecayConstructible... Args>
     requires(concepts::ConstructibleFrom<Self, Self&> && sizeof...(Args) < max_arity())

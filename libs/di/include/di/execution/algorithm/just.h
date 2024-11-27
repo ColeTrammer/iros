@@ -66,20 +66,20 @@ namespace just_ns {
 
     struct Function {
         template<concepts::MovableValue... Values>
-        constexpr concepts::Sender auto operator()(Values&&... values) const {
+        constexpr auto operator()(Values&&... values) const -> concepts::Sender auto {
             return Sender<SetValue, Values...> { construct_tag, util::forward<Values>(values)... };
         }
     };
 
     struct ErrorFunction {
         template<concepts::MovableValue Error>
-        constexpr concepts::Sender auto operator()(Error&& error) const {
+        constexpr auto operator()(Error&& error) const -> concepts::Sender auto {
             return Sender<SetError, Error> { construct_tag, util::forward<Error>(error) };
         }
     };
 
     struct StoppedFunction {
-        constexpr concepts::Sender auto operator()() const { return Sender<SetStopped> { construct_tag }; }
+        constexpr auto operator()() const -> concepts::Sender auto { return Sender<SetStopped> { construct_tag }; }
     };
 }
 

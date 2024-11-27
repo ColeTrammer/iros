@@ -3,6 +3,6 @@
 #include <di/math/prelude.h>
 #include <string.h>
 
-extern "C" size_t strlen(char const* string) {
+extern "C" auto strlen(char const* string) -> size_t {
     return di::to_unsigned(di::distance(di::ZCString(string)));
 }

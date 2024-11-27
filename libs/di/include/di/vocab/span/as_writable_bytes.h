@@ -8,7 +8,7 @@ namespace detail {
     struct AsWritableBytesFunction {
         template<typename T, size_t N, size_t S = N == dynamic_extent ? dynamic_extent : sizeof(T) * N>
         requires(!concepts::Const<T>)
-        Span<Byte, S> operator()(Span<T, N> span) const {
+        auto operator()(Span<T, N> span) const -> Span<Byte, S> {
             return { reinterpret_cast<Byte*>(span.data()), span.size_bytes() };
         }
     };

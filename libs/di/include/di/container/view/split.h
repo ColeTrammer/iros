@@ -22,7 +22,7 @@ namespace detail {
     struct SplitFunction {
         template<concepts::ViewableContainer Con, typename Pattern>
         requires(CustomSplit<Con, Pattern> || ViewSplit<Con, Pattern>)
-        constexpr concepts::View auto operator()(Con&& container, Pattern&& pattern) const {
+        constexpr auto operator()(Con&& container, Pattern&& pattern) const -> concepts::View auto {
             if constexpr (CustomSplit<Con, Pattern>) {
                 return function::tag_invoke(*this, util::forward<Con>(container), util::forward<Pattern>(pattern));
             } else {

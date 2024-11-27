@@ -8,7 +8,7 @@ namespace detail {
     template<concepts::InstanceOf<Duration> To>
     struct DurationCastFunction {
         template<typename Rep, math::detail::IsRatio Period>
-        constexpr To operator()(Duration<Rep, Period> const& from) const {
+        constexpr auto operator()(Duration<Rep, Period> const& from) const -> To {
             constexpr auto conversion_factor = math::RatioDivide<Period, typename To::Period>::rational;
 
             auto count = static_cast<imax>(from.count());

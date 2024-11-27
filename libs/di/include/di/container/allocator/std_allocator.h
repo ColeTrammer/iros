@@ -15,7 +15,7 @@ struct integral_constant {
     using value_type = T;
     using type = integral_constant;
     constexpr operator T() const noexcept { return value; }
-    constexpr T operator()() const noexcept { return value; }
+    constexpr auto operator()() const noexcept -> T { return value; }
 };
 
 template<typename T>
@@ -32,7 +32,7 @@ struct allocator {
 
     constexpr ~allocator() {}
 
-    [[nodiscard]] constexpr T* allocate(size_t count) {
+    [[nodiscard]] constexpr auto allocate(size_t count) -> T* {
         if consteval {
             return static_cast<T*>(::operator new(count * sizeof(T)));
         }
@@ -56,7 +56,7 @@ struct allocator {
 };
 
 template<class T, class U>
-constexpr bool operator==(allocator<T> const&, allocator<U> const&) noexcept {
+constexpr auto operator==(allocator<T> const&, allocator<U> const&) noexcept -> bool {
     return true;
 }
 }

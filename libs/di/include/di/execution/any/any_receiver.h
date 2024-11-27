@@ -45,10 +45,10 @@ struct AnyReceiverT {
         using is_receiver = void;
 
         Type(Type const&) = delete;
-        Type& operator=(Type const&) = delete;
+        auto operator=(Type const&) -> Type& = delete;
 
         Type(Type&&) = default;
-        Type& operator=(Type&&) = default;
+        auto operator=(Type&&) -> Type& = default;
 
         template<typename R, typename T = meta::RemoveCVRef<R>>
         requires(!concepts::DerivedFrom<T, Type> && concepts::ReceiverOf<T, detail::AnySigs<Sigs>> &&

@@ -9,7 +9,7 @@ namespace detail {
     struct ByteswapFunction {
         template<concepts::IntegralOrEnum T>
         requires(concepts::UniqueObjectRepresentation<T>)
-        constexpr T operator()(T value) const {
+        constexpr auto operator()(T value) const -> T {
             if constexpr (concepts::Enum<T>) {
                 return T((*this)(util::to_underlying(value)));
             } else {

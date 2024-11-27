@@ -71,11 +71,11 @@ class IoApic {
 public:
     IoApic(mm::PhysicalAddress access_base, u8 global_offset);
 
-    u8 id() const { return m_id; }
-    u8 max_redirection_entry() const { return m_max_redirection_entry; }
+    auto id() const -> u8 { return m_id; }
+    auto max_redirection_entry() const -> u8 { return m_max_redirection_entry; }
 
-    u32 direct_read(IoApicOffset);
-    u64 direct_read64(IoApicOffset offset) {
+    auto direct_read(IoApicOffset) -> u32;
+    auto direct_read64(IoApicOffset offset) -> u64 {
         auto low = direct_read(offset);
         auto high = direct_read(IoApicOffset(di::to_underlying(offset) + 1));
         return (static_cast<u64>(high) << 32) | low;
@@ -86,7 +86,7 @@ public:
         direct_write(IoApicOffset(di::to_underlying(offset) + 1), static_cast<u32>(value >> 32));
     }
 
-    IoApicRedirectionTableEntry read_redirection_entry(u8 offset) {
+    auto read_redirection_entry(u8 offset) -> IoApicRedirectionTableEntry {
         return di::bit_cast<IoApicRedirectionTableEntry>(direct_read64(offset_for_redirection_entry(offset)));
     }
     void write_redirection_entry(u8 offset, IoApicRedirectionTableEntry entry) {
@@ -97,14 +97,14 @@ private:
     friend void tag_invoke(di::Tag<send_eoi>, IoApic&, IrqLine irq_line);
     friend void tag_invoke(di::Tag<disable_irq_line>, IoApic&, IrqLine irq_line);
     friend void tag_invoke(di::Tag<enable_irq_line>, IoApic&, IrqLine irq_line);
-    friend IrqLineRange tag_invoke(di::Tag<responsible_irq_line_range>, IoApic const&);
+    friend auto tag_invoke(di::Tag<responsible_irq_line_range>, IoApic const&) -> IrqLineRange;
 
-    IoApicOffset offset_for_redirection_entry(u8 number) {
+    auto offset_for_redirection_entry(u8 number) -> IoApicOffset {
         ASSERT_LT_EQ(number, m_max_redirection_entry);
         return IoApicOffset(di::to_underlying(IoApicOffset::RedirectionTable) + 2 * number);
     }
 
-    di::Tuple<u8, di::Optional<acpi::InterruptSourceOverrideStructure>> resolve_irq_line(IrqLine irq_line);
+    auto resolve_irq_line(IrqLine irq_line) -> di::Tuple<u8, di::Optional<acpi::InterruptSourceOverrideStructure>>;
 
     u32 volatile* m_access { nullptr };
     u8 m_global_offset { 0 };

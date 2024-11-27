@@ -15,7 +15,7 @@ namespace detail {
                  typename D = meta::Deserializer<Format, StringReader<container::StringView>, Args...>,
                  typename R = meta::DeserializeResult<D, T>>
         requires(concepts::Deserializable<T, D>)
-        constexpr R operator()(Format format, container::StringView view, Args&&... args) const {
+        constexpr auto operator()(Format format, container::StringView view, Args&&... args) const -> R {
             auto deserializer = serialization::deserializer(format, StringReader<container::StringView> { view },
                                                             util::forward<Args>(args)...);
             return serialization::deserialize<T>(deserializer);

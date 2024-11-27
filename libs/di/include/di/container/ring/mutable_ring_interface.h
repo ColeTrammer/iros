@@ -7,8 +7,8 @@ namespace di::container {
 template<typename Self, typename Value>
 class MutableRingInterface : public ConstantRingInterface<Self, Value> {
 private:
-    constexpr Self& self() { return static_cast<Self&>(*this); }
-    constexpr Self const& self() const { return static_cast<Self const&>(*this); }
+    constexpr auto self() -> Self& { return static_cast<Self&>(*this); }
+    constexpr auto self() const -> Self const& { return static_cast<Self const&>(*this); }
 
     using Iterator = RingIterator<Value>;
     using ConstIterator = RingIterator<Value const>;
@@ -34,13 +34,13 @@ public:
 
     constexpr void clear() { ring::clear(self()); }
 
-    constexpr decltype(auto) push_back(Value const& value)
+    constexpr auto push_back(Value const& value) -> decltype(auto)
     requires(concepts::CopyConstructible<Value>)
     {
         return ring::emplace_back(self(), value);
     }
 
-    constexpr decltype(auto) push_back(Value&& value)
+    constexpr auto push_back(Value&& value) -> decltype(auto)
     requires(concepts::MoveConstructible<Value>)
     {
         return ring::emplace_back(self(), util::move(value));
@@ -48,7 +48,7 @@ public:
 
     template<typename... Args>
     requires(concepts::ConstructibleFrom<Value, Args...>)
-    constexpr decltype(auto) emplace_back(Args&&... args) {
+    constexpr auto emplace_back(Args&&... args) -> decltype(auto) {
         return ring::emplace_back(self(), util::forward<Args>(args)...);
     }
 
@@ -58,15 +58,15 @@ public:
         return ring::append_container(self(), util::forward<Con>(container));
     }
 
-    constexpr decltype(auto) pop_back() { return ring::pop_back(self()); }
+    constexpr auto pop_back() -> decltype(auto) { return ring::pop_back(self()); }
 
-    constexpr decltype(auto) push_front(Value const& value)
+    constexpr auto push_front(Value const& value) -> decltype(auto)
     requires(concepts::CopyConstructible<Value>)
     {
         return ring::emplace_front(self(), value);
     }
 
-    constexpr decltype(auto) push_front(Value&& value)
+    constexpr auto push_front(Value&& value) -> decltype(auto)
     requires(concepts::MoveConstructible<Value>)
     {
         return ring::emplace_front(self(), util::move(value));
@@ -74,7 +74,7 @@ public:
 
     template<typename... Args>
     requires(concepts::ConstructibleFrom<Value, Args...>)
-    constexpr decltype(auto) emplace_front(Args&&... args) {
+    constexpr auto emplace_front(Args&&... args) -> decltype(auto) {
         return ring::emplace_front(self(), util::forward<Args>(args)...);
     }
 
@@ -84,7 +84,7 @@ public:
         return ring::prepend_container(self(), util::forward<Con>(container));
     }
 
-    constexpr decltype(auto) pop_front() { return ring::pop_front(self()); }
+    constexpr auto pop_front() -> decltype(auto) { return ring::pop_front(self()); }
 
     constexpr auto insert(ConstIterator position, Value const& value)
     requires(concepts::CopyConstructible<Value>)

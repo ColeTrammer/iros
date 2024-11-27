@@ -14,7 +14,7 @@
 namespace di::container::vector {
 template<concepts::detail::MutableVector Vec, typename... Args>
 requires(concepts::ConstructibleFrom<meta::detail::VectorValue<Vec>, Args...>)
-constexpr decltype(auto) emplace_back(Vec& vector, Args&&... args) {
+constexpr auto emplace_back(Vec& vector, Args&&... args) -> decltype(auto) {
     auto size = vector::size(vector);
     return invoke_as_fallible([&] {
                return vector::reserve(vector, size + 1);

@@ -8,7 +8,7 @@ namespace detail {
     struct IntoParseContextFunction {
         template<typename T>
         requires(concepts::TagInvocable<IntoParseContextFunction, T> || concepts::ParserContext<T>)
-        constexpr concepts::ParserContext decltype(auto) operator()(T&& value) const {
+        constexpr auto operator()(T&& value) const -> concepts::ParserContext decltype(auto) {
             if constexpr (concepts::TagInvocable<IntoParseContextFunction, T>) {
                 return function::tag_invoke(*this, util::forward<T>(value));
             } else {

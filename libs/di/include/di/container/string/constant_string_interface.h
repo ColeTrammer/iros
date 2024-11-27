@@ -36,22 +36,22 @@ private:
     using CodePoint = meta::EncodingCodePoint<Enc>;
     using Iterator = meta::EncodingIterator<Enc>;
 
-    constexpr Self const& self() const { return static_cast<Self const&>(*this); }
+    constexpr auto self() const -> Self const& { return static_cast<Self const&>(*this); }
 
 public:
-    constexpr usize size() const
+    constexpr auto size() const -> usize
     requires(encoding::Contiguous<Enc>)
     {
         return string::size(self());
     }
 
-    constexpr CodePoint operator[](usize index) const
+    constexpr auto operator[](usize index) const -> CodePoint
     requires(encoding::Contiguous<Enc>)
     {
         return begin()[index];
     }
 
-    constexpr Optional<CodePoint> at(usize index) const
+    constexpr auto at(usize index) const -> Optional<CodePoint>
     requires(encoding::Contiguous<Enc>)
     {
         if (index >= size()) {
@@ -60,9 +60,9 @@ public:
         return begin()[index];
     }
 
-    constexpr usize size_bytes() const { return size_code_units() * sizeof(CodeUnit); }
-    constexpr usize size_code_units() const { return string::size_code_units(self()); }
-    constexpr bool empty() const { return string::empty(self()); }
+    constexpr auto size_bytes() const -> usize { return size_code_units() * sizeof(CodeUnit); }
+    constexpr auto size_code_units() const -> usize { return string::size_code_units(self()); }
+    constexpr auto empty() const -> bool { return string::empty(self()); }
 
     constexpr auto data() const { return string::data(self()); }
 
@@ -72,27 +72,27 @@ public:
     constexpr auto front() const { return string::front(self()); }
     constexpr auto back() const { return string::back(self()); }
 
-    constexpr bool starts_with(CodePoint code_point) const { return string::starts_with(self(), code_point); }
+    constexpr auto starts_with(CodePoint code_point) const -> bool { return string::starts_with(self(), code_point); }
 
     template<concepts::ContainerCompatible<CodePoint> Con>
     requires(concepts::SameAs<meta::Encoding<Con>, Enc>)
-    constexpr bool starts_with(Con&& container) const {
+    constexpr auto starts_with(Con&& container) const -> bool {
         return string::starts_with(self(), util::forward<Con>(container));
     }
 
-    constexpr bool ends_with(CodePoint code_point) const { return string::ends_with(self(), code_point); }
+    constexpr auto ends_with(CodePoint code_point) const -> bool { return string::ends_with(self(), code_point); }
 
     template<concepts::ContainerCompatible<CodePoint> Con>
     requires(concepts::SameAs<meta::Encoding<Con>, Enc>)
-    constexpr bool ends_with(Con&& container) const {
+    constexpr auto ends_with(Con&& container) const -> bool {
         return string::ends_with(self(), util::forward<Con>(container));
     }
 
-    constexpr bool contains(CodePoint code_point) const { return string::contains(self(), code_point); }
+    constexpr auto contains(CodePoint code_point) const -> bool { return string::contains(self(), code_point); }
 
     template<concepts::ContainerCompatible<CodePoint> Con>
     requires(concepts::SameAs<meta::Encoding<Con>, Enc> && concepts::ForwardContainer<Con>)
-    constexpr bool contains(Con&& container) const {
+    constexpr auto contains(Con&& container) const -> bool {
         return string::contains(self(), util::forward<Con>(container));
     }
 
@@ -174,7 +174,7 @@ public:
 private:
     template<concepts::detail::ConstantString Other>
     requires(concepts::SameAs<Enc, meta::Encoding<Other>>)
-    constexpr friend bool operator==(Self const& a, Other const& b) {
+    constexpr friend auto operator==(Self const& a, Other const& b) -> bool {
         return string::equal(a, b);
     }
 
@@ -184,8 +184,8 @@ private:
         return string::compare(a, b);
     }
 
-    constexpr friend StringViewImpl<Enc> tag_invoke(types::Tag<container::reconstruct>, InPlaceType<Self>,
-                                                    Iterator first, Iterator last) {
+    constexpr friend auto tag_invoke(types::Tag<container::reconstruct>, InPlaceType<Self>, Iterator first,
+                                     Iterator last) -> StringViewImpl<Enc> {
         return StringViewImpl<Enc>(util::move(first), util::move(last));
     }
 };

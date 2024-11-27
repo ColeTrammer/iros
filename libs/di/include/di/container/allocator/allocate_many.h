@@ -18,7 +18,8 @@ namespace detail {
     template<typename T>
     struct AllocateManyFunction {
         template<concepts::Allocator Alloc>
-        constexpr meta::AllocatorResult<Alloc, AllocationResult<T>> operator()(Alloc& allocator, usize count) const {
+        constexpr auto operator()(Alloc& allocator, usize count) const
+            -> meta::AllocatorResult<Alloc, AllocationResult<T>> {
             if consteval {
                 auto* result = std::allocator<T>().allocate(count);
                 return AllocationResult<T> { result, count };

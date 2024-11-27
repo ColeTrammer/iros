@@ -32,10 +32,10 @@ public:
         ASSERT_EQ(length % 0x1000, 0u);
     }
 
-    constexpr VirtualAddress base() const { return m_base; }
-    constexpr VirtualAddress end() const { return m_base + length(); }
-    constexpr usize length() const { return m_length; }
-    constexpr usize pages() const { return length() / 0x1000; }
+    constexpr auto base() const -> VirtualAddress { return m_base; }
+    constexpr auto end() const -> VirtualAddress { return m_base + length(); }
+    constexpr auto length() const -> usize { return m_length; }
+    constexpr auto pages() const -> usize { return length() / 0x1000; }
 
     constexpr auto each_page() const { return di::iota(base(), end()) | di::stride(0x1000z); }
 
@@ -47,17 +47,17 @@ public:
     }
     constexpr void set_end(VirtualAddress end) { m_length = end - m_base; }
 
-    constexpr RegionFlags flags() const { return m_flags; }
-    constexpr BackingObject& backing_object() const { return *m_backing_object; }
+    constexpr auto flags() const -> RegionFlags { return m_flags; }
+    constexpr auto backing_object() const -> BackingObject& { return *m_backing_object; }
 
-    constexpr bool readable() const { return !!(m_flags & RegionFlags::Readable); }
-    constexpr bool writable() const { return !!(m_flags & RegionFlags::Writable); }
-    constexpr bool executable() const { return !!(m_flags & RegionFlags::Executable); }
-    constexpr bool user() const { return !!(m_flags & RegionFlags::User); }
+    constexpr auto readable() const -> bool { return !!(m_flags & RegionFlags::Readable); }
+    constexpr auto writable() const -> bool { return !!(m_flags & RegionFlags::Writable); }
+    constexpr auto executable() const -> bool { return !!(m_flags & RegionFlags::Executable); }
+    constexpr auto user() const -> bool { return !!(m_flags & RegionFlags::User); }
 
-    constexpr bool contains(VirtualAddress b) const { return b >= base() && b < end(); }
+    constexpr auto contains(VirtualAddress b) const -> bool { return b >= base() && b < end(); }
 
-    constexpr di::strong_ordering compare_with_address(VirtualAddress b) const {
+    constexpr auto compare_with_address(VirtualAddress b) const -> di::strong_ordering {
         if (contains(b)) {
             return di::strong_ordering::equal;
         }
@@ -68,8 +68,8 @@ public:
     }
 
 private:
-    constexpr friend bool operator==(Region const& a, Region const& b) { return a.base() == b.base(); }
-    constexpr friend di::strong_ordering operator<=>(Region const& a, Region const& b) {
+    constexpr friend auto operator==(Region const& a, Region const& b) -> bool { return a.base() == b.base(); }
+    constexpr friend auto operator<=>(Region const& a, Region const& b) -> di::strong_ordering {
         // We assume that Region object which are compared are not overlapping.
         // This invariant is ensured by the AddressSpace object, which internally
         // uses this comparison function in its di::TreeSet<> of Regions.
@@ -78,8 +78,8 @@ private:
 
     // There overloads are provided to enable heterogenous lookup of Region objects in a
     // di::TreeSet by a VirtualAddress.
-    constexpr friend bool operator==(Region const& a, VirtualAddress b) { return a.contains(b); }
-    constexpr friend di::strong_ordering operator<=>(Region const& a, VirtualAddress b) {
+    constexpr friend auto operator==(Region const& a, VirtualAddress b) -> bool { return a.contains(b); }
+    constexpr friend auto operator<=>(Region const& a, VirtualAddress b) -> di::strong_ordering {
         return a.compare_with_address(b);
     }
 

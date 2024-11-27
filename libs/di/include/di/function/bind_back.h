@@ -27,31 +27,31 @@ namespace detail {
         constexpr BindBackFunction(BindBackFunction const&) = default;
         constexpr BindBackFunction(BindBackFunction&&) = default;
 
-        BindBackFunction& operator=(BindBackFunction const&) = delete;
-        BindBackFunction& operator=(BindBackFunction&&) = delete;
+        auto operator=(BindBackFunction const&) -> BindBackFunction& = delete;
+        auto operator=(BindBackFunction&&) -> BindBackFunction& = delete;
 
         template<typename... Args>
         requires(concepts::Invocable<F&, Args..., BoundArgs&...>)
-        constexpr decltype(auto) operator()(Args&&... args) & {
+        constexpr auto operator()(Args&&... args) & -> decltype(auto) {
             return function::invoke(m_function, util::forward<Args>(args)..., util::get<indices>(m_bound_arguments)...);
         }
 
         template<typename... Args>
         requires(concepts::Invocable<F const&, Args..., BoundArgs const&...>)
-        constexpr decltype(auto) operator()(Args&&... args) const& {
+        constexpr auto operator()(Args&&... args) const& -> decltype(auto) {
             return function::invoke(m_function, util::forward<Args>(args)..., util::get<indices>(m_bound_arguments)...);
         }
 
         template<typename... Args>
         requires(concepts::Invocable<F &&, Args..., BoundArgs && ...>)
-        constexpr decltype(auto) operator()(Args&&... args) && {
+        constexpr auto operator()(Args&&... args) && -> decltype(auto) {
             return function::invoke(util::move(m_function), util::forward<Args>(args)...,
                                     util::get<indices>(util::move(m_bound_arguments))...);
         }
 
         template<typename... Args>
         requires(concepts::Invocable<F const &&, Args..., BoundArgs const && ...>)
-        constexpr decltype(auto) operator()(Args&&... args) const&& {
+        constexpr auto operator()(Args&&... args) const&& -> decltype(auto) {
             return function::invoke(util::move(m_function), util::forward<Args>(args)...,
                                     util::get<indices>(util::move(m_bound_arguments))...);
         }

@@ -13,7 +13,7 @@ public:
 
     constexpr explicit SentinelExtension(Sent base) : m_base(base) {}
 
-    constexpr Sent base() const { return m_base; }
+    constexpr auto base() const -> Sent { return m_base; }
 
     constexpr auto difference(WrappedIter const& a) const
     requires(concepts::SizedSentinelFor<Sent, Iter>)
@@ -22,7 +22,7 @@ public:
     }
 
 private:
-    constexpr friend bool operator==(Self const& a, WrappedIter const& b) { return a.base() == b.base(); }
+    constexpr friend auto operator==(Self const& a, WrappedIter const& b) -> bool { return a.base() == b.base(); }
 
     Sent m_base;
 };

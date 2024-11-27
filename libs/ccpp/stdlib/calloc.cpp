@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-extern "C" void* calloc(size_t count, size_t size) {
+extern "C" auto calloc(size_t count, size_t size) -> void* {
     auto true_size = di::Checked(count) * size;
     if (!true_size.valid()) {
         errno = EOVERFLOW;

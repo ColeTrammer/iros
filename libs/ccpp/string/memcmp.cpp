@@ -1,7 +1,7 @@
 #include <di/container/algorithm/prelude.h>
 #include <string.h>
 
-extern "C" int memcmp(void const* lhs, void const* rhs, size_t count) {
+extern "C" auto memcmp(void const* lhs, void const* rhs, size_t count) -> int {
     auto const* lhs_typed = (unsigned char const*) lhs;
     auto const* rhs_typed = (unsigned char const*) rhs;
     auto result = di::container::compare(lhs_typed, lhs_typed + count, rhs_typed, rhs_typed + count);

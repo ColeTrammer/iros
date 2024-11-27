@@ -7,7 +7,7 @@ namespace di::bit {
 namespace detail {
     struct BitCeilFunction {
         template<concepts::UnsignedInteger T>
-        constexpr T operator()(T value) const {
+        constexpr auto operator()(T value) const -> T {
             if (value <= 1u) {
                 return T(1);
             }

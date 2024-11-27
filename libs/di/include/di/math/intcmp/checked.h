@@ -13,30 +13,30 @@ public:
 
     constexpr Checked(T value) : m_value(value) {}
 
-    constexpr Optional<T> value() const { return m_invalid ? nullopt : Optional(m_value); }
+    constexpr auto value() const -> Optional<T> { return m_invalid ? nullopt : Optional(m_value); }
 
-    constexpr bool valid() const { return !m_invalid; }
-    constexpr bool invalid() const { return m_invalid; }
+    constexpr auto valid() const -> bool { return !m_invalid; }
+    constexpr auto invalid() const -> bool { return m_invalid; }
 
-    constexpr Checked& operator+=(Checked value) {
+    constexpr auto operator+=(Checked value) -> Checked& {
         m_invalid |= value.m_invalid;
         m_invalid |= __builtin_add_overflow(m_value, value.m_value, &m_value);
         return *this;
     }
 
-    constexpr Checked& operator-=(Checked value) {
+    constexpr auto operator-=(Checked value) -> Checked& {
         m_invalid |= value.m_invalid;
         m_invalid |= __builtin_sub_overflow(m_value, value.m_value, &m_value);
         return *this;
     }
 
-    constexpr Checked& operator*=(Checked value) {
+    constexpr auto operator*=(Checked value) -> Checked& {
         m_invalid |= value.m_invalid;
         m_invalid |= __builtin_mul_overflow(m_value, value.m_value, &m_value);
         return *this;
     }
 
-    constexpr Checked& operator/=(Checked value) {
+    constexpr auto operator/=(Checked value) -> Checked& {
         m_invalid |= value.m_invalid;
 
         // Division is undefined for signed integers if the divisor is -1 and the dividend is the minimum value. Also,
@@ -52,7 +52,7 @@ public:
         return *this;
     }
 
-    constexpr Checked& operator%=(Checked value) {
+    constexpr auto operator%=(Checked value) -> Checked& {
         m_invalid |= value.m_invalid;
 
         // Division is undefined for signed integers if the divisor is -1 and the dividend is the minimum value. Also,
@@ -68,25 +68,25 @@ public:
         return *this;
     }
 
-    constexpr Checked& operator&=(Checked value) {
+    constexpr auto operator&=(Checked value) -> Checked& {
         m_invalid |= value.m_invalid;
         m_value &= value.m_value;
         return *this;
     }
 
-    constexpr Checked& operator|=(Checked value) {
+    constexpr auto operator|=(Checked value) -> Checked& {
         m_invalid |= value.m_invalid;
         m_value |= value.m_value;
         return *this;
     }
 
-    constexpr Checked& operator^=(Checked value) {
+    constexpr auto operator^=(Checked value) -> Checked& {
         m_invalid |= value.m_invalid;
         m_value ^= value.m_value;
         return *this;
     }
 
-    constexpr Checked& operator<<=(Checked value) {
+    constexpr auto operator<<=(Checked value) -> Checked& {
         m_invalid |= value.m_invalid;
 
         // Shifting by a negative amount is undefined, as it shifting by more than the number of bits in the "promoted"
@@ -99,7 +99,7 @@ public:
         return *this;
     }
 
-    constexpr Checked& operator>>=(Checked value) {
+    constexpr auto operator>>=(Checked value) -> Checked& {
         m_invalid |= value.m_invalid;
 
         // Shifting by a negative amount is undefined, as it shifting by more than the number of bits in the "promoted"
@@ -112,30 +112,30 @@ public:
         return *this;
     }
 
-    constexpr Checked& operator++() {
+    constexpr auto operator++() -> Checked& {
         *this += 1;
         return *this;
     }
 
-    constexpr Checked& operator--() {
+    constexpr auto operator--() -> Checked& {
         *this -= 1;
         return *this;
     }
 
-    constexpr Checked operator++(int) {
+    constexpr auto operator++(int) -> Checked {
         auto result = *this;
         ++*this;
         return result;
     }
 
-    constexpr Checked operator--(int) {
+    constexpr auto operator--(int) -> Checked {
         auto result = *this;
         --*this;
         return result;
     }
 
-    constexpr Checked operator+() const { return *this; }
-    constexpr Checked operator-() const {
+    constexpr auto operator+() const -> Checked { return *this; }
+    constexpr auto operator-() const -> Checked {
         // Negating the minimum value is undefined for signed integers.
         if constexpr (concepts::Signed<T>) {
             if (m_value == NumericLimits<T>::min) {
@@ -147,63 +147,63 @@ public:
         return Checked(-m_value);
     }
 
-    constexpr Checked operator~() const { return Checked(~m_value); }
+    constexpr auto operator~() const -> Checked { return Checked(~m_value); }
 
-    constexpr Checked operator&(Checked value) const {
+    constexpr auto operator&(Checked value) const -> Checked {
         auto result = *this;
         result &= value;
         return result;
     }
 
-    constexpr Checked operator|(Checked value) const {
+    constexpr auto operator|(Checked value) const -> Checked {
         auto result = *this;
         result |= value;
         return result;
     }
 
-    constexpr Checked operator^(Checked value) const {
+    constexpr auto operator^(Checked value) const -> Checked {
         auto result = *this;
         result ^= value;
         return result;
     }
 
-    constexpr Checked operator<<(Checked value) const {
+    constexpr auto operator<<(Checked value) const -> Checked {
         auto result = *this;
         result <<= value;
         return result;
     }
 
-    constexpr Checked operator>>(Checked value) const {
+    constexpr auto operator>>(Checked value) const -> Checked {
         auto result = *this;
         result >>= value;
         return result;
     }
 
-    constexpr Checked operator+(Checked value) const {
+    constexpr auto operator+(Checked value) const -> Checked {
         auto result = *this;
         result += value;
         return result;
     }
 
-    constexpr Checked operator-(Checked value) const {
+    constexpr auto operator-(Checked value) const -> Checked {
         auto result = *this;
         result -= value;
         return result;
     }
 
-    constexpr Checked operator*(Checked value) const {
+    constexpr auto operator*(Checked value) const -> Checked {
         auto result = *this;
         result *= value;
         return result;
     }
 
-    constexpr Checked operator/(Checked value) const {
+    constexpr auto operator/(Checked value) const -> Checked {
         auto result = *this;
         result /= value;
         return result;
     }
 
-    constexpr Checked operator%(Checked value) const {
+    constexpr auto operator%(Checked value) const -> Checked {
         auto result = *this;
         result %= value;
         return result;

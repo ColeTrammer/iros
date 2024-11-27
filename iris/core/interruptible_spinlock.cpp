@@ -16,7 +16,7 @@ void InterruptibleSpinlock::lock() {
     }
 }
 
-bool InterruptibleSpinlock::try_lock() {
+auto InterruptibleSpinlock::try_lock() -> bool {
     auto* task = with_interrupts_disabled([] {
         // SAFETY: This is safe since interrupts are disabled.
         return current_processor_unsafe().scheduler().current_task_null_if_during_boot();

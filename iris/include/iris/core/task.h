@@ -50,22 +50,22 @@ public:
         m_task_state.context_switch_to();
     }
 
-    arch::TaskState const& task_state() const { return m_task_state; }
+    auto task_state() const -> arch::TaskState const& { return m_task_state; }
     void set_task_state(arch::TaskState const& state) { m_task_state = state; }
 
-    di::Arc<TaskArguments> task_arguments() const { return m_task_arguments; }
+    auto task_arguments() const -> di::Arc<TaskArguments> { return m_task_arguments; }
     void set_task_arguments(di::Arc<TaskArguments> task_arguments) { m_task_arguments = di::move(task_arguments); }
 
-    arch::FpuState& fpu_state() { return m_fpu_state; }
-    arch::FpuState const& fpu_state() const { return m_fpu_state; }
+    auto fpu_state() -> arch::FpuState& { return m_fpu_state; }
+    auto fpu_state() const -> arch::FpuState const& { return m_fpu_state; }
 
-    TaskId id() const { return m_id; }
+    auto id() const -> TaskId { return m_id; }
 
-    mm::AddressSpace& address_space() { return *m_address_space; }
+    auto address_space() -> mm::AddressSpace& { return *m_address_space; }
     void set_address_space(di::Arc<mm::AddressSpace> address_space) { m_address_space = di::move(address_space); }
 
-    TaskNamespace& task_namespace() const { return *m_task_namespace; }
-    FileTable& file_table() { return m_file_table; }
+    auto task_namespace() const -> TaskNamespace& { return *m_task_namespace; }
+    auto file_table() -> FileTable& { return m_file_table; }
 
     void set_instruction_pointer(mm::VirtualAddress address) {
         m_task_state.set_instruction_pointer(address.raw_value());
@@ -76,29 +76,29 @@ public:
     void set_argument3(uptr value) { m_task_state.set_argument3(value); }
     void set_argument4(uptr value) { m_task_state.set_argument4(value); }
 
-    bool preemption_disabled() const { return m_preemption_disabled_count.load(di::MemoryOrder::Relaxed) > 0; }
+    auto preemption_disabled() const -> bool { return m_preemption_disabled_count.load(di::MemoryOrder::Relaxed) > 0; }
     void disable_preemption() { m_preemption_disabled_count.fetch_add(1, di::MemoryOrder::Relaxed); }
     void enable_preemption();
     void set_should_be_preempted() { m_should_be_preempted.store(true, di::MemoryOrder::Relaxed); }
 
-    di::Arc<TaskStatus> task_status() const { return m_task_status; }
+    auto task_status() const -> di::Arc<TaskStatus> { return m_task_status; }
 
-    bool waiting() const { return m_waiting.load(di::MemoryOrder::Relaxed); }
+    auto waiting() const -> bool { return m_waiting.load(di::MemoryOrder::Relaxed); }
     void set_waiting() { return m_waiting.store(true, di::MemoryOrder::Relaxed); }
     void set_runnable() { return m_waiting.store(false, di::MemoryOrder::Relaxed); }
 
-    mm::VirtualAddress kernel_stack() const { return m_kernel_stack; }
+    auto kernel_stack() const -> mm::VirtualAddress { return m_kernel_stack; }
     void set_kernel_stack(mm::VirtualAddress kernel_stack) { m_kernel_stack = kernel_stack; }
 
-    uptr userspace_thread_pointer() const { return m_userspace_thread_pointer; }
+    auto userspace_thread_pointer() const -> uptr { return m_userspace_thread_pointer; }
     void set_userspace_thread_pointer(uptr userspace_thread_pointer) {
         m_userspace_thread_pointer = userspace_thread_pointer;
     }
 
-    di::Arc<TNode> root_tnode() const { return m_root_tnode; }
+    auto root_tnode() const -> di::Arc<TNode> { return m_root_tnode; }
     void set_root_tnode(di::Arc<TNode> root_tnode) { m_root_tnode = di::move(root_tnode); }
 
-    di::Arc<TNode> cwd_tnode() const { return m_cwd_tnode; }
+    auto cwd_tnode() const -> di::Arc<TNode> { return m_cwd_tnode; }
     void set_cwd_tnode(di::Arc<TNode> cwd_tnode) { m_cwd_tnode = di::move(cwd_tnode); }
 
 private:
@@ -119,10 +119,10 @@ private:
     TaskId m_id;
 };
 
-Expected<di::Arc<Task>> create_kernel_task(TaskNamespace&, void (*entry)());
-Expected<di::Arc<Task>> create_user_task(TaskNamespace&, di::Arc<TNode> root_tnode, di::Arc<TNode> cwd_tnode, FileTable,
-                                         di::Arc<mm::AddressSpace>);
-Expected<void> load_executable(Task&, di::PathView path);
+auto create_kernel_task(TaskNamespace&, void (*entry)()) -> Expected<di::Arc<Task>>;
+auto create_user_task(TaskNamespace&, di::Arc<TNode> root_tnode, di::Arc<TNode> cwd_tnode, FileTable,
+                      di::Arc<mm::AddressSpace>) -> Expected<di::Arc<Task>>;
+auto load_executable(Task&, di::PathView path) -> Expected<void>;
 
-Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state);
+auto do_syscall(Task& current_task, arch::TaskState& task_state) -> Expected<u64>;
 }

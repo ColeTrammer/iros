@@ -10,7 +10,7 @@ namespace detail {
     struct CopyFunction {
         template<concepts::InputIterator It, concepts::SentinelFor<It> Sent, concepts::WeaklyIncrementable Out>
         requires(concepts::IndirectlyCopyable<It, Out>)
-        constexpr InOutResult<It, Out> operator()(It first, Sent last, Out output) const {
+        constexpr auto operator()(It first, Sent last, Out output) const -> InOutResult<It, Out> {
             // FIXME: use vectorized byte copy (::memcpy_forward) when provided contiguous
             //        iterators to trivially copyable types.
             for (; first != last; ++first, ++output) {
@@ -21,7 +21,7 @@ namespace detail {
 
         template<concepts::InputContainer Con, concepts::WeaklyIncrementable Out>
         requires(concepts::IndirectlyCopyable<meta::ContainerIterator<Con>, Out>)
-        constexpr InOutResult<meta::BorrowedIterator<Con>, Out> operator()(Con&& container, Out output) const {
+        constexpr auto operator()(Con&& container, Out output) const -> InOutResult<meta::BorrowedIterator<Con>, Out> {
             return (*this)(container::begin(container), container::end(container), util::move(output));
         }
     };

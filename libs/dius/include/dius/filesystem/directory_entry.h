@@ -16,101 +16,101 @@ public:
 
     DirectoryEntry(DirectoryEntry&&) = default;
 
-    DirectoryEntry& operator=(DirectoryEntry&&) = default;
+    auto operator=(DirectoryEntry&&) -> DirectoryEntry& = default;
 
-    constexpr di::Path const& path() const& { return m_path; }
-    constexpr di::Path&& path() && { return di::move(m_path); }
-    constexpr di::PathView path_view() const { return m_path.view(); }
-    constexpr di::Optional<di::PathView> filename() const { return path_view().filename(); }
+    constexpr auto path() const& -> di::Path const& { return m_path; }
+    constexpr auto path() && -> di::Path&& { return di::move(m_path); }
+    constexpr auto path_view() const -> di::PathView { return m_path.view(); }
+    constexpr auto filename() const -> di::Optional<di::PathView> { return path_view().filename(); }
 
     constexpr operator di::Path const&() const& { return path(); }
     constexpr operator di::Path&&() && { return di::move(*this).path(); }
     constexpr operator di::PathView() const { return path_view(); }
 
-    di::Result<bool> exists() const {
+    auto exists() const -> di::Result<bool> {
         if (has_cached_type()) {
             return filesystem::exists(FileStatus(m_cached_type));
         }
         return filesystem::exists(path_view());
     }
 
-    di::Result<bool> is_block_file() const {
+    auto is_block_file() const -> di::Result<bool> {
         if (has_cached_type()) {
             return filesystem::is_block_file(FileStatus(m_cached_type));
         }
         return filesystem::is_block_file(path_view());
     }
 
-    di::Result<bool> is_character_file() const {
+    auto is_character_file() const -> di::Result<bool> {
         if (has_cached_type()) {
             return filesystem::is_character_file(FileStatus(m_cached_type));
         }
         return filesystem::is_character_file(path_view());
     }
 
-    di::Result<bool> is_directory() const {
+    auto is_directory() const -> di::Result<bool> {
         if (has_cached_type()) {
             return filesystem::is_directory(FileStatus(m_cached_type));
         }
         return filesystem::is_directory(path_view());
     }
 
-    di::Result<bool> is_fifo() const {
+    auto is_fifo() const -> di::Result<bool> {
         if (has_cached_type()) {
             return filesystem::is_fifo(FileStatus(m_cached_type));
         }
         return filesystem::is_fifo(path_view());
     }
 
-    di::Result<bool> is_other() const {
+    auto is_other() const -> di::Result<bool> {
         if (has_cached_type()) {
             return filesystem::is_other(FileStatus(m_cached_type));
         }
         return filesystem::is_other(path_view());
     }
 
-    di::Result<bool> is_regular_file() const {
+    auto is_regular_file() const -> di::Result<bool> {
         if (has_cached_type()) {
             return filesystem::is_regular_file(FileStatus(m_cached_type));
         }
         return filesystem::is_regular_file(path_view());
     }
 
-    di::Result<bool> is_socket() const {
+    auto is_socket() const -> di::Result<bool> {
         if (has_cached_type()) {
             return filesystem::is_socket(FileStatus(m_cached_type));
         }
         return filesystem::is_socket(path_view());
     }
 
-    di::Result<bool> is_symlink() const {
+    auto is_symlink() const -> di::Result<bool> {
         if (m_cached_type != FileType::Unknown) {
             return filesystem::is_symlink(FileStatus(m_cached_type));
         }
         return filesystem::is_symlink(path_view());
     }
 
-    di::Result<umax> file_size() const { return filesystem::file_size(path_view()); }
-    di::Result<umax> hard_link_count() const { return filesystem::hard_link_count(path_view()); }
+    auto file_size() const -> di::Result<umax> { return filesystem::file_size(path_view()); }
+    auto hard_link_count() const -> di::Result<umax> { return filesystem::hard_link_count(path_view()); }
 
-    di::Result<FileStatus> status() const { return filesystem::status(path_view()); }
-    di::Result<FileStatus> symlink_status() const { return filesystem::symlink_status(path_view()); }
+    auto status() const -> di::Result<FileStatus> { return filesystem::status(path_view()); }
+    auto symlink_status() const -> di::Result<FileStatus> { return filesystem::symlink_status(path_view()); }
 
 private:
     friend class DirectoryIterator;
     friend class RecursiveDirectoryIterator;
 
-    constexpr friend bool operator==(DirectoryEntry const& a, DirectoryEntry const& b) {
+    constexpr friend auto operator==(DirectoryEntry const& a, DirectoryEntry const& b) -> bool {
         return a.path_view() == b.path_view();
     }
-    constexpr friend di::strong_ordering operator<=>(DirectoryEntry const& a, DirectoryEntry const& b) {
+    constexpr friend auto operator<=>(DirectoryEntry const& a, DirectoryEntry const& b) -> di::strong_ordering {
         return a.path_view() <=> b.path_view();
     }
 
     explicit DirectoryEntry(di::Path&& path, FileType cached_type)
         : m_path(di::move(path)), m_cached_type(cached_type) {}
 
-    di::Expected<bool, di::GenericCode> is_non_symlink_directory() const {
+    auto is_non_symlink_directory() const -> di::Expected<bool, di::GenericCode> {
         if (m_cached_type != FileType::Unknown) {
             return m_cached_type == FileType::Directory;
         }
@@ -119,7 +119,7 @@ private:
         return di::Expected<bool, di::GenericCode>(is_directory());
     }
 
-    constexpr bool has_cached_type() const {
+    constexpr auto has_cached_type() const -> bool {
         // NOTE: if the file type is a symlink, then we have to follow that symlink when
         //       answering all queries other than is_symlink(), which will require calling
         //       `status()`.

@@ -16,101 +16,101 @@ class MonadInterface {
 public:
     template<typename F>
     requires(concepts::Invocable<decltype(fmap), Self&, F>)
-    constexpr decltype(auto) transform(F&& function) & {
+    constexpr auto transform(F&& function) & -> decltype(auto) {
         return fmap(static_cast<Self&>(*this), util::forward<F>(function));
     }
 
     template<typename F>
     requires(concepts::Invocable<decltype(fmap), Self const&, F>)
-    constexpr decltype(auto) transform(F&& function) const& {
+    constexpr auto transform(F&& function) const& -> decltype(auto) {
         return fmap(static_cast<Self const&>(*this), util::forward<F>(function));
     }
 
     template<typename F>
     requires(concepts::Invocable<decltype(fmap), Self &&, F>)
-    constexpr decltype(auto) transform(F&& function) && {
+    constexpr auto transform(F&& function) && -> decltype(auto) {
         return fmap(static_cast<Self&&>(*this), util::forward<F>(function));
     }
 
     template<typename F>
     requires(concepts::Invocable<decltype(fmap), Self const &&, F>)
-    constexpr decltype(auto) transform(F&& function) const&& {
+    constexpr auto transform(F&& function) const&& -> decltype(auto) {
         return fmap(static_cast<Self const&&>(*this), util::forward<F>(function));
     }
 
     template<typename F>
     requires(concepts::Invocable<decltype(bind), Self&, F>)
-    constexpr decltype(auto) and_then(F&& function) & {
+    constexpr auto and_then(F&& function) & -> decltype(auto) {
         return bind(static_cast<Self&>(*this), util::forward<F>(function));
     }
 
     template<typename F>
     requires(concepts::Invocable<decltype(bind), Self const&, F>)
-    constexpr decltype(auto) and_then(F&& function) const& {
+    constexpr auto and_then(F&& function) const& -> decltype(auto) {
         return bind(static_cast<Self const&>(*this), util::forward<F>(function));
     }
 
     template<typename F>
     requires(concepts::Invocable<decltype(bind), Self &&, F>)
-    constexpr decltype(auto) and_then(F&& function) && {
+    constexpr auto and_then(F&& function) && -> decltype(auto) {
         return bind(static_cast<Self&&>(*this), util::forward<F>(function));
     }
 
     template<typename F>
     requires(concepts::Invocable<decltype(bind), Self const &&, F>)
-    constexpr decltype(auto) and_then(F&& function) const&& {
+    constexpr auto and_then(F&& function) const&& -> decltype(auto) {
         return bind(static_cast<Self const&&>(*this), util::forward<F>(function));
     }
 
     template<typename F>
     requires(concepts::Invocable<decltype(fail), Self&, F>)
-    constexpr decltype(auto) or_else(F&& function) & {
+    constexpr auto or_else(F&& function) & -> decltype(auto) {
         return fail(static_cast<Self&>(*this), util::forward<F>(function));
     }
 
     template<typename F>
     requires(concepts::Invocable<decltype(fail), Self const&, F>)
-    constexpr decltype(auto) or_else(F&& function) const& {
+    constexpr auto or_else(F&& function) const& -> decltype(auto) {
         return fail(static_cast<Self const&>(*this), util::forward<F>(function));
     }
 
     template<typename F>
     requires(concepts::Invocable<decltype(fail), Self &&, F>)
-    constexpr decltype(auto) or_else(F&& function) && {
+    constexpr auto or_else(F&& function) && -> decltype(auto) {
         return fail(static_cast<Self&&>(*this), util::forward<F>(function));
     }
 
     template<typename F>
     requires(concepts::Invocable<decltype(fail), Self const &&, F>)
-    constexpr decltype(auto) or_else(F&& function) const&& {
+    constexpr auto or_else(F&& function) const&& -> decltype(auto) {
         return fail(static_cast<Self const&&>(*this), util::forward<F>(function));
     }
 
     template<typename F>
     requires(concepts::Invocable<decltype(fmap_right), Self&, F>)
-    constexpr decltype(auto) transform_error(F&& function) & {
+    constexpr auto transform_error(F&& function) & -> decltype(auto) {
         return fmap_right(static_cast<Self&>(*this), util::forward<F>(function));
     }
 
     template<typename F>
     requires(concepts::Invocable<decltype(fmap_right), Self const&, F>)
-    constexpr decltype(auto) transform_error(F&& function) const& {
+    constexpr auto transform_error(F&& function) const& -> decltype(auto) {
         return fmap_right(static_cast<Self const&>(*this), util::forward<F>(function));
     }
 
     template<typename F>
     requires(concepts::Invocable<decltype(fmap_right), Self &&, F>)
-    constexpr decltype(auto) transform_error(F&& function) && {
+    constexpr auto transform_error(F&& function) && -> decltype(auto) {
         return fmap_right(static_cast<Self&&>(*this), util::forward<F>(function));
     }
 
     template<typename F>
     requires(concepts::Invocable<decltype(fmap_right), Self const &&, F>)
-    constexpr decltype(auto) transform_error(F&& function) const&& {
+    constexpr auto transform_error(F&& function) const&& -> decltype(auto) {
         return fmap_right(static_cast<Self const&&>(*this), util::forward<F>(function));
     }
 
 private:
-    constexpr friend bool tag_invoke(types::Tag<enable_monad>, types::InPlaceType<Self>) { return true; }
+    constexpr friend auto tag_invoke(types::Tag<enable_monad>, types::InPlaceType<Self>) -> bool { return true; }
 };
 }

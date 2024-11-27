@@ -36,10 +36,10 @@ public:
 };
 
 template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>>
-TreeMultiSet<T> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<TreeMultiSet>, Con&&);
+auto tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<TreeMultiSet>, Con&&) -> TreeMultiSet<T>;
 
 template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>, concepts::StrictWeakOrder<T> Comp>
-TreeMultiSet<T, Comp> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<TreeMultiSet>, Con&&, Comp);
+auto tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<TreeMultiSet>, Con&&, Comp) -> TreeMultiSet<T, Comp>;
 }
 
 namespace di {

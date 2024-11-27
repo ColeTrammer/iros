@@ -42,7 +42,7 @@ void draw(gfx::Painter& painter) {
     z %= width;
 }
 
-int main() {
+auto main() -> int {
     auto* display = wl_display_connect(nullptr);
     if (!display) {
         dius::eprintln("Failed to connect to Wayland display"_sv);

@@ -18,8 +18,8 @@ public:
     constexpr VariantImpl(VariantImpl const&) = default;
     constexpr VariantImpl(VariantImpl&&) = default;
 
-    constexpr VariantImpl& operator=(VariantImpl const&) = default;
-    constexpr VariantImpl& operator=(VariantImpl&&) = default;
+    constexpr auto operator=(VariantImpl const&) -> VariantImpl& = default;
+    constexpr auto operator=(VariantImpl&&) -> VariantImpl& = default;
 
     ~VariantImpl() = default;
 
@@ -28,13 +28,13 @@ public:
     {}
 
     template<concepts::RemoveCVRefSameAs<VariantImpl> Self>
-    constexpr static meta::Like<Self, T>&& static_get(Constexpr<0zu>, Self&& self) {
+    constexpr static auto static_get(Constexpr<0zu>, Self&& self) -> meta::Like<Self, T>&& {
         return util::forward<Self>(self).m_value.value();
     }
 
     template<concepts::RemoveCVRefSameAs<VariantImpl> Self, size_t index>
     requires(index != 0)
-    constexpr static decltype(auto) static_get(Constexpr<index>, Self&& self) {
+    constexpr static auto static_get(Constexpr<index>, Self&& self) -> decltype(auto) {
         return VariantImpl<Rest...>::static_get(c_<index - 1>, util::forward<Self>(self).m_rest);
     }
 
@@ -46,14 +46,14 @@ public:
     }
 
     template<typename... Args>
-    constexpr T& emplace_impl(Constexpr<0zu>, Args&&... args) {
+    constexpr auto emplace_impl(Constexpr<0zu>, Args&&... args) -> T& {
         util::construct_at(util::addressof(m_value), in_place, util::forward<Args>(args)...);
         return m_value.value();
     }
 
     template<size_t index, typename... Args>
     requires(index != 0)
-    constexpr decltype(auto) emplace_impl(Constexpr<index>, Args&&... args) {
+    constexpr auto emplace_impl(Constexpr<index>, Args&&... args) -> decltype(auto) {
         util::construct_at(util::addressof(m_rest));
         return m_rest.emplace_impl(c_<index - 1>, util::forward<Args>(args)...);
     }
@@ -72,8 +72,8 @@ public:
     constexpr VariantImpl(VariantImpl const&) = default;
     constexpr VariantImpl(VariantImpl&&) = default;
 
-    constexpr VariantImpl& operator=(VariantImpl const&) = default;
-    constexpr VariantImpl& operator=(VariantImpl&&) = default;
+    constexpr auto operator=(VariantImpl const&) -> VariantImpl& = default;
+    constexpr auto operator=(VariantImpl&&) -> VariantImpl& = default;
 
     ~VariantImpl() = default;
 
@@ -82,14 +82,14 @@ public:
     {}
 
     template<concepts::RemoveCVRefSameAs<VariantImpl> Self>
-    constexpr static meta::Like<Self, T>&& static_get(Constexpr<0zu>, Self&& self) {
+    constexpr static auto static_get(Constexpr<0zu>, Self&& self) -> meta::Like<Self, T>&& {
         return util::forward<Self>(self).m_value.value();
     }
 
     constexpr void destroy_impl(Constexpr<0zu>) { util::destroy_at(util::addressof(m_value)); }
 
     template<typename... Args>
-    constexpr T& emplace_impl(Constexpr<0zu>, Args&&... args) {
+    constexpr auto emplace_impl(Constexpr<0zu>, Args&&... args) -> T& {
         util::construct_at(util::addressof(m_value), in_place, util::forward<Args>(args)...);
         return m_value.value();
     }

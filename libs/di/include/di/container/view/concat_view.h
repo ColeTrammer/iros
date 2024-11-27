@@ -165,7 +165,7 @@ private:
                  (concepts::ConvertibleTo<meta::ContainerIterator<Views>, meta::ContainerIterator<Views const>> && ...))
             : m_parent(other.m_parent), m_base(util::move(other.m_base)) {}
 
-        constexpr decltype(auto) operator*() const {
+        constexpr auto operator*() const -> decltype(auto) {
             return visit(
                 [](auto&& it) -> Reference {
                     return *it;
@@ -203,19 +203,19 @@ private:
         }
 
     private:
-        constexpr friend bool operator==(Iterator const& a, Iterator const& b)
+        constexpr friend auto operator==(Iterator const& a, Iterator const& b) -> bool
         requires(concepts::EqualityComparable<meta::ContainerIterator<meta::MaybeConst<is_const, Views>>> && ...)
         {
             return a.m_base == b.m_base;
         }
 
-        constexpr bool at_end() const {
+        constexpr auto at_end() const -> bool {
             constexpr auto last_index = sizeof...(Views) - 1;
             return m_base.index() == last_index &&
                    util::get<last_index>(m_base) == container::end(util::get<last_index>(m_parent->m_views));
         }
 
-        constexpr friend bool operator==(Iterator const& a, DefaultSentinel) { return a.at_end(); }
+        constexpr friend auto operator==(Iterator const& a, DefaultSentinel) -> bool { return a.at_end(); }
 
         constexpr friend auto operator<=>(Iterator const& a, Iterator const& b)
         requires(concepts::ThreeWayComparable<meta::ContainerIterator<meta::MaybeConst<is_const, Views>>> && ...)
@@ -223,7 +223,7 @@ private:
             return a.m_base <=> b.m_base;
         }
 
-        constexpr SSizeType distance_from(Iterator const& b) const {
+        constexpr auto distance_from(Iterator const& b) const -> SSizeType {
             auto ai = this->m_base.index();
             auto bi = b.m_base.index();
 
@@ -255,7 +255,7 @@ private:
             }
         }
 
-        constexpr SSizeType distance_from_end() const {
+        constexpr auto distance_from_end() const -> SSizeType {
             auto sizes = apply(
                 [](auto const&... views) {
                     return Array { static_cast<SSizeType>(container::size(views))... };
@@ -273,25 +273,27 @@ private:
             return -(rest_to_end + current_to_its_end);
         }
 
-        constexpr friend SSizeType operator-(Iterator const& a, Iterator const& b)
+        constexpr friend auto operator-(Iterator const& a, Iterator const& b) -> SSizeType
         requires(detail::ConcatRandomAccess<meta::MaybeConst<is_const, Views>...>)
         {
             return a.distance_from(b);
         }
 
-        constexpr friend SSizeType operator-(Iterator const& a, DefaultSentinel)
+        constexpr friend auto operator-(Iterator const& a, DefaultSentinel) -> SSizeType
         requires(detail::ConcatRandomAccess<meta::MaybeConst<is_const, Views>...>)
         {
             return a.distance_from_end();
         }
 
-        constexpr friend SSizeType operator-(DefaultSentinel, Iterator const& a)
+        constexpr friend auto operator-(DefaultSentinel, Iterator const& a) -> SSizeType
         requires(detail::ConcatRandomAccess<meta::MaybeConst<is_const, Views>...>)
         {
             return -a.distance_from_end();
         }
 
-        constexpr friend decltype(auto) tag_invoke(Iterator const& a) { return visit<RValue>(iterator_move, a.m_base); }
+        constexpr friend auto tag_invoke(Iterator const& a) -> decltype(auto) {
+            return visit<RValue>(iterator_move, a.m_base);
+        }
 
         template<typename = void>
         constexpr friend void tag_invoke(Iterator const& a, Iterator const& b)

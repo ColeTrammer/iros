@@ -11,7 +11,7 @@ enum class ForwardProgressGuarantee {
 namespace detail {
     struct GetForwardProgressGuaranteeFunction {
         template<concepts::Scheduler Sched>
-        constexpr ForwardProgressGuarantee operator()(Sched&& scheduler) const {
+        constexpr auto operator()(Sched&& scheduler) const -> ForwardProgressGuarantee {
             if constexpr (concepts::TagInvocable<GetForwardProgressGuaranteeFunction, Sched const&>) {
                 static_assert(
                     concepts::SameAs<ForwardProgressGuarantee,

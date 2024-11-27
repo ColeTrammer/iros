@@ -46,8 +46,8 @@ private:
     using CodePoint = meta::EncodingCodePoint<Enc>;
     using Iterator = meta::EncodingIterator<Enc>;
 
-    constexpr Self& self() { return static_cast<Self&>(*this); }
-    constexpr Self const& self() const { return static_cast<Self const&>(*this); }
+    constexpr auto self() -> Self& { return static_cast<Self&>(*this); }
+    constexpr auto self() const -> Self const& { return static_cast<Self const&>(*this); }
 
     template<concepts::InputContainer Con, typename... Args>
     requires(concepts::ContainerOf<Con, CodeUnit> && concepts::ConstructibleFrom<Self, Args...>)
@@ -118,9 +118,7 @@ private:
 public:
     constexpr void clear() { return string::clear(self()); }
 
-    constexpr CodePoint& operator[](usize index)
-    requires(encoding::Contiguous<Enc>)
-    {
+    constexpr auto operator[](usize index) -> CodePoint& requires(encoding::Contiguous<Enc>) {
         DI_ASSERT(index < self().size());
         return vector::data(self())[index];
     }

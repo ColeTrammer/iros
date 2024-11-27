@@ -9,7 +9,7 @@ namespace detail {
     template<typename T>
     struct MakeFromTupleFunction {
         template<concepts::TupleLike Tup>
-        constexpr T operator()(Tup&& tuple) const
+        constexpr auto operator()(Tup&& tuple) const -> T
         requires(requires {
             apply(
                 []<typename... Args>(Args&&... args) {

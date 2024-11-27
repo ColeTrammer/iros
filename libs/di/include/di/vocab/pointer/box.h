@@ -64,10 +64,8 @@ public:
 
     constexpr ~Box() { reset(); }
 
-    Box& operator=(Box const&) = delete;
-    constexpr Box& operator=(Box&& other)
-    requires(concepts::MoveAssignable<Deleter>)
-    {
+    auto operator=(Box const&) -> Box& = delete;
+    constexpr auto operator=(Box&& other) -> Box& requires(concepts::MoveAssignable<Deleter>) {
         reset(other.release());
         m_deleter = util::forward<Deleter>(other.get_deleter());
         return *this;
@@ -76,18 +74,18 @@ public:
     template<typename U, typename E>
     requires(concepts::ImplicitlyConvertibleTo<U*, T*> && !concepts::LanguageArray<U> &&
              concepts::AssignableFrom<Deleter&, E &&>)
-    constexpr Box& operator=(Box<U, E>&& other) {
+    constexpr auto operator=(Box<U, E>&& other) -> Box& {
         reset(other.release());
         m_deleter = util::forward<Deleter>(other.get_deleter());
         return *this;
     }
 
-    constexpr Box& operator=(nullptr_t) {
+    constexpr auto operator=(nullptr_t) -> Box& {
         reset();
         return *this;
     }
 
-    constexpr T* release() { return util::exchange(m_pointer, nullptr); }
+    constexpr auto release() -> T* { return util::exchange(m_pointer, nullptr); }
     constexpr void reset(T* pointer = nullptr) {
         auto* old_pointer = m_pointer;
         m_pointer = pointer;
@@ -96,25 +94,25 @@ public:
         }
     }
 
-    constexpr T* get() const { return m_pointer; }
+    constexpr auto get() const -> T* { return m_pointer; }
 
-    constexpr Deleter& get_deleter() { return m_deleter; }
-    constexpr Deleter const& get_deleter() const { return m_deleter; }
+    constexpr auto get_deleter() -> Deleter& { return m_deleter; }
+    constexpr auto get_deleter() const -> Deleter const& { return m_deleter; }
 
     constexpr explicit operator bool() const { return !!m_pointer; }
 
-    constexpr T& operator*() const {
+    constexpr auto operator*() const -> T& {
         DI_ASSERT(*this);
         return *get();
     }
-    constexpr T* operator->() const {
+    constexpr auto operator->() const -> T* {
         DI_ASSERT(*this);
         return get();
     }
 
 private:
     template<typename U>
-    constexpr friend bool operator==(Box const& a, Box<U> const& b) {
+    constexpr friend auto operator==(Box const& a, Box<U> const& b) -> bool {
         return const_cast<void*>(static_cast<void const volatile*>(a.get())) ==
                const_cast<void*>(static_cast<void const volatile*>(b.get()));
     }
@@ -125,7 +123,7 @@ private:
                const_cast<void*>(static_cast<void const volatile*>(b.get()));
     }
 
-    constexpr friend bool operator==(Box const& a, nullptr_t) { return a.get() == static_cast<T*>(nullptr); }
+    constexpr friend auto operator==(Box const& a, nullptr_t) -> bool { return a.get() == static_cast<T*>(nullptr); }
     constexpr friend auto operator<=>(Box const& a, nullptr_t) {
         return a == nullptr ? di::strong_ordering::equal : di::strong_ordering::greater;
     }
@@ -139,7 +137,7 @@ namespace detail {
     struct MakeBoxFunction {
         template<typename... Args>
         requires(!concepts::LanguageArray<T> && concepts::ConstructibleFrom<T, Args...>)
-        constexpr meta::AllocatorResult<platform::DefaultAllocator, Box<T>> operator()(Args&&... args) const {
+        constexpr auto operator()(Args&&... args) const -> meta::AllocatorResult<platform::DefaultAllocator, Box<T>> {
             if constexpr (concepts::FallibleAllocator<platform::DefaultAllocator>) {
                 auto* result = ::new (std::nothrow) T(util::forward<Args>(args)...);
                 if (!result) {

@@ -9,51 +9,51 @@ namespace std {
 enum class byte : unsigned char {};
 
 template<di::concepts::Integral Int>
-constexpr Int to_integer(std::byte value) noexcept {
+constexpr auto to_integer(std::byte value) noexcept -> Int {
     return Int(value);
 }
 
-constexpr std::byte operator<<(std::byte byte, di::concepts::Integral auto shift) noexcept {
+constexpr auto operator<<(std::byte byte, di::concepts::Integral auto shift) noexcept -> std::byte {
     return std::byte(static_cast<unsigned char>(byte) << shift);
 }
 
-constexpr std::byte operator>>(std::byte byte, di::concepts::Integral auto shift) noexcept {
+constexpr auto operator>>(std::byte byte, di::concepts::Integral auto shift) noexcept -> std::byte {
     return std::byte(static_cast<unsigned char>(byte) >> shift);
 }
 
-constexpr std::byte& operator<<=(std::byte& byte, di::concepts::Integral auto shift) noexcept {
+constexpr auto operator<<=(std::byte& byte, di::concepts::Integral auto shift) noexcept -> std::byte& {
     return byte = byte << shift;
 }
 
-constexpr std::byte& operator>>=(std::byte& byte, di::concepts::Integral auto shift) noexcept {
+constexpr auto operator>>=(std::byte& byte, di::concepts::Integral auto shift) noexcept -> std::byte& {
     return byte = byte >> shift;
 }
 
-constexpr std::byte operator|(std::byte a, std::byte b) noexcept {
+constexpr auto operator|(std::byte a, std::byte b) noexcept -> std::byte {
     return std::byte(static_cast<unsigned char>(a) | static_cast<unsigned char>(b));
 }
 
-constexpr std::byte operator&(std::byte a, std::byte b) noexcept {
+constexpr auto operator&(std::byte a, std::byte b) noexcept -> std::byte {
     return std::byte(static_cast<unsigned char>(a) & static_cast<unsigned char>(b));
 }
 
-constexpr std::byte operator^(std::byte a, std::byte b) noexcept {
+constexpr auto operator^(std::byte a, std::byte b) noexcept -> std::byte {
     return std::byte(static_cast<unsigned char>(a) ^ static_cast<unsigned char>(b));
 }
 
-constexpr std::byte operator~(std::byte a) noexcept {
+constexpr auto operator~(std::byte a) noexcept -> std::byte {
     return std::byte(~static_cast<unsigned char>(a));
 }
 
-constexpr std::byte& operator|=(std::byte& a, std::byte b) noexcept {
+constexpr auto operator|=(std::byte& a, std::byte b) noexcept -> std::byte& {
     return a = a | b;
 }
 
-constexpr std::byte& operator&=(std::byte& a, std::byte b) noexcept {
+constexpr auto operator&=(std::byte& a, std::byte b) noexcept -> std::byte& {
     return a = a & b;
 }
 
-constexpr std::byte& operator^=(std::byte& a, std::byte b) noexcept {
+constexpr auto operator^=(std::byte& a, std::byte b) noexcept -> std::byte& {
     return a = a ^ b;
 }
 }

@@ -9,7 +9,7 @@ namespace detail {
         template<typename T, concepts::ParserContext Context>
         requires(concepts::TagInvocable<CreateParserInPlaceFunction, InPlaceType<T>, Context&> ||
                  concepts::TagInvocable<CreateParserInPlaceFunction, InPlaceType<T>>)
-        constexpr concepts::Parser<Context> auto operator()(InPlaceType<T>, Context& context) const {
+        constexpr auto operator()(InPlaceType<T>, Context& context) const -> concepts::Parser<Context> auto {
             if constexpr (concepts::TagInvocable<CreateParserInPlaceFunction, InPlaceType<T>, Context&>) {
                 return function::tag_invoke(*this, in_place_type<T>, context);
             } else {

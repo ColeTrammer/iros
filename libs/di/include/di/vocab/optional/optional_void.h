@@ -27,20 +27,20 @@ public:
 
     constexpr ~Optional() = default;
 
-    constexpr Optional& operator=(Optional const&) = default;
-    constexpr Optional& operator=(Optional&&) = default;
+    constexpr auto operator=(Optional const&) -> Optional& = default;
+    constexpr auto operator=(Optional&&) -> Optional& = default;
 
-    constexpr Optional& operator=(NullOpt) {
+    constexpr auto operator=(NullOpt) -> Optional& {
         m_has_value = false;
         return *this;
     }
 
-    constexpr Optional& operator=(bool value) {
+    constexpr auto operator=(bool value) -> Optional& {
         m_has_value = value;
         return *this;
     }
 
-    constexpr bool has_value() const { return m_has_value; }
+    constexpr auto has_value() const -> bool { return m_has_value; }
     constexpr explicit operator bool() const { return has_value(); }
 
     constexpr void operator*() const { DI_ASSERT(has_value()); }
@@ -53,19 +53,21 @@ public:
     constexpr void emplace() { m_has_value = true; }
 
 private:
-    constexpr friend bool operator==(Optional const& a, Optional const& b) { return a.has_value() == b.has_value(); }
-    constexpr friend bool operator==(Optional const& a, bool b) { return bool(a) == b; }
-    constexpr friend bool operator==(Optional const& a, NullOpt) { return !a.has_value(); }
+    constexpr friend auto operator==(Optional const& a, Optional const& b) -> bool {
+        return a.has_value() == b.has_value();
+    }
+    constexpr friend auto operator==(Optional const& a, bool b) -> bool { return bool(a) == b; }
+    constexpr friend auto operator==(Optional const& a, NullOpt) -> bool { return !a.has_value(); }
 
-    constexpr friend strong_ordering operator<=>(Optional const& a, Optional const& b) {
+    constexpr friend auto operator<=>(Optional const& a, Optional const& b) -> strong_ordering {
         return a.has_value() <=> b.has_value();
     }
-    constexpr friend strong_ordering operator<=>(Optional const& a, bool b) { return bool(a) <=> b; }
-    constexpr friend strong_ordering operator<=>(Optional const& a, NullOpt) { return bool(a) <=> false; }
+    constexpr friend auto operator<=>(Optional const& a, bool b) -> strong_ordering { return bool(a) <=> b; }
+    constexpr friend auto operator<=>(Optional const& a, NullOpt) -> strong_ordering { return bool(a) <=> false; }
 
     template<concepts::DecaySameAs<Optional> Self, typename F, typename R = meta::InvokeResult<F>>
     requires(concepts::Optional<R>)
-    constexpr friend R tag_invoke(types::Tag<function::monad::bind>, Self&& self, F&& f) {
+    constexpr friend auto tag_invoke(types::Tag<function::monad::bind>, Self&& self, F&& f) -> R {
         if (self.has_value()) {
             return function::invoke(util::forward<F>(f));
         } else {
@@ -74,7 +76,7 @@ private:
     }
 
     template<concepts::DecaySameAs<Optional> Self, typename F, typename U = meta::UnwrapRefDecay<meta::InvokeResult<F>>>
-    constexpr friend Optional<U> tag_invoke(types::Tag<function::monad::fmap>, Self&& self, F&& f) {
+    constexpr friend auto tag_invoke(types::Tag<function::monad::fmap>, Self&& self, F&& f) -> Optional<U> {
         if (self.has_value()) {
             if constexpr (concepts::LanguageVoid<U>) {
                 function::invoke(util::forward<F>(f));
@@ -88,7 +90,7 @@ private:
     }
 
     template<concepts::DecaySameAs<Optional> Self, concepts::InvocableTo<Optional> F>
-    constexpr friend Optional tag_invoke(types::Tag<function::monad::fail>, Self&& self, F&& f) {
+    constexpr friend auto tag_invoke(types::Tag<function::monad::fail>, Self&& self, F&& f) -> Optional {
         return self.has_value() ? util::forward<Self>(self) : function::invoke(util::forward<F>(f));
     }
 

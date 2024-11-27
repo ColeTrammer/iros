@@ -22,8 +22,8 @@ struct TmpfsInodeImpl {
     Metadata metadata;
     di::Vector<di::Tuple<di::TransparentString, di::Arc<Inode>>> inodes;
 
-    friend di::AnySenderOf<mm::PhysicalAddress> tag_invoke(di::Tag<inode_read>, TmpfsInodeImpl&,
-                                                           mm::BackingObject& backing_object, u64 page_number) {
+    friend auto tag_invoke(di::Tag<inode_read>, TmpfsInodeImpl&, mm::BackingObject& backing_object, u64 page_number)
+        -> di::AnySenderOf<mm::PhysicalAddress> {
         // NOTE: if we're getting here, it means that the page is not present in the backing object. Since this is the
         // tmpfs, just allocate a new (zero-filled) page and add it to the backing object.
         auto page = TRY(mm::allocate_page_frame());
@@ -31,8 +31,8 @@ struct TmpfsInodeImpl {
         return page;
     }
 
-    friend di::AnySenderOf<usize> tag_invoke(di::Tag<inode_read_directory>, TmpfsInodeImpl& self, mm::BackingObject&,
-                                             u64& offset, UserspaceBuffer<byte> buffer) {
+    friend auto tag_invoke(di::Tag<inode_read_directory>, TmpfsInodeImpl& self, mm::BackingObject&, u64& offset,
+                           UserspaceBuffer<byte> buffer) -> di::AnySenderOf<usize> {
         auto const* it = self.inodes.iterator(offset);
         if (it == self.inodes.end()) {
             co_return 0;
@@ -68,8 +68,8 @@ struct TmpfsInodeImpl {
         co_return effective_size;
     }
 
-    friend di::AnySenderOf<di::Arc<TNode>> tag_invoke(di::Tag<inode_lookup>, TmpfsInodeImpl& self,
-                                                      di::Arc<TNode> parent, di::TransparentStringView name) {
+    friend auto tag_invoke(di::Tag<inode_lookup>, TmpfsInodeImpl& self, di::Arc<TNode> parent,
+                           di::TransparentStringView name) -> di::AnySenderOf<di::Arc<TNode>> {
         auto const* it = di::find_if(self.inodes, [&](auto const& entry) {
             return di::get<0>(entry) == name;
         });
@@ -79,18 +79,19 @@ struct TmpfsInodeImpl {
         return di::make_arc<TNode>(di::move(parent), di::get<1>(*it), TRY(name.to_owned()));
     }
 
-    friend di::AnySenderOf<Metadata> tag_invoke(di::Tag<inode_metadata>, TmpfsInodeImpl& self) { return self.metadata; }
+    friend auto tag_invoke(di::Tag<inode_metadata>, TmpfsInodeImpl& self) -> di::AnySenderOf<Metadata> {
+        return self.metadata;
+    }
 
-    friend di::AnySenderOf<di::Arc<TNode>> tag_invoke(di::Tag<inode_create_node>, TmpfsInodeImpl& self,
-                                                      di::Arc<TNode> const& parent, di::TransparentStringView name,
-                                                      MetadataType type) {
+    friend auto tag_invoke(di::Tag<inode_create_node>, TmpfsInodeImpl& self, di::Arc<TNode> const& parent,
+                           di::TransparentStringView name, MetadataType type) -> di::AnySenderOf<di::Arc<TNode>> {
         auto& child = TRY(self.inodes.emplace_back(
             TRY(name.to_owned()), TRY(di::make_arc<Inode>(TRY(
                                       InodeImpl::create(TmpfsInodeImpl(Metadata { .type = type, .size = 0 }, {})))))));
         return di::make_arc<TNode>(parent, di::get<1>(child), TRY(name.to_owned()));
     }
 
-    friend di::AnySenderOf<> tag_invoke(di::Tag<inode_truncate>, TmpfsInodeImpl& self, u64 size) {
+    friend auto tag_invoke(di::Tag<inode_truncate>, TmpfsInodeImpl& self, u64 size) -> di::AnySenderOf<> {
         if (self.metadata.type != MetadataType::Regular) {
             return di::Unexpected(Error::OperationNotSupported);
         }
@@ -98,14 +99,14 @@ struct TmpfsInodeImpl {
         return {};
     }
 
-    friend di::AnySenderOf<di::Span<byte const>> tag_invoke(di::Tag<inode_hack_raw_data>, TmpfsInodeImpl&) {
+    friend auto tag_invoke(di::Tag<inode_hack_raw_data>, TmpfsInodeImpl&) -> di::AnySenderOf<di::Span<byte const>> {
         return di::Unexpected(Error::OperationNotSupported);
     }
 };
 
 static_assert(di::Impl<TmpfsInodeImpl, InodeInterface>);
 
-Expected<void> init_tmpfs() {
+auto init_tmpfs() -> Expected<void> {
     auto& global_state = global_state_in_boot();
     auto& initrd_root = global_state.initrd_root;
 

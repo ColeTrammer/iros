@@ -25,10 +25,10 @@ public:
 
     ~InPlaceStopSource() { DI_ASSERT(m_callbacks.empty()); }
 
-    [[nodiscard]] InPlaceStopToken get_stop_token() const;
-    [[nodiscard]] bool stop_requested() const { return m_state.load(MemoryOrder::Acquire) & stop_flag; }
+    [[nodiscard]] auto get_stop_token() const -> InPlaceStopToken;
+    [[nodiscard]] auto stop_requested() const -> bool { return m_state.load(MemoryOrder::Acquire) & stop_flag; }
 
-    bool request_stop() {
+    auto request_stop() -> bool {
         if (!lock_unless_stopped(true)) {
             // Already stopped, return false.
             return false;
@@ -70,7 +70,7 @@ public:
     }
 
 private:
-    bool try_add_callback(detail::InPlaceStopCallbackBase* callback) const {
+    auto try_add_callback(detail::InPlaceStopCallbackBase* callback) const -> bool {
         if (!lock_unless_stopped(false)) {
             return false;
         }
@@ -118,7 +118,7 @@ private:
         }
     }
 
-    bool lock_unless_stopped(bool set_stop) const {
+    auto lock_unless_stopped(bool set_stop) const -> bool {
         u8 flags = set_stop ? (stop_flag | locked_flag) : locked_flag;
 
         u8 expected = m_state.load(MemoryOrder::Relaxed);

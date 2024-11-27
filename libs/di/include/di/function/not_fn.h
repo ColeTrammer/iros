@@ -22,8 +22,8 @@ namespace detail {
         constexpr NotFnFunction(NotFnFunction const&) = default;
         constexpr NotFnFunction(NotFnFunction&&) = default;
 
-        constexpr NotFnFunction& operator=(NotFnFunction const&) = delete;
-        constexpr NotFnFunction& operator=(NotFnFunction&&) = delete;
+        constexpr auto operator=(NotFnFunction const&) -> NotFnFunction& = delete;
+        constexpr auto operator=(NotFnFunction&&) -> NotFnFunction& = delete;
 
         template<typename... Args>
         constexpr auto operator()(Args&&... args) & -> decltype(!function::invoke(m_function,

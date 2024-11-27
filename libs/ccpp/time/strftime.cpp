@@ -2,7 +2,7 @@
 #include <di/util/prelude.h>
 #include <time.h>
 
-extern "C" size_t strftime(char* __restrict, size_t, char const* __restrict, const struct tm* __restrict) {
+extern "C" auto strftime(char* __restrict, size_t, char const* __restrict, const struct tm* __restrict) -> size_t {
     ASSERT(false);
     di::unreachable();
 }

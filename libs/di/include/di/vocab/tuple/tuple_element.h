@@ -9,8 +9,8 @@ namespace di::vocab {
 struct TupleElementFunction {
     template<typename Tuple, types::size_t index>
     requires(concepts::TagInvocable<TupleElementFunction, types::InPlaceType<Tuple>, Constexpr<index>>)
-    constexpr meta::TagInvokeResult<TupleElementFunction, types::InPlaceType<Tuple>, Constexpr<index>>
-    operator()(types::InPlaceType<Tuple>, Constexpr<index>) const;
+    constexpr auto operator()(types::InPlaceType<Tuple>, Constexpr<index>) const
+        -> meta::TagInvokeResult<TupleElementFunction, types::InPlaceType<Tuple>, Constexpr<index>>;
 };
 
 constexpr inline auto tuple_element = TupleElementFunction {};

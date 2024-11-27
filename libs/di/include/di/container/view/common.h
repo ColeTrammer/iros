@@ -18,7 +18,7 @@ namespace detail {
     struct CommonFunction : public function::pipeline::EnablePipeline {
         template<concepts::ViewableContainer Con>
         requires(AllCommon<Con> || ViewCommon<Con>)
-        constexpr concepts::View auto operator()(Con&& container) const {
+        constexpr auto operator()(Con&& container) const -> concepts::View auto {
             if constexpr (AllCommon<Con>) {
                 return all(util::forward<Con>(container));
             } else {

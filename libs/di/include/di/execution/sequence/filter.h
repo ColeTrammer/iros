@@ -112,8 +112,8 @@ namespace filter_ns {
 
             explicit Type(ItemData<Send, Fun, Rec, R>* data) : m_data(data) {}
 
-            R const& base() const& { return m_data->receiver; }
-            R&& base() && { return di::move(m_data->receiver); }
+            auto base() const& -> R const& { return m_data->receiver; }
+            auto base() && -> R&& { return di::move(m_data->receiver); }
 
             template<typename... Values>
             void set_value(Values&&... values) && {
@@ -156,8 +156,8 @@ namespace filter_ns {
         public:
             explicit Type(ItemData<Send, Fun, Rec, R>* data) : m_data(data) {}
 
-            R const& base() const& { return m_data->receiver; }
-            R&& base() && { return di::move(m_data->receiver); }
+            auto base() const& -> R const& { return m_data->receiver; }
+            auto base() && -> R&& { return di::move(m_data->receiver); }
 
             void set_value(bool accept) && { m_data->on_filter_result(accept); }
 
@@ -179,8 +179,8 @@ namespace filter_ns {
         public:
             explicit Type(ItemData<Send, Fun, Rec, R>* data) : m_data(data) {}
 
-            R const& base() const& { return m_data->receiver; }
-            R&& base() && { return di::move(m_data->receiver); }
+            auto base() const& -> R const& { return m_data->receiver; }
+            auto base() && -> R&& { return di::move(m_data->receiver); }
 
             void set_value() && { m_data->on_sent_value(true); }
             void set_stopped() && { m_data->on_sent_value(false); }
@@ -367,12 +367,12 @@ namespace filter_ns {
         public:
             explicit Type(Data<Fun, Rec>* data) : m_data(data) {}
 
-            Rec& base() & { return m_data->receiver; }
-            Rec const& base() const& { return m_data->receiver; }
-            Rec&& base() && { return di::move(m_data->receiver); }
+            auto base() & -> Rec& { return m_data->receiver; }
+            auto base() const& -> Rec const& { return m_data->receiver; }
+            auto base() && -> Rec&& { return di::move(m_data->receiver); }
 
             template<concepts::Sender Next>
-            concepts::NextSender auto set_next(Next&& next) & {
+            auto set_next(Next&& next) & -> concepts::NextSender auto {
                 return ItemSender<Next, Fun, Rec> { di::forward<Next>(next), m_data };
             }
 
@@ -441,7 +441,7 @@ namespace filter_ns {
 
     struct Function {
         template<concepts::Sender Seq, concepts::MovableValue Fun>
-        concepts::SequenceSender auto operator()(Seq&& sequence, Fun&& predicate) const {
+        auto operator()(Seq&& sequence, Fun&& predicate) const -> concepts::SequenceSender auto {
             if constexpr (concepts::TagInvocable<Function, Seq, Fun>) {
                 static_assert(concepts::SequenceSender<meta::InvokeResult<Function, Seq, Fun>>,
                               "The return type of the filter function must be a sequence sender.");

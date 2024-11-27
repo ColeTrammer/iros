@@ -53,8 +53,8 @@ constexpr void all() {
 
     {
         struct X {
-            constexpr int* begin() { return arr + 0; }
-            constexpr int* end() { return arr + 5; }
+            constexpr auto begin() -> int* { return arr + 0; }
+            constexpr auto end() -> int* { return arr + 5; }
 
             int arr[5];
         };

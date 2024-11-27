@@ -6,7 +6,7 @@
 namespace dius::filesystem {
 namespace detail {
     struct FileSizeFunction {
-        di::Result<umax> operator()(di::PathView path) const;
+        auto operator()(di::PathView path) const -> di::Result<umax>;
     };
 }
 

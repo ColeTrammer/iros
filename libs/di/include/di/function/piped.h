@@ -19,30 +19,30 @@ namespace detail {
         constexpr PipedFunction(PipedFunction const&) = default;
         constexpr PipedFunction(PipedFunction&&) = default;
 
-        constexpr PipedFunction& operator=(PipedFunction const&) = delete;
-        constexpr PipedFunction& operator=(PipedFunction&&) = delete;
+        constexpr auto operator=(PipedFunction const&) -> PipedFunction& = delete;
+        constexpr auto operator=(PipedFunction&&) -> PipedFunction& = delete;
 
         template<typename... Args>
         requires(concepts::Invocable<F&, Args...>)
-        constexpr decltype(auto) operator()(Args&&... args) & {
+        constexpr auto operator()(Args&&... args) & -> decltype(auto) {
             return function::invoke(m_function, util::forward<Args>(args)...);
         }
 
         template<typename... Args>
         requires(concepts::Invocable<F const&, Args...>)
-        constexpr decltype(auto) operator()(Args&&... args) const& {
+        constexpr auto operator()(Args&&... args) const& -> decltype(auto) {
             return function::invoke(m_function, util::forward<Args>(args)...);
         }
 
         template<typename... Args>
         requires(concepts::Invocable<F &&, Args...>)
-        constexpr decltype(auto) operator()(Args&&... args) && {
+        constexpr auto operator()(Args&&... args) && -> decltype(auto) {
             return function::invoke(util::move(m_function), util::forward<Args>(args)...);
         }
 
         template<typename... Args>
         requires(concepts::Invocable<F const &&, Args...>)
-        constexpr decltype(auto) operator()(Args&&... args) const&& {
+        constexpr auto operator()(Args&&... args) const&& -> decltype(auto) {
             return function::invoke(util::move(m_function), util::forward<Args>(args)...);
         }
 

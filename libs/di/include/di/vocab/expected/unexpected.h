@@ -31,10 +31,10 @@ public:
     constexpr explicit Unexpected(types::InPlace, std::initializer_list<T> list, Args&&... args)
         : m_error(types::in_place, list, util::forward<Args>(args)...) {}
 
-    constexpr E& error() & { return m_error.value(); }
-    constexpr E const& error() const& { return m_error.value(); }
-    constexpr E&& error() && { return util::move(m_error).value(); }
-    constexpr E const&& error() const&& { return util::move(m_error).value(); }
+    constexpr auto error() & -> E& { return m_error.value(); }
+    constexpr auto error() const& -> E const& { return m_error.value(); }
+    constexpr auto error() && -> E&& { return util::move(m_error).value(); }
+    constexpr auto error() const&& -> E const&& { return util::move(m_error).value(); }
 
 private:
     constexpr friend void tag_invoke(types::Tag<util::swap>, Unexpected& a, Unexpected& b)

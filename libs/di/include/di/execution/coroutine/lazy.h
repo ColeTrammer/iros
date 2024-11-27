@@ -35,10 +35,10 @@ namespace lazy_ns {
     public:
         PromiseBase() = default;
 
-        void* operator new(usize size) noexcept { return ::operator new(size, std::nothrow); }
+        auto operator new(usize size) noexcept -> void* { return ::operator new(size, std::nothrow); }
         void operator delete(void* ptr, usize size) noexcept { ::operator delete(ptr, size); }
 
-        SuspendAlways initial_suspend() noexcept { return {}; }
+        auto initial_suspend() noexcept -> SuspendAlways { return {}; }
         auto final_suspend() noexcept { return FinalAwaiter {}; }
 
         template<concepts::ConvertibleTo<T> U>
@@ -67,10 +67,10 @@ namespace lazy_ns {
         friend class Lazy;
 
         struct FinalAwaiter {
-            bool await_ready() noexcept { return false; }
+            auto await_ready() noexcept -> bool { return false; }
 
             template<typename Promise>
-            CoroutineHandle<> await_suspend(CoroutineHandle<Promise> coroutine) noexcept {
+            auto await_suspend(CoroutineHandle<Promise> coroutine) noexcept -> CoroutineHandle<> {
                 PromiseBase& current = coroutine.promise();
 
                 auto was_error = !current.m_data.has_value();
@@ -90,10 +90,10 @@ namespace lazy_ns {
         struct Awaiter {
             CoroutineHandle<PromiseBase> coroutine;
 
-            bool await_ready() noexcept { return false; }
+            auto await_ready() noexcept -> bool { return false; }
 
             template<typename OtherPromise>
-            CoroutineHandle<> await_suspend(CoroutineHandle<OtherPromise> continuation) noexcept {
+            auto await_suspend(CoroutineHandle<OtherPromise> continuation) noexcept -> CoroutineHandle<> {
                 // If we don't have a coroutine, it is because allocating it failed. Since the continuation is already
                 // suspended, we can just report the error.
                 if (!coroutine) {
@@ -105,7 +105,7 @@ namespace lazy_ns {
                 return coroutine;
             }
 
-            T await_resume() {
+            auto await_resume() -> T {
                 DI_ASSERT(coroutine);
                 auto& promise = static_cast<PromiseBase&>(coroutine.promise());
                 DI_ASSERT(promise.m_data);
@@ -124,8 +124,8 @@ namespace lazy_ns {
         using PromiseBase = lazy_ns::PromiseBase<Promise, T>;
 
         struct Promise : PromiseBase {
-            Lazy get_return_object() noexcept { return Lazy { CoroutineHandle<Promise>::from_promise(*this) }; }
-            static Lazy get_return_object_on_allocation_failure() noexcept { return Lazy { AllocFailed {} }; }
+            auto get_return_object() noexcept -> Lazy { return Lazy { CoroutineHandle<Promise>::from_promise(*this) }; }
+            static auto get_return_object_on_allocation_failure() noexcept -> Lazy { return Lazy { AllocFailed {} }; }
         };
 
         using Handle = CoroutineHandle<Promise>;
@@ -143,7 +143,7 @@ namespace lazy_ns {
             }
         }
 
-        Awaiter operator co_await() {
+        auto operator co_await() -> Awaiter {
             if (!m_handle) {
                 return Awaiter { nullptr };
             }
@@ -164,12 +164,12 @@ using lazy_ns::Lazy;
 
 namespace di::vocab {
 template<concepts::Expected T, typename Promise>
-constexpr decltype(auto) tag_invoke(types::Tag<execution::as_awaitable>, T&& value, Promise& promise) {
+constexpr auto tag_invoke(types::Tag<execution::as_awaitable>, T&& value, Promise& promise) -> decltype(auto) {
     return execution::as_awaitable(execution::just_or_error(util::forward<T>(value)), promise);
 }
 
 template<concepts::Unexpected T, typename Promise>
-constexpr decltype(auto) tag_invoke(types::Tag<execution::as_awaitable>, T&& value, Promise& promise) {
+constexpr auto tag_invoke(types::Tag<execution::as_awaitable>, T&& value, Promise& promise) -> decltype(auto) {
     return execution::as_awaitable(execution::just_error(util::forward<T>(value).error()), promise);
 }
 }

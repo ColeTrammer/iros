@@ -2,6 +2,6 @@
 
 #include "malloc_block.h"
 
-extern "C" void* malloc(size_t size) {
+extern "C" auto malloc(size_t size) -> void* {
     return aligned_alloc(alignof(ccpp::MallocBlock), size);
 }

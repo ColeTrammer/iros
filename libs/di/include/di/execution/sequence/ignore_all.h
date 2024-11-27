@@ -131,8 +131,8 @@ namespace ignore_all_ns {
             explicit Type(NextData<Seq, Rec, Next, NextRec>* next_data, Data<Seq, Rec>* data)
                 : m_next_data(next_data), m_data(data) {}
 
-            NextRec const& base() const& { return m_next_data->next_receiver; }
-            NextRec&& base() && { return util::move(m_next_data->next_receiver); }
+            auto base() const& -> NextRec const& { return m_next_data->next_receiver; }
+            auto base() && -> NextRec&& { return util::move(m_next_data->next_receiver); }
 
         private:
             void set_value(auto&&...) && {
@@ -229,8 +229,8 @@ namespace ignore_all_ns {
         public:
             explicit Type(Data<Seq, Rec>* data) : m_data(data) {}
 
-            Rec const& base() const& { return m_data->receiver; }
-            Rec&& base() && { return util::move(m_data->receiver); }
+            auto base() const& -> Rec const& { return m_data->receiver; }
+            auto base() && -> Rec&& { return util::move(m_data->receiver); }
 
         private:
             void set_value() && { m_data->finish(); }
@@ -308,7 +308,7 @@ namespace ignore_all_ns {
 
     struct Function : function::pipeline::EnablePipeline {
         template<concepts::Sender Seq>
-        concepts::Sender auto operator()(Seq&& sequence) const {
+        auto operator()(Seq&& sequence) const -> concepts::Sender auto {
             if constexpr (concepts::TagInvocable<Function, Seq>) {
                 return function::tag_invoke(*this, util::forward<Seq>(sequence));
             } else {

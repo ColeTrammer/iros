@@ -42,12 +42,14 @@ private:
     public:
         Iterator() = default;
 
-        constexpr Value& operator*() const { return *m_base->top(); }
+        constexpr auto operator*() const -> Value& { return *m_base->top(); }
 
         constexpr void advance_one() { m_base->pop(); }
 
     private:
-        constexpr friend bool operator==(Iterator const& a, DefaultSentinel const&) { return a.m_base->empty(); }
+        constexpr friend auto operator==(Iterator const& a, DefaultSentinel const&) -> bool {
+            return a.m_base->empty();
+        }
 
         Stack* m_base { nullptr };
     };
@@ -57,22 +59,22 @@ public:
 
     constexpr explicit Stack(Con&& container) : m_container(util::move(container)) {}
 
-    constexpr Optional<Value&> top() { return m_container.back(); }
-    constexpr Optional<Value const&> top() const { return m_container.back(); }
+    constexpr auto top() -> Optional<Value&> { return m_container.back(); }
+    constexpr auto top() const -> Optional<Value const&> { return m_container.back(); }
 
-    constexpr bool empty() const { return size() == 0u; }
+    constexpr auto empty() const -> bool { return size() == 0u; }
     constexpr auto size() const { return m_container.size(); }
 
-    constexpr decltype(auto) push(Value const& value)
+    constexpr auto push(Value const& value) -> decltype(auto)
     requires(concepts::CopyConstructible<Value>)
     {
         return emplace(value);
     }
-    constexpr decltype(auto) push(Value&& value) { return emplace(util::move(value)); }
+    constexpr auto push(Value&& value) -> decltype(auto) { return emplace(util::move(value)); }
 
     template<typename... Args>
     requires(concepts::ConstructibleFrom<Value, Args...>)
-    constexpr decltype(auto) emplace(Args&&... args) {
+    constexpr auto emplace(Args&&... args) -> decltype(auto) {
         return m_container.emplace_back(util::forward<Args>(args)...);
     }
 
@@ -86,7 +88,7 @@ public:
     constexpr auto begin() { return Iterator(*this); }
     constexpr auto end() { return default_sentinel; }
 
-    constexpr Con const& base() const { return m_container; }
+    constexpr auto base() const -> Con const& { return m_container; }
 
     constexpr void clear() { m_container.clear(); }
 
@@ -103,7 +105,7 @@ requires(detail::StackCompatible<Con, T>)
 Stack(Con) -> Stack<T, Con>;
 
 template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>>
-Stack<T> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<Stack>, Con&&);
+auto tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<Stack>, Con&&) -> Stack<T>;
 }
 
 namespace di {

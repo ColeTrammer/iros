@@ -42,7 +42,7 @@ struct REndFunction : function::pipeline::EnablePipeline {
     template<typename T>
     requires(enable_borrowed_container(types::in_place_type<meta::RemoveCV<T>>) &&
              (detail::CustomREnd<T> || detail::MemberREnd<T> || detail::ReverseIteratorREnd<T>) )
-    constexpr detail::ValidREndReturn<T> auto operator()(T&& container) const {
+    constexpr auto operator()(T&& container) const -> detail::ValidREndReturn<T> auto {
         if constexpr (detail::CustomREnd<T>) {
             return function::tag_invoke(*this, util::forward<T>(container));
         } else if constexpr (detail::MemberREnd<T>) {

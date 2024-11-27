@@ -68,11 +68,11 @@ void init_timer_assignments() {
     println("Scheduler timer: {}"_sv, timer_name(*global_state.scheduler_timer->lock()));
 }
 
-di::Synchronized<Timer>& scheduler_timer() {
+auto scheduler_timer() -> di::Synchronized<Timer>& {
     return *global_state().scheduler_timer;
 }
 
-di::Synchronized<Timer>& calibration_timer() {
+auto calibration_timer() -> di::Synchronized<Timer>& {
     return *global_state().calibration_timer;
 }
 }

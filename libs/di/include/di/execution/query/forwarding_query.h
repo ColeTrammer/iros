@@ -6,7 +6,7 @@
 
 namespace di::execution {
 struct ForwardingQuery {
-    constexpr bool operator()(auto tag) const {
+    constexpr auto operator()(auto tag) const -> bool {
         if constexpr (concepts::TagInvocable<ForwardingQuery, decltype(tag)>) {
             static_assert(concepts::SameAs<bool, meta::TagInvokeResult<ForwardingQuery, decltype(tag)>>,
                           "ForwardingQuery must return bool");

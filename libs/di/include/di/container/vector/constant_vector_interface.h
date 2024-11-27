@@ -27,13 +27,13 @@ namespace di::container {
 template<typename Self, typename Value>
 class ConstantVectorInterface {
 private:
-    constexpr Self& self() { return static_cast<Self&>(*this); }
-    constexpr Self const& self() const { return static_cast<Self const&>(*this); }
+    constexpr auto self() -> Self& { return static_cast<Self&>(*this); }
+    constexpr auto self() const -> Self const& { return static_cast<Self const&>(*this); }
 
 public:
-    constexpr size_t size() const { return vector::size(self()); }
-    constexpr size_t size_bytes() const { return vector::size_bytes(self()); }
-    [[nodiscard]] constexpr bool empty() const { return vector::empty(self()); }
+    constexpr auto size() const -> size_t { return vector::size(self()); }
+    constexpr auto size_bytes() const -> size_t { return vector::size_bytes(self()); }
+    [[nodiscard]] constexpr auto empty() const -> bool { return vector::empty(self()); }
 
     constexpr auto begin() { return vector::begin(self()); }
     constexpr auto begin() const { return vector::begin(self()); }
@@ -50,8 +50,8 @@ public:
     constexpr auto at(size_t index) { return vector::at(self(), index); }
     constexpr auto at(size_t index) const { return vector::at(self(), index); }
 
-    constexpr decltype(auto) operator[](size_t index) { return vector::lookup(self(), index); }
-    constexpr decltype(auto) operator[](size_t index) const { return vector::lookup(self(), index); }
+    constexpr auto operator[](size_t index) -> decltype(auto) { return vector::lookup(self(), index); }
+    constexpr auto operator[](size_t index) const -> decltype(auto) { return vector::lookup(self(), index); }
 
     constexpr auto iterator(size_t index) { return vector::iterator(self(), index); }
     constexpr auto iterator(size_t index) const { return vector::iterator(self(), index); }
@@ -102,7 +102,7 @@ public:
     }
 
 private:
-    constexpr friend bool operator==(Self const& a, Self const& b)
+    constexpr friend auto operator==(Self const& a, Self const& b) -> bool
     requires(concepts::EqualityComparable<Value>)
     {
         return container::equal(a, b);
@@ -116,8 +116,8 @@ private:
 
     template<concepts::ContiguousIterator It, concepts::SizedSentinelFor<It> Sent>
     requires(concepts::ConvertibleToNonSlicing<It, Value*>)
-    constexpr friend vocab::Span<Value> tag_invoke(types::Tag<container::reconstruct>, InPlaceType<Self>, It first,
-                                                   Sent last) {
+    constexpr friend auto tag_invoke(types::Tag<container::reconstruct>, InPlaceType<Self>, It first, Sent last)
+        -> vocab::Span<Value> {
         return vocab::Span<Value>(util::move(first), util::move(last));
     }
 };

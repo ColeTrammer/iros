@@ -23,11 +23,11 @@ public:
 
     constexpr ~Expected() = default;
 
-    constexpr Expected& operator=(Expected const&) = default;
-    constexpr Expected& operator=(Expected&&) = default;
+    constexpr auto operator=(Expected const&) -> Expected& = default;
+    constexpr auto operator=(Expected&&) -> Expected& = default;
 
     constexpr explicit operator bool() const { return true; }
-    constexpr bool has_value() const { return true; }
+    constexpr auto has_value() const -> bool { return true; }
 
     constexpr void operator*() const& {}
     constexpr void operator*() && {}
@@ -37,24 +37,24 @@ public:
 
     constexpr void emplace() {}
 
-    Expected __try_did_fail() && { util::unreachable(); }
-    constexpr Expected __try_did_succeed() && { return Expected {}; }
+    auto __try_did_fail() && -> Expected { util::unreachable(); }
+    constexpr auto __try_did_succeed() && -> Expected { return Expected {}; }
     constexpr void __try_move_out() && {}
 
 private:
     template<typename G>
-    constexpr friend bool operator==(Expected const&, Expected<void, G> const& b) {
+    constexpr friend auto operator==(Expected const&, Expected<void, G> const& b) -> bool {
         return b.has_value();
     }
 
     template<typename G>
-    constexpr friend bool operator==(Expected const&, Unexpected<G> const&) {
+    constexpr friend auto operator==(Expected const&, Unexpected<G> const&) -> bool {
         return false;
     }
 
     template<concepts::RemoveCVRefSameAs<Expected> Self, typename F,
              typename U = meta::UnwrapRefDecay<meta::InvokeResult<F>>>
-    constexpr friend Expected<U, void> tag_invoke(types::Tag<function::monad::fmap>, Self&&, F&& function) {
+    constexpr friend auto tag_invoke(types::Tag<function::monad::fmap>, Self&&, F&& function) -> Expected<U, void> {
         if constexpr (concepts::LanguageVoid<U>) {
             function::invoke(util::forward<F>(function));
             return {};
@@ -65,19 +65,19 @@ private:
 
     template<concepts::RemoveCVRefSameAs<Expected> Self, typename F, typename R = meta::InvokeResult<F>>
     requires(concepts::Expected<R>)
-    constexpr friend R tag_invoke(types::Tag<function::monad::bind>, Self&&, F&& function) {
+    constexpr friend auto tag_invoke(types::Tag<function::monad::bind>, Self&&, F&& function) -> R {
         return function::invoke(util::forward<F>(function));
     }
 
     template<concepts::RemoveCVRefSameAs<Expected> Self, typename F>
     requires(concepts::ConstructibleFrom<Expected, Self>)
-    constexpr friend Expected tag_invoke(types::Tag<function::monad::fail>, Self&& self, F&&) {
+    constexpr friend auto tag_invoke(types::Tag<function::monad::fail>, Self&& self, F&&) -> Expected {
         return util::forward<Self>(self);
     }
 
     template<concepts::RemoveCVRefSameAs<Expected> Self, typename F>
     requires(concepts::ConstructibleFrom<Expected, Self>)
-    constexpr friend Expected tag_invoke(types::Tag<function::monad::fmap_right>, Self&& self, F&&) {
+    constexpr friend auto tag_invoke(types::Tag<function::monad::fmap_right>, Self&& self, F&&) -> Expected {
         return util::forward<Self>(self);
     }
 };

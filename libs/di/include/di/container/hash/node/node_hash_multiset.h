@@ -46,14 +46,15 @@ public:
 };
 
 template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>>
-NodeHashMultiSet<T> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<NodeHashMultiSet>, Con&&);
+auto tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<NodeHashMultiSet>, Con&&) -> NodeHashMultiSet<T>;
 
 template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>, typename Eq>
-NodeHashMultiSet<T, Eq> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<NodeHashMultiSet>, Con&&, Eq);
+auto tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<NodeHashMultiSet>, Con&&, Eq)
+    -> NodeHashMultiSet<T, Eq>;
 
 template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>, typename Eq, typename Hasher>
-NodeHashMultiSet<T, Eq, Hasher> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<NodeHashMultiSet>, Con&&,
-                                           Eq, Hasher);
+auto tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<NodeHashMultiSet>, Con&&, Eq, Hasher)
+    -> NodeHashMultiSet<T, Eq, Hasher>;
 }
 
 namespace di {

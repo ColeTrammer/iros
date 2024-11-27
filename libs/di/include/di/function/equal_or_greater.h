@@ -7,7 +7,7 @@
 namespace di::function {
 struct EqualOrGreater {
     template<typename T, typename U>
-    constexpr bool operator()(T const& a, U const& b) const
+    constexpr auto operator()(T const& a, U const& b) const -> bool
     requires(requires {
         { a >= b } -> concepts::ImplicitlyConvertibleTo<bool>;
     })

@@ -6,27 +6,27 @@
 #include <dius/system/system_call.h>
 
 namespace dius {
-di::Expected<usize, di::GenericCode> sys_read(int fd, di::Span<byte> data) {
+auto sys_read(int fd, di::Span<byte> data) -> di::Expected<usize, di::GenericCode> {
     return system::system_call<usize>(system::Number::read, fd, data.data(), data.size());
 }
 
-di::Expected<usize, di::GenericCode> sys_write(int fd, di::Span<byte const> data) {
+auto sys_write(int fd, di::Span<byte const> data) -> di::Expected<usize, di::GenericCode> {
     return system::system_call<usize>(system::Number::write, fd, data.data(), data.size());
 }
 
-di::Expected<usize, di::GenericCode> sys_pread(int fd, u64 offset, di::Span<byte> data) {
+auto sys_pread(int fd, u64 offset, di::Span<byte> data) -> di::Expected<usize, di::GenericCode> {
     return system::system_call<usize>(system::Number::pread, fd, data.data(), data.size(), offset);
 }
 
-di::Expected<usize, di::GenericCode> sys_pwrite(int fd, u64 offset, di::Span<byte const> data) {
+auto sys_pwrite(int fd, u64 offset, di::Span<byte const> data) -> di::Expected<usize, di::GenericCode> {
     return system::system_call<usize>(system::Number::pwrite, fd, data.data(), data.size(), offset);
 }
 
-di::Expected<void, di::GenericCode> sys_close(int fd) {
+auto sys_close(int fd) -> di::Expected<void, di::GenericCode> {
     return system::system_call<int>(system::Number::close, fd) % di::into_void;
 }
 
-di::Expected<int, di::GenericCode> sys_open(di::PathView path, int flags, u16 create_mode) {
+auto sys_open(di::PathView path, int flags, u16 create_mode) -> di::Expected<int, di::GenericCode> {
     auto raw_data = path.data();
     char null_terminated_string[4097];
     ASSERT_LT(raw_data.size(), sizeof(null_terminated_string) - 1);
@@ -37,16 +37,16 @@ di::Expected<int, di::GenericCode> sys_open(di::PathView path, int flags, u16 cr
     return system::system_call<int>(system::Number::openat, AT_FDCWD, null_terminated_string, flags, create_mode);
 }
 
-di::Expected<void, di::GenericCode> sys_ftruncate(int fd, u64 size) {
+auto sys_ftruncate(int fd, u64 size) -> di::Expected<void, di::GenericCode> {
     return system::system_call<int>(system::Number::ftruncate, fd, size) % di::into_void;
 }
 
-di::Expected<byte*, di::GenericCode> sys_mmap(void* addr, usize length, Protection prot, MapFlags flags, int fd,
-                                              u64 offset) {
+auto sys_mmap(void* addr, usize length, Protection prot, MapFlags flags, int fd, u64 offset)
+    -> di::Expected<byte*, di::GenericCode> {
     return system::system_call<byte*>(system::Number::mmap, addr, length, prot, flags, fd, offset);
 }
 
-di::Expected<void, di::GenericCode> SyncFile::close() {
+auto SyncFile::close() -> di::Expected<void, di::GenericCode> {
     auto owned = di::exchange(m_owned, Owned::No);
     auto fd = di::exchange(m_fd, -1);
 
@@ -56,33 +56,33 @@ di::Expected<void, di::GenericCode> SyncFile::close() {
     return {};
 }
 
-di::Expected<usize, di::GenericCode> SyncFile::read_some(di::Span<byte> data) const {
+auto SyncFile::read_some(di::Span<byte> data) const -> di::Expected<usize, di::GenericCode> {
     return sys_read(m_fd, data);
 }
 
-di::Expected<usize, di::GenericCode> SyncFile::read_some(u64 offset, di::Span<byte> data) const {
+auto SyncFile::read_some(u64 offset, di::Span<byte> data) const -> di::Expected<usize, di::GenericCode> {
     return sys_pread(m_fd, offset, data);
 }
 
-di::Expected<usize, di::GenericCode> SyncFile::write_some(di::Span<byte const> data) const {
+auto SyncFile::write_some(di::Span<byte const> data) const -> di::Expected<usize, di::GenericCode> {
     return sys_write(m_fd, data);
 }
 
-di::Expected<usize, di::GenericCode> SyncFile::write_some(u64 offset, di::Span<byte const> data) const {
+auto SyncFile::write_some(u64 offset, di::Span<byte const> data) const -> di::Expected<usize, di::GenericCode> {
     return sys_pwrite(m_fd, offset, data);
 }
 
-di::Expected<void, di::GenericCode> SyncFile::resize_file(u64 new_size) const {
+auto SyncFile::resize_file(u64 new_size) const -> di::Expected<void, di::GenericCode> {
     return sys_ftruncate(file_descriptor(), new_size);
 }
 
-di::Expected<MemoryRegion, di::GenericCode> SyncFile::map(u64 offset, usize size, Protection protection,
-                                                          MapFlags flags) const {
+auto SyncFile::map(u64 offset, usize size, Protection protection, MapFlags flags) const
+    -> di::Expected<MemoryRegion, di::GenericCode> {
     auto* base = TRY(sys_mmap(nullptr, size, protection, flags, m_fd, offset));
     return MemoryRegion(di::Span { base, size });
 }
 
-di::Expected<SyncFile, di::GenericCode> open_sync(di::PathView path, OpenMode open_mode, u16 create_mode) {
+auto open_sync(di::PathView path, OpenMode open_mode, u16 create_mode) -> di::Expected<SyncFile, di::GenericCode> {
     auto open_mode_flags = [&] {
         switch (open_mode) {
             case OpenMode::Readonly:
@@ -108,7 +108,7 @@ di::Expected<SyncFile, di::GenericCode> open_sync(di::PathView path, OpenMode op
     return SyncFile { SyncFile::Owned::Yes, fd };
 }
 
-di::Expected<SyncFile, di::GenericCode> open_tempory_file() {
+auto open_tempory_file() -> di::Expected<SyncFile, di::GenericCode> {
     auto fd = TRY(sys_open("/tmp"_pv, O_TMPFILE | O_RDWR, 0666));
     return SyncFile { SyncFile::Owned::Yes, fd };
 }

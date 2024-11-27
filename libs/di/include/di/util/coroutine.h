@@ -25,12 +25,12 @@ public:
     constexpr coroutine_handle() noexcept {}
     constexpr coroutine_handle(std::nullptr_t) noexcept {}
 
-    constexpr coroutine_handle& operator=(std::nullptr_t) noexcept {
+    constexpr auto operator=(std::nullptr_t) noexcept -> coroutine_handle& {
         m_frame_pointer = nullptr;
         return *this;
     }
 
-    bool done() const noexcept { return __builtin_coro_done(m_frame_pointer); }
+    auto done() const noexcept -> bool { return __builtin_coro_done(m_frame_pointer); }
     constexpr explicit operator bool() const noexcept { return bool(m_frame_pointer); }
 
     void operator()() const { resume(); }
@@ -38,8 +38,8 @@ public:
 
     void destroy() const { return __builtin_coro_destroy(m_frame_pointer); }
 
-    constexpr void* address() const noexcept { return m_frame_pointer; }
-    constexpr static coroutine_handle from_address(void* address) noexcept {
+    constexpr auto address() const noexcept -> void* { return m_frame_pointer; }
+    constexpr static auto from_address(void* address) noexcept -> coroutine_handle {
         coroutine_handle result;
         result.m_frame_pointer = address;
         return result;
@@ -56,14 +56,14 @@ public:
     constexpr coroutine_handle() noexcept {}
     constexpr coroutine_handle(std::nullptr_t) noexcept {}
 
-    constexpr coroutine_handle& operator=(std::nullptr_t) noexcept {
+    constexpr auto operator=(std::nullptr_t) noexcept -> coroutine_handle& {
         m_frame_pointer = nullptr;
         return *this;
     }
 
     constexpr operator coroutine_handle<>() const noexcept { return std::coroutine_handle<>::from_address(address()); }
 
-    bool done() const noexcept { return __builtin_coro_done(m_frame_pointer); }
+    auto done() const noexcept -> bool { return __builtin_coro_done(m_frame_pointer); }
     constexpr explicit operator bool() const noexcept { return bool(m_frame_pointer); }
 
     void operator()() const { resume(); }
@@ -71,18 +71,18 @@ public:
 
     void destroy() const { return __builtin_coro_destroy(m_frame_pointer); }
 
-    Promise& promise() const {
+    auto promise() const -> Promise& {
         void* promise_pointer = __builtin_coro_promise(m_frame_pointer, alignof(Promise), false);
         return *static_cast<Promise*>(promise_pointer);
     }
-    static coroutine_handle from_promise(Promise& promise) {
+    static auto from_promise(Promise& promise) -> coroutine_handle {
         coroutine_handle result;
         result.m_frame_pointer = __builtin_coro_promise((char*) &promise, alignof(Promise), true);
         return result;
     }
 
-    constexpr void* address() const noexcept { return m_frame_pointer; }
-    constexpr static coroutine_handle from_address(void* address) noexcept {
+    constexpr auto address() const noexcept -> void* { return m_frame_pointer; }
+    constexpr static auto from_address(void* address) noexcept -> coroutine_handle {
         coroutine_handle result;
         result.m_frame_pointer = address;
         return result;
@@ -92,11 +92,11 @@ private:
     void* m_frame_pointer { nullptr };
 };
 
-constexpr bool operator==(std::coroutine_handle<> a, std::coroutine_handle<> b) noexcept {
+constexpr auto operator==(std::coroutine_handle<> a, std::coroutine_handle<> b) noexcept -> bool {
     return a.address() == b.address();
 }
 
-constexpr std::strong_ordering operator<=>(std::coroutine_handle<> a, std::coroutine_handle<> b) noexcept {
+constexpr auto operator<=>(std::coroutine_handle<> a, std::coroutine_handle<> b) noexcept -> std::strong_ordering {
     return a.address() <=> b.address();
 }
 
@@ -117,7 +117,7 @@ private:
 public:
     constexpr operator coroutine_handle<>() const noexcept { return std::coroutine_handle<>::from_address(address()); }
 
-    constexpr bool done() const noexcept { return false; }
+    constexpr auto done() const noexcept -> bool { return false; }
     constexpr explicit operator bool() const noexcept { return true; }
 
     constexpr void operator()() const noexcept { resume(); }
@@ -125,12 +125,12 @@ public:
 
     constexpr void destroy() const noexcept {}
 
-    constexpr noop_coroutine_promise& promise() const noexcept { return static_frame.promise; }
+    constexpr auto promise() const noexcept -> noop_coroutine_promise& { return static_frame.promise; }
 
-    constexpr void* address() const noexcept { return m_frame_pointer; }
+    constexpr auto address() const noexcept -> void* { return m_frame_pointer; }
 
 private:
-    friend coroutine_handle noop_coroutine() noexcept;
+    friend auto noop_coroutine() noexcept -> coroutine_handle;
 
     explicit coroutine_handle() noexcept = default;
 
@@ -141,18 +141,18 @@ using noop_coroutine_handle = coroutine_handle<noop_coroutine_promise>;
 
 inline noop_coroutine_handle::Frame noop_coroutine_handle::static_frame {};
 
-inline noop_coroutine_handle noop_coroutine() noexcept {
+inline auto noop_coroutine() noexcept -> noop_coroutine_handle {
     return noop_coroutine_handle();
 }
 
 struct suspend_never {
-    constexpr bool await_ready() const noexcept { return true; }
+    constexpr auto await_ready() const noexcept -> bool { return true; }
     constexpr void await_suspend(std::coroutine_handle<>) const noexcept {}
     constexpr void await_resume() const noexcept {}
 };
 
 struct suspend_always {
-    constexpr bool await_ready() const noexcept { return false; }
+    constexpr auto await_ready() const noexcept -> bool { return false; }
     constexpr void await_suspend(std::coroutine_handle<>) const noexcept {}
     constexpr void await_resume() const noexcept {}
 };

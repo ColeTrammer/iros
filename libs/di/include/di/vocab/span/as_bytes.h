@@ -7,7 +7,7 @@ namespace di::vocab {
 namespace detail {
     struct AsBytesFunction {
         template<typename T, size_t N, size_t S = N == dynamic_extent ? dynamic_extent : sizeof(T) * N>
-        Span<Byte const, S> operator()(Span<T, N> span) const {
+        auto operator()(Span<T, N> span) const -> Span<Byte const, S> {
             return { reinterpret_cast<Byte const*>(span.data()), span.size_bytes() };
         }
     };

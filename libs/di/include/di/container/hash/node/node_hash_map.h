@@ -53,18 +53,18 @@ public:
 
 template<concepts::InputContainer Con, concepts::TupleLike T = meta::ContainerValue<Con>>
 requires(meta::TupleSize<T> == 2)
-NodeHashMap<meta::TupleElement<T, 0>, meta::TupleElement<T, 1>> tag_invoke(types::Tag<util::deduce_create>,
-                                                                           InPlaceTemplate<NodeHashMap>, Con&&);
+auto tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<NodeHashMap>, Con&&)
+    -> NodeHashMap<meta::TupleElement<T, 0>, meta::TupleElement<T, 1>>;
 
 template<concepts::InputContainer Con, concepts::TupleLike T = meta::ContainerValue<Con>, typename Eq>
 requires(meta::TupleSize<T> == 2)
-NodeHashMap<meta::TupleElement<T, 0>, meta::TupleElement<T, 1>, Eq> tag_invoke(types::Tag<util::deduce_create>,
-                                                                               InPlaceTemplate<NodeHashMap>, Con&&, Eq);
+auto tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<NodeHashMap>, Con&&, Eq)
+    -> NodeHashMap<meta::TupleElement<T, 0>, meta::TupleElement<T, 1>, Eq>;
 
 template<concepts::InputContainer Con, concepts::TupleLike T = meta::ContainerValue<Con>, typename Eq, typename Hasher>
 requires(meta::TupleSize<T> == 2)
-NodeHashMap<meta::TupleElement<T, 0>, meta::TupleElement<T, 1>, Eq, Hasher>
-tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<NodeHashMap>, Con&&, Eq, Hasher);
+auto tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<NodeHashMap>, Con&&, Eq, Hasher)
+    -> NodeHashMap<meta::TupleElement<T, 0>, meta::TupleElement<T, 1>, Eq, Hasher>;
 }
 
 namespace di {

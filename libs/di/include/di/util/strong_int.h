@@ -50,81 +50,77 @@ public:
 
     constexpr explicit StrongInt(Type value) : m_value(value) {}
 
-    constexpr Type raw_value() const { return m_value; }
+    constexpr auto raw_value() const -> Type { return m_value; }
 
-    constexpr StrongInt& operator+=(Type x) {
+    constexpr auto operator+=(Type x) -> StrongInt& {
         m_value += x;
         return *this;
     }
-    constexpr StrongInt& operator+=(SSizeType x)
-    requires(!concepts::SameAs<SSizeType, Type>)
-    {
+    constexpr auto operator+=(SSizeType x) -> StrongInt& requires(!concepts::SameAs<SSizeType, Type>) {
         m_value += x;
         return *this;
     }
 
-    constexpr StrongInt& operator-=(Type x) {
+    constexpr auto operator-=(Type x) -> StrongInt& {
         m_value -= x;
         return *this;
     }
-    constexpr StrongInt& operator-=(SSizeType x)
-    requires(!concepts::SameAs<SSizeType, Type>)
-    {
+    constexpr auto operator-=(SSizeType x) -> StrongInt& requires(!concepts::SameAs<SSizeType, Type>) {
         m_value -= x;
         return *this;
     }
 
-    constexpr StrongInt& operator++() {
+    constexpr auto operator++() -> StrongInt& {
         ++m_value;
         return *this;
     }
-    constexpr StrongInt operator++(int) {
+    constexpr auto operator++(int) -> StrongInt {
         auto copy = *this;
         ++m_value;
         return copy;
     }
 
-    constexpr StrongInt& operator--() {
+    constexpr auto operator--() -> StrongInt& {
         --m_value;
         return *this;
     }
-    constexpr StrongInt operator--(int) {
+    constexpr auto operator--(int) -> StrongInt {
         auto copy = *this;
         --m_value;
         return copy;
     }
 
 private:
-    constexpr friend StrongInt operator+(StrongInt a, Type b) { return StrongInt(a.raw_value() + b); }
-    constexpr friend StrongInt operator+(StrongInt a, SSizeType b)
+    constexpr friend auto operator+(StrongInt a, Type b) -> StrongInt { return StrongInt(a.raw_value() + b); }
+    constexpr friend auto operator+(StrongInt a, SSizeType b) -> StrongInt
     requires(!concepts::SameAs<SSizeType, Type>)
     {
         return StrongInt(a.raw_value() + b);
     }
-    constexpr friend StrongInt operator+(Type a, StrongInt b) { return StrongInt(a + b.raw_value()); }
-    constexpr friend StrongInt operator+(SSizeType a, StrongInt b)
+    constexpr friend auto operator+(Type a, StrongInt b) -> StrongInt { return StrongInt(a + b.raw_value()); }
+    constexpr friend auto operator+(SSizeType a, StrongInt b) -> StrongInt
     requires(!concepts::SameAs<SSizeType, Type>)
     {
         return StrongInt(a + b.raw_value());
     }
 
-    constexpr friend StrongInt operator-(StrongInt a, Type b) { return StrongInt(a.raw_value() - b); }
-    constexpr friend StrongInt operator-(StrongInt a, SSizeType b)
+    constexpr friend auto operator-(StrongInt a, Type b) -> StrongInt { return StrongInt(a.raw_value() - b); }
+    constexpr friend auto operator-(StrongInt a, SSizeType b) -> StrongInt
     requires(!concepts::SameAs<SSizeType, Type>)
     {
         return StrongInt(a.raw_value() - b);
     }
-    constexpr friend StrongInt operator-(Type a, StrongInt b) { return StrongInt(a - b.raw_value()); }
-    constexpr friend StrongInt operator-(SSizeType a, StrongInt b)
+    constexpr friend auto operator-(Type a, StrongInt b) -> StrongInt { return StrongInt(a - b.raw_value()); }
+    constexpr friend auto operator-(SSizeType a, StrongInt b) -> StrongInt
     requires(!concepts::SameAs<SSizeType, Type>)
     {
         return StrongInt(a - b.raw_value());
     }
 
-    constexpr friend SSizeType operator-(StrongInt a, StrongInt b) { return a.raw_value() - b.raw_value(); }
+    constexpr friend auto operator-(StrongInt a, StrongInt b) -> SSizeType { return a.raw_value() - b.raw_value(); }
 
-    constexpr friend bool operator==(StrongInt a, StrongInt b) { return a.raw_value() == b.raw_value(); }
-    constexpr friend di::strong_ordering operator<=>(StrongInt a, StrongInt b) {
+    constexpr friend auto operator==(StrongInt a, StrongInt b) -> bool { return a.raw_value() == b.raw_value(); }
+    constexpr friend auto operator<=>(StrongInt a, StrongInt b) -> di::strong_ordering {
         return a.raw_value() <=> b.raw_value();
     }
 

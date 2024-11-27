@@ -14,10 +14,10 @@ namespace detail {
         template<typename U>
         constexpr explicit Value(InPlace, U&& value) : m_value(util::forward<U>(value)) {}
 
-        constexpr T& operator()(auto&&...) & { return m_value; }
-        constexpr T const& operator()(auto&&...) const& { return m_value; }
-        constexpr T&& operator()(auto&&...) && { return util::move(m_value); }
-        constexpr T const&& operator()(auto&&...) const&& { return util::move(m_value); }
+        constexpr auto operator()(auto&&...) & -> T& { return m_value; }
+        constexpr auto operator()(auto&&...) const& -> T const& { return m_value; }
+        constexpr auto operator()(auto&&...) && -> T&& { return util::move(m_value); }
+        constexpr auto operator()(auto&&...) const&& -> T const&& { return util::move(m_value); }
 
     private:
         T m_value;

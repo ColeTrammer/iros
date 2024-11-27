@@ -11,7 +11,7 @@ namespace detail {
         template<concepts::InputIterator It, concepts::WeaklyIncrementable Out,
                  typename SSizeType = meta::IteratorSSizeType<It>>
         requires(concepts::IndirectlyCopyable<It, Out>)
-        constexpr InOutResult<It, Out> operator()(It first, meta::TypeIdentity<SSizeType> n, Out output) const {
+        constexpr auto operator()(It first, meta::TypeIdentity<SSizeType> n, Out output) const -> InOutResult<It, Out> {
             // FIXME: use vectorized byte copy (::memcpy_forward) when provided contiguous
             //        iterators to trivially copyable types.
             for (SSizeType i = 0; i < n; ++i, ++first, ++output) {

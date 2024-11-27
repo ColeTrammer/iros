@@ -22,12 +22,12 @@ public:
         return Rational<U> { U(numerator()), U(denominator()) };
     }
 
-    constexpr T numerator() const { return m_numerator; }
-    constexpr T denominator() const { return m_denominator; }
+    constexpr auto numerator() const -> T { return m_numerator; }
+    constexpr auto denominator() const -> T { return m_denominator; }
 
-    constexpr bool negative() const { return m_numerator < 0; }
+    constexpr auto negative() const -> bool { return m_numerator < 0; }
 
-    constexpr Rational add(Rational other) const {
+    constexpr auto add(Rational other) const -> Rational {
         auto common_denominator = math::lcm(this->denominator(), other.denominator());
 
         auto a_scaled_numerator = this->numerator() * (common_denominator / this->denominator());
@@ -36,43 +36,43 @@ public:
         return Rational { a_scaled_numerator + b_scaled_numerator, common_denominator };
     }
 
-    constexpr Rational multiply(Rational other) const {
+    constexpr auto multiply(Rational other) const -> Rational {
         return Rational { this->numerator() * other.numerator(), this->denominator() * other.denominator() };
     }
 
-    constexpr Rational subtract(Rational other) const { return add(other.negated()); }
-    constexpr Rational divide(Rational other) const { return multiply(other.inverted()); }
+    constexpr auto subtract(Rational other) const -> Rational { return add(other.negated()); }
+    constexpr auto divide(Rational other) const -> Rational { return multiply(other.inverted()); }
 
-    constexpr Rational negated() const { return Rational { -numerator(), denominator() }; }
-    constexpr Rational inverted() const { return Rational { denominator(), numerator() }; }
+    constexpr auto negated() const -> Rational { return Rational { -numerator(), denominator() }; }
+    constexpr auto inverted() const -> Rational { return Rational { denominator(), numerator() }; }
 
-    constexpr Rational& operator++() { return *this = add({}); }
-    constexpr Rational operator++(int) {
+    constexpr auto operator++() -> Rational& { return *this = add({}); }
+    constexpr auto operator++(int) -> Rational {
         auto save = *this;
         *this = add({});
         return save;
     }
 
-    constexpr Rational& operator--() { return *this = subtract({}); }
-    constexpr Rational operator--(int) {
+    constexpr auto operator--() -> Rational& { return *this = subtract({}); }
+    constexpr auto operator--(int) -> Rational {
         auto save = *this;
         *this = subtract({});
         return save;
     }
 
-    constexpr Rational& operator+=(Rational a) { return *this = add(a); }
-    constexpr Rational operator+(Rational a) const { return add(a); }
+    constexpr auto operator+=(Rational a) -> Rational& { return *this = add(a); }
+    constexpr auto operator+(Rational a) const -> Rational { return add(a); }
 
-    constexpr Rational& operator-=(Rational a) { return *this = subtract(a); }
-    constexpr Rational operator-(Rational a) const { return subtract(a); }
+    constexpr auto operator-=(Rational a) -> Rational& { return *this = subtract(a); }
+    constexpr auto operator-(Rational a) const -> Rational { return subtract(a); }
 
-    constexpr Rational& operator*=(Rational a) { return *this = multiply(a); }
-    constexpr Rational operator*(Rational a) const { return multiply(a); }
+    constexpr auto operator*=(Rational a) -> Rational& { return *this = multiply(a); }
+    constexpr auto operator*(Rational a) const -> Rational { return multiply(a); }
 
-    constexpr Rational& operator/=(Rational a) { return *this = divide(a); }
-    constexpr Rational operator/(Rational a) const { return divide(a); }
+    constexpr auto operator/=(Rational a) -> Rational& { return *this = divide(a); }
+    constexpr auto operator/(Rational a) const -> Rational { return divide(a); }
 
-    constexpr Rational operator-() const { return negated(); }
+    constexpr auto operator-() const -> Rational { return negated(); }
 
     // These fields are public to enable this class to be used
     // as a template argument.
@@ -80,9 +80,9 @@ public:
     T m_denominator;
 
 private:
-    constexpr friend bool operator==(Rational, Rational) = default;
+    constexpr friend auto operator==(Rational, Rational) -> bool = default;
 
-    constexpr friend strong_ordering operator<=>(Rational a, Rational b) {
+    constexpr friend auto operator<=>(Rational a, Rational b) -> strong_ordering {
         if (auto result = b.negative() <=> a.negative(); result != 0) {
             return result;
         }

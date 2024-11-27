@@ -64,16 +64,16 @@ public:
 
     constexpr Span(Span const&) = default;
 
-    constexpr Span& operator=(Span const&) = default;
+    constexpr auto operator=(Span const&) -> Span& = default;
 
-    constexpr T* data() const { return m_data; }
-    constexpr types::size_t size() const { return m_size; }
+    constexpr auto data() const -> T* { return m_data; }
+    constexpr auto size() const -> types::size_t { return m_size; }
 
-    constexpr Span span() const { return *this; }
+    constexpr auto span() const -> Span { return *this; }
 
     template<concepts::ImplicitLifetime U>
     requires(concepts::SameAs<Byte, T>)
-    Optional<U*> typed_pointer(size_t byte_offset) const {
+    auto typed_pointer(size_t byte_offset) const -> Optional<U*> {
         if (byte_offset + sizeof(U) > size()) {
             return nullopt;
         }
@@ -82,7 +82,7 @@ public:
 
     template<concepts::ImplicitLifetime U>
     requires(concepts::SameAs<Byte const, T>)
-    Optional<U const*> typed_pointer(size_t byte_offset) const {
+    auto typed_pointer(size_t byte_offset) const -> Optional<U const*> {
         if (byte_offset + sizeof(U) > size()) {
             return nullopt;
         }
@@ -91,19 +91,19 @@ public:
 
     template<concepts::ImplicitLifetime U>
     requires(concepts::SameAs<Byte, T>)
-    U* typed_pointer_unchecked(size_t byte_offset) const {
+    auto typed_pointer_unchecked(size_t byte_offset) const -> U* {
         return reinterpret_cast<U*>(m_data + byte_offset);
     }
 
     template<concepts::ImplicitLifetime U>
     requires(concepts::SameAs<Byte const, T>)
-    U const* typed_pointer_unchecked(size_t byte_offset) const {
+    auto typed_pointer_unchecked(size_t byte_offset) const -> U const* {
         return reinterpret_cast<U const*>(m_data + byte_offset);
     }
 
     template<concepts::ImplicitLifetime U>
     requires(concepts::SameAs<Byte, T>)
-    Optional<Span<U>> typed_span(size_t byte_offset, size_t count) const {
+    auto typed_span(size_t byte_offset, size_t count) const -> Optional<Span<U>> {
         if (byte_offset + sizeof(U) * count > size()) {
             return nullopt;
         }
@@ -112,7 +112,7 @@ public:
 
     template<concepts::ImplicitLifetime U>
     requires(concepts::SameAs<Byte const, T>)
-    Optional<Span<U const>> typed_span(size_t byte_offset, size_t count) const {
+    auto typed_span(size_t byte_offset, size_t count) const -> Optional<Span<U const>> {
         if (byte_offset + sizeof(U) * count > size()) {
             return nullopt;
         }
@@ -121,13 +121,13 @@ public:
 
     template<concepts::ImplicitLifetime U>
     requires(concepts::SameAs<Byte, T>)
-    Span<U> typed_span_unchecked(size_t byte_offset, size_t count) const {
+    auto typed_span_unchecked(size_t byte_offset, size_t count) const -> Span<U> {
         return Span<U> { typed_pointer_unchecked<U>(byte_offset), count };
     }
 
     template<concepts::ImplicitLifetime U>
     requires(concepts::SameAs<Byte const, T>)
-    Span<U const> typed_span_unchecked(size_t byte_offset, size_t count) const {
+    auto typed_span_unchecked(size_t byte_offset, size_t count) const -> Span<U const> {
         return Span<U const> { typed_pointer_unchecked<U const>(byte_offset), count };
     }
 

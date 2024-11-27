@@ -25,7 +25,7 @@ template<typename Self>
 requires(concepts::Class<Self> && concepts::SameAs<Self, meta::RemoveCV<Self>>)
 class ViewInterface : public meta::EnableView<Self> {
 public:
-    constexpr bool empty()
+    constexpr auto empty() -> bool
     requires(concepts::SizedContainer<Self> || concepts::ForwardContainer<Self>)
     {
         if constexpr (concepts::SizedContainer<Self>) {
@@ -35,7 +35,7 @@ public:
         }
     }
 
-    constexpr bool empty() const
+    constexpr auto empty() const -> bool
     requires(concepts::SizedContainer<Self const> || concepts::ForwardContainer<Self const>)
     {
         if constexpr (concepts::SizedContainer<Self>) {
@@ -142,12 +142,12 @@ public:
     }
 
     template<concepts::RandomAccessContainer Cont = Self>
-    constexpr decltype(auto) operator[](meta::ContainerSSizeType<Cont> n) {
+    constexpr auto operator[](meta::ContainerSSizeType<Cont> n) -> decltype(auto) {
         return container::begin(self())[n];
     }
 
     template<concepts::RandomAccessContainer Cont = Self const>
-    constexpr decltype(auto) operator[](meta::ContainerSSizeType<Cont> n) const {
+    constexpr auto operator[](meta::ContainerSSizeType<Cont> n) const -> decltype(auto) {
         return container::begin(self())[n];
     }
 
@@ -168,8 +168,8 @@ public:
     }
 
 private:
-    constexpr Self& self() { return static_cast<Self&>(*this); }
-    constexpr Self const& self() const { return static_cast<Self const&>(*this); }
+    constexpr auto self() -> Self& { return static_cast<Self&>(*this); }
+    constexpr auto self() const -> Self const& { return static_cast<Self const&>(*this); }
 };
 }
 

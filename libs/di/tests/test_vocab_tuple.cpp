@@ -6,14 +6,14 @@ namespace vocab_tuple {
 class X : public di::util::AddMemberGet<X> {
 public:
 private:
-    constexpr friend size_t tag_invoke(di::Tag<di::vocab::tuple_size>, di::InPlaceType<X>) { return 1zu; }
+    constexpr friend auto tag_invoke(di::Tag<di::vocab::tuple_size>, di::InPlaceType<X>) -> size_t { return 1zu; }
 
-    constexpr friend di::InPlaceType<int> tag_invoke(di::Tag<di::vocab::tuple_element>, di::InPlaceType<X>,
-                                                     di::Constexpr<0zu>);
+    constexpr friend auto tag_invoke(di::Tag<di::vocab::tuple_element>, di::InPlaceType<X>, di::Constexpr<0zu>)
+        -> di::InPlaceType<int>;
 
     template<di::concepts::DecaySameAs<X> Self>
-    constexpr friend di::meta::Like<Self, int> tag_invoke(di::Tag<di::util::get_in_place>, di::Constexpr<0zu>,
-                                                          Self&& self) {
+    constexpr friend auto tag_invoke(di::Tag<di::util::get_in_place>, di::Constexpr<0zu>, Self&& self)
+        -> di::meta::Like<Self, int> {
         return di::util::forward_like<Self>(self.x);
     }
 

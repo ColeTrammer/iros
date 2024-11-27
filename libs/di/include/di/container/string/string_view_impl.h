@@ -68,10 +68,10 @@ public:
     constexpr StringViewImpl(encoding::AssumeValid, Con&& container, Enc encoding = {})
         : m_data(container::data(container)), m_size(container::size(container)), m_encoding(encoding) {}
 
-    StringViewImpl& operator=(StringViewImpl const&) = default;
+    auto operator=(StringViewImpl const&) -> StringViewImpl& = default;
 
     constexpr auto span() const { return Span { m_data, m_size }; }
-    constexpr Enc encoding() const { return m_encoding; }
+    constexpr auto encoding() const -> Enc { return m_encoding; }
 
     constexpr void replace_begin(Iterator new_begin) { *this = { new_begin, this->end(), m_encoding }; }
     constexpr void replace_end(Iterator new_end) { *this = { this->begin(), new_end, m_encoding }; }
@@ -79,7 +79,7 @@ public:
 private:
     template<concepts::SameAs<types::Tag<into_erased_string>> T, concepts::SameAs<StringViewImpl> S>
     requires(concepts::SameAs<Enc, Utf8Encoding>)
-    constexpr friend ErasedString tag_invoke(T, S self) {
+    constexpr friend auto tag_invoke(T, S self) -> ErasedString {
         return ErasedString({ self.data(), self.size_code_units() + 1 });
     }
 

@@ -1,7 +1,7 @@
 #include <di/container/algorithm/prelude.h>
 #include <string.h>
 
-extern "C" void* memset(void* dest, int ch, size_t count) {
+extern "C" auto memset(void* dest, int ch, size_t count) -> void* {
     auto* dest_typed = (unsigned char*) dest;
     auto fill = (unsigned char) ch;
     di::fill(dest_typed, dest_typed + count, fill);

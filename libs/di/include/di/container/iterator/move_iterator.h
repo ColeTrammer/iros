@@ -39,15 +39,15 @@ public:
     template<typename Other>
     requires(!concepts::SameAs<Iter, Other> && concepts::ConvertibleTo<Other const&, Iter> &&
              concepts::AssignableFrom<Iter&, Other const&>)
-    constexpr MoveIterator& operator=(MoveIterator<Other> const& other) {
+    constexpr auto operator=(MoveIterator<Other> const& other) -> MoveIterator& {
         this->m_iterator = other.m_iterator;
         return *this;
     }
 
-    constexpr Iter const& base() const& { return m_iterator; }
-    constexpr Iter base() && { return util::move(m_iterator); }
+    constexpr auto base() const& -> Iter const& { return m_iterator; }
+    constexpr auto base() && -> Iter { return util::move(m_iterator); }
 
-    constexpr meta::IteratorRValue<Iter> operator*() const { return iterator_move(m_iterator); }
+    constexpr auto operator*() const -> meta::IteratorRValue<Iter> { return iterator_move(m_iterator); }
 
     constexpr void advance_one() { ++m_iterator; }
 
@@ -67,7 +67,7 @@ private:
     template<concepts::InputIterator Other>
     friend class MoveIterator;
 
-    constexpr friend decltype(auto) tag_invoke(types::Tag<iterator_move>, MoveIterator const& self)
+    constexpr friend auto tag_invoke(types::Tag<iterator_move>, MoveIterator const& self) -> decltype(auto)
     requires(requires { typename meta::IteratorRValue<Iter>; })
     {
         return iterator_move(self.base());
@@ -82,7 +82,7 @@ private:
 };
 
 template<typename Iter, concepts::EqualityComparableWith<Iter> U>
-constexpr bool operator==(MoveIterator<Iter> const& a, MoveIterator<U> const& b) {
+constexpr auto operator==(MoveIterator<Iter> const& a, MoveIterator<U> const& b) -> bool {
     return a.base() == b.base();
 }
 

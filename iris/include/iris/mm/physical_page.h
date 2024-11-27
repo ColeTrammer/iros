@@ -50,15 +50,17 @@ struct BackedPhysicalPage : di::IntrusiveTreeSetNode<BackedPhysicalPageTreeTag> 
     u64 page_number;
 
 private:
-    constexpr friend bool operator==(BackedPhysicalPage const& a, BackedPhysicalPage const& b) {
+    constexpr friend auto operator==(BackedPhysicalPage const& a, BackedPhysicalPage const& b) -> bool {
         return a.page_number == b.page_number;
     }
-    constexpr friend di::strong_ordering operator<=>(BackedPhysicalPage const& a, BackedPhysicalPage const& b) {
+    constexpr friend auto operator<=>(BackedPhysicalPage const& a, BackedPhysicalPage const& b) -> di::strong_ordering {
         return a.page_number <=> b.page_number;
     }
 
-    constexpr friend bool operator==(BackedPhysicalPage const& a, u64 b) { return a.page_number == b; }
-    constexpr friend di::strong_ordering operator<=>(BackedPhysicalPage const& a, u64 b) { return a.page_number <=> b; }
+    constexpr friend auto operator==(BackedPhysicalPage const& a, u64 b) -> bool { return a.page_number == b; }
+    constexpr friend auto operator<=>(BackedPhysicalPage const& a, u64 b) -> di::strong_ordering {
+        return a.page_number <=> b;
+    }
 };
 
 /// @brief A physical page of memory.
@@ -78,20 +80,20 @@ constexpr inline auto physical_page_base =
 
 namespace detail {
     struct PhysicalAddressFunction {
-        inline PhysicalAddress operator()(PhysicalPage const& page) const {
+        inline auto operator()(PhysicalPage const& page) const -> PhysicalAddress {
             return void_pointer_to_physical_address(&page);
         }
 
-        inline PhysicalAddress operator()(BackedPhysicalPage const& page) const {
+        inline auto operator()(BackedPhysicalPage const& page) const -> PhysicalAddress {
             return void_pointer_to_physical_address(&page);
         }
 
-        inline PhysicalAddress operator()(PageStructurePhysicalPage const& page) const {
+        inline auto operator()(PageStructurePhysicalPage const& page) const -> PhysicalAddress {
             return void_pointer_to_physical_address(&page);
         }
 
     private:
-        static inline PhysicalAddress void_pointer_to_physical_address(void const* pointer) {
+        static inline auto void_pointer_to_physical_address(void const* pointer) -> PhysicalAddress {
             auto page_number = (VirtualAddress(di::to_uintptr(pointer)) - physical_page_base) / sizeof(PhysicalPage);
             return PhysicalAddress(page_number * 4096);
         }
@@ -100,17 +102,17 @@ namespace detail {
 
 constexpr inline auto physical_address = detail::PhysicalAddressFunction {};
 
-inline PhysicalPage& physical_page(PhysicalAddress address) {
+inline auto physical_page(PhysicalAddress address) -> PhysicalPage& {
     ASSERT(address.raw_value() % 4096 == 0);
     auto const page_number = address.raw_value() / 4096;
     return *(reinterpret_cast<PhysicalPage*>(physical_page_base.raw_value()) + page_number);
 }
 
-inline PageStructurePhysicalPage& page_structure_page(PhysicalAddress address) {
+inline auto page_structure_page(PhysicalAddress address) -> PageStructurePhysicalPage& {
     return physical_page(address).as_page_structure_page;
 }
 
-inline BackedPhysicalPage& backed_page(PhysicalAddress address) {
+inline auto backed_page(PhysicalAddress address) -> BackedPhysicalPage& {
     return physical_page(address).as_backed_page;
 }
 

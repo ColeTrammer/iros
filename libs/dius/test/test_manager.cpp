@@ -8,7 +8,7 @@
 #endif
 
 namespace dius::test {
-TestManager& TestManager::the() {
+auto TestManager::the() -> TestManager& {
     static TestManager s_the;
     return s_the;
 }
@@ -72,7 +72,7 @@ void TestManager::final_report() {
     system::exit_process(result);
 }
 
-di::Result<void> TestManager::run_tests(Args& args) {
+auto TestManager::run_tests(Args& args) -> di::Result<void> {
     auto [list_simple, suite_name, case_name, _] = args;
 
     auto [first_to_remove, last_to_remove] = di::container::remove_if(m_test_cases, [&](auto&& test_case) {

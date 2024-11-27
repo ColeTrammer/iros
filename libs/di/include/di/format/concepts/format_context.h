@@ -16,7 +16,7 @@ namespace di::format {
 struct ContextPlaceholder {
     using Encoding = container::string::Utf8Encoding;
     void output(char);
-    Encoding encoding() const;
+    auto encoding() const -> Encoding;
 };
 }
 

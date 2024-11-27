@@ -99,7 +99,7 @@ namespace send_ns {
         template<concepts::HasProtocol SendToken, typename Message, typename... Args,
                  typename MessageTypes = meta::MessageTypes<SendToken>>
         requires(meta::Contains<MessageTypes, Message> && concepts::TagInvocable<Function, SendToken, Message, Args...>)
-        concepts::Sender auto operator()(SendToken send_token, Message&& message, Args&&... args) const {
+        auto operator()(SendToken send_token, Message&& message, Args&&... args) const -> concepts::Sender auto {
             return tag_invoke(*this, di::move(send_token), di::forward<Message>(message), di::forward<Args>(args)...);
         }
     };

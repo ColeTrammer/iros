@@ -12,7 +12,7 @@ namespace detail {
         template<concepts::InputIterator It, concepts::SentinelFor<It> Sent, concepts::WeaklyIncrementable Out,
                  concepts::CopyConstructible F, typename Proj = function::Identity>
         requires(concepts::IndirectlyWritable<Out, meta::IndirectResult<F&, meta::Projected<It, Proj>>>)
-        constexpr InOutResult<It, Out> operator()(It first, Sent last, Out output, F op, Proj proj = {}) const {
+        constexpr auto operator()(It first, Sent last, Out output, F op, Proj proj = {}) const -> InOutResult<It, Out> {
             for (; first != last; ++first, ++output) {
                 *output = function::invoke(op, function::invoke(proj, *first));
             }
@@ -23,8 +23,8 @@ namespace detail {
                  typename Proj = function::Identity>
         requires(concepts::IndirectlyWritable<
                  Out, meta::IndirectResult<F&, meta::Projected<meta::ContainerIterator<Con>, Proj>>>)
-        constexpr InOutResult<meta::BorrowedIterator<Con>, Out> operator()(Con&& container, Out output, F op,
-                                                                           Proj proj = {}) const {
+        constexpr auto operator()(Con&& container, Out output, F op, Proj proj = {}) const
+            -> InOutResult<meta::BorrowedIterator<Con>, Out> {
             return (*this)(container::begin(container), container::end(container), util::move(output), util::ref(op),
                            util::ref(proj));
         }
@@ -34,8 +34,8 @@ namespace detail {
                  typename Proj1 = function::Identity, typename Proj2 = function::Identity>
         requires(concepts::IndirectlyWritable<
                  Out, meta::IndirectResult<F&, meta::Projected<It1, Proj1>, meta::Projected<It2, Proj2>>>)
-        constexpr InInOutResult<It1, It2, Out> operator()(It1 first1, Sent1 last1, It2 first2, Sent2 last2, Out output,
-                                                          F op, Proj1 proj1 = {}, Proj2 proj2 = {}) const {
+        constexpr auto operator()(It1 first1, Sent1 last1, It2 first2, Sent2 last2, Out output, F op, Proj1 proj1 = {},
+                                  Proj2 proj2 = {}) const -> InInOutResult<It1, It2, Out> {
             for (; first1 != last1 && first2 != last2; ++first1, ++first2, ++output) {
                 *output = function::invoke(op, function::invoke(proj1, *first1), function::invoke(proj2, *first2));
             }
@@ -48,8 +48,8 @@ namespace detail {
         requires(concepts::IndirectlyWritable<
                  Out, meta::IndirectResult<F&, meta::Projected<meta::ContainerIterator<Con1>, Proj1>,
                                            meta::Projected<meta::ContainerIterator<Con2>, Proj2>>>)
-        constexpr InInOutResult<meta::BorrowedIterator<Con1>, meta::BorrowedIterator<Con2>, Out>
-        transform(Con1&& r1, Con2&& r2, Out output, F op, Proj1 proj1 = {}, Proj2 proj2 = {}) {
+        constexpr auto transform(Con1&& r1, Con2&& r2, Out output, F op, Proj1 proj1 = {}, Proj2 proj2 = {})
+            -> InInOutResult<meta::BorrowedIterator<Con1>, meta::BorrowedIterator<Con2>, Out> {
             return (*this)(container::begin(r1), container::end(r1), container::begin(r2), container::end(r2),
                            util::move(output), util::ref(op), util::ref(proj1), util::ref(proj2));
         }

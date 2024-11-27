@@ -1,7 +1,7 @@
 #include <ctype.h>
 #include <stdio.h>
 
-extern "C" int isblank(int ch) {
+extern "C" auto isblank(int ch) -> int {
     if (ch == EOF) {
         return 0;
     }

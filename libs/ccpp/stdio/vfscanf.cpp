@@ -5,7 +5,7 @@
 
 namespace ccpp {
 // https://pubs.opengroup.org/onlinepubs/9699919799/functions/vfscanf.html
-extern "C" int vfscanf(FILE* __restrict file, char const* __restrict format, va_list args) {
+extern "C" auto vfscanf(FILE* __restrict file, char const* __restrict format, va_list args) -> int {
     auto guard = di::ScopedLock(file->locked.get_lock());
     return STDIO_TRY(scanf_implementation(
         [&]() -> di::Expected<di::Optional<char>, di::GenericCode> {

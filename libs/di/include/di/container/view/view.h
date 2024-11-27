@@ -71,23 +71,23 @@ public:
     requires(is_sized)
         : View(container::begin(container), container::end(container), size) {}
 
-    constexpr Iter begin() const
+    constexpr auto begin() const -> Iter
     requires(concepts::Copyable<Iter>)
     {
         return m_iterator;
     }
 
-    [[nodiscard]] constexpr Iter begin()
+    [[nodiscard]] constexpr auto begin() -> Iter
     requires(!concepts::Copyable<Iter>)
     {
         return util::move(m_iterator);
     }
 
-    constexpr Sent end() const { return m_sentinel; }
+    constexpr auto end() const -> Sent { return m_sentinel; }
 
-    constexpr bool empty() const { return m_iterator == m_sentinel; }
+    constexpr auto empty() const -> bool { return m_iterator == m_sentinel; }
 
-    constexpr SizeType size() const
+    constexpr auto size() const -> SizeType
     requires(is_sized)
     {
         if constexpr (store_size) {
@@ -97,12 +97,12 @@ public:
         }
     }
 
-    constexpr View& advance(SSizeType n) {
+    constexpr auto advance(SSizeType n) -> View& {
         container::advance(m_iterator, n, m_sentinel);
         return *this;
     }
 
-    [[nodiscard]] constexpr View prev(SSizeType n = 1) const
+    [[nodiscard]] constexpr auto prev(SSizeType n = 1) const -> View
     requires(concepts::BidirectionalIterator<Iter>)
     {
         auto result = *this;
@@ -110,7 +110,7 @@ public:
         return result;
     }
 
-    [[nodiscard]] constexpr View next(SSizeType n = 1) const&
+    [[nodiscard]] constexpr auto next(SSizeType n = 1) const& -> View
     requires(concepts::ForwardIterator<Iter>)
     {
         auto result = *this;
@@ -118,37 +118,42 @@ public:
         return result;
     }
 
-    [[nodiscard]] constexpr View next(SSizeType n = 1) && {
+    [[nodiscard]] constexpr auto next(SSizeType n = 1) && -> View {
         this->advance(n);
         return util::move(*this);
     }
 
 private:
-    constexpr friend InPlaceType<Iter> tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<View>,
-                                                  Constexpr<0zu>) {}
-    constexpr friend InPlaceType<Sent> tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<View>,
-                                                  Constexpr<1zu>) {}
+    constexpr friend auto tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<View>, Constexpr<0zu>)
+        -> InPlaceType<Iter> {}
+    constexpr friend auto tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<View>, Constexpr<1zu>)
+        -> InPlaceType<Sent> {}
 
-    constexpr friend InPlaceType<Iter const> tag_invoke(types::Tag<vocab::tuple_element>,
-                                                        types::InPlaceType<View const>, Constexpr<0zu>) {}
-    constexpr friend InPlaceType<Sent const> tag_invoke(types::Tag<vocab::tuple_element>,
-                                                        types::InPlaceType<View const>, Constexpr<1zu>) {}
+    constexpr friend auto tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<View const>, Constexpr<0zu>)
+        -> InPlaceType<Iter const> {}
+    constexpr friend auto tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<View const>, Constexpr<1zu>)
+        -> InPlaceType<Sent const> {}
 
-    constexpr friend types::size_t tag_invoke(types::Tag<vocab::tuple_size>, types::InPlaceType<View>) { return 2; }
+    constexpr friend auto tag_invoke(types::Tag<vocab::tuple_size>, types::InPlaceType<View>) -> types::size_t {
+        return 2;
+    }
 
     template<concepts::DecaySameAs<View> Self>
-    constexpr friend meta::Like<Self, Iter> tag_invoke(types::Tag<util::get_in_place>, Constexpr<0zu>, Self&& self) {
+    constexpr friend auto tag_invoke(types::Tag<util::get_in_place>, Constexpr<0zu>, Self&& self)
+        -> meta::Like<Self, Iter> {
         return util::forward_like<Self>(self.m_iterator);
     }
 
     template<concepts::DecaySameAs<View> Self>
-    constexpr friend meta::Like<Self, Sent> tag_invoke(types::Tag<util::get_in_place>, Constexpr<1zu>, Self&& self) {
+    constexpr friend auto tag_invoke(types::Tag<util::get_in_place>, Constexpr<1zu>, Self&& self)
+        -> meta::Like<Self, Sent> {
         return util::forward_like<Self>(self.m_sentinel);
     }
 
     template<concepts::DecaySameAs<View> Self, typename T>
     requires(!concepts::SameAs<Iter, Sent> && (concepts::SameAs<T, Iter> || concepts::SameAs<T, Sent>) )
-    constexpr friend decltype(auto) tag_invoke(types::Tag<util::get_in_place>, types::InPlaceType<T>, Self&& self) {
+    constexpr friend auto tag_invoke(types::Tag<util::get_in_place>, types::InPlaceType<T>, Self&& self)
+        -> decltype(auto) {
         if constexpr (concepts::SameAs<T, Iter>) {
             return util::get<0>(util::forward<Self>(self));
         } else {

@@ -26,7 +26,7 @@ struct ReconstructFunction {
     template<typename It, typename Sent>
     requires((concepts::Class<It> || concepts::Class<Sent> || concepts::Enum<It> || concepts::Enum<Sent>) &&
              (detail::CustomReconstruct<It, Sent> || detail::ViewReconstruct<It, Sent>) )
-    constexpr concepts::View auto operator()(It&& iterator, Sent&& sentinel) const {
+    constexpr auto operator()(It&& iterator, Sent&& sentinel) const -> concepts::View auto {
         if constexpr (detail::CustomReconstruct<It, Sent>) {
             return function::tag_invoke(*this, util::forward<It>(iterator), util::forward<Sent>(sentinel));
         } else {
@@ -36,7 +36,7 @@ struct ReconstructFunction {
     }
 
     template<concepts::Container Con, typename It, typename Sent>
-    constexpr concepts::View auto operator()(InPlaceType<Con>, It&& iterator, Sent&& sentinel) const
+    constexpr auto operator()(InPlaceType<Con>, It&& iterator, Sent&& sentinel) const -> concepts::View auto
     requires(detail::CustomReconstruct<InPlaceType<Con>, It, Sent> ||
              requires {
                  { (*this)(util::forward<It>(iterator), util::forward<Sent>(sentinel)) } -> concepts::View;
@@ -54,7 +54,8 @@ struct ReconstructFunction {
     }
 
     template<concepts::Container Con, concepts::Container T, typename It, typename Sent>
-    constexpr concepts::View auto operator()(InPlaceType<Con>, T&& container, It&& iterator, Sent&& sentinel) const
+    constexpr auto operator()(InPlaceType<Con>, T&& container, It&& iterator, Sent&& sentinel) const -> concepts::View
+        auto
     requires(detail::CustomReconstruct<InPlaceType<Con>, T, It, Sent> ||
              requires {
                  {

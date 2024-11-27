@@ -3,7 +3,7 @@
 #include <di/io/prelude.h>
 
 namespace dius {
-di::Expected<void, di::GenericCode> SyncFile::read_exactly(u64 offset, di::Span<byte> data) const {
+auto SyncFile::read_exactly(u64 offset, di::Span<byte> data) const -> di::Expected<void, di::GenericCode> {
     while (!data.empty()) {
         auto nread = TRY(read_some(offset, data));
         if (nread == 0) {
@@ -15,7 +15,7 @@ di::Expected<void, di::GenericCode> SyncFile::read_exactly(u64 offset, di::Span<
     return {};
 }
 
-di::Expected<void, di::GenericCode> SyncFile::read_exactly(di::Span<byte> data) const {
+auto SyncFile::read_exactly(di::Span<byte> data) const -> di::Expected<void, di::GenericCode> {
     while (!data.empty()) {
         auto nread = TRY(read_some(data));
         if (nread == 0) {
@@ -26,7 +26,7 @@ di::Expected<void, di::GenericCode> SyncFile::read_exactly(di::Span<byte> data) 
     return {};
 }
 
-di::Expected<void, di::GenericCode> SyncFile::write_exactly(u64 offset, di::Span<byte const> data) const {
+auto SyncFile::write_exactly(u64 offset, di::Span<byte const> data) const -> di::Expected<void, di::GenericCode> {
     while (!data.empty()) {
         auto nwritten = TRY(write_some(offset, data));
         if (nwritten == 0) {
@@ -38,7 +38,7 @@ di::Expected<void, di::GenericCode> SyncFile::write_exactly(u64 offset, di::Span
     return {};
 }
 
-di::Expected<void, di::GenericCode> SyncFile::write_exactly(di::Span<byte const> data) const {
+auto SyncFile::write_exactly(di::Span<byte const> data) const -> di::Expected<void, di::GenericCode> {
     while (!data.empty()) {
         auto nwritten = TRY(write_some(data));
         if (nwritten == 0) {
@@ -49,7 +49,7 @@ di::Expected<void, di::GenericCode> SyncFile::write_exactly(di::Span<byte const>
     return {};
 }
 
-di::Result<di::String> read_to_string(di::PathView path) {
+auto read_to_string(di::PathView path) -> di::Result<di::String> {
     auto file = TRY(open_sync(path, OpenMode::Readonly));
     return di::read_to_string(file);
 }

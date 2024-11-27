@@ -33,8 +33,8 @@ struct AdvanceFunction {
     }
 
     template<concepts::Iterator Iter, concepts::SentinelFor<Iter> Sent>
-    constexpr meta::IteratorSSizeType<Iter> operator()(Iter& iterator, meta::IteratorSSizeType<Iter> n,
-                                                       Sent bound) const {
+    constexpr auto operator()(Iter& iterator, meta::IteratorSSizeType<Iter> n, Sent bound) const
+        -> meta::IteratorSSizeType<Iter> {
         if constexpr (concepts::SizedSentinelFor<Sent, Iter>) {
             if constexpr (concepts::BidirectionalIterator<Iter>) {
                 if (n < 0) {

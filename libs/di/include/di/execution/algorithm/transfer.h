@@ -11,7 +11,7 @@ namespace di::execution {
 namespace transfer_ns {
     struct Function {
         template<concepts::Scheduler Sched, concepts::Sender Send>
-        concepts::Sender auto operator()(Send&& sender, Sched&& scheduler) const {
+        auto operator()(Send&& sender, Sched&& scheduler) const -> concepts::Sender auto {
             if constexpr (requires {
                               function::tag_invoke(*this, get_completion_scheduler<SetValue>(get_env(sender)),
                                                    util::forward<Send>(sender), util::forward<Sched>(scheduler));

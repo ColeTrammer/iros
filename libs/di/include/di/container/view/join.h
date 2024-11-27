@@ -16,7 +16,7 @@ namespace detail {
     struct JoinFunction : function::pipeline::EnablePipeline {
         template<concepts::ViewableContainer Con>
         requires(CustomJoin<Con> || ViewJoin<Con>)
-        constexpr concepts::View auto operator()(Con&& container) const {
+        constexpr auto operator()(Con&& container) const -> concepts::View auto {
             if constexpr (CustomJoin<Con>) {
                 return function::tag_invoke(*this, util::forward<Con>(container));
             } else {

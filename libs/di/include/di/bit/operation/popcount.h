@@ -7,7 +7,7 @@ namespace di::bit {
 namespace detail {
     struct PopcountFunction {
         template<concepts::UnsignedInteger T>
-        constexpr int operator()(T value) const {
+        constexpr auto operator()(T value) const -> int {
             if constexpr (sizeof(T) <= sizeof(unsigned int)) {
                 return __builtin_popcount(value);
             } else if constexpr (sizeof(T) <= sizeof(unsigned long)) {

@@ -128,7 +128,7 @@ void init_sb16() {
     }
 }
 
-Expected<usize> sb16_write_audio(UserspaceBuffer<byte const> data) {
+auto sb16_write_audio(UserspaceBuffer<byte const> data) -> Expected<usize> {
     if (data.size_bytes() > 4096_usize * dma_max_page_count || data.size() % 2 == 1) {
         return di::Unexpected(iris::Error::InvalidArgument);
     }

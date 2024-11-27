@@ -16,16 +16,16 @@ namespace detail {
 
 template<typename Env>
 struct EnvPromise : WithAwaitTransform<EnvPromise<Env>> {
-    detail::DummyReturnObject<EnvPromise> get_return_object() noexcept;
-    SuspendAlways initial_suspend() noexcept;
-    SuspendAlways final_suspend() noexcept;
+    auto get_return_object() noexcept -> detail::DummyReturnObject<EnvPromise>;
+    auto initial_suspend() noexcept -> SuspendAlways;
+    auto final_suspend() noexcept -> SuspendAlways;
     void unhandled_exception() noexcept;
     void return_void() noexcept;
 
-    std::coroutine_handle<> unhandled_stopped() noexcept;
-    std::coroutine_handle<> unhandled_error(vocab::Error) noexcept;
+    auto unhandled_stopped() noexcept -> std::coroutine_handle<>;
+    auto unhandled_error(vocab::Error) noexcept -> std::coroutine_handle<>;
 
     template<typename E>
-    friend E const& tag_invoke(types::Tag<get_env>, EnvPromise<E> const&) noexcept;
+    friend auto tag_invoke(types::Tag<get_env>, EnvPromise<E> const&) noexcept -> E const&;
 };
 }

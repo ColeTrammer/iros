@@ -8,7 +8,7 @@ namespace di::io {
 namespace detail {
     struct ReadSomeMember {
         template<typename T>
-        constexpr Result<usize> operator()(T& reader, Span<Byte> data) const
+        constexpr auto operator()(T& reader, Span<Byte> data) const -> Result<usize>
         requires(requires {
             { reader.read_some(data) } -> concepts::ImplicitlyConvertibleTo<Result<usize>>;
         })
@@ -17,7 +17,7 @@ namespace detail {
         }
 
         template<typename T>
-        constexpr Result<usize> operator()(util::ReferenceWrapper<T> reader, Span<Byte> data) const
+        constexpr auto operator()(util::ReferenceWrapper<T> reader, Span<Byte> data) const -> Result<usize>
         requires(requires {
             { (*this)(reader.get(), data) };
         })

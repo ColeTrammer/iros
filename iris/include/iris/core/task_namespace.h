@@ -9,12 +9,12 @@
 namespace iris {
 class LockedTaskNamespace {
 public:
-    Expected<TaskId> allocate_task_id();
+    auto allocate_task_id() -> Expected<TaskId>;
 
-    Expected<void> register_task(Task&);
+    auto register_task(Task&) -> Expected<void>;
     void unregister_task(Task&);
 
-    Expected<di::Arc<Task>> find_task(TaskId id) const;
+    auto find_task(TaskId id) const -> Expected<di::Arc<Task>>;
 
 private:
     TaskId m_next_id { 0 };

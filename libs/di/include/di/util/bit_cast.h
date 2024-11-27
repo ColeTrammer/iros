@@ -5,7 +5,7 @@
 #else
 namespace std {
 template<typename To, typename From>
-constexpr To bit_cast(From const& value) noexcept {
+constexpr auto bit_cast(From const& value) noexcept -> To {
     return __builtin_bit_cast(To, value);
 }
 }

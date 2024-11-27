@@ -40,15 +40,15 @@ public:
 
     constexpr ~IntrusivePtr() { reset(); }
 
-    constexpr IntrusivePtr& operator=(nullptr_t) {
+    constexpr auto operator=(nullptr_t) -> IntrusivePtr& {
         reset();
         return *this;
     }
-    constexpr IntrusivePtr& operator=(IntrusivePtr const& other) {
+    constexpr auto operator=(IntrusivePtr const& other) -> IntrusivePtr& {
         reset(other.get(), adopt_object);
         return *this;
     }
-    constexpr IntrusivePtr& operator=(IntrusivePtr&& other) {
+    constexpr auto operator=(IntrusivePtr&& other) -> IntrusivePtr& {
         reset();
         m_pointer = other.release();
         return *this;
@@ -56,11 +56,11 @@ public:
 
     constexpr explicit operator bool() const { return !!get(); }
 
-    constexpr T& operator*() const { return *get(); }
-    constexpr T* operator->() const { return get(); }
-    constexpr T* get() const { return m_pointer; }
+    constexpr auto operator*() const -> T& { return *get(); }
+    constexpr auto operator->() const -> T* { return get(); }
+    constexpr auto get() const -> T* { return m_pointer; }
 
-    [[nodiscard]] constexpr T* release() { return util::exchange(m_pointer, nullptr); }
+    [[nodiscard]] constexpr auto release() -> T* { return util::exchange(m_pointer, nullptr); }
 
     constexpr void reset() {
         auto* old = release();
@@ -81,8 +81,10 @@ public:
     }
 
 private:
-    constexpr friend bool operator==(IntrusivePtr const& a, IntrusivePtr const& b) { return a.get() == b.get(); }
-    constexpr friend di::strong_ordering operator<=>(IntrusivePtr const& a, IntrusivePtr const& b) {
+    constexpr friend auto operator==(IntrusivePtr const& a, IntrusivePtr const& b) -> bool {
+        return a.get() == b.get();
+    }
+    constexpr friend auto operator<=>(IntrusivePtr const& a, IntrusivePtr const& b) -> di::strong_ordering {
         return a.get() <=> b.get();
     }
 

@@ -32,10 +32,10 @@ public:
     using Manage = meta::Type<detail::InlineStorageManage<InlineStorage>>;
     using Interface = meta::List<Manage>;
 
-    constexpr static StorageCategory storage_category() { return StorageCategory::MoveOnly; }
+    constexpr static auto storage_category() -> StorageCategory { return StorageCategory::MoveOnly; }
 
     template<typename T>
-    constexpr static bool creation_is_fallible(InPlaceType<T>) {
+    constexpr static auto creation_is_fallible(InPlaceType<T>) -> bool {
         return false;
     }
 
@@ -45,7 +45,7 @@ public:
     constexpr InlineStorage() {}
 
     InlineStorage(InlineStorage const&) = delete;
-    InlineStorage& operator=(InlineStorage const&) = delete;
+    auto operator=(InlineStorage const&) -> InlineStorage& = delete;
 
     template<typename T, typename... Args>
     requires(sizeof(T) <= inline_size && alignof(T) <= inline_align && concepts::MoveConstructible<T> &&
@@ -84,18 +84,18 @@ public:
     }
 
     template<typename T>
-    T* down_cast() {
+    auto down_cast() -> T* {
         return static_cast<T*>(address());
     }
 
     template<typename T>
-    T const* down_cast() const {
+    auto down_cast() const -> T const* {
         return static_cast<T const*>(address());
     }
 
 private:
-    void* address() { return static_cast<void*>(util::addressof(m_storage[0])); }
-    void const* address() const { return static_cast<void const*>(util::addressof(m_storage[0])); }
+    auto address() -> void* { return static_cast<void*>(util::addressof(m_storage[0])); }
+    auto address() const -> void const* { return static_cast<void const*>(util::addressof(m_storage[0])); }
 
     alignas(inline_align) di::Byte m_storage[inline_size];
 };

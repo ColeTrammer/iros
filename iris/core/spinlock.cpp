@@ -14,7 +14,7 @@ void Spinlock::lock() {
     }
 }
 
-bool Spinlock::try_lock() {
+auto Spinlock::try_lock() -> bool {
     auto interrupts_were_disabled = raw_disable_interrupts_and_save_previous_state();
     auto result = !m_state.exchange(true, di::sync::MemoryOrder::Acquire);
     if (!result) {

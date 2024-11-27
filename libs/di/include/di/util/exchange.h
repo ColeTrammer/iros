@@ -5,7 +5,7 @@
 
 namespace di::util {
 template<typename T, typename U = T>
-constexpr T exchange(T& object, U&& new_value) {
+constexpr auto exchange(T& object, U&& new_value) -> T {
     auto temp = util::move(object);
     object = util::forward<U>(new_value);
     return temp;

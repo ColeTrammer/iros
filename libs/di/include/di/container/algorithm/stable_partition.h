@@ -10,7 +10,7 @@ namespace detail {
         template<concepts::InputIterator It, concepts::SentinelFor<It> Sent, typename Proj = function::Identity,
                  concepts::IndirectUnaryPredicate<meta::Projected<It, Proj>> Pred>
         requires(concepts::Permutable<It>)
-        constexpr View<It> operator()(It first, Sent last, Pred pred, Proj proj = {}) const {
+        constexpr auto operator()(It first, Sent last, Pred pred, Proj proj = {}) const -> View<It> {
             // Find the first element that does not belong to the left of the partition point.
             auto pivot = container::find_if_not(util::move(first), last, util::ref(pred), util::ref(proj));
             if (pivot == last) {
@@ -39,7 +39,7 @@ namespace detail {
         template<concepts::InputContainer Con, typename Proj = function::Identity,
                  concepts::IndirectUnaryPredicate<meta::Projected<meta::ContainerIterator<Con>, Proj>> Pred>
         requires(concepts::Permutable<meta::ContainerIterator<Con>>)
-        constexpr meta::BorrowedView<Con> operator()(Con&& container, Pred pred, Proj proj = {}) const {
+        constexpr auto operator()(Con&& container, Pred pred, Proj proj = {}) const -> meta::BorrowedView<Con> {
             return (*this)(container::begin(container), container::end(container), util::ref(pred), util::ref(proj));
         }
     };

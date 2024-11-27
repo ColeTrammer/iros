@@ -10,7 +10,7 @@ namespace detail {
     template<size_t N>
     struct AdjacentFunction : function::pipeline::EnablePipeline {
         template<concepts::ViewableContainer Con>
-        constexpr concepts::View auto operator()(Con&& container) const {
+        constexpr auto operator()(Con&& container) const -> concepts::View auto {
             if constexpr (N == 0) {
                 return empty<Tuple<>>;
             } else {

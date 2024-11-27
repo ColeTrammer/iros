@@ -9,7 +9,7 @@ namespace detail {
     struct DefaultConstructAtFunction {
         template<typename T>
         requires(requires(void* pointer) { ::new (pointer) T; })
-        constexpr T* operator()(T* location) const {
+        constexpr auto operator()(T* location) const -> T* {
             // NOTE: this is not actually the same behavior, as the
             //       expression shown below leaves trivial types
             //       uninitialized. However, placement new is not

@@ -6,7 +6,7 @@ namespace di::bit {
 namespace detail {
     struct CountrOneFunction {
         template<concepts::UnsignedInteger T>
-        constexpr int operator()(T value) const {
+        constexpr auto operator()(T value) const -> int {
             return countr_zero(T(~value));
         }
     };

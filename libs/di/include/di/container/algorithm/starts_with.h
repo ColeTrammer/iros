@@ -9,8 +9,8 @@ namespace detail {
                  concepts::SentinelFor<Jt> Jent, typename Pred = function::Equal, typename Proj = function::Identity,
                  typename Jroj = function::Identity>
         requires(concepts::IndirectlyComparable<It, Jt, Pred, Proj, Jroj>)
-        constexpr bool operator()(It it, Sent ed, Jt jt, Jent fd, Pred pred = {}, Proj proj = {},
-                                  Jroj jroj = {}) const {
+        constexpr auto operator()(It it, Sent ed, Jt jt, Jent fd, Pred pred = {}, Proj proj = {}, Jroj jroj = {}) const
+            -> bool {
             return container::mismatch(util::move(it), ed, util::move(jt), fd, util::ref(pred), util::ref(proj),
                                        util::ref(jroj))
                        .in2 == fd;
@@ -20,7 +20,7 @@ namespace detail {
                  typename Proj = function::Identity, typename Jroj = function::Identity>
         requires(concepts::IndirectlyComparable<meta::ContainerIterator<Con>, meta::ContainerIterator<Jon>, Pred, Proj,
                                                 Jroj>)
-        constexpr bool operator()(Con&& con, Jon&& jon, Pred pred = {}, Proj proj = {}, Jroj jroj = {}) const {
+        constexpr auto operator()(Con&& con, Jon&& jon, Pred pred = {}, Proj proj = {}, Jroj jroj = {}) const -> bool {
             return (*this)(container::begin(con), container::end(con), container::begin(jon), container::end(jon),
                            util::ref(pred), util::ref(proj), util::ref(jroj));
         }

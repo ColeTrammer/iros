@@ -21,9 +21,9 @@ public:
         return data.size();
     }
 
-    constexpr vocab::Result<void> flush() { return {}; }
+    constexpr auto flush() -> vocab::Result<void> { return {}; }
 
-    constexpr T output() && { return util::move(m_output); }
+    constexpr auto output() && -> T { return util::move(m_output); }
 
 private:
     T m_output;

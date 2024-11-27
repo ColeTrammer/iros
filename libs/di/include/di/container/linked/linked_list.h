@@ -30,7 +30,7 @@ namespace detail {
         requires(concepts::ConstructibleFrom<T, Args...>)
         constexpr LinkedListNode(InPlace, Args&&... args) : m_value(util::forward<Args>(args)...) {}
 
-        constexpr T& value() { return m_value; }
+        constexpr auto value() -> T& { return m_value; }
 
     private:
         T m_value;
@@ -40,8 +40,8 @@ namespace detail {
     struct LinkedListTag : IntrusiveTagBase<LinkedListNode<T>> {
         using Node = LinkedListNode<T>;
 
-        constexpr static bool is_sized(InPlaceType<T>) { return true; }
-        constexpr static T& down_cast(InPlaceType<T>, Node& node) { return node.value(); }
+        constexpr static auto is_sized(InPlaceType<T>) -> bool { return true; }
+        constexpr static auto down_cast(InPlaceType<T>, Node& node) -> T& { return node.value(); }
 
         constexpr static void did_remove(auto& list, Node& node) {
             util::destroy_at(util::addressof(node));
@@ -73,20 +73,22 @@ public:
     LinkedList() = default;
 
     LinkedList(LinkedList&&) = default;
-    LinkedList& operator=(LinkedList&&) = default;
+    auto operator=(LinkedList&&) -> LinkedList& = default;
 
     ~LinkedList() = default;
 
-    constexpr Iterator insert(ConstIterator position, T const& value)
+    constexpr auto insert(ConstIterator position, T const& value) -> Iterator
     requires(concepts::CopyConstructible<T>)
     {
         return emplace(position, value);
     }
-    constexpr Iterator insert(ConstIterator position, T&& value) { return emplace(position, util::move(value)); }
+    constexpr auto insert(ConstIterator position, T&& value) -> Iterator {
+        return emplace(position, util::move(value));
+    }
 
     template<typename... Args>
     requires(concepts::ConstructibleFrom<T, Args...>)
-    constexpr decltype(auto) emplace(ConstIterator position, Args&&... args) {
+    constexpr auto emplace(ConstIterator position, Args&&... args) -> decltype(auto) {
         return as_fallible(create_node(util::forward<Args>(args)...)) % [&](Node& node) {
             return List::insert(position, node);
         } | try_infallible;
@@ -104,17 +106,17 @@ public:
         } | try_infallible;
     }
 
-    constexpr decltype(auto) push_back(T const& value)
+    constexpr auto push_back(T const& value) -> decltype(auto)
     requires(concepts::CopyConstructible<T>)
     {
         return emplace_back(value);
     }
 
-    constexpr decltype(auto) push_back(T&& value) { return emplace_back(util::move(value)); }
+    constexpr auto push_back(T&& value) -> decltype(auto) { return emplace_back(util::move(value)); }
 
     template<typename... Args>
     requires(concepts::ConstructibleFrom<T, Args...>)
-    constexpr decltype(auto) emplace_back(Args&&... args) {
+    constexpr auto emplace_back(Args&&... args) -> decltype(auto) {
         return as_fallible(emplace(this->end(), util::forward<Args>(args)...)) % [](Iterator it) {
             return util::ref(*it);
         } | try_infallible;
@@ -125,7 +127,7 @@ public:
         return insert_container(this->end(), util::forward<Con>(container));
     }
 
-    constexpr Optional<T> pop_back() {
+    constexpr auto pop_back() -> Optional<T> {
         if (this->empty()) {
             return nullopt;
         }
@@ -135,17 +137,17 @@ public:
         return value;
     }
 
-    constexpr decltype(auto) push_front(T const& value)
+    constexpr auto push_front(T const& value) -> decltype(auto)
     requires(concepts::CopyConstructible<T>)
     {
         return emplace_front(value);
     }
 
-    constexpr decltype(auto) push_front(T&& value) { return emplace_front(util::move(value)); }
+    constexpr auto push_front(T&& value) -> decltype(auto) { return emplace_front(util::move(value)); }
 
     template<typename... Args>
     requires(concepts::ConstructibleFrom<T, Args...>)
-    constexpr decltype(auto) emplace_front(Args&&... args) {
+    constexpr auto emplace_front(Args&&... args) -> decltype(auto) {
         return as_fallible(emplace(this->begin(), util::forward<Args>(args)...)) % [](auto it) {
             return util::ref(*it);
         } | try_infallible;
@@ -156,7 +158,7 @@ public:
         return insert_container(this->begin(), util::forward<Con>(container));
     }
 
-    constexpr Optional<T> pop_front() {
+    constexpr auto pop_front() -> Optional<T> {
         if (this->empty()) {
             return nullopt;
         }
@@ -166,12 +168,12 @@ public:
         return value;
     }
 
-    constexpr Alloc& allocator() { return m_allocator; }
+    constexpr auto allocator() -> Alloc& { return m_allocator; }
 
 private:
     template<typename... Args>
     requires(concepts::ConstructibleFrom<T, Args...>)
-    constexpr decltype(auto) create_node(Args&&... args) {
+    constexpr auto create_node(Args&&... args) -> decltype(auto) {
         return as_fallible(di::allocate_one<Node>(m_allocator)) % [&](Node* pointer) {
             util::construct_at(pointer, in_place, util::forward<Args>(args)...);
             return util::ref(*pointer);
@@ -182,7 +184,7 @@ private:
 };
 
 template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>>
-LinkedList<T> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<LinkedList>, Con&&);
+auto tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<LinkedList>, Con&&) -> LinkedList<T>;
 }
 
 namespace di {

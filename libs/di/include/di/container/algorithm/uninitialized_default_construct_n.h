@@ -12,7 +12,7 @@ namespace detail {
     struct UninitializedDefaultConstructNFunction {
         template<concepts::UninitForwardIterator Out>
         requires(concepts::DefaultInitializable<meta::IteratorValue<Out>>)
-        constexpr Out operator()(Out out, meta::IteratorSSizeType<Out> n) const {
+        constexpr auto operator()(Out out, meta::IteratorSSizeType<Out> n) const -> Out {
             if constexpr (concepts::TriviallyDefaultConstructible<meta::IteratorValue<Out>>) {
                 return container::next(out, n);
             }

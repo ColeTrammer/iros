@@ -36,7 +36,7 @@ void unreserve_page_frames(PhysicalAddress base_address, usize page_count) {
     });
 }
 
-Expected<PhysicalAddress> allocate_page_frame() {
+auto allocate_page_frame() -> Expected<PhysicalAddress> {
     return page_frame_bitmap.with_lock([&](auto& bitmap) -> Expected<PhysicalAddress> {
         for (usize i = 0; i < physical_page_count; i++) {
             if (bitmap[i]) {
@@ -52,7 +52,7 @@ Expected<PhysicalAddress> allocate_page_frame() {
     });
 }
 
-Expected<PhysicalAddress> allocate_physically_contiguous_page_frames(usize page_count) {
+auto allocate_physically_contiguous_page_frames(usize page_count) -> Expected<PhysicalAddress> {
     return page_frame_bitmap.with_lock([&](auto& bitmap) -> Expected<PhysicalAddress> {
         for (usize i = 0; i <= physical_page_count - page_count; i++) {
             if (bitmap[i]) {

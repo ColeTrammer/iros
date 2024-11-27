@@ -7,7 +7,7 @@
 #else
 namespace std {
 template<typename T>
-constexpr di::meta::RemoveReference<T>&& move(T&& value) noexcept {
+constexpr auto move(T&& value) noexcept -> di::meta::RemoveReference<T>&& {
     return static_cast<di::meta::RemoveReference<T>&&>(value);
 }
 }

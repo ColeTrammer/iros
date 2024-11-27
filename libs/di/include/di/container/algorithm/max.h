@@ -16,13 +16,13 @@ namespace detail {
     struct MaxFunction {
         template<typename T, typename Proj = function::Identity,
                  concepts::IndirectStrictWeakOrder<meta::Projected<T const*, Proj>> Comp = function::Compare>
-        constexpr T const& operator()(T const& a, T const& b, Comp comp = {}, Proj proj = {}) const {
+        constexpr auto operator()(T const& a, T const& b, Comp comp = {}, Proj proj = {}) const -> T const& {
             return function::invoke(comp, function::invoke(proj, a), function::invoke(proj, b)) >= 0 ? a : b;
         }
 
         template<concepts::Copyable T, typename Proj = function::Identity,
                  concepts::IndirectStrictWeakOrder<meta::Projected<T const*, Proj>> Comp = function::Compare>
-        constexpr T const operator()(std::initializer_list<T> list, Comp comp = {}, Proj proj = {}) const {
+        constexpr auto operator()(std::initializer_list<T> list, Comp comp = {}, Proj proj = {}) const -> T const {
             return *max_element(list, util::ref(comp), util::ref(proj));
         }
 
@@ -30,7 +30,7 @@ namespace detail {
                  concepts::IndirectStrictWeakOrder<meta::Projected<meta::ContainerIterator<Con>, Proj>> Comp =
                      function::Compare>
         requires(concepts::IndirectlyCopyableStorable<meta::ContainerIterator<Con>, meta::ContainerValue<Con>*>)
-        constexpr meta::ContainerValue<Con> operator()(Con&& container, Comp comp = {}, Proj proj = {}) const {
+        constexpr auto operator()(Con&& container, Comp comp = {}, Proj proj = {}) const -> meta::ContainerValue<Con> {
             auto it = container::begin(container);
             auto ed = container::end(container);
             auto result = meta::ContainerValue<Con> { *it };

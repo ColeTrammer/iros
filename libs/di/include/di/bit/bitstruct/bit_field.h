@@ -17,7 +17,7 @@ struct BitField {
     }
 
     template<size_t bit_size>
-    constexpr static Value bits_into_value(BitSet<bit_size> const& bit_set) {
+    constexpr static auto bits_into_value(BitSet<bit_size> const& bit_set) -> Value {
         auto result = Value { 0 };
         for (size_t i = 0; i < bit_count; i++) {
             result |= (bit_set[index + i] << i);
@@ -26,7 +26,7 @@ struct BitField {
     }
 
     constexpr BitField(Value value) : m_value(value) {}
-    constexpr Value get() const { return m_value; }
+    constexpr auto get() const -> Value { return m_value; }
 
 private:
     Value m_value;

@@ -52,7 +52,7 @@ public:
     requires(!concepts::RemoveCVRefSameAs<T, ErasedString> && requires { into_erased_string(util::declval<T>()); })
     constexpr ErasedString(T&& value) : ErasedString(into_erased_string(util::forward<T>(value))) {}
 
-    constexpr ErasedString& operator=(ErasedString&& other) {
+    constexpr auto operator=(ErasedString&& other) -> ErasedString& {
         if (this != &other) {
             util::destroy_at(this);
             util::construct_at(this, util::move(other));

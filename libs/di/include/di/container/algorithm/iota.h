@@ -10,7 +10,7 @@ namespace detail {
     struct IotaFunction {
         template<concepts::Iterator Out, concepts::SentinelFor<Out> Sent, concepts::WeaklyIncrementable T>
         requires(concepts::IndirectlyWritable<Out, T const&>)
-        constexpr OutValueResult<Out, T> operator()(Out output, Sent last, T value) const {
+        constexpr auto operator()(Out output, Sent last, T value) const -> OutValueResult<Out, T> {
             for (; output != last; ++output, ++value) {
                 *output = util::as_const(value);
             }
@@ -18,7 +18,7 @@ namespace detail {
         }
 
         template<concepts::WeaklyIncrementable T, concepts::OutputContainer<T const&> Con>
-        constexpr OutValueResult<meta::BorrowedIterator<Con>, T> operator()(Con&& container, T value) const {
+        constexpr auto operator()(Con&& container, T value) const -> OutValueResult<meta::BorrowedIterator<Con>, T> {
             return (*this)(container::begin(container), container::end(container), util::move(value));
         }
     };

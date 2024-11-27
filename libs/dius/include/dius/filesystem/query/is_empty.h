@@ -6,7 +6,7 @@
 namespace dius::filesystem {
 namespace detail {
     struct IsEmptyFunction {
-        di::Result<bool> operator()(di::PathView path) const;
+        auto operator()(di::PathView path) const -> di::Result<bool>;
     };
 }
 

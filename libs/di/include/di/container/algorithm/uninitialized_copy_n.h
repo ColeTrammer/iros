@@ -13,8 +13,8 @@ namespace detail {
         template<concepts::InputIterator It, concepts::UninitForwardIterator Out,
                  concepts::UninitSentinelFor<Out> OutSent>
         requires(concepts::ConstructibleFrom<meta::IteratorValue<Out>, meta::IteratorReference<It>>)
-        constexpr InOutResult<It, Out> operator()(It in, meta::IteratorSSizeType<It> n, Out out,
-                                                  OutSent out_last) const {
+        constexpr auto operator()(It in, meta::IteratorSSizeType<It> n, Out out, OutSent out_last) const
+            -> InOutResult<It, Out> {
             for (; n > 0 && out != out_last; --n, ++in, ++out) {
                 util::construct_at(util::addressof(*out), *in);
             }

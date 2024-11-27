@@ -161,8 +161,8 @@ public:
         m_data = di::exchange(other.m_data, Span<byte> {});
     }
 
-    constexpr ExclusiveByteBufferImpl& operator=(ExclusiveByteBufferImpl const&) = delete;
-    constexpr ExclusiveByteBufferImpl& operator=(ExclusiveByteBufferImpl&& other) {
+    constexpr auto operator=(ExclusiveByteBufferImpl const&) -> ExclusiveByteBufferImpl& = delete;
+    constexpr auto operator=(ExclusiveByteBufferImpl&& other) -> ExclusiveByteBufferImpl& {
         m_store = di::move(other.m_store);
         m_data = di::exchange(other.m_data, Span<byte> {});
     }

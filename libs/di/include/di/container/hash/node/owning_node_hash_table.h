@@ -26,7 +26,7 @@ public:
     requires(concepts::ConstructibleFrom<T, Args...>)
     constexpr OwningHashNode(InPlace, Args&&... args) : m_value(util::forward<Args>(args)...) {}
 
-    constexpr T& value() { return m_value; }
+    constexpr auto value() -> T& { return m_value; }
 
 private:
     T m_value;
@@ -36,11 +36,11 @@ template<typename Self, typename T>
 struct OwningHashNodeTag : IntrusiveTagBase<OwningHashNode<T, Self>> {
     using Node = OwningHashNode<T, Self>;
 
-    constexpr static bool is_sized(auto) { return false; }
-    constexpr static OwningHashNode<T, Self>& down_cast(auto, auto& node) {
+    constexpr static auto is_sized(auto) -> bool { return false; }
+    constexpr static auto down_cast(auto, auto& node) -> OwningHashNode<T, Self>& {
         return static_cast<OwningHashNode<T, Self>&>(node);
     }
-    constexpr static T& down_cast(InPlaceType<T>, Node& node) { return node.value(); }
+    constexpr static auto down_cast(InPlaceType<T>, Node& node) -> T& { return node.value(); }
 
     constexpr static void did_remove(auto& self, auto& node) {
         if constexpr (requires { di::deallocate_one<Node>(self.allocator(), util::addressof(node)); }) {
@@ -49,7 +49,7 @@ struct OwningHashNodeTag : IntrusiveTagBase<OwningHashNode<T, Self>> {
         }
     }
 
-    constexpr static bool allow_rehashing_in_insert(auto) { return true; }
+    constexpr static auto allow_rehashing_in_insert(auto) -> bool { return true; }
 };
 
 template<typename Value, typename Eq, concepts::Hasher Hasher, typename Buckets, typename Tag,
@@ -77,10 +77,10 @@ private:
 public:
     using Base::Base;
 
-    constexpr Alloc& allocator() { return m_allocator; }
+    constexpr auto allocator() -> Alloc& { return m_allocator; }
 
     template<typename U, concepts::Invocable F>
-    constexpr InsertResult insert_with_factory(U&& needle, F&& factory) {
+    constexpr auto insert_with_factory(U&& needle, F&& factory) -> InsertResult {
         if (this->bucket_count() == 0) {
             if constexpr (concepts::Expected<AllocResult>) {
                 DI_TRY(this->reserve(20));

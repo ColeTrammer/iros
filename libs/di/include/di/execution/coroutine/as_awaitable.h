@@ -35,7 +35,7 @@ namespace as_awaitable_ns {
             static_cast<CoroutineHandle<>>(self.continuation.promise().unhandled_stopped()).resume();
         }
 
-        constexpr friend decltype(auto) tag_invoke(types::Tag<get_env> tag, Type const& self) {
+        constexpr friend auto tag_invoke(types::Tag<get_env> tag, Type const& self) -> decltype(auto) {
             return tag(self.continuation.promise());
         }
     };
@@ -54,9 +54,9 @@ namespace as_awaitable_ns {
                       util::forward<Send>(sender),
                       Receiver { util::addressof(m_result), CoroutineHandle<Promise>::from_promise(promise) })) {}
 
-            bool await_ready() const noexcept { return false; }
+            auto await_ready() const noexcept -> bool { return false; }
             void await_suspend(CoroutineHandle<>) noexcept { start(m_state); }
-            Value await_resume() {
+            auto await_resume() -> Value {
                 if constexpr (!concepts::LanguageVoid<Value>) {
                     return util::move(m_result).value();
                 }
@@ -72,19 +72,19 @@ namespace as_awaitable_ns {
     using SenderAwaitable = meta::Type<SenderAwaitableT<Send, Promise>>;
 
     struct DummyPromise {
-        DummyPromise get_return_object() noexcept;
-        SuspendAlways initial_suspend() noexcept;
-        SuspendAlways final_suspend() noexcept;
+        auto get_return_object() noexcept -> DummyPromise;
+        auto initial_suspend() noexcept -> SuspendAlways;
+        auto final_suspend() noexcept -> SuspendAlways;
         void unhandled_exception() noexcept;
         void return_void() noexcept;
 
-        std::coroutine_handle<> unhandled_stopped() noexcept;
-        std::coroutine_handle<> unhandled_error(vocab::Error) noexcept;
+        auto unhandled_stopped() noexcept -> std::coroutine_handle<>;
+        auto unhandled_error(vocab::Error) noexcept -> std::coroutine_handle<>;
     };
 
     struct Function {
         template<typename T, typename Promise>
-        constexpr decltype(auto) operator()(T&& value, Promise& promise) const {
+        constexpr auto operator()(T&& value, Promise& promise) const -> decltype(auto) {
             if constexpr (concepts::TagInvocable<Function, T, Promise&>) {
                 static_assert(concepts::IsAwaitable<meta::TagInvokeResult<Function, T, Promise&>>,
                               "Customizations of di::as_awaitable() must return an Awaitable.");

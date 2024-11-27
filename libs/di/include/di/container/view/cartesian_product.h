@@ -21,7 +21,7 @@ namespace detail {
     struct CartesianProductFunction {
         template<concepts::ViewableContainer... Cons>
         requires(CustomCartesianProduct<Cons...> || EmptyCartesianProduct<Cons...> || ViewCartesianProduct<Cons...>)
-        constexpr concepts::View auto operator()(Cons&&... containers) const {
+        constexpr auto operator()(Cons&&... containers) const -> concepts::View auto {
             if constexpr (CustomCartesianProduct<Cons...>) {
                 return function::tag_invoke(*this, util::forward<Cons>(containers)...);
             } else if constexpr (EmptyCartesianProduct<Cons...>) {

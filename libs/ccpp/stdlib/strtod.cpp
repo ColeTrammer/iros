@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 // https://pubs.opengroup.org/onlinepubs/9699919799/functions/strtod.html
-extern "C" double strtod(char const* __restrict, char** __restrict) {
+extern "C" auto strtod(char const* __restrict, char** __restrict) -> double {
     ASSERT(false);
     di::unreachable();
 }

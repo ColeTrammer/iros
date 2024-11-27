@@ -1,7 +1,7 @@
 #include <ctype.h>
 #include <stdio.h>
 
-extern "C" int isspace(int ch) {
+extern "C" auto isspace(int ch) -> int {
     if (ch == EOF) {
         return 0;
     }

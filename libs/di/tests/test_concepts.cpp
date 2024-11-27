@@ -14,7 +14,7 @@ static_assert(!di::concepts::LanguageArray<int*>);
 
 struct X {
     int y;
-    int z();
+    auto z() -> int;
 };
 
 static_assert(!di::concepts::MemberFunctionPointer<decltype(&X::y)>);

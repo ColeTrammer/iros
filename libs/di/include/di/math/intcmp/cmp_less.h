@@ -6,7 +6,7 @@ namespace di::math {
 namespace detail {
     struct CmpLessFunction {
         template<concepts::Integer T, concepts::Integer U>
-        constexpr bool operator()(T a, U b) const {
+        constexpr auto operator()(T a, U b) const -> bool {
             using UT = meta::MakeUnsigned<T>;
             using UU = meta::MakeUnsigned<U>;
             if constexpr (concepts::Signed<T> == concepts::Signed<U>) {

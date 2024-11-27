@@ -33,7 +33,7 @@ namespace linux {
         di::Array<di::Byte, 24> padding_end;
     };
 
-    static di::Result<int> sys_fstatat64(int dirfd, di::PathView path, stat64* buffer, int flags) {
+    static auto sys_fstatat64(int dirfd, di::PathView path, stat64* buffer, int flags) -> di::Result<int> {
         auto raw_data = path.data();
         char null_terminated_string[4097];
         ASSERT_LT(raw_data.size(), sizeof(null_terminated_string) - 1);
@@ -45,7 +45,7 @@ namespace linux {
     }
 }
 
-static FileStatus stat_to_file_status(linux::stat64& info) {
+static auto stat_to_file_status(linux::stat64& info) -> FileStatus {
     auto type = [&] {
         if (S_ISREG(info.mode)) {
             return FileType::Regular;
@@ -74,7 +74,7 @@ static FileStatus stat_to_file_status(linux::stat64& info) {
 }
 
 namespace detail {
-    di::Result<bool> IsEmptyFunction::operator()(di::PathView path) const {
+    auto IsEmptyFunction::operator()(di::PathView path) const -> di::Result<bool> {
         linux::stat64 info;
         auto result = linux::sys_fstatat64(AT_FDCWD, path, &info, 0);
         if (!S_ISDIR(info.mode) && !S_ISREG(info.mode)) {
@@ -87,7 +87,7 @@ namespace detail {
         return info.size == 0;
     }
 
-    di::Result<FileStatus> StatusFunction::operator()(di::PathView path) const {
+    auto StatusFunction::operator()(di::PathView path) const -> di::Result<FileStatus> {
         linux::stat64 info;
         auto result = linux::sys_fstatat64(AT_FDCWD, path, &info, 0);
         if (result == di::Unexpected(PosixError::NoSuchFileOrDirectory)) {
@@ -99,7 +99,7 @@ namespace detail {
         return stat_to_file_status(info);
     }
 
-    di::Result<FileStatus> SymlinkStatusFunction::operator()(di::PathView path) const {
+    auto SymlinkStatusFunction::operator()(di::PathView path) const -> di::Result<FileStatus> {
         linux::stat64 info;
         auto result = linux::sys_fstatat64(AT_FDCWD, path, &info, AT_SYMLINK_NOFOLLOW);
         if (result == di::Unexpected(PosixError::NoSuchFileOrDirectory)) {
@@ -111,7 +111,7 @@ namespace detail {
         return stat_to_file_status(info);
     }
 
-    di::Result<umax> FileSizeFunction::operator()(di::PathView path) const {
+    auto FileSizeFunction::operator()(di::PathView path) const -> di::Result<umax> {
         linux::stat64 info;
         TRY(linux::sys_fstatat64(AT_FDCWD, path, &info, 0));
 
@@ -124,7 +124,7 @@ namespace detail {
         return info.size;
     }
 
-    di::Result<umax> HardLinkCountFunction::operator()(di::PathView path) const {
+    auto HardLinkCountFunction::operator()(di::PathView path) const -> di::Result<umax> {
         linux::stat64 info;
         TRY(linux::sys_fstatat64(AT_FDCWD, path, &info, 0));
         return info.link_count;

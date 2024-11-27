@@ -15,7 +15,7 @@ namespace stopped_as_optional_ns {
     struct Function : function::pipeline::EnablePipeline {
         template<concepts::Sender Send>
         requires(concepts::DecayConstructible<Send>)
-        concepts::Sender auto operator()(Send&& sender) const {
+        auto operator()(Send&& sender) const -> concepts::Sender auto {
             return execution::let_value(get_env(), [sender = util::forward<Send>(sender)]<typename E>(E const&)
                                         requires(concepts::SingleSender<Send, E>)
                                         {

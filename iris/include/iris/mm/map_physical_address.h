@@ -9,7 +9,7 @@
 namespace iris::mm {
 struct PhysicalAddressMapping;
 
-Expected<PhysicalAddressMapping> map_physical_address(PhysicalAddress, usize byte_size);
+auto map_physical_address(PhysicalAddress, usize byte_size) -> Expected<PhysicalAddressMapping>;
 
 struct PhysicalAddressMapping {
 public:
@@ -19,11 +19,11 @@ public:
 
     PhysicalAddressMapping(PhysicalAddressMapping const&) = delete;
     PhysicalAddressMapping(PhysicalAddressMapping&&) = default;
-    PhysicalAddressMapping& operator=(PhysicalAddressMapping const&) = delete;
-    PhysicalAddressMapping& operator=(PhysicalAddressMapping&&) = default;
+    auto operator=(PhysicalAddressMapping const&) -> PhysicalAddressMapping& = delete;
+    auto operator=(PhysicalAddressMapping&&) -> PhysicalAddressMapping& = default;
 
     template<typename T>
-    T& typed() const {
+    auto typed() const -> T& {
         return *reinterpret_cast<T*>(m_data.data());
     }
 

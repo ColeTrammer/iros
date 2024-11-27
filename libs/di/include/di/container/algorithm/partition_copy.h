@@ -12,8 +12,8 @@ namespace detail {
                  concepts::WeaklyIncrementable OutFalse, typename Proj = function::Identity,
                  concepts::IndirectUnaryPredicate<meta::Projected<It, Proj>> Pred>
         requires(concepts::IndirectlyCopyable<It, OutTrue> && concepts::IndirectlyCopyable<It, OutFalse>)
-        constexpr InOutOutResult<It, OutTrue, OutFalse>
-        operator()(It first, Sent last, OutTrue out_true, OutFalse out_false, Pred pred, Proj proj = {}) const {
+        constexpr auto operator()(It first, Sent last, OutTrue out_true, OutFalse out_false, Pred pred,
+                                  Proj proj = {}) const -> InOutOutResult<It, OutTrue, OutFalse> {
             for (; first != last; ++first) {
                 if (function::invoke(pred, function::invoke(proj, *first))) {
                     *out_true = *first;
@@ -31,8 +31,9 @@ namespace detail {
                  concepts::IndirectUnaryPredicate<meta::Projected<meta::ContainerIterator<Con>, Proj>> Pred>
         requires(concepts::IndirectlyCopyable<meta::ContainerIterator<Con>, OutTrue> &&
                  concepts::IndirectlyCopyable<meta::ContainerIterator<Con>, OutFalse>)
-        constexpr InOutOutResult<meta::BorrowedIterator<Con>, OutTrue, OutFalse>
-        operator()(Con&& container, OutTrue out_true, OutFalse out_false, Pred pred, Proj proj = {}) const {
+        constexpr auto operator()(Con&& container, OutTrue out_true, OutFalse out_false, Pred pred,
+                                  Proj proj = {}) const
+            -> InOutOutResult<meta::BorrowedIterator<Con>, OutTrue, OutFalse> {
             return (*this)(container::begin(container), container::end(container), util::move(out_true),
                            util::move(out_false), util::ref(pred), util::ref(proj));
         }

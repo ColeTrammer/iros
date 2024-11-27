@@ -14,7 +14,7 @@ namespace detail {
     struct CloneFunction : function::pipeline::EnablePipeline {
         template<concepts::ViewableContainer Con, typename Value = meta::ContainerReference<Con>>
         requires(!concepts::LValueReference<Value> || concepts::Clonable<Value>)
-        constexpr concepts::View auto operator()(Con&& container) const {
+        constexpr auto operator()(Con&& container) const -> concepts::View auto {
             if constexpr (!concepts::LValueReference<Value>) {
                 return all(util::forward<Con>(container));
             } else {

@@ -11,7 +11,7 @@ namespace detail {
     struct ShuffleFunction {
         template<concepts::RandomAccessIterator It, concepts::SentinelFor<It> Sent, typename Gen>
         requires(concepts::Permutable<It> && concepts::UniformRandomBitGenerator<meta::RemoveReference<Gen>>)
-        constexpr It operator()(It first, Sent last, Gen&& generator) const {
+        constexpr auto operator()(It first, Sent last, Gen&& generator) const -> It {
             using SSizeType = meta::IteratorSSizeType<It>;
             using Distribution = random::UniformIntDistribution<SSizeType>;
             using Param = Distribution::Param;
@@ -30,7 +30,7 @@ namespace detail {
         template<concepts::RandomAccessContainer Con, typename Gen>
         requires(concepts::Permutable<meta::ContainerIterator<Con>> &&
                  concepts::UniformRandomBitGenerator<meta::RemoveReference<Gen>>)
-        constexpr meta::BorrowedIterator<Con> operator()(Con&& container, Gen&& generator) const {
+        constexpr auto operator()(Con&& container, Gen&& generator) const -> meta::BorrowedIterator<Con> {
             return (*this)(container::begin(container), container::end(container), generator);
         }
     };

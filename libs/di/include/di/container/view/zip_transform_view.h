@@ -70,7 +70,7 @@ private:
         requires(is_const && concepts::ConvertibleTo<Ziperator<is_const>, Ziperator<!is_const>>)
             : Base(util::move(other).base()), m_parent(other.m_parent) {}
 
-        constexpr decltype(auto) operator*() const {
+        constexpr auto operator*() const -> decltype(auto) {
             return apply(
                 [&](auto const&... iters) -> decltype(auto) {
                     return function::invoke(m_parent->m_function.value(), *iters...);
@@ -82,7 +82,7 @@ private:
         template<bool>
         friend class Iterator;
 
-        constexpr friend decltype(auto) tag_invoke(types::Tag<iterator_move>, Iterator const& self) {
+        constexpr friend auto tag_invoke(types::Tag<iterator_move>, Iterator const& self) -> decltype(auto) {
             if constexpr (concepts::LValueReference<decltype(*self)>) {
                 return util::move(*self);
             } else {

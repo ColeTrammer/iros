@@ -6,7 +6,7 @@
 namespace di::util {
 namespace detail {
     struct Function : function::pipeline::EnablePipeline {
-        uintptr_t operator()(auto* pointer) const { return reinterpret_cast<uintptr_t>(pointer); }
+        auto operator()(auto* pointer) const -> uintptr_t { return reinterpret_cast<uintptr_t>(pointer); }
     };
 }
 

@@ -11,7 +11,7 @@ namespace di::container::view {
 namespace detail {
     struct CacheLastFunction : public function::pipeline::EnablePipeline {
         template<concepts::InputContainer Con>
-        constexpr concepts::View auto operator()(Con&& container) const {
+        constexpr auto operator()(Con&& container) const -> concepts::View auto {
             return CacheLastView { di::forward<Con>(container) };
         }
     };

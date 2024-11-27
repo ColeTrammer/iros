@@ -4,7 +4,7 @@
 #include <di/container/view/prelude.h>
 #include <string.h>
 
-extern "C" size_t strxfrm(char* __restrict dest, char const* __restrict src, size_t count) {
+extern "C" auto strxfrm(char* __restrict dest, char const* __restrict src, size_t count) -> size_t {
     // NOTE: This is valid for the "C" locale, but may needed to be changed if other locales are supported.
     if (count == 0) {
         return strlen(src);

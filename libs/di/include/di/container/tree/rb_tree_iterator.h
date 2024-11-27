@@ -18,12 +18,12 @@ public:
     constexpr RBTreeIterator(Node* node, bool at_end = false) : m_current(node), m_at_end(at_end) {}
     constexpr RBTreeIterator(Node& node) : m_current(util::addressof(node)) {}
 
-    constexpr Value& operator*() const {
+    constexpr auto operator*() const -> Value& {
         DI_ASSERT(!m_at_end);
         return Tag::down_cast(in_place_type<Value>, static_cast<ConcreteNode&>(*m_current));
     }
-    constexpr Value* operator->() const { return util::addressof(**this); }
-    constexpr Node& node() const { return *m_current; }
+    constexpr auto operator->() const -> Value* { return util::addressof(**this); }
+    constexpr auto node() const -> Node& { return *m_current; }
 
     constexpr void advance_one() {
         auto* next = m_current->successor();
@@ -44,7 +44,7 @@ public:
     }
 
 private:
-    constexpr friend bool operator==(RBTreeIterator const& a, RBTreeIterator const& b) {
+    constexpr friend auto operator==(RBTreeIterator const& a, RBTreeIterator const& b) -> bool {
         return (a.m_at_end == b.m_at_end) && (a.m_current == b.m_current);
     }
 

@@ -10,7 +10,7 @@ namespace detail {
     // coroutine a specified promise type. C++ first tries to call a member operator co_await,
     // then a global operator co_await, and finally returns the awaitable unmodified.
     template<typename Awaitable>
-    decltype(auto) get_awaiter(Awaitable&& awaitable, void*) {
+    auto get_awaiter(Awaitable&& awaitable, void*) -> decltype(auto) {
         if constexpr (requires { util::forward<Awaitable>(awaitable).operator co_await(); }) {
             return util::forward<Awaitable>(awaitable).operator co_await();
         } else if constexpr (requires { operator co_await(util::forward<Awaitable>(awaitable)); }) {
@@ -23,7 +23,7 @@ namespace detail {
     // When a concrete promise type is known, and it has a member await_transform(), C++
     // calls that function before applying the above rules.
     template<typename Awaitable, typename Promise>
-    decltype(auto) get_awaiter(Awaitable&& awaitable, Promise* promise)
+    auto get_awaiter(Awaitable&& awaitable, Promise* promise) -> decltype(auto)
     requires(requires { promise->await_transform(util::forward<Awaitable>(awaitable)); })
     {
         return get_awaiter(promise->await_transform(util::forward<Awaitable>(awaitable)), util::voidify(promise));

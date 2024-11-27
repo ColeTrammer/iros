@@ -19,16 +19,16 @@ public:
     InPlaceStopToken() = default;
     ~InPlaceStopToken() = default;
 
-    [[nodiscard]] bool stop_requested() const { return !!m_source && m_source->stop_requested(); }
-    [[nodiscard]] bool stop_possible() const { return !!m_source; }
+    [[nodiscard]] auto stop_requested() const -> bool { return !!m_source && m_source->stop_requested(); }
+    [[nodiscard]] auto stop_possible() const -> bool { return !!m_source; }
 
-    [[nodiscard]] bool operator==(InPlaceStopToken const&) const = default;
+    [[nodiscard]] auto operator==(InPlaceStopToken const&) const -> bool = default;
 
 private:
     InPlaceStopSource const* m_source { nullptr };
 };
 
-inline InPlaceStopToken InPlaceStopSource::get_stop_token() const {
+inline auto InPlaceStopSource::get_stop_token() const -> InPlaceStopToken {
     return InPlaceStopToken { this };
 }
 }

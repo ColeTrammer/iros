@@ -6,7 +6,7 @@
 namespace di::function::monad {
 struct BindFunction {
     template<typename T, typename F>
-    constexpr meta::TagInvokeResult<BindFunction, T, F> operator()(T&& value, F&& function) const {
+    constexpr auto operator()(T&& value, F&& function) const -> meta::TagInvokeResult<BindFunction, T, F> {
         return tag_invoke(*this, util::forward<T>(value), util::forward<F>(function));
     }
 };

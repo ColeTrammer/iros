@@ -14,9 +14,9 @@ public:
 
     constexpr void output(char c) { m_output.push_back(c); }
 
-    constexpr Str output() && { return util::move(m_output); }
+    constexpr auto output() && -> Str { return util::move(m_output); }
 
-    constexpr Encoding encoding() const { return m_output.encoding(); }
+    constexpr auto encoding() const -> Encoding { return m_output.encoding(); }
 
 private:
     Str m_output;

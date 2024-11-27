@@ -82,17 +82,16 @@ private:
         = default;
 
         Iterator(Iterator const&) = delete;
-        Iterator& operator=(Iterator const&) = delete;
+        auto operator=(Iterator const&) -> Iterator& = delete;
 
         Iterator(Iterator const&)
         requires(ref_is_glvalue && concepts::ForwardIterator<OuterIter> && concepts::ForwardIterator<InnerIter>)
         = default;
-        Iterator& operator=(Iterator const&)
-        requires(ref_is_glvalue && concepts::ForwardIterator<OuterIter> && concepts::ForwardIterator<InnerIter>)
-        = default;
+        auto operator=(Iterator const&) -> Iterator& requires(
+            ref_is_glvalue&& concepts::ForwardIterator<OuterIter>&& concepts::ForwardIterator<InnerIter>) = default;
 
         Iterator(Iterator&&) = default;
-        Iterator& operator=(Iterator&&) = default;
+        auto operator=(Iterator&&) -> Iterator& = default;
 
         constexpr Iterator(Iterator<!is_const> other)
         requires(is_const && concepts::ConvertibleTo<meta::ContainerIterator<View>, OuterIter> &&
@@ -100,7 +99,7 @@ private:
                  concepts::ConvertibleTo<meta::ContainerIterator<Pattern>, PatternIter>)
             : m_parent(other.m_parent), m_outer(util::move(other.m_outer)), m_inner(util::move(other.m_inner)) {}
 
-        constexpr decltype(auto) operator*() const {
+        constexpr auto operator*() const -> decltype(auto) {
             using Reference =
                 meta::CommonReference<meta::IteratorReference<InnerIter>, meta::IteratorReference<PatternIter>>;
             return visit(
@@ -155,7 +154,7 @@ private:
                 m_inner);
         }
 
-        constexpr OuterIter const& outer() const { return m_outer; }
+        constexpr auto outer() const -> OuterIter const& { return m_outer; }
 
     private:
         template<bool other_is_const>
@@ -166,7 +165,7 @@ private:
 
         friend class JoinWithView;
 
-        constexpr auto&& update_inner(OuterIter const& x) {
+        constexpr auto update_inner(OuterIter const& x) -> auto&& {
             if constexpr (ref_is_glvalue) {
                 return *x;
             } else {
@@ -174,7 +173,7 @@ private:
             }
         }
 
-        constexpr auto&& get_inner(OuterIter const& x) {
+        constexpr auto get_inner(OuterIter const& x) -> auto&& {
             if constexpr (ref_is_glvalue) {
                 return *x;
             } else {
@@ -209,13 +208,13 @@ private:
             }
         }
 
-        constexpr friend bool operator==(Iterator const& x, Iterator const& y)
+        constexpr friend auto operator==(Iterator const& x, Iterator const& y) -> bool
         requires(ref_is_glvalue && concepts::EqualityComparable<OuterIter> && concepts::EqualityComparable<InnerIter>)
         {
             return x.m_outer == y.m_outer && x.m_inner == y.m_inner;
         }
 
-        constexpr friend decltype(auto) tag_invoke(types::Tag<iterator_move>, Iterator const& x) {
+        constexpr friend auto tag_invoke(types::Tag<iterator_move>, Iterator const& x) -> decltype(auto) {
             using RValue = meta::CommonReference<meta::IteratorRValue<InnerIter>, meta::IteratorRValue<PatternIter>>;
             return visit<RValue>(container::iterator_move, x.m_inner);
         }
@@ -258,7 +257,7 @@ private:
         template<bool other_is_const>
         requires(concepts::SentinelFor<meta::ContainerSentinel<Base>,
                                        meta::ContainerIterator<meta::MaybeConst<other_is_const, View>>>)
-        constexpr friend bool operator==(Iterator<other_is_const> const& x, Sentinel const& y) {
+        constexpr friend auto operator==(Iterator<other_is_const> const& x, Sentinel const& y) -> bool {
             return x.outer() == y.m_base;
         }
 
@@ -278,12 +277,12 @@ public:
     constexpr JoinWithView(Con&& container, meta::ContainerValue<InnerContainer> value)
         : m_base(view::all(util::forward<Con>(container))), m_pattern(SingleView { util::move(value) }) {}
 
-    constexpr View base() const&
+    constexpr auto base() const& -> View
     requires(concepts::CopyConstructible<View>)
     {
         return m_base;
     }
-    constexpr View base() && { return util::move(m_base); }
+    constexpr auto base() && -> View { return util::move(m_base); }
 
     constexpr auto begin() {
         constexpr bool is_const =

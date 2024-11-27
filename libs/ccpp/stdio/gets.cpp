@@ -1,7 +1,7 @@
 #include <ccpp/bits/file_implementation.h>
 
 // https://pubs.opengroup.org/onlinepubs/9699919799/functions/gets.html
-extern "C" char* gets(char* str) {
+extern "C" auto gets(char* str) -> char* {
     auto guard = di::ScopedLock(stdin->locked.get_lock());
     auto* current = str;
     for (;;) {

@@ -9,8 +9,8 @@ namespace di::container {
 namespace detail {
     struct AllocateFunction {
         template<typename A>
-        constexpr concepts::MaybeFallible<AllocationResult<>> auto operator()(A& allocator, usize size,
-                                                                              usize alignment) const
+        constexpr auto operator()(A& allocator, usize size, usize alignment) const
+            -> concepts::MaybeFallible<AllocationResult<>> auto
         requires(concepts::TagInvocable<AllocateFunction, A&, usize, usize> ||
                  requires { allocator.allocate(size, alignment); })
         {

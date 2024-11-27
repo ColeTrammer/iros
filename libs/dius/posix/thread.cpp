@@ -1,7 +1,7 @@
 #include <dius/thread.h>
 
 namespace dius {
-di::Result<Thread> Thread::do_start(di::Function<void()> entry) {
+auto Thread::do_start(di::Function<void()> entry) -> di::Result<Thread> {
     auto platform = di::make_box<PlatformThread>();
     platform->entry = di::move(entry);
 
@@ -19,7 +19,7 @@ di::Result<Thread> Thread::do_start(di::Function<void()> entry) {
     return Thread(di::move(platform));
 }
 
-di::Result<void> PlatformThread::join() {
+auto PlatformThread::join() -> di::Result<void> {
     auto result = pthread_join(native_handle, nullptr);
     native_handle = {};
     if (result != 0) {

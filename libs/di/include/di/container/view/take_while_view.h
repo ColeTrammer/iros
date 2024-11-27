@@ -33,10 +33,10 @@ private:
         requires(is_const && concepts::ConvertibleTo<Sent<false>, Sent<true>>)
             : m_base(other.base()), m_predicate(other.m_predicate) {}
 
-        constexpr Sent<is_const> base() const { return m_base; }
+        constexpr auto base() const -> Sent<is_const> { return m_base; }
 
     private:
-        constexpr friend bool operator==(Iter<is_const> const& a, Sentinel const& b) {
+        constexpr friend auto operator==(Iter<is_const> const& a, Sentinel const& b) -> bool {
             return a == b.base() || !function::invoke(*b.m_predicate, *a);
         }
 
@@ -52,14 +52,14 @@ public:
     constexpr explicit TakeWhileView(View base, Pred predicate)
         : m_base(util::move(base)), m_predicate(util::move(predicate)) {}
 
-    constexpr View base() const&
+    constexpr auto base() const& -> View
     requires(concepts::CopyConstructible<View>)
     {
         return m_base;
     }
-    constexpr View base() && { return util::move(m_base); }
+    constexpr auto base() && -> View { return util::move(m_base); }
 
-    constexpr Pred const& pred() const { return m_predicate.value(); }
+    constexpr auto pred() const -> Pred const& { return m_predicate.value(); }
 
     constexpr auto begin()
     requires(!concepts::SimpleView<View>)

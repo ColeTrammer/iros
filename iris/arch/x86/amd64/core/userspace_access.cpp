@@ -16,7 +16,7 @@ UserspaceAccessEnabler::~UserspaceAccessEnabler() {
     }
 }
 
-[[gnu::naked]] static Error do_userspace_copy(byte*, byte const*, usize) {
+[[gnu::naked]] static auto do_userspace_copy(byte*, byte const*, usize) -> Error {
     asm volatile("mov %rdx, %rcx\n"
 
                  ".global __do_userspace_copy_instruction\n"
@@ -30,7 +30,7 @@ UserspaceAccessEnabler::~UserspaceAccessEnabler() {
                  "ret\n");
 }
 
-Expected<void> copy_to_user(di::Span<byte const> kernel_data, byte* userspace_ptr) {
+auto copy_to_user(di::Span<byte const> kernel_data, byte* userspace_ptr) -> Expected<void> {
     auto guard = UserspaceAccessEnabler {};
     auto result = do_userspace_copy(userspace_ptr, kernel_data.data(), kernel_data.size());
     if (result != Error::Success) {
@@ -39,7 +39,7 @@ Expected<void> copy_to_user(di::Span<byte const> kernel_data, byte* userspace_pt
     return {};
 }
 
-Expected<void> copy_from_user(di::Span<byte const> userspace_data, byte* kernel_ptr) {
+auto copy_from_user(di::Span<byte const> userspace_data, byte* kernel_ptr) -> Expected<void> {
     auto guard = UserspaceAccessEnabler {};
     auto result = do_userspace_copy(kernel_ptr, userspace_data.data(), userspace_data.size());
     if (result != Error::Success) {
@@ -48,7 +48,7 @@ Expected<void> copy_from_user(di::Span<byte const> userspace_data, byte* kernel_
     return {};
 }
 
-static Expected<void> validate_userspace_address(uptr address) {
+static auto validate_userspace_address(uptr address) -> Expected<void> {
     // For now, the kernel takes the upper half of the address space.
     if (address & (1_u64 << 63)) {
         return di::Unexpected(Error::BadAddress);
@@ -56,7 +56,7 @@ static Expected<void> validate_userspace_address(uptr address) {
     return {};
 }
 
-static Expected<void> validate_canonical_address(uptr address) {
+static auto validate_canonical_address(uptr address) -> Expected<void> {
     // Normally, x86_64 requires the upper 16 bits be sign extended. This code will need to be updated if 5-level paging
     // is being used.
     auto upper_16_bits = (address >> 48) & 0xFFFF;
@@ -67,7 +67,7 @@ static Expected<void> validate_canonical_address(uptr address) {
     return {};
 }
 
-Expected<void> validate_user_region(mm::VirtualAddress userspace_address, usize count, usize size) {
+auto validate_user_region(mm::VirtualAddress userspace_address, usize count, usize size) -> Expected<void> {
     auto size_bytes = di::Checked(size) * count;
     if (!size_bytes.valid()) {
         return di::Unexpected(Error::BadAddress);

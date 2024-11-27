@@ -9,11 +9,11 @@
 namespace dius::filesystem {
 namespace detail {
     struct IsOtherFunction {
-        constexpr bool operator()(FileStatus status) const {
+        constexpr auto operator()(FileStatus status) const -> bool {
             return exists(status) && !is_regular_file(status) && !is_directory(status) && !is_symlink(status);
         }
 
-        di::Result<bool> operator()(di::PathView path) const { return status(path) % *this; }
+        auto operator()(di::PathView path) const -> di::Result<bool> { return status(path) % *this; }
     };
 }
 

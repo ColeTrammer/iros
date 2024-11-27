@@ -5,7 +5,7 @@
 namespace dius::filesystem {
 namespace detail {
     struct CreateRegularFileFunction {
-        di::Result<bool> operator()(di::PathView path) const;
+        auto operator()(di::PathView path) const -> di::Result<bool>;
     };
 }
 
@@ -13,7 +13,7 @@ constexpr inline auto create_regular_file = detail::CreateRegularFileFunction {}
 
 namespace detail {
     struct CreateDirectoryFunction {
-        di::Result<bool> operator()(di::PathView path) const;
+        auto operator()(di::PathView path) const -> di::Result<bool>;
     };
 }
 

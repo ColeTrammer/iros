@@ -8,7 +8,7 @@
 #include <linux/futex.h>
 
 namespace dius {
-di::Result<di::Box<PlatformThread, PlatformThreadDeleter>> PlatformThread::create(runtime::TlsInfo info) {
+auto PlatformThread::create(runtime::TlsInfo info) -> di::Result<di::Box<PlatformThread, PlatformThreadDeleter>> {
     auto [tls_data, tls_size, tls_alignment] = info;
 
     auto alignment = di::max(tls_alignment, alignof(PlatformThread));
@@ -38,7 +38,7 @@ void PlatformThreadDeleter::operator()(PlatformThread* thread) const {
     ::operator delete(storage, size, std::align_val_t(alignment));
 }
 
-di::Result<Thread> Thread::do_start(di::Function<void()> entry) {
+auto Thread::do_start(di::Function<void()> entry) -> di::Result<Thread> {
     auto platform_thread = TRY(PlatformThread::create(runtime::get_tls_info()));
     platform_thread->entry = di::move(entry);
 
@@ -55,12 +55,12 @@ di::Result<Thread> Thread::do_start(di::Function<void()> entry) {
     return Thread(di::move(platform_thread));
 }
 
-static di::Result<void> futex_wait(int* futex, int expect) {
+static auto futex_wait(int* futex, int expect) -> di::Result<void> {
     TRY(system::system_call<int>(system::Number::futex, futex, FUTEX_WAIT, expect, 0));
     return {};
 }
 
-di::Result<void> PlatformThread::join() {
+auto PlatformThread::join() -> di::Result<void> {
     while (auto value = di::AtomicRef(thread_id).load(di::MemoryOrder::Acquire)) {
         (void) futex_wait(&thread_id, value);
     }

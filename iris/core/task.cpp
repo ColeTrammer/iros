@@ -35,7 +35,7 @@ Task::~Task() {
     });
 }
 
-Expected<di::Arc<Task>> create_kernel_task(TaskNamespace& task_namespace, void (*entry)()) {
+auto create_kernel_task(TaskNamespace& task_namespace, void (*entry)()) -> Expected<di::Arc<Task>> {
     auto entry_address = mm::VirtualAddress(di::to_uintptr(entry));
 
     auto const& global_state = iris::global_state();
@@ -60,9 +60,8 @@ Expected<di::Arc<Task>> create_kernel_task(TaskNamespace& task_namespace, void (
     return result;
 }
 
-Expected<di::Arc<Task>> create_user_task(TaskNamespace& task_namespace, di::Arc<TNode> root_tnode,
-                                         di::Arc<TNode> cwd_tnode, FileTable file_table,
-                                         di::Arc<mm::AddressSpace> address_space) {
+auto create_user_task(TaskNamespace& task_namespace, di::Arc<TNode> root_tnode, di::Arc<TNode> cwd_tnode,
+                      FileTable file_table, di::Arc<mm::AddressSpace> address_space) -> Expected<di::Arc<Task>> {
     auto task_status = TRY(di::make_arc<TaskStatus>());
     auto task_id = TRY(task_namespace.lock()->allocate_task_id());
     auto result = TRY(di::make_arc<Task>(true, di::move(address_space), task_namespace.arc_from_this(), task_id,
@@ -81,7 +80,7 @@ Expected<di::Arc<Task>> create_user_task(TaskNamespace& task_namespace, di::Arc<
     return result;
 }
 
-Expected<void> load_executable(Task& task, di::PathView path) {
+auto load_executable(Task& task, di::PathView path) -> Expected<void> {
     auto file = TRY_UNERASE_ERROR(
         di::execution::sync_wait(open_path(task.root_tnode(), task.cwd_tnode(), path, OpenMode::None)));
     auto file_metadata = TRY_UNERASE_ERROR(di::execution::sync_wait(iris::file_metadata(file)));

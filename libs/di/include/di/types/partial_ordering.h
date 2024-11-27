@@ -13,23 +13,23 @@ public:
     static partial_ordering const greater;
     static partial_ordering const unordered;
 
-    constexpr friend bool operator==(partial_ordering v, partial_ordering w) = default;
-    constexpr friend bool operator==(partial_ordering v, int) { return v.m_value == 0; }
+    constexpr friend auto operator==(partial_ordering v, partial_ordering w) -> bool = default;
+    constexpr friend auto operator==(partial_ordering v, int) -> bool { return v.m_value == 0; }
 
-    constexpr friend bool operator<(partial_ordering v, int) { return v.m_value < 0; }
-    constexpr friend bool operator<(int, partial_ordering v) { return v.m_value == 1; }
+    constexpr friend auto operator<(partial_ordering v, int) -> bool { return v.m_value < 0; }
+    constexpr friend auto operator<(int, partial_ordering v) -> bool { return v.m_value == 1; }
 
-    constexpr friend bool operator<=(partial_ordering v, int) { return v == 0 || v < 0; }
-    constexpr friend bool operator<=(int, partial_ordering v) { return v == 0 || 0 < v; }
+    constexpr friend auto operator<=(partial_ordering v, int) -> bool { return v == 0 || v < 0; }
+    constexpr friend auto operator<=(int, partial_ordering v) -> bool { return v == 0 || 0 < v; }
 
-    constexpr friend bool operator>(partial_ordering v, int) { return 0 < v; }
-    constexpr friend bool operator>(int, partial_ordering v) { return v < 0; }
+    constexpr friend auto operator>(partial_ordering v, int) -> bool { return 0 < v; }
+    constexpr friend auto operator>(int, partial_ordering v) -> bool { return v < 0; }
 
-    constexpr friend bool operator>=(partial_ordering v, int) { return 0 <= v; }
-    constexpr friend bool operator>=(int, partial_ordering v) { return v <= 0; }
+    constexpr friend auto operator>=(partial_ordering v, int) -> bool { return 0 <= v; }
+    constexpr friend auto operator>=(int, partial_ordering v) -> bool { return v <= 0; }
 
-    constexpr friend partial_ordering operator<=>(partial_ordering v, int) { return v; }
-    constexpr friend partial_ordering operator<=>(int, partial_ordering v) {
+    constexpr friend auto operator<=>(partial_ordering v, int) -> partial_ordering { return v; }
+    constexpr friend auto operator<=>(int, partial_ordering v) -> partial_ordering {
         return v.m_value == 2 ? v : partial_ordering(-v.m_value);
     }
 

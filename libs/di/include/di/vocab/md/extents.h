@@ -11,13 +11,13 @@ template<concepts::Integer T, size_t... extents>
 requires((extents == dynamic_extent || extents <= math::to_unsigned(math::NumericLimits<T>::max)) && ...)
 class Extents {
 public:
-    constexpr static size_t static_extent(size_t index) {
+    constexpr static auto static_extent(size_t index) -> size_t {
         auto result = Array { extents... };
         return result.data()[index];
     }
 
 private:
-    constexpr static size_t dynamic_index(size_t index) {
+    constexpr static auto dynamic_index(size_t index) -> size_t {
         auto result = Array<size_t, rank() + 1> {};
         size_t count = 0;
         for (auto i : container::view::range(1zu, rank() + 1)) {
@@ -30,7 +30,7 @@ private:
         return result.data()[index];
     }
 
-    constexpr static size_t dynamic_index_inv(size_t index) {
+    constexpr static auto dynamic_index_inv(size_t index) -> size_t {
         constexpr auto result = [] {
             auto answer = Array<size_t, rank_dynamic()> {};
             for (auto i : container::view::range(rank())) {
@@ -51,8 +51,8 @@ public:
     using SizeType = T;
     using RankType = size_t;
 
-    constexpr static size_t rank() { return sizeof...(extents); }
-    constexpr static size_t rank_dynamic() { return dynamic_index(rank()); }
+    constexpr static auto rank() -> size_t { return sizeof...(extents); }
+    constexpr static auto rank_dynamic() -> size_t { return dynamic_index(rank()); }
 
     constexpr Extents() { m_dynamic_extents.fill(0); }
 
@@ -104,7 +104,7 @@ public:
     constexpr explicit(N != rank_dynamic()) Extents(Array<OtherSizeType, N> const& extents_array)
         : Extents(extents_array.span()) {}
 
-    constexpr size_t extent(size_t index) const {
+    constexpr auto extent(size_t index) const -> size_t {
         auto extent = static_extent(index);
         if (extent != dynamic_extent) {
             return extent;
@@ -115,7 +115,7 @@ public:
         }
     }
 
-    constexpr size_t fwd_prod_of_extents(size_t i) const {
+    constexpr auto fwd_prod_of_extents(size_t i) const -> size_t {
         size_t result = 1;
         for (auto i : container::view::range(i)) {
             result *= extent(i);
@@ -123,7 +123,7 @@ public:
         return result;
     }
 
-    constexpr size_t rev_prod_of_extents(size_t i) const {
+    constexpr auto rev_prod_of_extents(size_t i) const -> size_t {
         size_t result = 1;
         for (auto i : container::view::range(i + 1, rank())) {
             result *= extent(i);
@@ -142,7 +142,7 @@ public:
 
 private:
     template<typename OtherSizeType, size_t... other_extents>
-    constexpr friend bool operator==(Extents const& a, Extents<OtherSizeType, other_extents...> const& b) {
+    constexpr friend auto operator==(Extents const& a, Extents<OtherSizeType, other_extents...> const& b) -> bool {
         if (a.rank() != b.rank()) {
             return false;
         }

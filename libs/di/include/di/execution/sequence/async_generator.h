@@ -40,17 +40,17 @@ namespace async_generator_ns {
         public:
             Type() = default;
 
-            void* operator new(usize size) noexcept { return ::operator new(size, std::nothrow); }
+            auto operator new(usize size) noexcept -> void* { return ::operator new(size, std::nothrow); }
             void operator delete(void* ptr, usize size) noexcept { ::operator delete(ptr, size); }
 
-            SuspendAlways initial_suspend() noexcept { return {}; }
+            auto initial_suspend() noexcept -> SuspendAlways { return {}; }
             auto final_suspend() noexcept { return FinalAwaiter {}; }
 
             struct YieldAwaiter {
-                bool await_ready() noexcept { return false; }
+                auto await_ready() noexcept -> bool { return false; }
 
                 template<typename Promise>
-                CoroutineHandle<> await_suspend(CoroutineHandle<Promise> coroutine) noexcept {
+                auto await_suspend(CoroutineHandle<Promise> coroutine) noexcept -> CoroutineHandle<> {
                     PromiseBase& current = coroutine.promise();
                     return current.continuation() ? current.continuation() : noop_coroutine();
                 }
@@ -80,10 +80,10 @@ namespace async_generator_ns {
             friend struct AsyncGeneratorT;
 
             struct FinalAwaiter {
-                bool await_ready() noexcept { return false; }
+                auto await_ready() noexcept -> bool { return false; }
 
                 template<typename Promise>
-                CoroutineHandle<> await_suspend(CoroutineHandle<Promise> coroutine) noexcept {
+                auto await_suspend(CoroutineHandle<Promise> coroutine) noexcept -> CoroutineHandle<> {
                     PromiseBase& current = coroutine.promise();
 
                     auto was_error = current.m_error.has_value();
@@ -114,17 +114,17 @@ namespace async_generator_ns {
                 struct NextAwaiter {
                     CoroutineHandle<PromiseBase> coroutine;
 
-                    bool await_ready() noexcept { return false; }
+                    auto await_ready() noexcept -> bool { return false; }
 
                     template<typename OtherPromise>
-                    CoroutineHandle<> await_suspend(CoroutineHandle<OtherPromise> continuation) noexcept {
+                    auto await_suspend(CoroutineHandle<OtherPromise> continuation) noexcept -> CoroutineHandle<> {
                         DI_ASSERT(coroutine);
 
                         coroutine.promise().set_continuation(continuation);
                         return coroutine;
                     }
 
-                    vocab::Optional<Value> await_resume() noexcept {
+                    auto await_resume() noexcept -> vocab::Optional<Value> {
                         DI_ASSERT(coroutine);
 
                         auto& promise = coroutine.promise();
@@ -144,13 +144,13 @@ namespace async_generator_ns {
             struct Awaiter {
                 CoroutineHandle<PromiseBase> coroutine;
 
-                bool await_ready() noexcept {
+                auto await_ready() noexcept -> bool {
                     // No need to suspend if we have a coroutine.
                     return !!coroutine;
                 }
 
                 template<typename OtherPromise>
-                CoroutineHandle<> await_suspend(CoroutineHandle<OtherPromise> continuation) noexcept {
+                auto await_suspend(CoroutineHandle<OtherPromise> continuation) noexcept -> CoroutineHandle<> {
                     DI_ASSERT(!coroutine);
                     return continuation.promise().unhandled_error(vocab::Error(BasicError::NotEnoughMemory));
                 }
@@ -178,8 +178,12 @@ namespace async_generator_ns {
             using PromiseBase = async_generator_ns::PromiseBase<Promise, Ref, GeneratorValue<Ref, Value>>;
 
             struct Promise : PromiseBase {
-                Type get_return_object() noexcept { return Type { CoroutineHandle<Promise>::from_promise(*this) }; }
-                static Type get_return_object_on_allocation_failure() noexcept { return Type { AllocFailed {} }; }
+                auto get_return_object() noexcept -> Type {
+                    return Type { CoroutineHandle<Promise>::from_promise(*this) };
+                }
+                static auto get_return_object_on_allocation_failure() noexcept -> Type {
+                    return Type { AllocFailed {} };
+                }
             };
 
             using Handle = CoroutineHandle<Promise>;
@@ -197,7 +201,7 @@ namespace async_generator_ns {
                 }
             }
 
-            Awaiter operator co_await() && {
+            auto operator co_await() && -> Awaiter {
                 auto handle = util::exchange(m_handle, {});
                 if (!handle) {
                     return Awaiter { nullptr };

@@ -27,7 +27,7 @@ namespace detail {
         template<typename Format, concepts::Impl<io::Reader> Reader, typename... Args>
         requires(concepts::TagInvocable<DeserializerFunction, Format, Reader, Args...> ||
                  requires { Format::deserializer(util::declval<Reader>(), util::declval<Args>()...); })
-        constexpr concepts::Deserializer auto operator()(Format, Reader&& reader, Args&&... args) const {
+        constexpr auto operator()(Format, Reader&& reader, Args&&... args) const -> concepts::Deserializer auto {
             if constexpr (concepts::TagInvocable<DeserializerFunction, Format, Reader, Args...>) {
                 return function::tag_invoke(*this, Format {}, util::forward<Reader>(reader),
                                             util::forward<Args>(args)...);
@@ -66,7 +66,7 @@ namespace detail {
         requires(concepts::TagInvocable<DeserializeMetadataFunction, InPlaceType<U>, InPlaceType<V>> ||
                  concepts::TagInvocable<DeserializeMetadataFunction, InPlaceType<U>> ||
                  requires { typename meta::SerializeMetadata<V, T>; } || concepts::Reflectable<T>)
-        constexpr concepts::ReflectionValue auto operator()(InPlaceType<T>, InPlaceType<F>) const {
+        constexpr auto operator()(InPlaceType<T>, InPlaceType<F>) const -> concepts::ReflectionValue auto {
             if constexpr (concepts::TagInvocable<DeserializeMetadataFunction, InPlaceType<U>, InPlaceType<V>>) {
                 return function::tag_invoke(*this, in_place_type<U>, in_place_type<V>);
             } else if constexpr (concepts::TagInvocable<DeserializeMetadataFunction, InPlaceType<U>>) {
@@ -94,7 +94,7 @@ namespace detail {
         template<concepts::Deserializer D, typename T, typename F = meta::DeserializationFormat<D>>
         requires(concepts::TagInvocable<DeserializeInPlaceFunction, F, D&, InPlaceType<T>> ||
                  requires(D&& deserializer) { deserializer.deserialize(in_place_type<T>); })
-        constexpr meta::DeserializeResult<D, T> operator()(D&& deserializer, InPlaceType<T>) const {
+        constexpr auto operator()(D&& deserializer, InPlaceType<T>) const -> meta::DeserializeResult<D, T> {
             if constexpr (concepts::TagInvocable<DeserializeInPlaceFunction, F, D&, InPlaceType<T>>) {
                 return function::tag_invoke(*this, F {}, deserializer, in_place_type<T>);
             } else {
@@ -108,7 +108,7 @@ namespace detail {
                    requires(D&& deserializer) { deserializer.deserialize(in_place_type<T>); }) &&
                  (concepts::TagInvocable<DeserializeInPlaceFunction, D&, InPlaceType<T>, M> ||
                   requires(D&& deserializer) { deserializer.deserialize(in_place_type<T>, M {}); }))
-        constexpr meta::DeserializeResult<D, T> operator()(D&& deserializer, InPlaceType<T>) const {
+        constexpr auto operator()(D&& deserializer, InPlaceType<T>) const -> meta::DeserializeResult<D, T> {
             if constexpr (concepts::TagInvocable<DeserializeInPlaceFunction, D&, InPlaceType<T>, M>) {
                 return function::tag_invoke(*this, deserializer, in_place_type<T>, M {});
             } else {
@@ -135,7 +135,7 @@ constexpr inline auto deserialize_in_place = detail::DeserializeInPlaceFunction 
 namespace detail {
     struct DeserializableFunction {
         template<concepts::Deserializer D, typename T, typename U = meta::RemoveCVRef<T>>
-        constexpr bool operator()(InPlaceType<D>, InPlaceType<T>) const {
+        constexpr auto operator()(InPlaceType<D>, InPlaceType<T>) const -> bool {
             if constexpr (concepts::TagInvocable<DeserializableFunction, InPlaceType<D>, InPlaceType<U>>) {
                 return function::tag_invoke(*this, in_place_type<D>, in_place_type<U>);
             } else {

@@ -17,9 +17,9 @@ public:
 
     constexpr initializer_list() {}
 
-    constexpr size_type size() const { return m_size; }
-    constexpr iterator begin() const { return m_data; }
-    constexpr iterator end() const { return m_data + m_size; }
+    constexpr auto size() const -> size_type { return m_size; }
+    constexpr auto begin() const -> iterator { return m_data; }
+    constexpr auto end() const -> iterator { return m_data + m_size; }
 
 private:
     // This private constructor is called by the compiler to created initializer_list objects.

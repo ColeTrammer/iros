@@ -22,13 +22,13 @@ struct InlineVTable {
 
     public:
         template<typename Storage, concepts::AnyStorable<Storage> T>
-        constexpr static Invoke create_for() {
+        constexpr static auto create_for() -> Invoke {
             return Invoke(make_tuple(detail::ErasedCallImpl<meta::Type<Methods>, Storage, T>::call...));
         }
 
         constexpr Invoke() { reset(); }
 
-        constexpr bool empty() const { return util::get<0>(m_storage) == nullptr; }
+        constexpr auto empty() const -> bool { return util::get<0>(m_storage) == nullptr; }
         constexpr void reset() { util::get<0>(m_storage) = nullptr; }
 
         template<concepts::OneOf<meta::Type<Methods>...> Method>

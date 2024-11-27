@@ -14,7 +14,7 @@ namespace detail {
         template<concepts::BidirectionalIterator In, concepts::SentinelFor<In> Sent,
                  concepts::BidirectionalIterator Out>
         requires(concepts::IndirectlyMovable<In, Out>)
-        constexpr MoveBackwardResult<In, Out> operator()(In first, Sent last, Out output) const {
+        constexpr auto operator()(In first, Sent last, Out output) const -> MoveBackwardResult<In, Out> {
             auto last_it = container::next(first, last);
             for (auto it = last_it; it != first;) {
                 *--output = container::iterator_move(--it);
@@ -24,7 +24,8 @@ namespace detail {
 
         template<concepts::BidirectionalContainer Con, concepts::BidirectionalIterator Out>
         requires(concepts::IndirectlyMovable<meta::ContainerIterator<Con>, Out>)
-        constexpr MoveBackwardResult<meta::BorrowedIterator<Con>, Out> operator()(Con&& container, Out output) const {
+        constexpr auto operator()(Con&& container, Out output) const
+            -> MoveBackwardResult<meta::BorrowedIterator<Con>, Out> {
             return (*this)(begin(container), end(container), util::move(output));
         }
     };

@@ -54,8 +54,8 @@ public:
     constexpr UncurryImpl(UncurryImpl const&) = default;
     constexpr UncurryImpl(UncurryImpl&&) = default;
 
-    constexpr UncurryImpl& operator=(UncurryImpl const&) = delete;
-    constexpr UncurryImpl& operator=(UncurryImpl&&) = delete;
+    constexpr auto operator=(UncurryImpl const&) -> UncurryImpl& = delete;
+    constexpr auto operator=(UncurryImpl&&) -> UncurryImpl& = delete;
 
     template<typename... Args>
     requires(CanUncurry<F&, Args...>)

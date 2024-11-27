@@ -7,7 +7,7 @@
 namespace dius::filesystem {
 namespace detail {
     struct StatusKnownFunction {
-        constexpr bool operator()(FileStatus status) const { return status.type() != FileType::None; }
+        constexpr auto operator()(FileStatus status) const -> bool { return status.type() != FileType::None; }
     };
 }
 

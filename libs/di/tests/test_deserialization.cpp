@@ -88,7 +88,7 @@ struct MyType {
     bool w;
     di::String a;
 
-    bool operator==(MyType const& other) const = default;
+    auto operator==(MyType const& other) const -> bool = default;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyType>) {
         return di::make_fields(di::field<"x", &MyType::x>, di::field<"y", &MyType::y>, di::field<"z", &MyType::z>,
@@ -109,7 +109,7 @@ struct MySuperType {
     di::TreeMap<di::String, int> map;
     MyEnum my_enum;
 
-    bool operator==(MySuperType const& other) const = default;
+    auto operator==(MySuperType const& other) const -> bool = default;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MySuperType>) {
         return di::make_fields(di::field<"my_type", &MySuperType::my_type>, di::field<"array", &MySuperType::array>,

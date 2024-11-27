@@ -17,9 +17,9 @@ public:
     template<concepts::ConvertibleToNonSlicing<Element> OtherElement>
     constexpr DefaultAccessor(DefaultAccessor<OtherElement>) {}
 
-    constexpr Reference access(DataHandle p, size_t i) const { return p[i]; }
+    constexpr auto access(DataHandle p, size_t i) const -> Reference { return p[i]; }
 
-    constexpr DataHandle offset(DataHandle p, size_t i) const { return p + i; }
+    constexpr auto offset(DataHandle p, size_t i) const -> DataHandle { return p + i; }
 };
 }
 

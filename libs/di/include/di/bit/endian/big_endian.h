@@ -8,7 +8,7 @@ namespace di::bit {
 namespace detail {
     struct HostToBigEndianFunction {
         template<concepts::IntegralOrEnum T>
-        constexpr T operator()(T value) const {
+        constexpr auto operator()(T value) const -> T {
             if constexpr (Endian::Native == Endian::Big) {
                 return value;
             } else {
@@ -28,14 +28,14 @@ public:
 
     constexpr BigEndian(T value) { *this = value; }
 
-    constexpr BigEndian operator=(T value) {
+    constexpr auto operator=(T value) -> BigEndian {
         m_value = host_to_big_endian(value);
         return *this;
     }
 
     constexpr operator T() const { return big_endian_to_host(m_value); }
 
-    constexpr T value() const { return *this; }
+    constexpr auto value() const -> T { return *this; }
 
 private:
     template<concepts::Encoding Enc>
