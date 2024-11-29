@@ -186,8 +186,8 @@ namespace schedule_from_ns {
                          Receiver<Rec, Sched,
                                   meta::CompletionSignaturesOf<meta::Like<Self, Send>, MakeEnv<meta::EnvOf<Rec>>>>>)
             friend auto tag_invoke(types::Tag<connect>, Self&& self, Rec receiver) {
-                return OperationState<Send, Rec, Sched> { util::forward<Self>(self).scheduler, util::move(receiver),
-                                                          util::forward<Self>(self).sender };
+                return OperationState<Send, Rec, Sched> { util::forward_like<Self>(self.scheduler),
+                                                          util::move(receiver), util::forward_like<Self>(self.sender) };
             }
 
             using SenderEnv = meta::EnvOf<Send>;

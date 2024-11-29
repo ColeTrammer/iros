@@ -9,7 +9,6 @@
 #include <di/execution/meta/await_result.h>
 #include <di/execution/receiver/set_error.h>
 #include <di/function/invoke.h>
-#include <di/platform/compiler.h>
 #include <di/platform/prelude.h>
 #include <di/util/addressof.h>
 #include <di/util/exchange.h>
@@ -133,7 +132,8 @@ namespace connect_awaitable_ns {
         auto operator()(Awaitable&& awaitable, Receiver receiver) const {
             auto result = impl(util::forward<Awaitable>(awaitable), util::move(receiver));
             if (result.allocation_failed()) {
-                result.set_receiver(util::move(receiver));
+                // Since the allocation failed, the receiver was never move constructued into the operation state.
+                result.set_receiver(util::move(receiver)); // NOLINT(bugprone-use-after-move)
             }
             return result;
         }

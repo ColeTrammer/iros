@@ -169,9 +169,9 @@ namespace let_ns {
                          Receiver<CPO, Rec, Fun,
                                   meta::CompletionSignaturesOf<meta::Like<Self, Send>, MakeEnv<meta::EnvOf<Rec>>>>>)
             friend auto tag_invoke(Tag, Self&& self, Rec receiver) {
-                return OperationState<CPO, meta::Like<Self, Send>, Rec, Fun> { util::forward<Self>(self).function,
+                return OperationState<CPO, meta::Like<Self, Send>, Rec, Fun> { util::forward_like<Self>(self.function),
                                                                                util::move(receiver),
-                                                                               util::forward<Self>(self).sender };
+                                                                               util::forward_like<Self>(self.sender) };
             }
 
             constexpr friend auto tag_invoke(types::Tag<get_env>, Type const& self) {

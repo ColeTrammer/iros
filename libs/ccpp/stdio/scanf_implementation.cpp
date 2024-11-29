@@ -73,7 +73,7 @@ static auto is_valid_char_for_set(char c, char const* set, int set_end, bool inv
             }
 
             // Don't need to check edges b/c they are checked automatically
-            for (char r = range_start + 1; r < range_end; r++) {
+            for (auto r = char(range_start + 1); r < range_end; r++) {
                 if (r == c) {
                     return !invert;
                 }
@@ -278,7 +278,7 @@ auto scanf_implementation(di::FunctionRef<di::Expected<di::Optional<char>, di::G
                 }
 
                 if (ret != EOF && i < specifier.width) {
-                    c = (int) ret;
+                    c = (char) ret;
                 } else if (ret == EOF) {
                     done = true;
                 } else {
@@ -303,7 +303,7 @@ auto scanf_implementation(di::FunctionRef<di::Expected<di::Optional<char>, di::G
                 }
 
                 // Always assume at least 1 character in set (there has to be and this allows for inclusion of `]`)
-                int set_start = format_off;
+                int set_start = (int) format_off;
                 int set_end = set_start + 1;
                 while (format[set_end] != ']') {
                     set_end++;
@@ -323,9 +323,10 @@ auto scanf_implementation(di::FunctionRef<di::Expected<di::Optional<char>, di::G
 
                 i++;
 
-                while (i < specifier.width && (is_valid_char_for_set(ret = get_character(state), format + format_off,
-                                                                     set_end - set_start, invert) &&
-                                               ret != EOF)) {
+                while (i < specifier.width &&
+                       (is_valid_char_for_set(char(ret = get_character(state)), format + format_off,
+                                              set_end - set_start, invert) &&
+                        ret != EOF)) {
                     if (!specifier.star) {
                         buf[i] = (char) ret;
                     }
@@ -338,7 +339,7 @@ auto scanf_implementation(di::FunctionRef<di::Expected<di::Optional<char>, di::G
                 }
 
                 if (ret != EOF && i < specifier.width) {
-                    c = (int) ret;
+                    c = (char) ret;
                 } else if (ret == EOF) {
                     done = true;
                 } else {
@@ -478,7 +479,7 @@ auto scanf_implementation(di::FunctionRef<di::Expected<di::Optional<char>, di::G
 
                 /* Copy str character by character into buffer */
                 while (buffer_index < specifier.width && buffer_index < SCANF_NUMBER_BUFFER_MAX - 1 &&
-                       (is_valid_char_for_base(ret = get_character(state), base) ||
+                       (is_valid_char_for_base(char(ret = get_character(state)), base) ||
                         (base == 16 && buffer_index == 1 && (ret == 'x' || ret == 'X')))) {
                     if (ret == EOF) {
                         done = true;

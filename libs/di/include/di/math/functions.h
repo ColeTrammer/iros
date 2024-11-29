@@ -75,6 +75,7 @@ struct Round {
         if (x < 0) {
             return -Round::operator()(-x);
         }
+        // NOLINTNEXTLINE(bugprone-incorrect-roundings)
         return T(i64(x + 0.5));
     }
 

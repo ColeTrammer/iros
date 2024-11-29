@@ -346,7 +346,7 @@ namespace filter_ns {
             requires(concepts::DecayConstructible<meta::Like<Self, Fun>> &&
                      concepts::ReceiverOf<R, CompletionSignatures>)
             friend auto tag_invoke(types::Tag<connect>, Self&& self, R receiver) {
-                return ItemOperationState<meta::Like<Self, Send>, Fun, Rec, R>(di::forward<Self>(self).sender,
+                return ItemOperationState<meta::Like<Self, Send>, Fun, Rec, R>(di::forward_like<Self>(self.sender),
                                                                                self.data, di::move(receiver));
             }
 
@@ -420,7 +420,7 @@ namespace filter_ns {
                      concepts::SubscriberOf<Rec, Signatures<meta::Like<Self, Seq>, Fun, MakeEnv<meta::EnvOf<Rec>>>>)
             friend auto tag_invoke(types::Tag<subscribe>, Self&& self, Rec receiver) {
                 return OperationState<meta::Like<Self, Seq>, meta::Like<Self, Fun>, Rec>(
-                    di::forward<Self>(self).sequence, di::forward<Self>(self).predicate, di::move(receiver));
+                    di::forward_like<Self>(self.sequence), di::forward_like<Self>(self.predicate), di::move(receiver));
             }
 
             template<concepts::RemoveCVRefSameAs<Type> Self, typename Env>

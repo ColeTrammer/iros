@@ -138,6 +138,9 @@ private:
                     if (!utf8::is_valid_second_byte(first_byte, data.data()[i + 1])) {
                         return false;
                     }
+                    break;
+                default:
+                    break;
             }
             i += length;
         }

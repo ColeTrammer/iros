@@ -12,15 +12,11 @@ extern "C" auto fdopen(int fd, char const* mode) -> FILE* {
     auto permissions = Permissions::None;
     if (mode_sv == "r"_tsv || mode_sv == "rb"_tsv) {
         permissions = Permissions::Readable;
-    } else if (mode_sv == "w"_tsv || mode_sv == "wb"_tsv) {
+    } else if (mode_sv == "w"_tsv || mode_sv == "wb"_tsv || mode_sv == "a"_tsv || mode_sv == "ab"_tsv) {
         permissions = Permissions::Writable;
-    } else if (mode_sv == "a"_tsv || mode_sv == "ab"_tsv) {
-        permissions = Permissions::Writable;
-    } else if (mode_sv == "r+"_tsv || mode_sv == "r+b"_tsv || mode_sv == "rb+"_tsv) {
-        permissions = Permissions::Readable | Permissions::Writable;
-    } else if (mode_sv == "w+"_tsv || mode_sv == "w+b"_tsv || mode_sv == "wb+"_tsv) {
-        permissions = Permissions::Readable | Permissions::Writable;
-    } else if (mode_sv == "a+"_tsv || mode_sv == "a+b"_tsv || mode_sv == "ab+"_tsv) {
+    } else if (mode_sv == "r+"_tsv || mode_sv == "r+b"_tsv || mode_sv == "rb+"_tsv || mode_sv == "w+"_tsv ||
+               mode_sv == "w+b"_tsv || mode_sv == "wb+"_tsv || mode_sv == "a+"_tsv || mode_sv == "a+b"_tsv ||
+               mode_sv == "ab+"_tsv) {
         permissions = Permissions::Readable | Permissions::Writable;
     } else {
         errno = EINVAL;

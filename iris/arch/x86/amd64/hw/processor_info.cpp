@@ -77,18 +77,18 @@ auto detect_processor_info() -> ProcessorInfo {
 
     auto processor_vendor_string = di::container::string::StringImpl<di::container::string::TransparentEncoding,
                                                                      di::StaticVector<char, decltype(12_zic)>> {};
-    (void) processor_vendor_string.push_back((result.ebx >> 0) & 0xFF);
-    (void) processor_vendor_string.push_back((result.ebx >> 8) & 0xFF);
-    (void) processor_vendor_string.push_back((result.ebx >> 16) & 0xFF);
-    (void) processor_vendor_string.push_back((result.ebx >> 24) & 0xFF);
-    (void) processor_vendor_string.push_back((result.edx >> 0) & 0xFF);
-    (void) processor_vendor_string.push_back((result.edx >> 8) & 0xFF);
-    (void) processor_vendor_string.push_back((result.edx >> 16) & 0xFF);
-    (void) processor_vendor_string.push_back((result.edx >> 24) & 0xFF);
-    (void) processor_vendor_string.push_back((result.ecx >> 0) & 0xFF);
-    (void) processor_vendor_string.push_back((result.ecx >> 8) & 0xFF);
-    (void) processor_vendor_string.push_back((result.ecx >> 16) & 0xFF);
-    (void) processor_vendor_string.push_back((result.ecx >> 24) & 0xFF);
+    (void) processor_vendor_string.push_back(char((result.ebx >> 0) & 0xFF));
+    (void) processor_vendor_string.push_back(char((result.ebx >> 8) & 0xFF));
+    (void) processor_vendor_string.push_back(char((result.ebx >> 16) & 0xFF));
+    (void) processor_vendor_string.push_back(char((result.ebx >> 24) & 0xFF));
+    (void) processor_vendor_string.push_back(char((result.edx >> 0) & 0xFF));
+    (void) processor_vendor_string.push_back(char((result.edx >> 8) & 0xFF));
+    (void) processor_vendor_string.push_back(char((result.edx >> 16) & 0xFF));
+    (void) processor_vendor_string.push_back(char((result.edx >> 24) & 0xFF));
+    (void) processor_vendor_string.push_back(char((result.ecx >> 0) & 0xFF));
+    (void) processor_vendor_string.push_back(char((result.ecx >> 8) & 0xFF));
+    (void) processor_vendor_string.push_back(char((result.ecx >> 16) & 0xFF));
+    (void) processor_vendor_string.push_back(char((result.ecx >> 24) & 0xFF));
 
     auto family_and_flags_result = cpuid::query(cpuid::Function::FamilyAndFlags);
 

@@ -72,9 +72,8 @@ namespace let_value_with_ns {
                          (concepts::DecayConstructible<meta::Like<Self, Factories>> && ...) &&
                          concepts::SenderTo<Send, Rec>)
                 friend auto tag_invoke(types::Tag<connect>, Self&& self, Rec receiver) {
-                    auto function = util::forward<Self>(self).function;
-                    auto factories = util::forward<Self>(self).factories;
-                    return OperationState<State, Send, Rec> { util::move(function), util::move(factories),
+                    return OperationState<State, Send, Rec> { di::forward_like<Self>(self.function),
+                                                              di::forward_like<Self>(self.factories),
                                                               util::move(receiver) };
                 }
 

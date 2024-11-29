@@ -117,7 +117,8 @@ public:
 
     constexpr static void copy_construct(concepts::VTableFor<Interface> auto const& vtable, SharedStorage* dest,
                                          SharedStorage const* source) {
-        if ((dest->m_pointer = source->m_pointer)) {
+        dest->m_pointer = source->m_pointer;
+        if (dest->m_pointer) {
             if consteval {
                 auto const fp = vtable[Manage {}];
                 fp(dest, dest, dest->m_allocator, detail::OpForConsteval::RefInc);

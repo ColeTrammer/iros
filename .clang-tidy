@@ -6,8 +6,13 @@ ExcludeHeaderFilterRegex: ".*ccpp/.*"
 ExtraArgs: [-std=gnu++26, -fconstexpr-steps=10000000, -Wno-unknown-warning-option, -fsized-deallocation]
 Checks: >
   -*,
-  modernize-use-trailing-return-type
-# bugprone-*,
+  bugprone-*,
+  -bugprone-crtp-constructor-accessibility,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-inc-dec-in-conditions,
+  -bugprone-macro-parentheses,
+  -bugprone-reserved-identifier,
+# modernize-use-trailing-return-type,
 # cert-*,
 # concurrency-*,
 # misc-*,
@@ -36,6 +41,8 @@ Checks: >
 CheckOptions:
   - key: bugprone-dangling-handle.HandleClasses
     value: "di::StringView;di::Span"
+  - key: bugprone-sizeof-expression.WarnOnSizeOfPointerToAggregate
+    value: false
   - key: readability-implicit-bool-conversion.AllowPointerConditions
     value: true
   - key: readability-implicit-bool-conversion.AllowIntegerConditions

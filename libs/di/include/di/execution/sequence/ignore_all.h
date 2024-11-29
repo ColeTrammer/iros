@@ -201,7 +201,7 @@ namespace ignore_all_ns {
             requires(concepts::ReceiverOf<NextRec, NextSignatures<meta::Like<Self, Next>, meta::EnvOf<NextRec>>>)
             friend auto tag_invoke(types::Tag<connect>, Self&& self, NextRec receiver) {
                 return NextOperationState<Seq, Rec, meta::Like<Self, Next>, NextRec>(
-                    self.data, util::forward<Self>(self).next, util::move(receiver));
+                    self.data, di::forward_like<Self>(self.next), util::move(receiver));
             }
 
             template<concepts::RemoveCVRefSameAs<Type> Self, typename Env>

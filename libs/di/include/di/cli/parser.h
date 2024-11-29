@@ -115,7 +115,7 @@ namespace detail {
                         }
 
                         // Parse short option with directly specified value: '-iinput.txt'
-                        auto value_view = arg.substr(arg.begin() + char_index + 1);
+                        auto value_view = arg.substr(arg.begin() + isize(char_index + 1));
                         if (!value_view.empty()) {
                             DI_TRY(option_parse(*index, seen_arguments, &result, value_view));
                             if (option_always_succeeds(*index)) {

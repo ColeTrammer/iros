@@ -29,6 +29,7 @@ constexpr void exclusive() {
     auto shared = di::ByteBuffer(di::move(buffer));
     ASSERT_EQ(data, shared.span());
 
+    // NOLINTNEXTLINE(bugprone-use-after-move)
     ASSERT(buffer.empty());
 }
 

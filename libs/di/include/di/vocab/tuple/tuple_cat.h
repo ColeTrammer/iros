@@ -22,6 +22,7 @@ constexpr auto tuple_cat(Tups&&... tuples) {
                     [&]<size_t... ys>(meta::ListV<ys...>) {
                         return Tuple<meta::TupleElement<meta::RemoveCVRef<X>, xs>...,
                                      meta::TupleElement<meta::RemoveCVRef<Y>, ys>...> {
+                            // NOLINTNEXTLINE(bugprone-use-after-move)
                             util::get<xs>(util::forward<X>(x))..., util::get<ys>(util::forward<Y>(y))...
                         };
                     });

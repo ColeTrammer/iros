@@ -37,12 +37,10 @@ namespace detail {
                 constexpr bool is_sized = concepts::SizedContainer<Con>;
 
                 if constexpr (is_sized) {
-                    return container::View<Iter, Iter, is_sized>(util::forward<Con>(container).end().base(),
-                                                                 util::forward<Con>(container).begin().base(),
-                                                                 util::forward<Con>(container).size());
+                    return container::View<Iter, Iter, is_sized>(container.end().base(), container.begin().base(),
+                                                                 container.size());
                 } else {
-                    return container::View<Iter, Iter, is_sized>(util::forward<Con>(container).end().base(),
-                                                                 util::forward<Con>(container).begin().base());
+                    return container::View<Iter, Iter, is_sized>(container.end().base(), container.begin().base());
                 }
             } else {
                 return ReverseView { util::forward<Con>(container) };

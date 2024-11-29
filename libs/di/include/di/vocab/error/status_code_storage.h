@@ -37,8 +37,7 @@ public:
 protected:
     StatusCodeStorage() = default;
     StatusCodeStorage(StatusCodeStorage const&) = default;
-    constexpr StatusCodeStorage(StatusCodeStorage&& other)
-        : Base(util::move(other)), m_value(util::move(other).value()) {
+    constexpr StatusCodeStorage(StatusCodeStorage&& other) : Base(other), m_value(util::move(other.value())) {
         other.m_domain = nullptr;
     }
 

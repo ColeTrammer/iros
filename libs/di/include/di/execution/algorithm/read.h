@@ -29,7 +29,7 @@ namespace read_ns {
 
                 private:
                     friend void tag_invoke(types::Tag<execution::start>, Type& self) {
-                        set_value(util::move(self).m_receiver, auto(Tag {}(get_env(self.m_receiver))));
+                        set_value(util::move(self.m_receiver), auto(Tag {}(get_env(self.m_receiver))));
                     }
 
                     Receiver m_receiver;

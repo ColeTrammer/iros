@@ -7,6 +7,8 @@
 #include <di/execution/meta/env_of.h>
 #include <di/execution/meta/single_sender_value_type.h>
 
+#include "di/meta/core.h"
+
 namespace di::execution {
 namespace as_awaitable_ns {
     template<typename Send, typename Promise>
@@ -93,8 +95,6 @@ namespace as_awaitable_ns {
                 return util::forward<T>(value);
             } else if constexpr (concepts::AwaitableSender<T, Promise>) {
                 return SenderAwaitable<T, Promise> { util::forward<T>(value), promise };
-            } else {
-                return util::forward<T>(value);
             }
         }
     };

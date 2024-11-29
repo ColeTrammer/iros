@@ -108,6 +108,8 @@ constexpr void move_only() {
 
     auto w = di::move(v);
     ASSERT_EQ(w.size(), 2u);
+
+    // NOLINTNEXTLINE(bugprone-use-after-move)
     ASSERT(v.empty());
 }
 

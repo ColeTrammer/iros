@@ -67,7 +67,7 @@ constexpr void void_error() {
     ASSERT_EQ(y, 12);
 
     auto z = x % [](auto z) {
-        return static_cast<long>(z + 2);
+        return static_cast<long>(z) + 2;
     };
     ASSERT_EQ(z, 10);
 

@@ -110,13 +110,13 @@ static void inline_() {
     ASSERT_EQ(yf(y), 1);
 
     auto z = di::move(y);
-    ASSERT(!y.has_value());
+    ASSERT(!y.has_value()); // NOLINT(bugprone-use-after-move)
 
     ASSERT_EQ(xf(z, 12), 16);
     ASSERT_EQ(yf(z), 1);
 
     z = di::move(x);
-    ASSERT(!x.has_value());
+    ASSERT(!x.has_value()); // NOLINT(bugprone-use-after-move)
 
     ASSERT_EQ(xf(z, 12), 16);
     ASSERT_EQ(yf(z), 6);
@@ -140,13 +140,13 @@ constexpr void unique() {
     ASSERT_EQ(yf(y), 1);
 
     auto z = di::move(y);
-    ASSERT(!y.has_value());
+    ASSERT(!y.has_value()); // NOLINT(bugprone-use-after-move)
 
     ASSERT_EQ(xf(z, 12), 16);
     ASSERT_EQ(yf(z), 1);
 
     z = di::move(x);
-    ASSERT(!x.has_value());
+    ASSERT(!x.has_value()); // NOLINT(bugprone-use-after-move)
 
     ASSERT_EQ(xf(z, 12), 16);
     ASSERT_EQ(yf(z), 6);
@@ -171,13 +171,13 @@ constexpr void hybrid() {
     ASSERT_EQ(yf(y), 1);
 
     auto z = di::move(y);
-    ASSERT(!y.has_value());
+    ASSERT(!y.has_value()); // NOLINT(bugprone-use-after-move)
 
     ASSERT_EQ(xf(z, 12), 16);
     ASSERT_EQ(yf(z), 1);
 
     z = di::move(x);
-    ASSERT(!x.has_value());
+    ASSERT(!x.has_value()); // NOLINT(bugprone-use-after-move)
 
     ASSERT_EQ(xf(z, 12), 16);
     ASSERT_EQ(yf(z), 6);
@@ -207,13 +207,13 @@ constexpr void shared() {
     ASSERT_EQ(yf(y), 1);
 
     auto z = di::move(y);
-    ASSERT(!y.has_value());
+    ASSERT(!y.has_value()); // NOLINT(bugprone-use-after-move)
 
     ASSERT_EQ(xf(z, 12), 16);
     ASSERT_EQ(yf(z), 1);
 
     z = di::move(x);
-    ASSERT(!x.has_value());
+    ASSERT(!x.has_value()); // NOLINT(bugprone-use-after-move)
 
     ASSERT_EQ(xf(z, 12), 16);
     ASSERT_EQ(yf(z), 6);

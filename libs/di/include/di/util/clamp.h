@@ -13,6 +13,8 @@ namespace detail {
         constexpr auto operator()(T const& value, T const& min, T const& max, Comp comp = {}, Proj proj = {}) const
             -> T const& {
             auto&& projected_value = function::invoke(proj, value);
+
+            // NOLINTBEGIN(bugprone-return-const-ref-from-parameter)
             if (function::invoke(comp, projected_value, function::invoke(proj, min)) < 0) {
                 return min;
             }
@@ -20,6 +22,7 @@ namespace detail {
                 return max;
             }
             return value;
+            // NOLINTEND(bugprone-return-const-ref-from-parameter)
         }
     };
 }

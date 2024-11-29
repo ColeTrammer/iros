@@ -79,9 +79,9 @@ private:
 
                        auto output_digit = [&](u8 digit) {
                            if (digit >= 10) {
-                               buffer[index++] = digit - 10 + 'a';
+                               buffer[index++] = char(digit - 10 + 'a');
                            } else {
-                               buffer[index++] = digit + '0';
+                               buffer[index++] = char(digit + '0');
                            }
                        };
 

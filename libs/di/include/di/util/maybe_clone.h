@@ -11,7 +11,7 @@ namespace detail {
         requires((concepts::RValueReference<T> && concepts::MoveConstructible<T>) || concepts::Clonable<T>)
         constexpr auto operator()(T&& value) const {
             if constexpr (concepts::RValueReference<T> && concepts::MoveConstructible<T>) {
-                return util::move(value);
+                return util::forward<T>(value);
             } else {
                 return util::clone(value);
             }

@@ -90,9 +90,9 @@ requires(di::ValidNamedArguments<di::meta::List<Foo, Bar, di::InPlaceTemplate<Ba
 constexpr auto f(Args&&... args) -> i32 {
     auto named = di::NamedArguments(di::forward<Args>(args)...);
 
-    auto foo_value = di::get_named_argument_or<Foo>(di::move(named), 1);
-    auto bar_value = di::get_named_argument_or<Bar>(di::move(named), 2);
-    auto baz_value = di::get_named_argument_or<di::InPlaceTemplate<Baz>>(di::move(named), 3);
+    auto foo_value = di::get_named_argument_or<Foo>(named, 1);
+    auto bar_value = di::get_named_argument_or<Bar>(named, 2);
+    auto baz_value = di::get_named_argument_or<di::InPlaceTemplate<Baz>>(named, 3);
 
     return foo_value + bar_value + baz_value;
 }

@@ -31,7 +31,7 @@ static auto handle_short_options(int argc, di::Span<char*> argv, di::Transparent
         if (print_errors) {
             (void) fprintf(stderr, "%s: unknown argument '-%c'\n", argv[0], short_name);
         }
-        optopt = short_name;
+        optopt = (u8) short_name;
         return '?';
     }
 
@@ -43,7 +43,7 @@ static auto handle_short_options(int argc, di::Span<char*> argv, di::Transparent
                 if (print_errors) {
                     (void) fprintf(stderr, "%s: argument '-%c' must be passed a value\n", argv[0], short_name);
                 }
-                optopt = short_name;
+                optopt = (u8) short_name;
                 optind++;
                 next_short_char = nullptr;
                 return strict_mode ? ':' : '?';

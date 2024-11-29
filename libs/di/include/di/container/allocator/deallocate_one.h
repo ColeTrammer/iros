@@ -5,6 +5,7 @@
 #include <di/container/allocator/allocator.h>
 #include <di/container/allocator/std_allocator.h>
 #include <di/meta/vocab.h>
+#include <di/util/voidify.h>
 #include <di/vocab/expected/as_fallible.h>
 #include <di/vocab/expected/try_infallible.h>
 
@@ -17,7 +18,7 @@ namespace detail {
                 return std::allocator<T>().deallocate(pointer, 1);
             }
 
-            return di::deallocate(allocator, pointer, sizeof(T), alignof(T));
+            return di::deallocate(allocator, di::voidify(pointer), sizeof(T), alignof(T));
         }
     };
 }

@@ -15,8 +15,8 @@ namespace detail {
 
     template<typename Sender, typename Receiver>
     concept CustomConnect =
-        /* concepts::Sender<Sender> &&
-        concepts::ReceiverOf<Receiver, meta::CompletionSignaturesOf<Sender, meta::EnvOf<Receiver>>> && */
+        concepts::Sender<Sender> &&
+        concepts::ReceiverOf<Receiver, meta::CompletionSignaturesOf<Sender, meta::EnvOf<Receiver>>> &&
         concepts::TagInvocable<ConnectFunction, Sender, Receiver>;
 
     template<typename Sender, typename Receiver>
@@ -34,8 +34,6 @@ namespace detail {
             } else if constexpr (AwaitableConnect<Sender, Receiver>) {
                 return connect_awaitable_ns::connect_awaitable(util::forward<Sender>(sender),
                                                                util::forward<Receiver>(receiver));
-            } else {
-                return function::tag_invoke(*this, util::forward<Sender>(sender), util::forward<Receiver>(receiver));
             }
         }
     };

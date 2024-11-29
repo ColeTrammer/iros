@@ -61,7 +61,7 @@ configure_build_test:
 # Build and run a specific test (regex matching)
 build_test_only name=test:
     @just preset={{ preset }} build
-    @just preset={{ preset }} ctest_only {{ name }}
+    @just preset={{ preset }} test_only {{ name }}
 
 # Compile a specific file (regex matching)
 build_file name: ensure_configured

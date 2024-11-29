@@ -7,6 +7,7 @@
 #include <memory>
 #else
 #include <di/util/std_new.h>
+#include <di/util/voidify.h>
 
 namespace std {
 template<typename T, T v>
@@ -43,7 +44,8 @@ struct allocator {
         }
     }
 
-    constexpr void deallocate(T* pointer, size_t count) {
+    constexpr void deallocate(T* typed_pointer, size_t count) {
+        auto* pointer = di::voidify(typed_pointer);
         if consteval {
             return ::operator delete(pointer);
         }

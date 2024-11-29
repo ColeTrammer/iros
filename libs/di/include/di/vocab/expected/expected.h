@@ -314,12 +314,13 @@ private:
 
     template<typename U>
     constexpr void internal_construct_from_expected(U&& other) {
-        if (other.has_value()) {
-            util::construct_at(&this->m_value, util::forward<U>(other).value());
+        auto other_has_value = other.has_value();
+        if (other_has_value) {
+            util::construct_at(&this->m_value, di::forward<U>(other).value());
         } else {
-            util::construct_at(&this->m_error, util::forward<U>(other).error());
+            util::construct_at(&this->m_error, di::forward<U>(other).error());
         }
-        this->m_has_error = !other.has_value();
+        this->m_has_error = !other_has_value;
     }
 
     constexpr void internal_reset() {

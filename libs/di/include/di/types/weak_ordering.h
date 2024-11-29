@@ -29,7 +29,7 @@ public:
     constexpr friend auto operator>=(int, weak_ordering v) -> bool { return v <= 0; }
 
     constexpr friend auto operator<=>(weak_ordering v, int) -> weak_ordering { return v; }
-    constexpr friend auto operator<=>(int, weak_ordering v) -> weak_ordering { return weak_ordering(-v.m_value); }
+    constexpr friend auto operator<=>(int, weak_ordering v) -> weak_ordering { return weak_ordering(char(-v.m_value)); }
 
     constexpr operator partial_ordering() const { return partial_ordering(m_value); }
 

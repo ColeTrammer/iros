@@ -619,19 +619,19 @@ namespace ipc_binary_ns {
                 return ServerSender<Proto, Read, Write, TxFun, RxFun, Alloc>(
                     get_named_argument<InPlaceTemplate<ipc::ReceiverTransmitter>>(named),
                     get_named_argument<InPlaceTemplate<ipc::ReceiverTransmitter>>(named),
-                    get_named_argument_or<InPlaceTemplate<ipc::Transmit>>(di::move(named), default_transmit),
-                    get_named_argument_or<InPlaceTemplate<ipc::Receive>>(di::move(named), default_receive),
-                    get_named_argument_or<InPlaceTemplate<ipc::Allocator>>(di::move(named), DefaultAllocator {}));
+                    di::move(get_named_argument_or<InPlaceTemplate<ipc::Transmit>>(named, default_transmit)),
+                    di::move(get_named_argument_or<InPlaceTemplate<ipc::Receive>>(named, default_receive)),
+                    di::move(get_named_argument_or<InPlaceTemplate<ipc::Allocator>>(named, DefaultAllocator {})));
             } else {
                 using Read = meta::NamedArgumentValue<Named, InPlaceTemplate<ipc::Receiver>>;
                 using Write = meta::NamedArgumentValue<Named, InPlaceTemplate<ipc::Transmitter>>;
 
                 return ServerSender<Proto, Read, Write, TxFun, RxFun, Alloc>(
-                    get_named_argument<InPlaceTemplate<ipc::Receiver>>(di::move(named)),
-                    get_named_argument<InPlaceTemplate<ipc::Transmitter>>(di::move(named)),
-                    get_named_argument_or<InPlaceTemplate<ipc::Transmit>>(di::move(named), default_transmit),
-                    get_named_argument_or<InPlaceTemplate<ipc::Receive>>(di::move(named), default_receive),
-                    get_named_argument_or<InPlaceTemplate<ipc::Allocator>>(di::move(named), DefaultAllocator {}));
+                    di::move(get_named_argument<InPlaceTemplate<ipc::Receiver>>(named)),
+                    di::move(get_named_argument<InPlaceTemplate<ipc::Transmitter>>(named)),
+                    di::move(get_named_argument_or<InPlaceTemplate<ipc::Transmit>>(named, default_transmit)),
+                    di::move(get_named_argument_or<InPlaceTemplate<ipc::Receive>>(named, default_receive)),
+                    di::move(get_named_argument_or<InPlaceTemplate<ipc::Allocator>>(named, DefaultAllocator {})));
             }
         }
     };
@@ -661,19 +661,19 @@ namespace ipc_binary_ns {
                 return ClientSender<Proto, Read, Write, TxFun, RxFun, Alloc>(
                     get_named_argument<InPlaceTemplate<ipc::ReceiverTransmitter>>(named),
                     get_named_argument<InPlaceTemplate<ipc::ReceiverTransmitter>>(named),
-                    get_named_argument_or<InPlaceTemplate<ipc::Transmit>>(di::move(named), default_transmit),
-                    get_named_argument_or<InPlaceTemplate<ipc::Receive>>(di::move(named), default_receive),
-                    get_named_argument_or<InPlaceTemplate<ipc::Allocator>>(di::move(named), DefaultAllocator {}));
+                    di::move(get_named_argument_or<InPlaceTemplate<ipc::Transmit>>(named, default_transmit)),
+                    di::move(get_named_argument_or<InPlaceTemplate<ipc::Receive>>(named, default_receive)),
+                    di::move(get_named_argument_or<InPlaceTemplate<ipc::Allocator>>(named, DefaultAllocator {})));
             } else {
                 using Read = meta::NamedArgumentValue<Named, InPlaceTemplate<ipc::Receiver>>;
                 using Write = meta::NamedArgumentValue<Named, InPlaceTemplate<ipc::Transmitter>>;
 
                 return ClientSender<Proto, Read, Write, TxFun, RxFun, Alloc>(
-                    get_named_argument<InPlaceTemplate<ipc::Receiver>>(di::move(named)),
-                    get_named_argument<InPlaceTemplate<ipc::Transmitter>>(di::move(named)),
-                    get_named_argument_or<InPlaceTemplate<ipc::Transmit>>(di::move(named), default_transmit),
-                    get_named_argument_or<InPlaceTemplate<ipc::Receive>>(di::move(named), default_receive),
-                    get_named_argument_or<InPlaceTemplate<ipc::Allocator>>(di::move(named), DefaultAllocator {}));
+                    di::move(get_named_argument<InPlaceTemplate<ipc::Receiver>>(named)),
+                    di::move(get_named_argument<InPlaceTemplate<ipc::Transmitter>>(named)),
+                    di::move(get_named_argument_or<InPlaceTemplate<ipc::Transmit>>(named, default_transmit)),
+                    di::move(get_named_argument_or<InPlaceTemplate<ipc::Receive>>(named, default_receive)),
+                    di::move(get_named_argument_or<InPlaceTemplate<ipc::Allocator>>(named, DefaultAllocator {})));
             }
         }
     };

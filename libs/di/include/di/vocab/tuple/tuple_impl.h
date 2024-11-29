@@ -61,9 +61,11 @@ public:
     requires(sizeof...(Rest) + 1 == meta::TupleSize<Tup> &&
              concepts::ConstructibleFrom<T, meta::TupleValue<Tup, index>> &&
              (concepts::ConstructibleFrom<Rest, meta::TupleValue<Tup, indices>> && ...))
+    // NOLINTBEGIN(bugprone-use-after-move)
     constexpr TupleImpl(ConstructTupleImplFromTuplelike, Tup&& tuple)
         : Base(construct_tuple_impl_valuewise, util::get<indices>(util::forward<Tup>(tuple))...)
         , m_value(util::get<index>(util::forward<Tup>(tuple))) {}
+    // NOLINTEND(bugprone-use-after-move)
 
     constexpr ~TupleImpl() = default;
 
@@ -83,12 +85,14 @@ protected:
              (concepts::AssignableFrom<meta::Like<Self, Rest>, meta::TupleValue<Tup, indices> &&> && ...))
     constexpr static void static_assign(Self&& self, Tup&& other) {
         self.m_value = util::get<index>(util::forward<Tup>(other));
+        // NOLINTNEXTLINE(bugprone-use-after-move)
         Base::static_assign_unchecked(util::forward_as_base<Self, Base>(self), util::forward<Tup>(other));
     }
 
     template<typename Self, typename Tup>
     constexpr static void static_assign_unchecked(Self&& self, Tup&& other) {
         self.m_value = util::get<index>(util::forward<Tup>(other));
+        // NOLINTNEXTLINE(bugprone-use-after-move)
         Base::static_assign_unchecked(util::forward_as_base<Self, Base>(self), util::forward<Tup>(other));
     }
 

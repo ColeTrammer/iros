@@ -150,8 +150,9 @@ auto tag_invoke(di::Tag<seek_file>, InodeFile& self, i64 offset, int whence) -> 
             self.m_offset = metadata.size + offset;
             co_return self.m_offset;
         }
+        default:
+            co_return di::Unexpected(Error::InvalidArgument);
     }
-    co_return di::Unexpected(Error::InvalidArgument);
 }
 
 auto tag_invoke(di::Tag<file_truncate>, InodeFile& self, u64 size) -> di::AnySenderOf<void> {

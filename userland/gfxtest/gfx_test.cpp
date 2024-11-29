@@ -33,12 +33,12 @@ void draw(gfx::Painter& painter) {
 
     // Moving rect.
     static usize x = 0;
-    gfx::draw_rect(painter, gfx::Rect(x++, 100, 200, 200), gfx::Color(255, 0, 0));
+    gfx::draw_rect(painter, gfx::Rect(f32(x++), 100, 200, 200), gfx::Color(255, 0, 0));
     x %= width;
 
     // Moving circle.
     static usize z = 100;
-    gfx::draw_circle(painter, gfx::Point(z++, 500), 100, gfx::Color(0, 255, 0));
+    gfx::draw_circle(painter, gfx::Point(f32(z++), 500), 100, gfx::Color(0, 255, 0));
     z %= width;
 }
 
@@ -124,7 +124,7 @@ auto main() -> int {
     xdg_surface* xdg_surface = xdg_wm_base_get_xdg_surface(shell, surface);
     xdg_surface_add_listener(xdg_surface, &xdg_surface_listen, nullptr);
 
-    static auto should_exit = false;
+    static auto volatile should_exit = false;
     auto xdg_toplevel_listen = xdg_toplevel_listener {
         .configure =
             [](void*, xdg_toplevel*, int32_t width, int32_t height, wl_array*) {

@@ -46,7 +46,7 @@ struct SizeFunction : function::pipeline::EnablePipeline {
         } else if constexpr (detail::MemberSize<T>) {
             return util::forward<T>(container).size();
         } else {
-            return end(util::forward<T>(container)) - begin(util::forward<T>(container));
+            return end(container) - begin(container);
         }
     }
 };

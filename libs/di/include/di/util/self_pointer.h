@@ -8,6 +8,7 @@ struct SelfPointer {
     constexpr SelfPointer(SelfPointer const&) : SelfPointer() {}
     constexpr SelfPointer(SelfPointer&&) : SelfPointer() {}
 
+    // NOLINTNEXTLINE(bugprone-unhandled-self-assignment)
     constexpr auto operator=(SelfPointer const&) -> SelfPointer& { return *this; }
     constexpr auto operator=(SelfPointer&&) -> SelfPointer& { return *this; }
 

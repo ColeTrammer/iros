@@ -1,7 +1,7 @@
 #include <string.h>
 
 extern "C" auto strrchr(char const* str, int ch) -> char* {
-    auto needle = (char) ch;
+    auto needle = (unsigned char) (char) ch;
     auto* str_typed = (unsigned char*) str;
 
     unsigned char* result = nullptr;

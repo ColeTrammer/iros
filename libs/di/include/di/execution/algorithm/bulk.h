@@ -143,7 +143,7 @@ namespace bulk_ns {
                      concepts::ReceiverOf<Rec, Sigs<meta::Like<Self, Send>, meta::EnvOf<Rec>, Shape, Function>>)
             friend auto tag_invoke(Tag<connect>, Self&& self, Rec receiver) {
                 return OperationState<meta::Like<Self, Send>, Shape, meta::Like<Self, Function>, Rec>(
-                    util::forward<Self>(self).sender, self.shape, util::forward<Self>(self).function,
+                    util::forward_like<Self>(self.sender), self.shape, util::forward_like<Self>(self.function),
                     util::move(receiver));
             }
 

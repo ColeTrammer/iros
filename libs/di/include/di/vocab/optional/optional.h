@@ -290,10 +290,10 @@ private:
             util::swap(a.m_storage, b.m_storage);
         } else if (a.has_value()) {
             b = util::move(a);
-            a.reset();
+            a = {};
         } else if (b.has_value()) {
             a = util::move(b);
-            b.reset();
+            b = {};
         }
     }
 

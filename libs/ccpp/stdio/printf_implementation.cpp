@@ -2,7 +2,6 @@
 
 #include <di/container/algorithm/prelude.h>
 #include <di/math/prelude.h>
-#include <errno.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -11,7 +10,7 @@ static auto parseInt(char const* num, size_t length) -> int {
     int n = 0;
     for (size_t i = 0; i < length; i++) {
         int digit = num[i] - '0';
-        for (unsigned char t = 1; t < length - i; t++) {
+        for (size_t t = 1; t < length - i; t++) {
             digit *= 10;
         }
         n += digit;
@@ -25,19 +24,19 @@ auto printf_implementation(
     int written = 0;
 
     void* obj = nullptr;
-    auto print = [&](void* obj, char const* s, usize len) -> bool {
+    auto print = [&](void* obj, char const* s, int len) -> bool {
         (void) obj;
-        return write_exactly({ s, len }).has_value();
+        return write_exactly({ s, (usize) len }).has_value();
     };
 
     while (*format != '\0') {
-        size_t maxrem = di::NumericLimits<int>::max - written;
+        int maxrem = di::NumericLimits<int>::max - written;
 
         if (format[0] != '%' || format[1] == '%') {
             if (format[0] == '%') {
                 format++;
             }
-            size_t amount = 1;
+            int amount = 1;
             while (format[amount] && format[amount] != '%') {
                 amount++;
             }
@@ -139,7 +138,7 @@ auto printf_implementation(
             if (width < 1) {
                 width = 1;
             }
-            if (maxrem < (unsigned int) width) {
+            if (maxrem < width) {
                 // TODO: Set errno to EOVERFLOW.
                 return -1;
             }
@@ -173,33 +172,33 @@ auto printf_implementation(
             }
 
             format++;
-            size_t len = strlen(str);
-            if (len > (unsigned int) width) {
+            auto len = (int) strlen(str);
+            if (len > width) {
                 width = len;
             }
             if (precision >= 0 && precision < width) {
                 width = precision;
             }
-            if (precision >= 0 && (unsigned int) precision < len) {
+            if (precision >= 0 && precision < len) {
                 len = width = precision;
             }
-            if (maxrem < (unsigned int) width) {
+            if (maxrem < width) {
                 // TODO: Set errno to EOVERFLOW.
                 return -1;
             }
-            if (len < (unsigned int) width) {
+            if (len < width) {
                 char space = ' ';
                 if (flags & 0b00010000) {
                     if (!print(obj, str, len)) {
                         return -1;
                     }
-                    while (len++ < (unsigned int) width) {
+                    while (len++ < width) {
                         if (!print(obj, &space, 1)) {
                             return -1;
                         }
                     }
                 } else {
-                    for (size_t i = 0; i < width - len; i++) {
+                    for (int i = 0; i < width - len; i++) {
                         if (!print(obj, &space, 1)) {
                             return -1;
                         }
@@ -217,9 +216,9 @@ auto printf_implementation(
         } else if (*format == 'o') {
             format++;
             unsigned int num = va_arg(args, unsigned int);
-            size_t len = 1;
-            size_t len_prec;
-            size_t len_width;
+            int len = 1;
+            int len_prec;
+            int len_width;
             unsigned int div = 1;
             while (num / div > 7) {
                 div *= 8;
@@ -230,7 +229,7 @@ auto printf_implementation(
             }
             len_prec = len;
             len_width = len_prec;
-            if (precision >= 0 && (unsigned int) precision > len) {
+            if (precision >= 0 && precision > len) {
                 len_prec = precision;
                 len_width = precision;
             }
@@ -240,10 +239,10 @@ auto printf_implementation(
             if (flags & 0b00000010) {
                 len_width += 2;
             }
-            if ((unsigned int) width < len_width) {
+            if (width < len_width) {
                 width = len_width;
             }
-            if (maxrem < (unsigned int) width) {
+            if (maxrem < width) {
                 // TODO: Set errno to EOVERFLOW.
                 return -1;
             }
@@ -302,12 +301,12 @@ auto printf_implementation(
                 while (div > 7) {
                     unsigned int n = num / div;
                     div /= 8;
-                    digit = n % 8 + '0';
+                    digit = char(n % 8 + '0');
                     if (!print(obj, &digit, 1)) {
                         return -1;
                     }
                 }
-                digit = num % 8 + '0';
+                digit = char(num % 8 + '0');
                 if (!print(obj, &digit, 1)) {
                     return -1;
                 }
@@ -327,9 +326,9 @@ auto printf_implementation(
             if (length_modifier == 0 || *format == 'p' || length_modifier == 3 || length_modifier == 5) {
 #endif
                 unsigned int num = va_arg(args, unsigned int);
-                size_t len = 1;
-                size_t len_prec;
-                size_t len_width;
+                int len = 1;
+                int len_prec;
+                int len_width;
                 char base_char = *format == 'p' ? 'X' : *format;
                 if (*format == 'p') {
                     precision = 8;
@@ -346,7 +345,7 @@ auto printf_implementation(
                 }
                 len_prec = len;
                 len_width = len_prec;
-                if (precision >= 0 && (unsigned int) precision > len) {
+                if (precision >= 0 && precision > len) {
                     len_prec = precision;
                     len_width = precision;
                 }
@@ -356,10 +355,10 @@ auto printf_implementation(
                 if (flags & 0b00000010) {
                     len_width += 2;
                 }
-                if ((unsigned int) width < len_width) {
+                if (width < len_width) {
                     width = len_width;
                 }
-                if (maxrem < (unsigned int) width) {
+                if (maxrem < width) {
                     // TODO: Set errno to EOVERFLOW.
                     return -1;
                 }
@@ -418,21 +417,21 @@ auto printf_implementation(
                     while (div > 15) {
                         unsigned int n = num / div;
                         div /= 16;
-                        digit = n % 16;
+                        digit = char(n % 16);
                         if (digit < 10) {
                             digit += '0';
                         } else {
-                            digit += base_char - ('x' - 'a') - 10;
+                            digit = char(digit + base_char - ('x' - 'a') - 10);
                         }
                         if (!print(obj, &digit, 1)) {
                             return -1;
                         }
                     }
-                    digit = num % 16;
+                    digit = char(num % 16);
                     if (digit < 10) {
                         digit += '0';
                     } else {
-                        digit += base_char - ('x' - 'a') - 10;
+                        digit = char(digit + base_char - ('x' - 'a') - 10);
                     }
                     if (!print(obj, &digit, 1)) {
                         return -1;
@@ -464,9 +463,9 @@ auto printf_implementation(
                     continue;
                 }
 
-                size_t len = 1;
-                size_t len_prec;
-                size_t len_width;
+                int len = 1;
+                int len_prec;
+                int len_width;
                 char base_char = *format == 'p' ? 'X' : *format;
                 if (*format == 'p') {
                     precision = 16;
@@ -482,7 +481,7 @@ auto printf_implementation(
                 }
                 len_prec = len;
                 len_width = len_prec;
-                if (precision >= 0 && (unsigned int) precision > len) {
+                if (precision >= 0 && precision > len) {
                     len_prec = precision;
                     len_width = precision;
                 }
@@ -492,10 +491,10 @@ auto printf_implementation(
                 if (flags & 0b00000010) {
                     len_width += 2;
                 }
-                if ((unsigned int) width < len_width) {
+                if (width < len_width) {
                     width = len_width;
                 }
-                if (maxrem < (unsigned int) width) {
+                if (maxrem < width) {
                     // TODO: Set errno to EOVERFLOW.
                     return -1;
                 }
@@ -554,21 +553,21 @@ auto printf_implementation(
                     while (div > 15) {
                         uint64_t n = num / div;
                         div /= 16;
-                        digit = n % 16;
+                        digit = char(n % 16);
                         if (digit < 10) {
                             digit += '0';
                         } else {
-                            digit += base_char - ('x' - 'a') - 10;
+                            digit = char(digit + base_char - ('x' - 'a') - 10);
                         }
                         if (!print(obj, &digit, 1)) {
                             return -1;
                         }
                     }
-                    digit = num % 16;
+                    digit = char(num % 16);
                     if (digit < 10) {
                         digit += '0';
                     } else {
-                        digit += base_char - ('x' - 'a') - 10;
+                        digit = char(digit + base_char - ('x' - 'a') - 10);
                     }
                     if (!print(obj, &digit, 1)) {
                         return -1;
@@ -590,9 +589,9 @@ auto printf_implementation(
         } else if (*format == 'u') {
             format++;
             unsigned int num = va_arg(args, unsigned int);
-            size_t len = 1;
-            size_t len_prec;
-            size_t len_width;
+            int len = 1;
+            int len_prec;
+            int len_width;
             unsigned int div = 1;
             while (num / div > 9) {
                 div *= 10;
@@ -603,7 +602,7 @@ auto printf_implementation(
             }
             len_prec = len;
             len_width = len_prec;
-            if (precision >= 0 && (unsigned int) precision > len) {
+            if (precision >= 0 && precision > len) {
                 len_prec = precision;
                 len_width = precision;
             }
@@ -613,10 +612,10 @@ auto printf_implementation(
             if (flags & 0b00000010) {
                 len_width += 2;
             }
-            if ((unsigned int) width < len_width) {
+            if (width < len_width) {
                 width = len_width;
             }
-            if (maxrem < (unsigned int) width) {
+            if (maxrem < width) {
                 // TODO: Set errno to EOVERFLOW.
                 return -1;
             }
@@ -675,12 +674,12 @@ auto printf_implementation(
                 while (div > 9) {
                     unsigned int n = num / div;
                     div /= 10;
-                    digit = n % 10 + '0';
+                    digit = char(n % 10 + '0');
                     if (!print(obj, &digit, 1)) {
                         return -1;
                     }
                 }
-                digit = num % 10 + '0';
+                digit = char(num % 10 + '0');
                 if (!print(obj, &digit, 1)) {
                     return -1;
                 }
@@ -696,9 +695,9 @@ auto printf_implementation(
         } else if (*format == 'd' || *format == 'i') {
             format++;
             int num = va_arg(args, int);
-            size_t len = 1;
-            size_t len_prec;
-            size_t len_width;
+            int len = 1;
+            int len_prec;
+            int len_width;
             unsigned int div = 1;
             int abs_num = num < 0 ? -num : num;
             while (abs_num / div > 9) {
@@ -710,7 +709,7 @@ auto printf_implementation(
             }
             len_prec = len;
             len_width = len_prec;
-            if (precision >= 0 && (unsigned int) precision > len) {
+            if (precision >= 0 && precision > len) {
                 len_prec = precision;
                 len_width = precision;
             }
@@ -723,16 +722,16 @@ auto printf_implementation(
             if (num < 0) {
                 len_width++;
             }
-            if ((unsigned int) width < len_width) {
+            if (width < len_width) {
                 width = len_width;
             }
-            if (maxrem < (unsigned int) width) {
+            if (maxrem < width) {
                 // TODO: Set errno to EOVERFLOW.
                 return -1;
             }
             char filler = ' ';
             if (!((flags & 0b00010000) | (flags & 0b00000001))) {
-                for (unsigned int i = 0; i < (unsigned int) width - len_width; i++) {
+                for (int i = 0; i < width - len_width; i++) {
                     if (!print(obj, &filler, 1)) {
                         return -1;
                     }
@@ -793,12 +792,12 @@ auto printf_implementation(
                 while (div > 9) {
                     unsigned int n = abs_num / div;
                     div /= 10;
-                    digit = n % 10 + '0';
+                    digit = char(n % 10 + '0');
                     if (!print(obj, &digit, 1)) {
                         return -1;
                     }
                 }
-                digit = num % 10 + '0';
+                digit = char(num % 10 + '0');
                 if (!print(obj, &digit, 1)) {
                     return -1;
                 }
@@ -817,17 +816,17 @@ auto printf_implementation(
             format++;
             double num = va_arg(args, double);
 
-            size_t len = 1;
+            int len = 1;
             double div = 1.0;
             while (num / div >= 10.0) {
                 div *= 10.0;
                 len++;
             }
 
-            size_t total_len = len;
+            int total_len = len;
             total_len += di::max(0, precision + 1);
 
-            while (total_len < (size_t) width) {
+            while (total_len < width) {
                 char space = ' ';
                 if (!print(obj, &space, 1)) {
                     return -1;
@@ -845,7 +844,7 @@ auto printf_implementation(
                 written++;
             }
 
-            for (size_t i = 0; i < total_len; i++) {
+            for (int i = 0; i < total_len; i++) {
                 if (i == len) {
                     char d = '.';
                     if (!print(obj, &d, 1)) {
@@ -855,7 +854,7 @@ auto printf_implementation(
                 }
                 double current = num / div;
                 int digit = ((int) current) % 10;
-                char c = digit + '0';
+                char c = char(digit + '0');
                 if (!print(obj, &c, 1)) {
                     return -1;
                 }
@@ -867,7 +866,7 @@ auto printf_implementation(
 #endif /* __SSE__ */
         else {
             format = format_begun_at;
-            size_t len = strlen(format);
+            int len = (int) strlen(format);
             if (maxrem < len) {
                 // TODO: Set errno to EOVERFLOW.
                 return -1;

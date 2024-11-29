@@ -94,8 +94,8 @@ namespace repeat_effect_until_ns {
             requires(concepts::DecayConstructible<Send const&> &&
                      concepts::SenderTo<Send const&, Receiver<Send, Rec, Pred>>)
             friend auto tag_invoke(types::Tag<connect>, Self&& self, Rec receiver) {
-                return OperationState<Send, Rec, Pred> { util::forward<Self>(self).predicate, util::move(receiver),
-                                                         util::forward<Self>(self).sender };
+                return OperationState<Send, Rec, Pred> { util::forward_like<Self>(self.predicate), util::move(receiver),
+                                                         util::forward_like<Self>(self.sender) };
             }
 
             template<concepts::DecaysTo<Type> Self, typename Env>

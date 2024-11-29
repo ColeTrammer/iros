@@ -185,6 +185,11 @@ static void strchr_() {
     auto const* r5 = do_strchr(t, '\0');
     auto const* e5 = t;
     ASSERT_EQ(r5, e5);
+
+    auto const* u = di::black_box((char const*) "Hello\xfe");
+    auto const* r6 = do_strchr(u, '\xfe');
+    auto const* e6 = u + 5;
+    ASSERT_EQ(r6, e6);
 }
 
 static void strrchr_() {
@@ -210,6 +215,11 @@ static void strrchr_() {
     auto const* r5 = do_strrchr(t, '\0');
     auto const* e5 = t;
     ASSERT_EQ(r5, e5);
+
+    auto const* u = di::black_box((char const*) "Hello\xfe");
+    auto const* r6 = do_strrchr(u, '\xfe');
+    auto const* e6 = u + 5;
+    ASSERT_EQ(r6, e6);
 }
 
 static void strstr_() {

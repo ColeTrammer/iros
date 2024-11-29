@@ -13,6 +13,7 @@ namespace detail {
     template<types::size_t... indices, typename F, concepts::TupleLike Tup>
     constexpr auto apply_impl(meta::ListV<indices...>, F&& f, Tup&& tuple)
         -> decltype(function::invoke(util::forward<F>(f), util::get<indices>(util::forward<Tup>(tuple))...)) {
+        // NOLINTNEXTLINE(bugprone-use-after-move)
         return function::invoke(util::forward<F>(f), util::get<indices>(util::forward<Tup>(tuple))...);
     }
 }

@@ -100,7 +100,8 @@ namespace transform_each_ns {
                      concepts::SubscriberOf<Rec, Signatures<meta::Like<Self, Seq>, Fun, MakeEnv<meta::EnvOf<Rec>>>>)
             friend auto tag_invoke(types::Tag<subscribe>, Self&& self, Rec receiver) {
                 return OperationState<meta::Like<Self, Seq>, meta::Like<Self, Fun>, Rec>(
-                    util::forward<Self>(self).sequence, util::forward<Self>(self).transformer, util::move(receiver));
+                    di::forward_like<Self>(self.sequence), di::forward_like<Self>(self.transformer),
+                    util::move(receiver));
             }
 
             template<concepts::RemoveCVRefSameAs<Type> Self, typename Env>

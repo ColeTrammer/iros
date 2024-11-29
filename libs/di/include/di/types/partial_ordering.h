@@ -30,7 +30,7 @@ public:
 
     constexpr friend auto operator<=>(partial_ordering v, int) -> partial_ordering { return v; }
     constexpr friend auto operator<=>(int, partial_ordering v) -> partial_ordering {
-        return v.m_value == 2 ? v : partial_ordering(-v.m_value);
+        return v.m_value == 2 ? v : partial_ordering(char(-v.m_value));
     }
 
 private:

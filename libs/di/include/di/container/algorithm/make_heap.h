@@ -9,7 +9,8 @@ namespace detail {
                  typename Proj = function::Identity>
         requires(concepts::Sortable<It, Comp, Proj>)
         constexpr auto operator()(It first, Sent last, Comp comp = {}, Proj proj = {}) const -> It {
-            return impl(util::move(first), util::ref(comp), util::ref(proj), container::distance(first, last));
+            auto dist = container::distance(first, last);
+            return impl(util::move(first), util::ref(comp), util::ref(proj), dist);
         }
 
         template<concepts::RandomAccessContainer Con, typename Comp = function::Compare,

@@ -59,8 +59,8 @@ namespace with_env_ns {
             template<concepts::RemoveCVRefSameAs<Type> Self, concepts::Receiver Rec>
             requires(concepts::SenderTo<meta::Like<Self, Send>, Receiver<Rec, Env>>)
             friend auto tag_invoke(types::Tag<connect>, Self&& self, Rec receiver) {
-                return connect(util::forward<Self>(self).m_sender,
-                               Receiver<Rec, Env> { util::move(receiver), util::forward<Self>(self).m_env });
+                return connect(util::forward_like<Self>(self.m_sender),
+                               Receiver<Rec, Env> { util::move(receiver), util::forward_like<Self>(self.m_env) });
             }
 
             auto tag_invoke(types::Tag<get_env>, Type const& self) -> decltype(auto) { return get_env(self.m_sender); }

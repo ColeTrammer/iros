@@ -24,7 +24,7 @@ namespace detail {
                     *out = *first1++;
                 } else if (result > 0) {
                     // Element was larger, take from range 2.
-                    *out = *first1++;
+                    *out = *first2++;
                 } else {
                     // Element is equal, skip value from range 2.
                     *out = ++first1;

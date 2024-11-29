@@ -76,7 +76,7 @@ private:
 
         constexpr Iterator(Iterator<!is_const> other)
         requires(is_const && concepts::ConvertibleTo<Iter<is_const>, Iter<!is_const>>)
-            : Base(util::move(other).base()), m_parent(other.m_parent) {}
+            : Base(util::move(other.base())), m_parent(other.m_parent) {}
 
         constexpr auto operator*() const -> decltype(auto) {
             return function::invoke(m_parent->m_function.value(), *this->base());

@@ -488,7 +488,7 @@ auto LockedAddressSpace::bootstrap_kernel_page_tracking() -> Expected<void> {
 
             if (pdp_offset == pdp_entry_count - 1) {
                 auto const last_pdp_entry_page_count =
-                    di::divide_round_up((end - start) % (1024 * 1024 * 1024), 2 * 1024 * 1024);
+                    di::divide_round_up((end - start) % (1024L * 1024 * 1024), 2L * 1024 * 1024);
                 pd_structure.mapped_page_count = last_pdp_entry_page_count;
             } else {
                 pd_structure.mapped_page_count = 512;

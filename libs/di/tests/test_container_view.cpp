@@ -436,13 +436,14 @@ constexpr void enumerate() {
 }
 
 constexpr void cycle() {
-    auto x = di::Array { 1, 2, 3, 4, 5 } | di::cycle;
+    auto n = di::Array { 1, 2, 3, 4, 5 };
+    auto x = n.span() | di::cycle;
 
-    auto y = di::move(x) | di::take(15) | di::to<di::Vector>();
+    auto y = x | di::take(15) | di::to<di::Vector>();
     auto ex1 = di::Array { 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5 } | di::to<di::Vector>();
     ASSERT_EQ(y, ex1);
 
-    auto z = di::move(x) | di::take(15) | di::reverse | di::to<di::Vector>();
+    auto z = x | di::take(15) | di::reverse | di::to<di::Vector>();
     auto ex2 = di::Array { 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5 } | di::reverse | di::to<di::Vector>();
     ASSERT_EQ(z, ex2);
 
@@ -563,7 +564,7 @@ constexpr void concat() {
     static_assert(di::SameAs<int&, di::meta::ContainerReference<decltype(v1)>>);
     static_assert(di::concepts::Permutable<decltype(v1.begin())>);
 
-    auto r1 = di::move(v1) | di::to<di::Vector>();
+    auto r1 = v1 | di::to<di::Vector>();
     auto ex1 = di::Array { 2, 3, 4, 7, 6, 5, 1, 8, 0 } | di::to<di::Vector>();
     ASSERT_EQ(r1, ex1);
 

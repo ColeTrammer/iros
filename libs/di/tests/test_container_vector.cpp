@@ -90,7 +90,7 @@ constexpr void move_only() {
 
     auto w = di::move(v);
     ASSERT_EQ(w.size(), 2u);
-    ASSERT(v.empty());
+    ASSERT(v.empty()); // NOLINT(bugprone-use-after-move)
 }
 
 constexpr void to() {

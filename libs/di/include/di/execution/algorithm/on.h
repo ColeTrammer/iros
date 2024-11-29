@@ -122,8 +122,8 @@ namespace on_ns {
             requires(concepts::DecayConstructible<meta::Like<Self, Send>> &&
                      concepts::SenderTo<meta::Like<Self, Send>, ReceiverWithEnv<Send, Rec, Sched>>)
             friend auto tag_invoke(types::Tag<connect>, Self&& self, Rec receiver) {
-                return OperationState<Send, Rec, Sched> { util::forward<Self>(self).scheduler,
-                                                          util::forward<Self>(self).sender, util::move(receiver) };
+                return OperationState<Send, Rec, Sched> { util::forward_like<Self>(self.scheduler),
+                                                          util::forward_like<Self>(self.sender), util::move(receiver) };
             }
 
             template<concepts::DecaysTo<Type> Self, typename E>

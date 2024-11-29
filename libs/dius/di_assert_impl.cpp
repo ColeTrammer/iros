@@ -62,7 +62,7 @@ void assert_fail(char const* source_text, char const* lhs_message, char const* r
         }
     }
 
-    ::free(symbols);
+    ::free(di::voidify(symbols));
 #endif
 
     auto& test_manager = dius::test::TestManager::the();

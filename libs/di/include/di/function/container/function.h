@@ -18,6 +18,7 @@
 #include <di/util/exchange.h>
 #include <di/util/initializer_list.h>
 #include <di/util/std_new.h>
+#include <di/util/voidify.h>
 #include <di/vocab/array/prelude.h>
 #include <di/vocab/error/prelude.h>
 #include <di/vocab/expected/as_fallible.h>
@@ -281,7 +282,8 @@ namespace function_ns {
 
         ErasedObject(ErasedObject const&) = delete;
         constexpr ErasedObject(ErasedObject&& other) {
-            if ((m_thunk = util::exchange(other.m_thunk, nullptr))) {
+            m_thunk = util::exchange(other.m_thunk, nullptr);
+            if (m_thunk) {
                 m_thunk(util::addressof(m_storage), util::addressof(other.m_storage), m_allocator);
             }
         }
@@ -291,7 +293,8 @@ namespace function_ns {
         auto operator=(ErasedObject const&) -> ErasedObject& = delete;
         constexpr auto operator=(ErasedObject&& other) -> ErasedObject& {
             reset();
-            if ((m_thunk = util::exchange(other.m_thunk, nullptr))) {
+            m_thunk = util::exchange(other.m_thunk, nullptr);
+            if (m_thunk) {
                 m_thunk(util::addressof(m_storage), util::addressof(other.m_storage), m_allocator);
             }
             return *this;
@@ -343,7 +346,7 @@ namespace function_ns {
         constexpr auto init_out_of_line(Args&&... args) {
             return vocab::as_fallible(di::allocate_one<T>(m_allocator)) % [&](T* storage) {
                 m_thunk = &concrete_thunk<T>;
-                m_storage.pointer = storage;
+                m_storage.pointer = di::voidify(storage);
                 util::construct_at(storage, util::forward<Args>(args)...);
             } | vocab::try_infallible;
         }

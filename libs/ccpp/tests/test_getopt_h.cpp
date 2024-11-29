@@ -44,13 +44,13 @@ static auto do_getopt(char const* short_options, di::Span<char const*> argv, Get
     auto do_getopt = [&] -> int {
         switch (function) {
             case GetoptFunction::Short:
-                return getopt(argv.size(), const_cast<char**>(argv.data()), short_options);
+                return getopt(int(argv.size()), const_cast<char**>(argv.data()), short_options);
             case GetoptFunction::Long:
-                return getopt_long(argv.size(), const_cast<char**>(argv.data()), short_options, options.data(),
+                return getopt_long(int(argv.size()), const_cast<char**>(argv.data()), short_options, options.data(),
                                    &longindex);
             case GetoptFunction::LongOnly:
-                return getopt_long_only(argv.size(), const_cast<char**>(argv.data()), short_options, options.data(),
-                                        &longindex);
+                return getopt_long_only(int(argv.size()), const_cast<char**>(argv.data()), short_options,
+                                        options.data(), &longindex);
             default:
                 di::unreachable();
         }

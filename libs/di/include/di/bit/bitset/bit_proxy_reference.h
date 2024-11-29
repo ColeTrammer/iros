@@ -18,6 +18,8 @@ public:
         }
         return *this;
     }
+
+    // NOLINTNEXTLINE(bugprone-unhandled-self-assignment)
     constexpr auto operator=(BitProxyReference const& other) const -> BitProxyReference const& {
         return *this = bool(other);
     }

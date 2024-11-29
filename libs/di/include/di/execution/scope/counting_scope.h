@@ -172,7 +172,7 @@ namespace counting_scope_ns {
                      Rec, meta::CompletionSignaturesOf<meta::Like<Self, Send>, Env<Alloc, meta::EnvOf<Rec>>>>)
             friend auto tag_invoke(Tag<connect>, Self&& self, Rec receiver) {
                 return NestOperationState<Alloc, meta::Like<Self, Send>, Rec>(
-                    self.data, util::forward<Self>(self).sender, util::move(receiver));
+                    self.data, util::forward_like<Self>(self.sender), util::move(receiver));
             }
 
             friend auto tag_invoke(Tag<get_env>, Type const& self) { return make_env(self.sender); }

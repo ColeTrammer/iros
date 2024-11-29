@@ -75,8 +75,7 @@ public:
                            };
                        } |
                    if_error([&](auto&&) {
-                       // FIXME: uncomment once String has pop_back().
-                       //    m_data.pop_back();
+                       m_data.pop_back();
                    }) |
                    try_infallible;
         }

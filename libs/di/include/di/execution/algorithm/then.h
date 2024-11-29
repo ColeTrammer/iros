@@ -185,7 +185,7 @@ namespace then_ns {
                      concepts::ReceiverOf<Rec, Sigs<CPO, meta::Like<Self, Send>, meta::EnvOf<Rec>, Fun>>)
             friend auto tag_invoke(Tag<connect>, Self&& self, Rec receiver) {
                 return OperationState<CPO, meta::Like<Self, Send>, meta::Like<Self, Fun>, Rec>(
-                    util::forward<Self>(self).sender, util::forward<Self>(self).function, util::move(receiver));
+                    di::forward_like<Self>(self.sender), di::forward_like<Self>(self.function), util::move(receiver));
             }
 
             friend auto tag_invoke(Tag<get_env>, Type const& self) { return make_env(get_env(self.sender)); }

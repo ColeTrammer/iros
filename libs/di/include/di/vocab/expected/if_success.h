@@ -8,11 +8,11 @@
 namespace di::vocab {
 namespace detail {
     struct IfSuccessFunction {
-        template<concepts::Expected T, concepts::InvocableTo<void, meta::Like<T, meta::ExpectedValue<T>>> F>
+        template<concepts::Expected T, concepts::InvocableTo<void, meta::Like<T, meta::ExpectedValue<T>>&> F>
         requires(concepts::DecayConstructible<T>)
         constexpr auto operator()(T&& expected, F&& function) const {
             if (expected) {
-                function::invoke(util::forward<F>(function), *util::forward<T>(expected));
+                function::invoke(util::forward<F>(function), expected.value());
             }
             return util::forward<T>(expected);
         }

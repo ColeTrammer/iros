@@ -45,12 +45,16 @@ public:
         return *this;
     }
     constexpr auto operator=(IntrusivePtr const& other) -> IntrusivePtr& {
-        reset(other.get(), adopt_object);
+        if (this != &other) {
+            reset(other.get(), adopt_object);
+        }
         return *this;
     }
     constexpr auto operator=(IntrusivePtr&& other) -> IntrusivePtr& {
-        reset();
-        m_pointer = other.release();
+        if (this != &other) {
+            reset();
+            m_pointer = other.release();
+        }
         return *this;
     }
 

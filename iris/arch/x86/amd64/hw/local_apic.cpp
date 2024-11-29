@@ -21,7 +21,7 @@ void Processor::handle_pending_ipi_messages() {
     // This takes the lock, and then empties the queue into a local variable.
     auto messages = m_ipi_message_queue.with_lock([](auto& queue) {
         auto result = di::move(queue);
-        queue.clear();
+        queue = {};
         return result;
     });
 

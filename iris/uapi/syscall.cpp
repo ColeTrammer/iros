@@ -43,7 +43,7 @@ auto do_syscall(Task& current_task, arch::TaskState& task_state) -> Expected<u64
             return task->id().raw_value();
         }
         case SystemCall::load_executable: {
-            auto task_id = iris::TaskId(task_state.syscall_arg1());
+            auto task_id = iris::TaskId((i32) task_state.syscall_arg1());
             auto const* string_base = reinterpret_cast<byte const*>(task_state.syscall_arg2());
             auto string_length = task_state.syscall_arg3();
             auto string_buffer = TRY(di::create<UserspaceBuffer>(string_base, string_length));
@@ -58,7 +58,7 @@ auto do_syscall(Task& current_task, arch::TaskState& task_state) -> Expected<u64
             return 0;
         }
         case SystemCall::start_task: {
-            auto task_id = iris::TaskId(task_state.syscall_arg1());
+            auto task_id = iris::TaskId((i32) task_state.syscall_arg1());
 
             auto& task_namespace = current_task.task_namespace();
             auto task = TRY(task_namespace.lock()->find_task(task_id));
@@ -118,13 +118,13 @@ auto do_syscall(Task& current_task, arch::TaskState& task_state) -> Expected<u64
                 di::execution::sync_wait(iris::read_file(handle, TRY(di::create<UserspaceBuffer>(buffer, amount)))));
         }
         case SystemCall::close: {
-            i32 file_handle = task_state.syscall_arg1();
+            auto file_handle = (i32) task_state.syscall_arg1();
 
             TRY(current_task.file_table().deallocate_file_handle(file_handle));
             return 0;
         }
         case SystemCall::start_task_and_block: {
-            auto task_id = iris::TaskId(task_state.syscall_arg1());
+            auto task_id = iris::TaskId((i32) task_state.syscall_arg1());
 
             auto& task_namespace = current_task.task_namespace();
             auto task = TRY(task_namespace.lock()->find_task(task_id));
@@ -136,7 +136,7 @@ auto do_syscall(Task& current_task, arch::TaskState& task_state) -> Expected<u64
             return 0;
         }
         case SystemCall::set_userspace_thread_pointer: {
-            auto task_id = iris::TaskId(task_state.syscall_arg1());
+            auto task_id = iris::TaskId((i32) task_state.syscall_arg1());
             auto value = task_state.syscall_arg2();
 
             auto& task_namespace = current_task.task_namespace();
@@ -148,7 +148,7 @@ auto do_syscall(Task& current_task, arch::TaskState& task_state) -> Expected<u64
             return 0;
         }
         case SystemCall::set_userspace_stack_pointer: {
-            auto task_id = iris::TaskId(task_state.syscall_arg1());
+            auto task_id = iris::TaskId((i32) task_state.syscall_arg1());
             auto value = task_state.syscall_arg2();
 
             auto& task_namespace = current_task.task_namespace();
@@ -158,7 +158,7 @@ auto do_syscall(Task& current_task, arch::TaskState& task_state) -> Expected<u64
             return 0;
         }
         case SystemCall::set_userspace_instruction_pointer: {
-            auto task_id = iris::TaskId(task_state.syscall_arg1());
+            auto task_id = iris::TaskId((i32) task_state.syscall_arg1());
             auto value = task_state.syscall_arg2();
 
             auto& task_namespace = current_task.task_namespace();
@@ -168,7 +168,7 @@ auto do_syscall(Task& current_task, arch::TaskState& task_state) -> Expected<u64
             return 0;
         }
         case SystemCall::set_userspace_argument1: {
-            auto task_id = iris::TaskId(task_state.syscall_arg1());
+            auto task_id = iris::TaskId((i32) task_state.syscall_arg1());
             auto value = task_state.syscall_arg2();
 
             auto& task_namespace = current_task.task_namespace();
@@ -187,7 +187,7 @@ auto do_syscall(Task& current_task, arch::TaskState& task_state) -> Expected<u64
             return TRY_UNERASE_ERROR(di::execution::sync_wait(iris::seek_file(handle, offset, whence)));
         }
         case SystemCall::set_task_arguments: {
-            auto task_id = iris::TaskId(task_state.syscall_arg1());
+            auto task_id = iris::TaskId((i32) task_state.syscall_arg1());
             auto const* argument_array =
                 reinterpret_cast<UserspaceBuffer<byte const> const*>(task_state.syscall_arg2());
             auto argument_count = task_state.syscall_arg3();
