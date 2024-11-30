@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <di/assert/prelude.h>
 #include <di/math/prelude.h>
+#include <dius/print.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -304,7 +305,7 @@ auto scanf_implementation(di::FunctionRef<di::Expected<di::Optional<char>, di::G
                 }
 
                 // Always assume at least 1 character in set (there has to be and this allows for inclusion of `]`)
-                int set_start = (int) format_off;
+                auto set_start = (int) format_off;
                 int set_end = set_start + 1;
                 while (format[set_end] != ']') {
                     set_end++;
@@ -642,7 +643,7 @@ auto scanf_implementation(di::FunctionRef<di::Expected<di::Optional<char>, di::G
 #ifdef __is_libk
                 debug_log("Unsupported specifier: %s\n", specifier.specifier);
 #else
-                fprintf(stderr, "Unsupported specifier: %s\n", specifier.specifier);
+                dius::eprintln("Unsupported specifier: {}"_sv, specifier.specifier);
 #endif /* __is_libk */
                 return num_read;
         }

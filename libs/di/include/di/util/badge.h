@@ -8,6 +8,7 @@ private:
 
     Badge() = default;
 
+public:
     Badge(Badge const&) = delete;
     Badge(Badge&&) = delete;
 

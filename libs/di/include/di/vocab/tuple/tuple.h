@@ -31,7 +31,7 @@ private:
 public:
     constexpr Tuple()
     requires(concepts::DefaultConstructible<Types> && ...)
-    {}
+    = default;
 
     constexpr Tuple(Tuple const&) = default;
     constexpr Tuple(Tuple&&) = default;

@@ -40,7 +40,7 @@ template<detail::SystemCallResult R, detail::SystemCallArgument T1>
 auto system_call(Number number, T1&& a1) -> di::Expected<R, di::BasicError> {
     SystemCallResult res = di::to_underlying(number);
     SystemCallResult err;
-    SystemCallArg y1 = SystemCallArg(a1);
+    auto y1 = SystemCallArg(a1);
     register SystemCallArg x1 asm(DIUS_SYSTEM_CALL_ASM_ARG1) = y1;
     asm volatile(DIUS_SYSTEM_CALL_INSTRUCTION
                  : DIUS_SYSTEM_CALL_ASM_RESULT(res), DIUS_SYSTEM_CALL_ASM_ERROR(err)
@@ -56,8 +56,8 @@ template<detail::SystemCallResult R, detail::SystemCallArgument T1, detail::Syst
 auto system_call(Number number, T1&& a1, T2&& a2) -> di::Expected<R, di::BasicError> {
     SystemCallResult res = di::to_underlying(number);
     SystemCallResult err;
-    SystemCallArg y1 = SystemCallArg(a1);
-    SystemCallArg y2 = SystemCallArg(a2);
+    auto y1 = SystemCallArg(a1);
+    auto y2 = SystemCallArg(a2);
     register SystemCallArg x1 asm(DIUS_SYSTEM_CALL_ASM_ARG1) = y1;
     register SystemCallArg x2 asm(DIUS_SYSTEM_CALL_ASM_ARG2) = y2;
     asm volatile(DIUS_SYSTEM_CALL_INSTRUCTION
@@ -75,9 +75,9 @@ template<detail::SystemCallResult R, detail::SystemCallArgument T1, detail::Syst
 auto system_call(Number number, T1&& a1, T2&& a2, T3&& a3) -> di::Expected<R, di::BasicError> {
     SystemCallResult res = di::to_underlying(number);
     SystemCallResult err;
-    SystemCallArg y1 = SystemCallArg(a1);
-    SystemCallArg y2 = SystemCallArg(a2);
-    SystemCallArg y3 = SystemCallArg(a3);
+    auto y1 = SystemCallArg(a1);
+    auto y2 = SystemCallArg(a2);
+    auto y3 = SystemCallArg(a3);
     register SystemCallArg x1 asm(DIUS_SYSTEM_CALL_ASM_ARG1) = y1;
     register SystemCallArg x2 asm(DIUS_SYSTEM_CALL_ASM_ARG2) = y2;
     register SystemCallArg x3 asm(DIUS_SYSTEM_CALL_ASM_ARG3) = y3;
@@ -96,10 +96,10 @@ template<detail::SystemCallResult R, detail::SystemCallArgument T1, detail::Syst
 auto system_call(Number number, T1&& a1, T2&& a2, T3&& a3, T4&& a4) -> di::Expected<R, di::BasicError> {
     SystemCallResult res = di::to_underlying(number);
     SystemCallResult err;
-    SystemCallArg y1 = SystemCallArg(a1);
-    SystemCallArg y2 = SystemCallArg(a2);
-    SystemCallArg y3 = SystemCallArg(a3);
-    SystemCallArg y4 = SystemCallArg(a4);
+    auto y1 = SystemCallArg(a1);
+    auto y2 = SystemCallArg(a2);
+    auto y3 = SystemCallArg(a3);
+    auto y4 = SystemCallArg(a4);
     register SystemCallArg x1 asm(DIUS_SYSTEM_CALL_ASM_ARG1) = y1;
     register SystemCallArg x2 asm(DIUS_SYSTEM_CALL_ASM_ARG2) = y2;
     register SystemCallArg x3 asm(DIUS_SYSTEM_CALL_ASM_ARG3) = y3;
@@ -119,11 +119,11 @@ template<detail::SystemCallResult R, detail::SystemCallArgument T1, detail::Syst
 auto system_call(Number number, T1&& a1, T2&& a2, T3&& a3, T4&& a4, T5&& a5) -> di::Expected<R, di::BasicError> {
     SystemCallResult res = di::to_underlying(number);
     SystemCallResult err;
-    SystemCallArg y1 = SystemCallArg(a1);
-    SystemCallArg y2 = SystemCallArg(a2);
-    SystemCallArg y3 = SystemCallArg(a3);
-    SystemCallArg y4 = SystemCallArg(a4);
-    SystemCallArg y5 = SystemCallArg(a5);
+    auto y1 = SystemCallArg(a1);
+    auto y2 = SystemCallArg(a2);
+    auto y3 = SystemCallArg(a3);
+    auto y4 = SystemCallArg(a4);
+    auto y5 = SystemCallArg(a5);
     register SystemCallArg x1 asm(DIUS_SYSTEM_CALL_ASM_ARG1) = y1;
     register SystemCallArg x2 asm(DIUS_SYSTEM_CALL_ASM_ARG2) = y2;
     register SystemCallArg x3 asm(DIUS_SYSTEM_CALL_ASM_ARG3) = y3;

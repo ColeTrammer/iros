@@ -31,35 +31,31 @@ public:
 
     constexpr static auto get() -> GenericDomain const&;
 
-    virtual auto name() const -> di::container::ErasedString override {
-        return container::ErasedString(u8"Posix) Domain");
-    }
+    auto name() const -> di::container::ErasedString override { return container::ErasedString(u8"Posix) Domain"); }
 
-    virtual auto payload_info() const -> PayloadInfo override {
+    auto payload_info() const -> PayloadInfo override {
         return { sizeof(Value), sizeof(Value) + sizeof(StatusCodeDomain const*),
                  di::container::max(alignof(Value), alignof(StatusCodeDomain const*)) };
     }
 
 protected:
-    constexpr virtual auto do_failure(vocab::StatusCode<void> const& code) const -> bool override {
+    constexpr auto do_failure(vocab::StatusCode<void> const& code) const -> bool override {
         return down_cast(code).value() != BasicError::Success;
     }
 
-    constexpr virtual auto do_equivalent(vocab::StatusCode<void> const& a, vocab::StatusCode<void> const& b) const
+    constexpr auto do_equivalent(vocab::StatusCode<void> const& a, vocab::StatusCode<void> const& b) const
         -> bool override {
         DI_ASSERT(a.domain() == *this);
         return b.domain() == *this && down_cast(a).value() == down_cast(b).value();
     }
 
-    constexpr virtual auto do_convert_to_generic(vocab::StatusCode<void> const& a) const
-        -> vocab::GenericCode override {
+    constexpr auto do_convert_to_generic(vocab::StatusCode<void> const& a) const -> vocab::GenericCode override {
         DI_ASSERT(a.domain() == *this);
         return vocab::GenericCode(di::in_place, down_cast(a).value());
     }
 
     // NOLINTNEXTLINE(readability-function-cognitive-complexity)
-    constexpr virtual auto do_message(vocab::StatusCode<void> const& code) const
-        -> di::container::ErasedString override {
+    constexpr auto do_message(vocab::StatusCode<void> const& code) const -> di::container::ErasedString override {
         auto value = down_cast(code).value();
         if (value == BasicError::Success) {
             return container::ErasedString(u8"Success");

@@ -38,7 +38,7 @@ struct InlineVTable {
         }
 
     private:
-        constexpr Invoke(Storage storage) : m_storage(storage) {}
+        constexpr Invoke(Storage storage) : m_storage(di::move(storage)) {}
 
         Storage m_storage;
     };

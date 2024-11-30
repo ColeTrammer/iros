@@ -99,7 +99,7 @@ public:
             // the range [0, 3] and multiply that by 4 to get an index in { 0, 4, 8, 12 }.
             // Then add to this index a non-scaled generated value, to produce a uniform
             // integer in the range [0, 15]. And finally, discard the value if it is out of bounds.
-            U const generated_size = U(generated_range + 1);
+            auto const generated_size = U(generated_range + 1);
             for (;;) {
                 U const base_index = generated_size * (*this)(generator, Param(0U, desired_range / generated_size));
                 U const index = generate();

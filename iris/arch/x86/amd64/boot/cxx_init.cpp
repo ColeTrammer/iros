@@ -3,7 +3,7 @@
 #include <di/types/prelude.h>
 
 extern "C" {
-typedef void (*init_function_t)(void);
+using init_function_t = void (*)();
 
 extern init_function_t __iris_init_array_start[];
 extern init_function_t __iris_init_array_end[];

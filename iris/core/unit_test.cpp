@@ -12,7 +12,7 @@ void TestManager::register_test_case(TestCase test_case) {
 }
 
 extern "C" {
-typedef void (*init_function_t)(void);
+using init_function_t = void (*)();
 
 extern init_function_t __iris_unit_test_init_array_start[];
 extern init_function_t __iris_unit_test_init_array_end[];

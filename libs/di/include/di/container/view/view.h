@@ -46,7 +46,7 @@ public:
 
     constexpr View(concepts::ConvertibleToNonSlicing<Iter> auto iterator, Sent sentinel)
     requires(!store_size)
-        : m_iterator(util::move(iterator)), m_sentinel(sentinel) {}
+        : m_iterator(util::move(iterator)), m_sentinel(di::move(sentinel)) {}
 
     constexpr View(concepts::ConvertibleToNonSlicing<Iter> auto iterator, Sent sentinel, SizeType size)
     requires(is_sized)

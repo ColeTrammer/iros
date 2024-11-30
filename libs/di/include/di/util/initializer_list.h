@@ -15,7 +15,7 @@ public:
     using iterator = T const*;
     using const_iterator = iterator;
 
-    constexpr initializer_list() {}
+    constexpr initializer_list() = default;
 
     constexpr auto size() const -> size_type { return m_size; }
     constexpr auto begin() const -> iterator { return m_data; }

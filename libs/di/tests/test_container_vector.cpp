@@ -72,7 +72,7 @@ struct M {
     constexpr M(M const&) = delete;
     constexpr M(M&& xx) : x(di::exchange(xx.x, 0)) {}
 
-    constexpr ~M() {}
+    constexpr ~M() = default;
 
     int x;
 

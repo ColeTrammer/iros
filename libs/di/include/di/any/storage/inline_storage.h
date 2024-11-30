@@ -42,7 +42,7 @@ public:
     template<typename>
     using CreationResult = void;
 
-    constexpr InlineStorage() {}
+    constexpr InlineStorage() = default;
 
     InlineStorage(InlineStorage const&) = delete;
     auto operator=(InlineStorage const&) -> InlineStorage& = delete;

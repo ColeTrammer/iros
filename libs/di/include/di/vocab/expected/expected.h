@@ -95,12 +95,12 @@ public:
     template<typename... Args>
     requires(concepts::ConstructibleFrom<T, Args...>)
     constexpr explicit Expected(types::InPlace, Args&&... args)
-        : m_has_error(false), m_value(types::in_place, util::forward<Args>(args)...) {}
+        : m_value(types::in_place, util::forward<Args>(args)...) {}
 
     template<typename U, typename... Args>
     requires(concepts::ConstructibleFrom<T, std::initializer_list<U>, Args...>)
     constexpr explicit Expected(types::InPlace, std::initializer_list<U> list, Args&&... args)
-        : m_has_error(false), m_value(types::in_place, list, util::forward<Args>(args)...) {}
+        : m_value(types::in_place, list, util::forward<Args>(args)...) {}
 
     template<typename... Args>
     requires(concepts::ConstructibleFrom<E, Args...>)

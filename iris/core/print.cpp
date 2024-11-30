@@ -36,7 +36,7 @@ void log_prologue(detail::DebugFormatContext& context, di::SourceLocation locati
 
 namespace di::assert::detail {
 static auto zstring_to_string_view(char const* s) -> di::TransparentStringView {
-    return di::TransparentStringView(s, di::to_unsigned(di::distance(di::ZCString(s))));
+    return { s, di::to_unsigned(di::distance(di::ZCString(s))) };
 }
 
 void assert_fail(char const* source_text, char const* lhs_message, char const* rhs_message, util::SourceLocation loc) {

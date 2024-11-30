@@ -32,7 +32,7 @@ public:
     void handle_assertion_failure();
 
 private:
-    TestManager() {}
+    TestManager() = default;
 
     void print_failure_message();
     void print_success_message();

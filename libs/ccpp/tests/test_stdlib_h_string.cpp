@@ -75,7 +75,7 @@ static void atoll_() {
 }
 
 static auto cstring_to_tsv(char const* ptr) -> di::TransparentStringView {
-    return di::TransparentStringView(ptr, strlen(ptr));
+    return { ptr, strlen(ptr) };
 }
 
 static void strtol_() {

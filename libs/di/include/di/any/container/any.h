@@ -36,7 +36,7 @@ namespace detail {
             template<typename X>
             requires(concepts::DerivedFrom<meta::RemoveCVRef<X>, E>)
             constexpr friend auto tag_invoke(Tag, X&& self_in, BArgs... bargs) -> R {
-                auto&& self = static_cast<meta::Like<Self, E>>(self_in);
+                auto&& self = static_cast<meta::Like<Self, E>>(self_in); // NOLINT(modernize-use-auto)
                 auto const& vtable = Type::vtable(self);
                 auto* storage = util::voidify(util::addressof(Type::storage(self)));
 

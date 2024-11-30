@@ -42,7 +42,7 @@ private:
 
         return with_interrupts_disabled([&] -> Expected<void> {
             TRY(self.register_irq());
-            self.m_callback = std::move(callback);
+            self.m_callback = di::move(callback);
             // Set PIT to mode 0: interrupt on terminal count.
             x86::amd64::io_out(0x43, 0b00110000_u8);
             x86::amd64::io_out(0x40, u8(divisor & 0xFF));
@@ -57,7 +57,7 @@ private:
 
         return with_interrupts_disabled([&] -> Expected<void> {
             TRY(self.register_irq());
-            self.m_callback = std::move(callback);
+            self.m_callback = di::move(callback);
 
             // Set PIT to mode 3: square wave generator.
             x86::amd64::io_out(0x43, 0b00110110_u8);

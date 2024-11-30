@@ -22,7 +22,7 @@ struct coroutine_handle;
 template<>
 struct coroutine_handle<void> {
 public:
-    constexpr coroutine_handle() noexcept {}
+    constexpr coroutine_handle() noexcept = default;
     constexpr coroutine_handle(std::nullptr_t) noexcept {}
 
     constexpr auto operator=(std::nullptr_t) noexcept -> coroutine_handle& {
@@ -53,7 +53,7 @@ template<typename Promise>
 requires(!di::concepts::LanguageVoid<Promise>)
 struct coroutine_handle<Promise> {
 public:
-    constexpr coroutine_handle() noexcept {}
+    constexpr coroutine_handle() noexcept = default;
     constexpr coroutine_handle(std::nullptr_t) noexcept {}
 
     constexpr auto operator=(std::nullptr_t) noexcept -> coroutine_handle& {

@@ -33,7 +33,7 @@ private:
         public:
             Type(RunLoop* parent, Receiver&& receiver) : OperationStateBase(parent), m_receiver(util::move(receiver)) {}
 
-            virtual void execute() override {
+            void execute() override {
                 if (get_stop_token(m_receiver).stop_requested()) {
                     set_stopped(util::move(m_receiver));
                 } else {

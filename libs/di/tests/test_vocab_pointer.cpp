@@ -5,7 +5,7 @@ namespace vocab_pointer {
 struct X {
     constexpr explicit X(int x_) : x(x_) {}
 
-    constexpr virtual ~X() {}
+    constexpr virtual ~X() = default;
 
     int x;
 };
@@ -13,7 +13,7 @@ struct X {
 struct Y : X {
     constexpr explicit Y(int x_, int y_) : X(x_), y(y_) {}
 
-    constexpr virtual ~Y() override {}
+    constexpr ~Y() override = default;
 
     int y;
 };

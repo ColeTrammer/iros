@@ -135,7 +135,7 @@ auto printf_implementation(
 
         if (*format == 'c') {
             format++;
-            char c = (char) va_arg(args, int /* char promotes to int */);
+            auto c = (char) va_arg(args, int /* char promotes to int */);
             width = di::max(width, 1);
             if (maxrem < width) {
                 // TODO: Set errno to EOVERFLOW.
@@ -841,7 +841,7 @@ auto printf_implementation(
                 }
                 double current = num / div;
                 int digit = ((int) current) % 10;
-                char c = char(digit + '0');
+                auto c = char(digit + '0');
                 if (!print(obj, &c, 1)) {
                     return -1;
                 }
@@ -853,7 +853,7 @@ auto printf_implementation(
 #endif /* __SSE__ */
         else {
             format = format_begun_at;
-            int len = (int) strlen(format);
+            auto len = (int) strlen(format);
             if (maxrem < len) {
                 // TODO: Set errno to EOVERFLOW.
                 return -1;

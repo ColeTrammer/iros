@@ -17,7 +17,7 @@ fi
 
 cd "$IROS_ROOT"
 
-tidy_args="-p ${IROS_BUILD_DIR} -use-color 1 -allow-no-checks"
+tidy_args="-p ${IROS_BUILD_DIR} -use-color 1 -allow-no-checks -quiet"
 
 action="$1"
 shift
@@ -48,4 +48,4 @@ while getopts ":s:a:" opt; do
 done
 
 set -x
-run-clang-tidy $tidy_args
+! run-clang-tidy $tidy_args 2>&1 | grep -vE 'clang-tidy|[[:digit:]]+ warnings? generated'

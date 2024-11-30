@@ -2,7 +2,7 @@
 WarningsAsErrors: "*"
 FormatStyle: none
 HeaderFilterRegex: .*
-ExcludeHeaderFilterRegex: ".*ccpp/.*"
+ExcludeHeaderFilterRegex: ".*(ccpp)/.*|.*limine.h.*"
 ExtraArgs: [-std=gnu++26, -fconstexpr-steps=10000000, -Wno-unknown-warning-option, -fsized-deallocation]
 Checks: >
   -*,
@@ -12,6 +12,13 @@ Checks: >
   -bugprone-inc-dec-in-conditions,
   -bugprone-macro-parentheses,
   -bugprone-reserved-identifier,
+  modernize-*,
+  -modernize-avoid-c-arrays,
+  -modernize-concat-nested-namespaces,
+  -modernize-deprecated-headers,
+  -modernize-use-designated-initializers,
+  -modernize-use-nodiscard,
+  -modernize-use-std-numbers,
   readability-*,
   -readability-avoid-nested-conditional-operator,
   -readability-convert-member-functions-to-static,
@@ -23,22 +30,9 @@ Checks: >
   -readability-math-missing-parentheses,
   -readability-named-parameter,
   -readability-static-accessed-through-instance,
-# modernize-use-trailing-return-type,
-# cert-*,
-# concurrency-*,
 # misc-*,
-# modernize-*,
 # performance-*,
 # portability-*,
-# readability-*,
-# -bugprone-easily-swappable-parameters,
-# -bugprone-reserved-identifier,-cert-dcl37-c,-cert-dcl51-cpp,
-# -cert-dcl21-cpp,
-# -cert-dcl58-cpp,
-# -modernize-deprecated-headers,
-# -modernize-use-trailing-return-type,
-# -modernize-use-nodiscard,
-# -modernize-use-noexcept,
 # -misc-no-recursion,
 # -misc-non-private-member-variables-in-classes,
 # -misc-use-anonymous-namespace,
@@ -50,6 +44,14 @@ CheckOptions:
     value: "di::StringView;di::Span"
   - key: bugprone-sizeof-expression.WarnOnSizeOfPointerToAggregate
     value: false
+  - key: modernize-use-auto.MinTypeNameLength
+    value: 0
+  - key: modernize-use-std-print.ReplacementPrintFunction
+    value: dius::print
+  - key: modernize-use-std-print.ReplacementPrintlnFunction
+    value: dius::println
+  - key: modernize-use-std-print.PrintHeader
+    value: <dius/print.h>
   - key: readability-implicit-bool-conversion.AllowPointerConditions
     value: true
   - key: readability-implicit-bool-conversion.AllowIntegerConditions

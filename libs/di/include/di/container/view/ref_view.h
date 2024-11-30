@@ -23,10 +23,10 @@ private:
     template<typename X>
     constexpr static void delete_rvalues(X&);
 
+public:
     template<typename X>
     constexpr static void delete_rvalues(X&&) = delete;
 
-public:
     template<typename T>
     requires(!concepts::DecaySameAs<T, RefView> && requires { delete_rvalues(util::declval<T>()); })
     constexpr RefView(T&& container) : m_container(static_cast<Cont&>(util::forward<T>(container))) {}

@@ -12,7 +12,7 @@ extern "C" auto __cxa_atexit(void (*)(void*), void*, void*) -> int {
     return 0;
 }
 
-__extension__ typedef int __guard __attribute__((mode(__DI__)));
+__extension__ using __guard = long __attribute__((mode(__DI__)));
 
 extern "C" [[gnu::weak]] auto __cxa_guard_acquire(__guard* guard) -> int {
     __guard expected = 0;

@@ -39,10 +39,10 @@
 #define WL_EXPORT
 
 static const struct wl_interface* xdg_shell_types[] = {
-    NULL,
-    NULL,
-    NULL,
-    NULL,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
     &xdg_positioner_interface,
     &xdg_surface_interface,
     &wl_surface_interface,
@@ -52,19 +52,19 @@ static const struct wl_interface* xdg_shell_types[] = {
     &xdg_positioner_interface,
     &xdg_toplevel_interface,
     &wl_seat_interface,
-    NULL,
-    NULL,
-    NULL,
+    nullptr,
+    nullptr,
+    nullptr,
     &wl_seat_interface,
-    NULL,
+    nullptr,
     &wl_seat_interface,
-    NULL,
-    NULL,
+    nullptr,
+    nullptr,
     &wl_output_interface,
     &wl_seat_interface,
-    NULL,
+    nullptr,
     &xdg_positioner_interface,
-    NULL,
+    nullptr,
 };
 
 static const struct wl_message xdg_wm_base_requests[] = {
@@ -96,7 +96,7 @@ static const struct wl_message xdg_positioner_requests[] = {
 };
 
 WL_EXPORT const struct wl_interface xdg_positioner_interface = {
-    "xdg_positioner", 6, 10, xdg_positioner_requests, 0, NULL,
+    "xdg_positioner", 6, 10, xdg_positioner_requests, 0, nullptr,
 };
 
 static const struct wl_message xdg_surface_requests[] = {

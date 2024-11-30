@@ -19,7 +19,7 @@ private:
     constexpr static u8 locked_flag = 2;
 
 public:
-    InPlaceStopSource() {}
+    InPlaceStopSource() = default;
 
     InPlaceStopSource(InPlaceStopSource&&) = delete;
 

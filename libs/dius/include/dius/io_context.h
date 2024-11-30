@@ -57,7 +57,7 @@ private:
         public:
             Type(IoContext* parent, Receiver&& receiver) : OperationStateBase(parent), m_receiver(di::move(receiver)) {}
 
-            virtual void execute() override {
+            void execute() override {
                 if (execution::get_stop_token(m_receiver).stop_requested()) {
                     execution::set_stopped(di::move(m_receiver));
                 } else {
@@ -352,7 +352,7 @@ private:
     };
 
     struct State {
-        State() {};
+        State() {} // NOLINT(modernize-use-equals-default)
 
         di::Queue<OperationStateBase, di::IntrusiveForwardList<OperationStateBase>> queue;
         bool stopped { false };
@@ -380,7 +380,7 @@ public:
     }
 
 private:
-    IoContext() {}
+    IoContext() = default;
 
     auto pop_front() -> OperationStateBase* {
         // FIXME: block instead of busy polling the queue when it is empty.

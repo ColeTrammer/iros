@@ -9,7 +9,7 @@ extern "C" auto fgets_unlocked(char* __restrict str, int count, FILE* __restrict
     }
     if (count == 1) {
         *str = '\0';
-        return 0;
+        return nullptr;
     }
 
     auto* current = str;

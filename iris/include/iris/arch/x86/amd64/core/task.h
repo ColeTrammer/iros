@@ -69,7 +69,7 @@ struct TaskState {
 };
 
 struct FpuState {
-    FpuState() {}
+    FpuState() = default;
 
     ~FpuState();
 

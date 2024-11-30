@@ -26,12 +26,12 @@ struct allocator {
     using difference_type = ptrdiff_t;
     using propagate_on_container_move_assignment = integral_constant<bool, true>;
 
-    constexpr allocator() noexcept {}
+    constexpr allocator() noexcept = default;
 
     template<typename U>
     constexpr allocator(allocator<U> const&) noexcept {}
 
-    constexpr ~allocator() {}
+    constexpr ~allocator() = default;
 
     [[nodiscard]] constexpr auto allocate(size_t count) -> T* {
         if consteval {

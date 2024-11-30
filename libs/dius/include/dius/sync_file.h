@@ -37,7 +37,7 @@ class SyncFile {
 public:
     enum class Owned { Yes, No };
 
-    constexpr SyncFile() {};
+    constexpr SyncFile() = default;
 
     constexpr explicit SyncFile(Owned owned, int fd) : m_owned(owned), m_fd(fd) {}
 

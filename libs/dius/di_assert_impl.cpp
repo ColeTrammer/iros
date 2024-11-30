@@ -14,7 +14,7 @@
 
 namespace di::assert::detail {
 static auto zstring_to_string_view(char const* s) -> di::TransparentStringView {
-    return di::TransparentStringView(s, di::to_unsigned(di::distance(di::ZCString(s))));
+    return { s, di::to_unsigned(di::distance(di::ZCString(s))) };
 }
 
 void assert_fail(char const* source_text, char const* lhs_message, char const* rhs_message, util::SourceLocation loc) {
@@ -54,9 +54,9 @@ void assert_fail(char const* source_text, char const* lhs_message, char const* r
             *end_of_symbol_name = end_of_symbol_save;
             if (status == 0) {
                 *start_of_symbol_name = '\0';
-                ::fprintf(stderr, "%s%s%s\n", s, demangled_name, end_of_symbol_name);
+                dius::eprintln("{}{}{}"_sv, s, demangled_name, end_of_symbol_name);
             } else {
-                ::fprintf(stderr, "%s\n", symbols[i]);
+                dius::eprintln("{}"_sv, symbols[i]);
             }
             free(demangled_name);
         }
