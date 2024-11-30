@@ -2,14 +2,14 @@
 #include <di/container/string/prelude.h>
 #include <string.h>
 
-extern "C" auto strstr(char const* haystack_str, char const* needle_str) -> char* {
-    auto haystack = di::ZUString { (unsigned char*) haystack_str };
-    auto needle = di::ZCUString { (unsigned char const*) needle_str };
-    if (di::empty(needle)) {
-        return (char*) haystack.data();
+extern "C" auto strstr(char const* haystack, char const* needle) -> char* {
+    auto haystack_zstring = di::ZUString { (unsigned char*) haystack };
+    auto needle_zstring = di::ZCUString { (unsigned char const*) needle };
+    if (di::empty(needle_zstring)) {
+        return (char*) haystack_zstring.data();
     }
 
-    auto [first, last] = di::search(haystack, needle);
+    auto [first, last] = di::search(haystack_zstring, needle_zstring);
     if (first == last) {
         return nullptr;
     }

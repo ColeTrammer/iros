@@ -56,7 +56,7 @@ namespace proj_ns {
     };
 }
 
-constexpr inline auto proj = di::curry(proj_ns::ProjFunction {}, c_<2zu>);
+constexpr inline auto proj = di::curry(proj_ns::ProjFunction {}, c_<2ZU>);
 }
 
 namespace di {

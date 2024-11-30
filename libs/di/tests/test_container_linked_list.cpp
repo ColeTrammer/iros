@@ -13,7 +13,7 @@ constexpr void basic() {
     ASSERT_EQ(di::sum(x), 6);
     ASSERT_EQ(di::distance(x.begin(), x.end()), 3);
 
-    ASSERT_EQ(x.size(), 3u);
+    ASSERT_EQ(x.size(), 3U);
     ASSERT_EQ(x.pop_back(), 3);
     ASSERT_EQ(x.pop_back(), 2);
     ASSERT_EQ(x.pop_back(), 1);
@@ -44,22 +44,22 @@ constexpr void splice() {
     a.splice(a.begin(), b, b.begin());
     auto ex1 = di::Array { 8, 0, 1, 2, 3, 4 } | di::to<di::LinkedList>();
 
-    ASSERT_EQ(a.size(), 6u);
-    ASSERT_EQ(b.size(), 8u);
+    ASSERT_EQ(a.size(), 6U);
+    ASSERT_EQ(b.size(), 8U);
     ASSERT_EQ(a, ex1);
 
     a.splice(a.end(), b, di::prev(b.end(), 4), b.end());
     auto ex2 = di::Array { 8, 0, 1, 2, 3, 4, 13, 14, 15, 16 } | di::to<di::LinkedList>();
 
-    ASSERT_EQ(a.size(), 10u);
-    ASSERT_EQ(b.size(), 4u);
+    ASSERT_EQ(a.size(), 10U);
+    ASSERT_EQ(b.size(), 4U);
     ASSERT_EQ(a, ex2);
 
     a.splice(di::next(a.begin(), 2), b);
     auto ex3 = di::Array { 8, 0, 9, 10, 11, 12, 1, 2, 3, 4, 13, 14, 15, 16 } | di::to<di::LinkedList>();
 
-    ASSERT_EQ(a.size(), 14u);
-    ASSERT_EQ(b.size(), 0u);
+    ASSERT_EQ(a.size(), 14U);
+    ASSERT_EQ(b.size(), 0U);
     ASSERT_EQ(a, ex3);
 }
 

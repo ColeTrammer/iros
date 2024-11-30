@@ -81,7 +81,7 @@ auto FpuState::allocate_fpu_state() -> Expected<di::Byte*> {
     auto fpu_size = global_state().processor_info.fpu_max_state_size;
 
     // NOTE: 64 byte alignment is required when using SSE extensions.
-    auto result = ::operator new(fpu_size, std::align_val_t { 64 }, std::nothrow);
+    auto* result = ::operator new(fpu_size, std::align_val_t { 64 }, std::nothrow);
     if (!result) {
         return di::Unexpected(Error::NotEnoughMemory);
     }

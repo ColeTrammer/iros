@@ -20,7 +20,7 @@ struct EqualOrGreater {
     }
 };
 
-constexpr inline auto equal_or_greater = curry_back(EqualOrGreater {}, meta::c_<2zu>);
+constexpr inline auto equal_or_greater = curry_back(EqualOrGreater {}, meta::c_<2ZU>);
 }
 
 namespace di {

@@ -38,7 +38,7 @@ void ArchProcessor::setup_fpu_support_for_processor(bool print_info) {
 }
 
 void ArchProcessor::enable_cpu_features(bool print_info) {
-    auto& global_state = iris::global_state();
+    auto const& global_state = iris::global_state();
     if (!!(global_state.processor_info.features & ProcessorFeatures::Smep)) {
         if (print_info) {
             iris::println("Enabling SMEP..."_sv);

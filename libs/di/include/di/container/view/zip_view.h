@@ -178,8 +178,7 @@ private:
         {
             return function::unpack<meta::MakeIndexSequence<sizeof...(Views)>>(
                 [&]<size_t... indices>(meta::ListV<indices...>) {
-                    return (void) (iterator_swap(util::get<indices>(a.m_iterators), util::get<indices>(b.m_iterators)),
-                                   ...);
+                    (void) (iterator_swap(util::get<indices>(a.m_iterators), util::get<indices>(b.m_iterators)), ...);
                 });
         }
 

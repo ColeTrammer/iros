@@ -24,7 +24,7 @@ namespace detail {
                 }
 
                 // Have one match, try to keep going.
-                auto start = first;
+                auto* start = first;
                 SSizeType count = 1;
                 for (;; ++count) {
                     if (count == n) {

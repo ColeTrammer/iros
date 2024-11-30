@@ -49,10 +49,9 @@ namespace detail {
                     if (first == pivot) {
                         container::reverse(pivot, tail);
                         return { tail, last };
-                    } else {
-                        container::reverse(first, pivot);
-                        return { first, last };
                     }
+                    container::reverse(first, pivot);
+                    return { first, last };
                 }
             }
             // Forward case: rotate in blocks, cycles at a time.

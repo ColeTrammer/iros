@@ -12,7 +12,7 @@ struct BitAnd {
     }
 };
 
-constexpr inline auto bit_and = function::curry_back(BitAnd {}, meta::c_<2zu>);
+constexpr inline auto bit_and = function::curry_back(BitAnd {}, meta::c_<2ZU>);
 }
 
 namespace di {

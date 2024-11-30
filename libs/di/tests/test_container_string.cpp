@@ -9,7 +9,7 @@ constexpr void basic() {
     auto x = u8"QWER"_sv;
     (void) x;
 
-    ASSERT_EQ(x.size_code_units(), 4u);
+    ASSERT_EQ(x.size_code_units(), 4U);
 
     int c = 0;
     for (auto xx : x) {
@@ -27,7 +27,7 @@ constexpr void push_back() {
     x.push_back('a');
     x.push_back('b');
     x.push_back('c');
-    ASSERT_EQ(x.size_code_units(), 3u);
+    ASSERT_EQ(x.size_code_units(), 3U);
     ASSERT_EQ(x, u8"abc"_sv);
 
     x.append(u8"def"_sv);
@@ -37,7 +37,7 @@ constexpr void push_back() {
     ASSERT_EQ(x, u8"abcdefghj"_sv);
 
     auto y = di::container::string::StringImpl<di::container::string::Utf8Encoding,
-                                               di::StaticVector<c8, di::Constexpr<64zu>>> {};
+                                               di::StaticVector<c8, di::Constexpr<64ZU>>> {};
     (void) y.push_back(U'a');
 
     ASSERT_EQ(y, "a"_sv);
@@ -92,7 +92,7 @@ constexpr void mutation() {
                            [](auto c) {
                                return c == U'世' || c == U'界';
                            }),
-              2zu);
+              2ZU);
     ASSERT_EQ(w, u8"Hello, , Hello 友達!"_sv);
 }
 
@@ -139,7 +139,7 @@ constexpr void utf8() {
     ASSERT_EQ(x.front(), U'$');
     ASSERT_EQ(x.back(), U'𐍈');
 
-    ASSERT_EQ(x.size_bytes(), 10u);
+    ASSERT_EQ(x.size_bytes(), 10U);
     ASSERT_EQ(di::distance(x), 4);
 
     ASSERT(u8"¢€"_sv == x.substr(*x.iterator_at_offset(1), *x.iterator_at_offset(6)));

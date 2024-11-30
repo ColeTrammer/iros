@@ -22,7 +22,7 @@ constexpr void exclusive() {
     auto buffer = di::ExclusiveByteBuffer(di::move(backing_store));
     auto data = buffer.span();
 
-    ASSERT_EQ(buffer.size(), 10zu);
+    ASSERT_EQ(buffer.size(), 10ZU);
 
     di::container::fill(buffer.span(), 5_b);
 

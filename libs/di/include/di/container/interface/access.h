@@ -144,7 +144,7 @@ namespace detail {
     };
 }
 
-constexpr inline auto at = di::curry_back(detail::AtFunction {}, c_<2zu>);
+constexpr inline auto at = di::curry_back(detail::AtFunction {}, c_<2ZU>);
 
 namespace detail {
     struct FrontUncheckedFunction : function::pipeline::EnablePipeline {
@@ -177,7 +177,7 @@ namespace detail {
 
 constexpr inline auto front_unchecked = detail::FrontUncheckedFunction {};
 constexpr inline auto back_unchecked = detail::BackUncheckedFunction {};
-constexpr inline auto at_unchecked = di::curry_back(detail::AtUncheckedFunction {}, c_<2zu>);
+constexpr inline auto at_unchecked = di::curry_back(detail::AtUncheckedFunction {}, c_<2ZU>);
 }
 
 namespace di {

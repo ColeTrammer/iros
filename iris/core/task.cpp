@@ -49,7 +49,7 @@ auto create_kernel_task(TaskNamespace& task_namespace, void (*entry)()) -> Expec
     auto result = TRY(di::make_arc<Task>(false, address_space.arc_from_this(), task_namespace.arc_from_this(), task_id,
                                          FileTable {}, di::move(task_status)));
     result->set_instruction_pointer(entry_address);
-    result->set_stack_pointer(stack + 0x2000zu);
+    result->set_stack_pointer(stack + 0x2000ZU);
     result->set_kernel_stack(stack);
 
     ASSERT(global_state.initrd_root);
@@ -103,7 +103,7 @@ auto load_executable(Task& task, di::PathView path) -> Expected<void> {
     using ProgramHeaderType = di::exec::ElfProgramHeaderType;
 
     auto raw_data = TRY_UNERASE_ERROR(di::execution::sync_wait(file_hack_raw_data(file)));
-    auto* elf_header = raw_data.typed_pointer_unchecked<ElfHeader>(0);
+    auto const* elf_header = raw_data.typed_pointer_unchecked<ElfHeader>(0);
     ASSERT_EQ(sizeof(ProgramHeader), elf_header->program_entry_size);
 
     auto address_space = task.address_space().lock();
@@ -165,7 +165,7 @@ auto load_executable(Task& task, di::PathView path) -> Expected<void> {
             task.set_argument4(0);
 
             // Ensure the stack is 16-byte aligned.
-            task.set_stack_pointer(user_stack + stack_size - 16zu + sizeof(uptr));
+            task.set_stack_pointer(user_stack + stack_size - 16ZU + sizeof(uptr));
         } else {
             // Determine the amount of stack memory needed, and error if there is not at least 4096 bytes left.
             auto string_bytes_needed = di::concat(task_arguments->arguments(), task_arguments->enviornment()) |
@@ -208,7 +208,7 @@ auto load_executable(Task& task, di::PathView path) -> Expected<void> {
             task.set_argument4(envc);
 
             // Ensure the stack is 16-byte aligned.
-            task.set_stack_pointer(string_record_base - 16zu + sizeof(uptr));
+            task.set_stack_pointer(string_record_base - 16ZU + sizeof(uptr));
         }
 
         return {};

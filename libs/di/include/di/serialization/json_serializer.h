@@ -157,7 +157,7 @@ public:
         DI_TRY(serialize_comma());
 
         using Enc = container::string::Utf8Encoding;
-        using TargetContext = format::BoundedFormatContext<Enc, meta::Constexpr<256zu>>;
+        using TargetContext = format::BoundedFormatContext<Enc, meta::Constexpr<256ZU>>;
         auto context = TargetContext {};
         DI_TRY(di::format::vpresent_encoded_context<Enc>(
             di::container::string::StringViewImpl<Enc>(encoding::assume_valid, u8"{}", 2),
@@ -340,7 +340,7 @@ private:
     constexpr auto pretty_print() const -> bool { return m_config.is_pretty(); }
 
     Writer m_writer;
-    JsonSerializerConfig m_config {};
+    JsonSerializerConfig m_config;
     usize m_indent { 0 };
     State m_state { State::First };
 };

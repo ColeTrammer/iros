@@ -4,7 +4,7 @@
 #include <cstddef>
 #else
 namespace std {
-using size_t = decltype(0zu);
+using size_t = decltype(0ZU);
 }
 #endif
 

@@ -146,5 +146,5 @@ namespace transform_each_ns {
 ///
 /// @warning If the underlying sequence is not always lock-step, the transformer function must be thread-safe. If using
 /// a non-thread-safe transformer function, first call execution::into_lockstep_sequence() on the sequence.
-constexpr inline auto transform_each = function::curry_back(transform_each_ns::Function {}, meta::c_<2zu>);
+constexpr inline auto transform_each = function::curry_back(transform_each_ns::Function {}, meta::c_<2ZU>);
 }

@@ -30,7 +30,7 @@ namespace detail {
     };
 }
 
-constexpr inline auto chunk_by = function::curry_back(detail::ChunkByFunction {}, meta::c_<2zu>);
+constexpr inline auto chunk_by = function::curry_back(detail::ChunkByFunction {}, meta::c_<2ZU>);
 }
 
 namespace di {

@@ -10,7 +10,7 @@
 namespace math_vec {
 struct IntTag {
     using Type = i32;
-    constexpr static usize extent = 2zu;
+    constexpr static usize extent = 2ZU;
 };
 
 using Ints = di::math::linalg::Vec<IntTag>;

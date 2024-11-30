@@ -55,7 +55,7 @@ private:
         util::unreachable();
     }
 
-    CoroutineHandle<> m_continuation {};
+    CoroutineHandle<> m_continuation;
     CoroutineHandle<> (*m_stopped_handler)(void*) { &default_unhandled_stopped };
     CoroutineHandle<> (*m_error_handler)(void*, Error) { &default_unhandled_error };
 };

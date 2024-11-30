@@ -195,5 +195,5 @@ namespace bulk_ns {
 /// @snippet{trimleft} tests/test_execution.cpp bulk
 ///
 /// @warning The function must be thread-safe, if invoked on a parallel scheduler.
-constexpr inline auto bulk = function::curry_back(bulk_ns::Function {}, c_<3zu>);
+constexpr inline auto bulk = function::curry_back(bulk_ns::Function {}, c_<3ZU>);
 }

@@ -9,7 +9,7 @@ constexpr void priority_queue_basic() {
     x.push(1);
     x.push(5);
 
-    ASSERT_EQ(x.size(), 3u);
+    ASSERT_EQ(x.size(), 3U);
     ASSERT_EQ(x.pop(), 5);
     ASSERT_EQ(x.pop(), 3);
     ASSERT_EQ(x.pop(), 1);
@@ -39,7 +39,7 @@ constexpr void stack() {
     a.push(2);
     a.push(3);
 
-    ASSERT_EQ(a.size(), 3u);
+    ASSERT_EQ(a.size(), 3U);
     ASSERT_EQ(a.pop(), 3);
     ASSERT_EQ(a.pop(), 2);
     ASSERT_EQ(a.pop(), 1);
@@ -56,7 +56,7 @@ constexpr void queue() {
     queue.push(2);
     queue.push(3);
 
-    ASSERT_EQ(queue.size(), 3u);
+    ASSERT_EQ(queue.size(), 3U);
     ASSERT_EQ(queue.pop(), 1);
     ASSERT_EQ(queue.pop(), 2);
     ASSERT_EQ(queue.pop(), 3);

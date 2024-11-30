@@ -11,7 +11,7 @@
 namespace iris {
 struct IpiMessage {
     di::Atomic<u32> times_processed { 0 };
-    mm::VirtualAddress tlb_flush_base {};
+    mm::VirtualAddress tlb_flush_base;
     usize tlb_flush_size { 0 };
     Task* task_to_schedule { nullptr };
 };
@@ -49,7 +49,7 @@ private:
     di::Atomic<bool> m_is_initialized { false };
     di::Atomic<bool> m_is_booted { false };
     di::Atomic<bool> m_is_online { false };
-    di::Synchronized<di::Queue<IpiMessage*, di::StaticRing<IpiMessage*, di::Constexpr<32zu>>>> m_ipi_message_queue {};
+    di::Synchronized<di::Queue<IpiMessage*, di::StaticRing<IpiMessage*, di::Constexpr<32ZU>>>> m_ipi_message_queue;
     u16 m_id {};
     arch::ArchProcessor m_arch_processor;
 };

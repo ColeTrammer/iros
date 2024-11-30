@@ -246,13 +246,13 @@ private:
                     });
 
                 return b_to_its_end + b_to_a + a_to_its_start;
-            } else if (ai < bi) {
-                return b.distance_from(*this);
-            } else {
-                return function::index_dispatch<SSizeType, sizeof...(Views)>(ai, [&]<size_t index>(Constexpr<index>) {
-                    return util::get<index>(this->m_base) - util::get<index>(b.m_base);
-                });
             }
+            if (ai < bi) {
+                return b.distance_from(*this);
+            }
+            return function::index_dispatch<SSizeType, sizeof...(Views)>(ai, [&]<size_t index>(Constexpr<index>) {
+                return util::get<index>(this->m_base) - util::get<index>(b.m_base);
+            });
         }
 
         constexpr auto distance_from_end() const -> SSizeType {
@@ -318,7 +318,7 @@ public:
     constexpr auto begin()
     requires(!concepts::SimpleView<Views> || ...)
     {
-        auto it = Iterator<false>(this, c_<0zu>, container::begin(util::get<0>(m_views)));
+        auto it = Iterator<false>(this, c_<0ZU>, container::begin(util::get<0>(m_views)));
         it.template satisfy<0>();
         return it;
     }
@@ -326,7 +326,7 @@ public:
     constexpr auto begin() const
     requires((concepts::Container<Views const> && detail::Concatable<Views const>) && ...)
     {
-        auto it = Iterator<true>(this, c_<0zu>, container::begin(util::get<0>(m_views)));
+        auto it = Iterator<true>(this, c_<0ZU>, container::begin(util::get<0>(m_views)));
         it.template satisfy<0>();
         return it;
     }

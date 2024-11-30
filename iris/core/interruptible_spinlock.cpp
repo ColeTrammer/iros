@@ -36,7 +36,7 @@ auto InterruptibleSpinlock::try_lock() -> bool {
 }
 
 void InterruptibleSpinlock::unlock() {
-    auto current_task = m_task;
+    auto* current_task = m_task;
     m_state.store(false, di::sync::MemoryOrder::Release);
     if (current_task) {
         current_task->enable_preemption();

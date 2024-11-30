@@ -8,7 +8,7 @@ namespace detail {
     struct BitCeilFunction {
         template<concepts::UnsignedInteger T>
         constexpr auto operator()(T value) const -> T {
-            if (value <= 1u) {
+            if (value <= 1U) {
                 return T(1);
             }
             if constexpr (concepts::SameAs<T, decltype(+value)>) {
@@ -17,7 +17,7 @@ namespace detail {
                 // Ensure UB if the result cannot fit inside T. This is needed because
                 // T promotes to an int automatically.
                 constexpr int extra_offset = math::NumericLimits<unsigned int>::digits - math::NumericLimits<T>::digits;
-                return T(1u << (bit_width(T(value - 1)) + extra_offset) >> extra_offset);
+                return T(1U << (bit_width(T(value - 1)) + extra_offset) >> extra_offset);
             }
         }
     };

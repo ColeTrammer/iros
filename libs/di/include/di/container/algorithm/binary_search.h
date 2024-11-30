@@ -32,12 +32,13 @@ namespace detail {
                                                       meta::TypeIdentity<SSizeType> n) -> InFoundResult<It> {
             while (n != 0) {
                 SSizeType left_length = n >> 1;
-                auto mid = container::next(first, left_length);
+                auto* mid = container::next(first, left_length);
                 auto result = function::invoke(comp, needle, function::invoke(proj, *mid));
                 if (result == 0) {
                     // found the needle, return true.
                     return { util::move(mid), true };
-                } else if (result > 0) {
+                }
+                if (result > 0) {
                     // needle is greater than every element in the range [first, mid].
                     n -= left_length + 1;
                     first = ++mid;

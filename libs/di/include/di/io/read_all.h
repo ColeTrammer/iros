@@ -9,13 +9,14 @@ namespace di::io {
 namespace detail {
     struct ReadAll {
         constexpr auto operator()(Impl<Reader> auto& reader) const -> Result<Vector<Byte>> {
-            constexpr auto block_size = 16384zu;
+            constexpr auto block_size = 16384ZU;
 
             auto buffer = Vector<Byte> {};
 
             auto try_reserve_more_capacity = [&] {
                 return invoke_as_fallible([&] {
-                    return buffer.reserve(buffer.capacity() + block_size);
+                    buffer.reserve(buffer.capacity() + block_size);
+                    return;
                 });
             };
 

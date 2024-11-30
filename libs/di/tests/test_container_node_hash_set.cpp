@@ -42,7 +42,7 @@ constexpr void basic() {
                            [](auto x) {
                                return x == 3;
                            }),
-              1u);
+              1U);
     ASSERT_EQ(x.size(), 2);
 }
 

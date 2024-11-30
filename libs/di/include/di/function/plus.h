@@ -12,7 +12,7 @@ struct Plus {
     }
 };
 
-constexpr inline auto plus = function::curry_back(Plus {}, meta::c_<2zu>);
+constexpr inline auto plus = function::curry_back(Plus {}, meta::c_<2ZU>);
 }
 
 namespace di {

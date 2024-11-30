@@ -137,7 +137,7 @@ template<typename T>
 using RemoveAllExtents = Type<detail::RemoveAllExtentsHelper<T>>;
 
 template<typename T>
-constexpr inline auto ArrayRank = 0zu;
+constexpr inline auto ArrayRank = 0ZU;
 
 template<typename T>
 constexpr inline auto ArrayRank<T[]> = 1 + ArrayRank<T>;
@@ -146,7 +146,7 @@ template<typename T, usize N>
 constexpr inline auto ArrayRank<T[N]> = 1 + ArrayRank<T>;
 
 template<typename T, types::size_t level = 0>
-constexpr inline auto Extent = 0zu;
+constexpr inline auto Extent = 0ZU;
 
 template<typename T, usize level>
 constexpr inline auto Extent<T[], level> = Extent<T, level - 1>;

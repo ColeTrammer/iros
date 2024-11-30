@@ -57,8 +57,9 @@ void init_serial() {
 
 namespace iris {
 void log_output_byte(di::Byte byte) {
-    while ((x86::amd64::io_in<di::Byte>(0x3F8 + 5) & 0x20_b) == 0_b)
+    while ((x86::amd64::io_in<di::Byte>(0x3F8 + 5) & 0x20_b) == 0_b) {
         ;
+    }
 
     x86::amd64::io_out(0x3F8, byte);
 }

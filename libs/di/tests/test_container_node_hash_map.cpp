@@ -50,7 +50,7 @@ constexpr void basic() {
                            [](auto x) {
                                return di::get<0>(x) == 3;
                            }),
-              1u);
+              1U);
     ASSERT_EQ(x.size(), 3);
 }
 

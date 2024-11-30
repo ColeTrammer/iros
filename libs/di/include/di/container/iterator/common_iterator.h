@@ -18,8 +18,8 @@ public:
     requires(concepts::DefaultInitializable<Iter>)
     = default;
 
-    constexpr CommonIterator(Iter it) : m_state(c_<0zu>, util::move(it)) {}
-    constexpr CommonIterator(Sent sent) : m_state(c_<1zu>, util::move(sent)) {}
+    constexpr CommonIterator(Iter it) : m_state(c_<0ZU>, util::move(it)) {}
+    constexpr CommonIterator(Sent sent) : m_state(c_<1ZU>, util::move(sent)) {}
 
     template<typename It, typename St>
     requires(concepts::ConvertibleTo<It const&, Iter> && concepts::ConvertibleTo<St const&, Sent>)
@@ -76,9 +76,8 @@ private:
         }
         if (a.m_state.index() == 0) {
             return util::get<0>(a.m_state) == util::get<1>(b.m_state);
-        } else {
-            return util::get<1>(a.m_state) == util::get<0>(b.m_state);
         }
+        return util::get<1>(a.m_state) == util::get<0>(b.m_state);
     }
 
     template<typename It, concepts::SentinelFor<It> St>
@@ -86,13 +85,14 @@ private:
     constexpr friend auto operator==(CommonIterator const& a, CommonIterator<It, St> const& b) -> bool {
         if (a.m_state.index() == 1 && b.m_state.index() == 1) {
             return true;
-        } else if (a.m_state.index() == 0 && b.m_state.index() == 0) {
-            return util::get<0>(a.m_state) == util::get<0>(b.m_state);
-        } else if (a.m_state.index() == 0) {
-            return util::get<0>(a.m_state) == util::get<1>(b.m_state);
-        } else {
-            return util::get<1>(a.m_state) == util::get<0>(b.m_state);
         }
+        if (a.m_state.index() == 0 && b.m_state.index() == 0) {
+            return util::get<0>(a.m_state) == util::get<0>(b.m_state);
+        }
+        if (a.m_state.index() == 0) {
+            return util::get<0>(a.m_state) == util::get<1>(b.m_state);
+        }
+        return util::get<1>(a.m_state) == util::get<0>(b.m_state);
     }
 
     template<concepts::SizedSentinelFor<Iter> It, concepts::SizedSentinelFor<Iter> St>
@@ -101,13 +101,14 @@ private:
         -> meta::IteratorSSizeType<It> {
         if (a.m_state.index() == 1 && b.m_state.index() == 1) {
             return 0;
-        } else if (a.m_state.index() == 0 && b.m_state.index() == 0) {
-            return util::get<0>(a.m_state) - util::get<0>(b.m_state);
-        } else if (a.m_state.index() == 0) {
-            return util::get<0>(a.m_state) - util::get<1>(b.m_state);
-        } else {
-            return util::get<1>(a.m_state) - util::get<0>(b.m_state);
         }
+        if (a.m_state.index() == 0 && b.m_state.index() == 0) {
+            return util::get<0>(a.m_state) - util::get<0>(b.m_state);
+        }
+        if (a.m_state.index() == 0) {
+            return util::get<0>(a.m_state) - util::get<1>(b.m_state);
+        }
+        return util::get<1>(a.m_state) - util::get<0>(b.m_state);
     }
 
     constexpr friend auto tag_invoke(types::Tag<iterator_move>, CommonIterator const& a) -> decltype(auto) {

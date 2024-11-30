@@ -66,7 +66,7 @@ void DirectoryIterator::advance_one() {
 
 void DirectoryIterator::advance() {
     // Re-fill the buffer of directory entries.
-    if (m_buffer.size() == 0) {
+    if (m_buffer.empty()) {
         auto result = linux::sys_getdents64(m_directory_handle.file_descriptor(), m_buffer.data(), m_buffer.capacity());
         if (!result) {
             m_current = di::Unexpected(result.error());
@@ -81,10 +81,11 @@ void DirectoryIterator::advance() {
         m_buffer.assume_size(*result);
     }
 
-    auto* dirent = m_buffer.span().typed_pointer_unchecked<linux::Dirent const>(m_current_offset);
+    auto const* dirent = m_buffer.span().typed_pointer_unchecked<linux::Dirent const>(m_current_offset);
     if (dirent->record_length == 0) {
         m_buffer.clear();
-        return advance_one();
+        advance_one();
+        return;
     }
 
     ASSERT_GT_EQ(dirent->record_length, sizeof(*dirent));

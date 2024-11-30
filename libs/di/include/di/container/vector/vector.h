@@ -53,7 +53,7 @@ public:
     constexpr auto max_size() const -> usize { return static_cast<usize>(-1); }
 
     constexpr auto reserve_from_nothing(usize n) -> meta::AllocatorResult<Alloc> {
-        DI_ASSERT(capacity() == 0u);
+        DI_ASSERT(capacity() == 0U);
 
         return as_fallible(di::allocate_many<T>(m_allocator, n)) % [&](AllocationResult<T> result) {
             auto [data, new_capacity] = result;

@@ -19,10 +19,10 @@
 }
 
 [[gnu::weak]] void operator delete(void* pointer, std::nothrow_t const&) noexcept {
-    return ::operator delete(pointer);
+    ::operator delete(pointer);
 }
 [[gnu::weak]] void operator delete(void* pointer, std::align_val_t alignment, std::nothrow_t const&) noexcept {
-    return ::operator delete(pointer, alignment);
+    ::operator delete(pointer, alignment);
 }
 
 // Array allocating new.
@@ -42,22 +42,22 @@
 
 // Array deallocating delete.
 [[gnu::weak]] void operator delete[](void* pointer) noexcept {
-    return ::operator delete(pointer);
+    ::operator delete(pointer);
 }
 [[gnu::weak]] void operator delete[](void* pointer, std::size_t size) noexcept {
-    return ::operator delete(pointer, size);
+    ::operator delete(pointer, size);
 }
 [[gnu::weak]] void operator delete[](void* pointer, std::align_val_t alignment) noexcept {
-    return ::operator delete(pointer, alignment);
+    ::operator delete(pointer, alignment);
 }
 [[gnu::weak]] void operator delete[](void* pointer, std::size_t size, std::align_val_t alignment) noexcept {
-    return ::operator delete(pointer, size, alignment);
+    ::operator delete(pointer, size, alignment);
 }
 [[gnu::weak]] void operator delete[](void* pointer, std::nothrow_t const&) noexcept {
-    return ::operator delete(pointer, std::nothrow);
+    ::operator delete(pointer, std::nothrow);
 }
 [[gnu::weak]] void operator delete[](void* pointer, std::align_val_t alignment, std::nothrow_t const&) noexcept {
-    return ::operator delete(pointer, alignment, std::nothrow);
+    ::operator delete(pointer, alignment, std::nothrow);
 }
 
 [[gnu::weak]] auto operator new(std::size_t size, std::align_val_t align, std::nothrow_t const&) noexcept -> void* {

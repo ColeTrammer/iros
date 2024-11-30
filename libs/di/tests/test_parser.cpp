@@ -35,7 +35,7 @@ constexpr void integer() {
     ASSERT_EQ(*di::parse<i32>(u8"-123"_sv), -123);
 
     ASSERT(!di::parse<u32>(u8"-123"_sv));
-    ASSERT_EQ(di::parse<u32>(u8"+123"_sv), 123u);
+    ASSERT_EQ(di::parse<u32>(u8"+123"_sv), 123U);
 
     ASSERT_EQ(di::parse<i32>(u8"2147483647"_sv), di::NumericLimits<i32>::max);
     ASSERT_EQ(di::parse<i32>(u8"-2147483648"_sv), di::NumericLimits<i32>::min);
@@ -51,13 +51,13 @@ constexpr void integer() {
     ASSERT_EQ(di::parse<u32>(u8"4294967295"_sv), di::NumericLimits<u32>::max);
     ASSERT(!di::parse<u32>(u8"4294967296"_sv));
 
-    ASSERT_EQ(di::parse<u8>(u8"255"_sv), 255u);
+    ASSERT_EQ(di::parse<u8>(u8"255"_sv), 255U);
     ASSERT(!di::parse<u8>(u8"256"_sv));
 }
 
 constexpr void integral_constant() {
-    ASSERT_EQ(1_zic, 1u);
-    ASSERT_EQ(4161_zic, 4161u);
+    ASSERT_EQ(1_zic, 1U);
+    ASSERT_EQ(4161_zic, 4161U);
 }
 
 constexpr void alternation() {

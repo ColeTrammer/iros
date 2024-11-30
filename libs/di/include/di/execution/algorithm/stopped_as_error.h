@@ -15,5 +15,5 @@ namespace stopped_as_error_ns {
     };
 }
 
-constexpr inline auto stopped_as_error = function::curry_back(stopped_as_error_ns::Function {}, meta::c_<2zu>);
+constexpr inline auto stopped_as_error = function::curry_back(stopped_as_error_ns::Function {}, meta::c_<2ZU>);
 }

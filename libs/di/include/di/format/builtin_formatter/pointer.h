@@ -26,7 +26,7 @@ constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<nullptr_t>
             auto width = format.width.transform(&detail::Width::value);
             return detail::present_integer_to<Enc>(context, format.fill_and_align, detail::Sign::Minus,
                                                    detail::HashTag::Yes, detail::Zero::No, width,
-                                                   detail::IntegerType::HexLower, false, 0u);
+                                                   detail::IntegerType::HexLower, false, 0U);
         };
     };
 }

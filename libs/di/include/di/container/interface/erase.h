@@ -30,7 +30,7 @@ struct EraseIfFunction : CurryBack<EraseIfFunction> {
     }
 
     using CurryBack<EraseIfFunction>::operator();
-    constexpr static auto max_arity = 2zu;
+    constexpr static auto max_arity = 2ZU;
 };
 
 template<typename Con, typename T>
@@ -68,7 +68,7 @@ struct EraseFunction : CurryBack<EraseFunction> {
     }
 
     using CurryBack<EraseFunction>::operator();
-    constexpr static auto max_arity = 2zu;
+    constexpr static auto max_arity = 2ZU;
 };
 }
 

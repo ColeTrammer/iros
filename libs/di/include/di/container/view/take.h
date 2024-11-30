@@ -32,7 +32,7 @@ namespace detail {
     };
 }
 
-constexpr inline auto take = function::curry_back(detail::TakeFunction {}, meta::c_<2zu>);
+constexpr inline auto take = function::curry_back(detail::TakeFunction {}, meta::c_<2ZU>);
 }
 
 namespace di {

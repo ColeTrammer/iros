@@ -19,11 +19,11 @@ namespace detail {
 
 namespace detail {
     template<typename Needle, typename... Types>
-    struct LookupHelper : Constexpr<0zu> {};
+    struct LookupHelper : Constexpr<0ZU> {};
 
     template<typename Needle, typename T, typename... Rest>
     struct LookupHelper<Needle, T, Rest...>
-        : Constexpr<concepts::SameAs<T, Needle> ? 0zu : 1 + LookupHelper<Needle, Rest...>::value> {};
+        : Constexpr<concepts::SameAs<T, Needle> ? 0ZU : 1 + LookupHelper<Needle, Rest...>::value> {};
 }
 
 namespace detail {
@@ -53,7 +53,7 @@ struct List<Head, Rest...> {
 
     template<typename T>
     constexpr static bool UniqueType =
-        (static_cast<usize>(concepts::SameAs<T, Head>) + ... + static_cast<usize>(concepts::SameAs<T, Rest>)) == 1zu;
+        (static_cast<usize>(concepts::SameAs<T, Head>) + ... + static_cast<usize>(concepts::SameAs<T, Rest>)) == 1ZU;
 };
 
 template<typename T>
@@ -123,7 +123,7 @@ namespace detail {
     struct CountHelper;
 
     template<typename T>
-    struct CountHelper<T, List<>> : meta::Constexpr<0zu> {};
+    struct CountHelper<T, List<>> : meta::Constexpr<0ZU> {};
 
     template<typename T, typename U, typename... Rest>
     struct CountHelper<T, List<U, Rest...>> {

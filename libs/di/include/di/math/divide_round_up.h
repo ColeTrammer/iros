@@ -14,7 +14,7 @@ namespace detail {
     };
 }
 
-constexpr inline auto divide_round_up = function::curry_back(detail::DivideRoundUpFunction {}, meta::c_<2zu>);
+constexpr inline auto divide_round_up = function::curry_back(detail::DivideRoundUpFunction {}, meta::c_<2ZU>);
 }
 
 namespace di {

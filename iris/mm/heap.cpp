@@ -40,7 +40,7 @@ auto operator new(std::size_t size, std::align_val_t alignment, std::nothrow_t c
             di::align_up(old_heap_end.raw_value(), 4096) != di::align_up(global_state.heap_end.raw_value(), 4096)) {
             auto virtual_start = iris::mm::VirtualAddress(di::align_up(old_heap_end.raw_value(), 4096));
             auto virtual_end = iris::mm::VirtualAddress(di::align_up(global_state.heap_end.raw_value(), 4096));
-            for (auto virtual_address = virtual_start; virtual_address < virtual_end; virtual_address += 4096zu) {
+            for (auto virtual_address = virtual_start; virtual_address < virtual_end; virtual_address += 4096ZU) {
                 auto physical_page = iris::mm::allocate_page_frame();
                 if (!physical_page) {
                     iris::println(u8"Failed to allocate physical page in ::new()"_sv);

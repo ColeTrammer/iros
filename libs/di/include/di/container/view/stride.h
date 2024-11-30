@@ -28,7 +28,7 @@ namespace detail {
     };
 }
 
-constexpr inline auto stride = function::curry_back(detail::StrideFunction {}, meta::c_<2zu>);
+constexpr inline auto stride = function::curry_back(detail::StrideFunction {}, meta::c_<2ZU>);
 }
 
 namespace di {

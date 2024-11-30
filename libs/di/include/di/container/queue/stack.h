@@ -62,7 +62,7 @@ public:
     constexpr auto top() -> Optional<Value&> { return m_container.back(); }
     constexpr auto top() const -> Optional<Value const&> { return m_container.back(); }
 
-    constexpr auto empty() const -> bool { return size() == 0u; }
+    constexpr auto empty() const -> bool { return size() == 0U; }
     constexpr auto size() const { return m_container.size(); }
 
     constexpr auto push(Value const& value) -> decltype(auto)

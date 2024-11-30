@@ -84,9 +84,8 @@ auto TestManager::run_tests(Args& args) -> di::Result<void> {
             if (colon_it != colon_it_end) {
                 return test_case.suite_name() != case_name->substr(case_name->begin(), colon_it) ||
                        test_case.case_name() != case_name->substr(colon_it_end);
-            } else {
-                return test_case.case_name() != *case_name;
             }
+            return test_case.case_name() != *case_name;
         }
         return false;
     });

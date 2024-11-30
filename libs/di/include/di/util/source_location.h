@@ -31,8 +31,8 @@ public:
 private:
     char const* m_file_name { "" };
     char const* m_function_name { "" };
-    unsigned int m_line { 0u };
-    unsigned int m_column { 0u };
+    unsigned int m_line { 0U };
+    unsigned int m_column { 0U };
 };
 }
 

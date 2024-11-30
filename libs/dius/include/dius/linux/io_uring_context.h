@@ -1012,7 +1012,7 @@ private:
 
     constexpr friend auto tag_invoke(di::Tag<di::execution::get_env>, RunSender const& self) {
         return di::execution::make_env(Env(self.parent),
-                                       di::execution::with(di::execution::get_sequence_cardinality, di::c_<1zu>));
+                                       di::execution::with(di::execution::get_sequence_cardinality, di::c_<1ZU>));
     }
 };
 
@@ -1048,8 +1048,6 @@ inline auto tag_invoke(di::Tag<di::execution::async_make_socket>, IoUringSchedul
 inline auto IoUringContext::create() -> di::Result<IoUringContext> {
     return IoUringContext(TRY(io_uring::IoUringHandle::create()));
 }
-
-inline IoUringContext::~IoUringContext() = default;
 
 template<di::concepts::Invocable<io_uring::SQE*> Fun>
 inline void enqueue_io_operation(IoUringContext* context, OperationStateBase* op, Fun&& function) {

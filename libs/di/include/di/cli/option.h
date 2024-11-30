@@ -79,11 +79,11 @@ public:
     constexpr auto display_name() const {
         if (long_name()) {
             return long_display_name();
-        } else if (short_name()) {
-            return short_display_name();
-        } else {
-            return di::TransparentString {};
         }
+        if (short_name()) {
+            return short_display_name();
+        }
+        return di::TransparentString {};
     }
 
 private:

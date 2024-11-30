@@ -9,7 +9,7 @@ struct DefaultHasher {
         // For now, this is a simple hash function. This is apparently used by Java.
         // See https://computinglife.wordpress.com/2008/11/20/why-do-hash-functions-use-prime-numbers/.
         for (auto const byte : data) {
-            m_hash = (m_hash * 31u) + di::to_integer<u8>(byte);
+            m_hash = (m_hash * 31U) + di::to_integer<u8>(byte);
         }
     }
 

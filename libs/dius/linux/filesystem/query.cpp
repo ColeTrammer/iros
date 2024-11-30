@@ -92,7 +92,8 @@ namespace detail {
         auto result = linux::sys_fstatat64(AT_FDCWD, path, &info, 0);
         if (result == di::Unexpected(PosixError::NoSuchFileOrDirectory)) {
             return FileStatus(FileType::NotFound);
-        } else if (!result) {
+        }
+        if (!result) {
             return di::Unexpected(di::move(result).error());
         }
 
@@ -104,7 +105,8 @@ namespace detail {
         auto result = linux::sys_fstatat64(AT_FDCWD, path, &info, AT_SYMLINK_NOFOLLOW);
         if (result == di::Unexpected(PosixError::NoSuchFileOrDirectory)) {
             return FileStatus(FileType::NotFound);
-        } else if (!result) {
+        }
+        if (!result) {
             return di::Unexpected(di::move(result).error());
         }
 

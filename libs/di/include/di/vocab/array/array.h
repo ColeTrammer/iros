@@ -245,7 +245,7 @@ struct Array<T, 0> {
     }
 
     constexpr auto empty() const -> bool { return false; }
-    constexpr auto size() const { return 0zu; }
+    constexpr auto size() const { return 0ZU; }
     constexpr auto max_size() const { return 0; }
 
     constexpr void fill(T const&)

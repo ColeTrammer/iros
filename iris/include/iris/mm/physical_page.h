@@ -80,20 +80,20 @@ constexpr inline auto physical_page_base =
 
 namespace detail {
     struct PhysicalAddressFunction {
-        inline auto operator()(PhysicalPage const& page) const -> PhysicalAddress {
+        auto operator()(PhysicalPage const& page) const -> PhysicalAddress {
             return void_pointer_to_physical_address(&page);
         }
 
-        inline auto operator()(BackedPhysicalPage const& page) const -> PhysicalAddress {
+        auto operator()(BackedPhysicalPage const& page) const -> PhysicalAddress {
             return void_pointer_to_physical_address(&page);
         }
 
-        inline auto operator()(PageStructurePhysicalPage const& page) const -> PhysicalAddress {
+        auto operator()(PageStructurePhysicalPage const& page) const -> PhysicalAddress {
             return void_pointer_to_physical_address(&page);
         }
 
     private:
-        static inline auto void_pointer_to_physical_address(void const* pointer) -> PhysicalAddress {
+        static auto void_pointer_to_physical_address(void const* pointer) -> PhysicalAddress {
             auto page_number = (VirtualAddress(di::to_uintptr(pointer)) - physical_page_base) / sizeof(PhysicalPage);
             return PhysicalAddress(page_number * 4096);
         }
@@ -118,11 +118,11 @@ inline auto backed_page(PhysicalAddress address) -> BackedPhysicalPage& {
 
 namespace detail {
     struct BumpPage {
-        inline void operator()(BackedPhysicalPage& page) const {
+        void operator()(BackedPhysicalPage& page) const {
             page.reference_count.fetch_add(1, di::sync::MemoryOrder::AcquireRelease);
         }
 
-        inline void operator()(PhysicalAddress address) const {
+        void operator()(PhysicalAddress address) const {
             auto& page = backed_page(address);
             page.reference_count.fetch_add(1, di::sync::MemoryOrder::AcquireRelease);
         }
@@ -133,13 +133,13 @@ constexpr inline auto bump_page = detail::BumpPage {};
 
 namespace detail {
     struct DropPageFunction {
-        inline void operator()(BackedPhysicalPage& page) const {
+        void operator()(BackedPhysicalPage& page) const {
             if (page.reference_count.fetch_sub(1, di::sync::MemoryOrder::AcquireRelease) == 1) {
                 deallocate_page_frame(physical_address(page));
             }
         }
 
-        inline void operator()(PhysicalAddress address) const {
+        void operator()(PhysicalAddress address) const {
             auto& page = backed_page(address);
             if (page.reference_count.fetch_sub(1, di::sync::MemoryOrder::AcquireRelease) == 1) {
                 deallocate_page_frame(physical_address(page));

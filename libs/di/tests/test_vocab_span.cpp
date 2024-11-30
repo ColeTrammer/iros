@@ -11,7 +11,7 @@ constexpr void basic() {
     ASSERT_EQ(y.front(), 1);
 
     auto z = di::Span<int> { x };
-    ASSERT_EQ(z.size(), 5u);
+    ASSERT_EQ(z.size(), 5U);
     ASSERT_EQ(z[3], x[3]);
     ASSERT_EQ(*z.front(), 1);
     ASSERT_EQ(*z.back(), 5);

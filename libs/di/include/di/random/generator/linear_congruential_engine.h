@@ -12,14 +12,14 @@ public:
     constexpr static auto multiplier = a;
     constexpr static auto increment = c;
     constexpr static auto modulus = m;
-    constexpr static T default_seed = 1u;
+    constexpr static T default_seed = 1U;
 
-    constexpr static auto min() -> T { return increment == 0u ? 1u : 0u; }
-    constexpr static auto max() -> T { return modulus - 1u; }
+    constexpr static auto min() -> T { return increment == 0U ? 1U : 0U; }
+    constexpr static auto max() -> T { return modulus - 1U; }
 
 private:
     constexpr auto safe_modulo(T value) -> T {
-        if constexpr (modulus == 0u) {
+        if constexpr (modulus == 0U) {
             return value;
         } else {
             return value % modulus;
@@ -33,7 +33,7 @@ public:
 
     constexpr void seed(T seed = default_seed) {
         if (safe_modulo(increment) == 0 && safe_modulo(seed) == 0) {
-            m_state = 1u;
+            m_state = 1U;
         } else {
             m_state = safe_modulo(seed);
         }
@@ -48,7 +48,7 @@ public:
     }
 
     constexpr void discard(umax z) {
-        for (; z != 0u; z--) {
+        for (; z != 0U; z--) {
             (*this)();
         }
     }

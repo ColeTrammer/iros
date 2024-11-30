@@ -19,38 +19,38 @@
 
 namespace di::assert::detail {
 template<typename T, typename U>
-void binary_assert_fail(char const* message, T&& a, U&& b, util::SourceLocation loc) {
+void binary_assert_fail(char const* expression, T&& a, U&& b, util::SourceLocation loc) {
     // Allocate a 256 byte buffer on the stack to stringify a and b. We'd don't want to allocate here because this
     // assertion could indicate heap corruption, or even be triggered before the heap is initialized.
     using Enc = container::string::Utf8Encoding;
-    using TargetContext = format::BoundedFormatContext<Enc, meta::Constexpr<256zu>>;
+    using TargetContext = format::BoundedFormatContext<Enc, meta::Constexpr<256ZU>>;
 
-    auto a_context = TargetContext {};
-    auto const* a_data_pointer = static_cast<char const*>(nullptr);
+    auto lhs_context = TargetContext {};
+    auto const* lhs_data_pointer = static_cast<char const*>(nullptr);
     if constexpr (concepts::Formattable<T>) {
         (void) di::format::vpresent_encoded_context<Enc>(
             di::container::string::StringViewImpl<Enc>(encoding::assume_valid, u8"{}", 2),
-            di::format::make_format_args<TargetContext>(a), a_context);
-        a_data_pointer = reinterpret_cast<char const*>(a_context.output().span().data());
+            di::format::make_format_args<TargetContext>(a), lhs_context);
+        lhs_data_pointer = reinterpret_cast<char const*>(lhs_context.output().span().data());
     }
-    auto b_context = TargetContext {};
-    auto const* b_data_pointer = static_cast<char const*>(nullptr);
+    auto rhs_context = TargetContext {};
+    auto const* rhs_data_pointer = static_cast<char const*>(nullptr);
     if constexpr (concepts::Formattable<U>) {
         (void) di::format::vpresent_encoded_context<Enc>(
             di::container::string::StringViewImpl<Enc>(encoding::assume_valid, u8"{}", 2),
-            di::format::make_format_args<TargetContext>(b), b_context);
-        b_data_pointer = reinterpret_cast<char const*>(b_context.output().span().data());
+            di::format::make_format_args<TargetContext>(b), rhs_context);
+        rhs_data_pointer = reinterpret_cast<char const*>(rhs_context.output().span().data());
     }
-    assert_fail(message, a_data_pointer, b_data_pointer, loc);
+    assert_fail(expression, lhs_data_pointer, rhs_data_pointer, loc);
 }
 
 template<typename F, typename T, typename U>
-constexpr void binary_assert(F op, char const* message, T&& a, U&& b, util::SourceLocation loc) {
+constexpr void binary_assert(F op, char const* expression, T&& a, U&& b, util::SourceLocation loc) {
     if (!op(a, b)) {
         if consteval {
             ::di::util::compile_time_fail<>();
         } else {
-            binary_assert_fail(message, util::forward<T>(a), util::forward<U>(b), loc);
+            binary_assert_fail(expression, util::forward<T>(a), util::forward<U>(b), loc);
         }
     }
 }

@@ -27,7 +27,7 @@ public:
     auto operator=(GenericDomain const&) -> GenericDomain& = default;
     auto operator=(GenericDomain&&) -> GenericDomain& = default;
 
-    constexpr static inline auto get() -> GenericDomain const&;
+    constexpr static auto get() -> GenericDomain const&;
 
     virtual auto name() const -> di::container::ErasedString override {
         return container::ErasedString(u8"Posix) Domain");
@@ -55,6 +55,7 @@ protected:
         return vocab::GenericCode(di::in_place, down_cast(a).value());
     }
 
+    // NOLINTNEXTLINE(readability-function-cognitive-complexity)
     constexpr virtual auto do_message(vocab::StatusCode<void> const& code) const
         -> di::container::ErasedString override {
         auto value = down_cast(code).value();
@@ -310,7 +311,7 @@ private:
 
 constexpr inline auto posix_domain = GenericDomain {};
 
-constexpr inline auto GenericDomain::get() -> GenericDomain const& {
+constexpr auto GenericDomain::get() -> GenericDomain const& {
     return posix_domain;
 }
 }

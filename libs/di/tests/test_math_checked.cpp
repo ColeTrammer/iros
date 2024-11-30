@@ -21,7 +21,7 @@ constexpr void add_sub() {
     a--;
     ASSERT(a.invalid());
 
-    auto c = di::Checked(0u);
+    auto c = di::Checked(0U);
     ASSERT(c.valid());
     c--;
     ASSERT(c.invalid());

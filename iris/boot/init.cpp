@@ -55,7 +55,7 @@ static limine_kernel_file_request volatile kernel_file_request = {
 
 namespace iris {
 static auto kernel_command_line = di::container::string::StringImpl<di::container::string::TransparentEncoding,
-                                                                    di::StaticVector<char, di::Constexpr<4096zu>>> {};
+                                                                    di::StaticVector<char, di::Constexpr<4096ZU>>> {};
 
 void iris_main() {
     iris::println("Starting architecture independent initialization..."_sv);
@@ -108,7 +108,7 @@ void iris_main() {
 
     iris::mm::reserve_page_frames(iris::mm::PhysicalAddress(0), 64);
 
-    ASSERT_GT(module_request.response->module_count, 0u);
+    ASSERT_GT(module_request.response->module_count, 0U);
     auto initrd_module = *module_request.response->modules[0];
 
     iris::println("Kernel virtual base: {:#018x}"_sv, kernel_address_request.response->virtual_base);

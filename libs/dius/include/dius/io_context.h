@@ -312,7 +312,7 @@ private:
 
                 friend auto tag_invoke(di::Tag<execution::get_env>, RunSender const& self) {
                     return execution::make_env(Env(self.parent),
-                                               execution::with(execution::get_sequence_cardinality, di::c_<1zu>));
+                                               execution::with(execution::get_sequence_cardinality, di::c_<1ZU>));
                 }
             };
 
@@ -397,7 +397,8 @@ private:
 
             if (is_stopped) {
                 return nullptr;
-            } else if (operation) {
+            }
+            if (operation) {
                 return operation;
             }
         }

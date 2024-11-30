@@ -103,9 +103,8 @@ public:
         using Result = vocab::Optional<meta::ContainerReference<Self>>;
         if (this->empty()) {
             return Result(vocab::nullopt);
-        } else {
-            return Result(*container::begin(self()));
         }
+        return Result(*container::begin(self()));
     }
 
     constexpr auto front() const
@@ -114,9 +113,8 @@ public:
         using Result = vocab::Optional<meta::ContainerReference<Self const>>;
         if (this->empty()) {
             return Result(vocab::nullopt);
-        } else {
-            return Result(*container::begin(self()));
         }
+        return Result(*container::begin(self()));
     }
 
     constexpr auto back()
@@ -125,9 +123,8 @@ public:
         using Result = vocab::Optional<meta::ContainerReference<Self>>;
         if (this->empty()) {
             return Result(vocab::nullopt);
-        } else {
-            return Result(*container::prev(container::end(self())));
         }
+        return Result(*container::prev(container::end(self())));
     }
 
     constexpr auto back() const
@@ -136,9 +133,8 @@ public:
         using Result = vocab::Optional<meta::ContainerReference<Self const>>;
         if (this->empty()) {
             return Result(vocab::nullopt);
-        } else {
-            return Result(*container::prev(container::end(self())));
         }
+        return Result(*container::prev(container::end(self())));
     }
 
     template<concepts::RandomAccessContainer Cont = Self>

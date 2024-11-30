@@ -12,11 +12,11 @@ namespace detail {
             int r = s % N;
             if (r == 0) {
                 return x;
-            } else if (r > 0) {
-                return (x << r) | (x >> (N - r));
-            } else {
-                return (x >> -r) | (x << (N + r));
             }
+            if (r > 0) {
+                return (x << r) | (x >> (N - r));
+            }
+            return (x >> -r) | (x << (N + r));
         }
     };
 }

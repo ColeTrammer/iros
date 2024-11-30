@@ -338,7 +338,7 @@ namespace detail {
                 case FillAndAlign::Align::Left:
                     return { 0, chars_to_pad };
                 case FillAndAlign::Align::Center:
-                    return { chars_to_pad / 2, math::divide_round_up(chars_to_pad, 2u) };
+                    return { chars_to_pad / 2, math::divide_round_up(chars_to_pad, 2U) };
                 case FillAndAlign::Align::Right:
                     return { chars_to_pad, 0 };
                 default:
@@ -379,7 +379,7 @@ namespace detail {
         // The maximum number of digits a number can have is 64 (u64::max() printed in binary).
         // Add 3 extra characters to account for a prefix, like -0x.
         auto buffer = container::string::StringImpl<
-            Enc, container::StaticVector<meta::EncodingCodeUnit<Enc>, meta::Constexpr<67zu>>> {};
+            Enc, container::StaticVector<meta::EncodingCodeUnit<Enc>, meta::Constexpr<67ZU>>> {};
 
         using UnsignedType = meta::MakeUnsigned<T>;
         auto as_unsigned = math::abs_unsigned(value);

@@ -45,7 +45,7 @@ constexpr void forward_list() {
                            [](Node const& node) {
                                return node.value % 2 == 0;
                            }),
-              3u);
+              3U);
 
     ASSERT_EQ(list.pop_front().transform(&Node::value), 9);
     ASSERT_EQ(list.pop_front().transform(&Node::value), di::nullopt);
@@ -97,7 +97,7 @@ constexpr void list() {
                            [](Node const& node) {
                                return node.value % 2 == 0;
                            }),
-              3u);
+              3U);
 
     ASSERT_EQ(list.pop_front().transform(&Node::value), 9);
     ASSERT_EQ(list.pop_front().transform(&Node::value), di::nullopt);

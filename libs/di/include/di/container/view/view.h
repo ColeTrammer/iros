@@ -124,14 +124,14 @@ public:
     }
 
 private:
-    constexpr friend auto tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<View>, Constexpr<0zu>)
+    constexpr friend auto tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<View>, Constexpr<0ZU>)
         -> InPlaceType<Iter> {}
-    constexpr friend auto tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<View>, Constexpr<1zu>)
+    constexpr friend auto tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<View>, Constexpr<1ZU>)
         -> InPlaceType<Sent> {}
 
-    constexpr friend auto tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<View const>, Constexpr<0zu>)
+    constexpr friend auto tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<View const>, Constexpr<0ZU>)
         -> InPlaceType<Iter const> {}
-    constexpr friend auto tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<View const>, Constexpr<1zu>)
+    constexpr friend auto tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<View const>, Constexpr<1ZU>)
         -> InPlaceType<Sent const> {}
 
     constexpr friend auto tag_invoke(types::Tag<vocab::tuple_size>, types::InPlaceType<View>) -> types::size_t {
@@ -139,13 +139,13 @@ private:
     }
 
     template<concepts::DecaySameAs<View> Self>
-    constexpr friend auto tag_invoke(types::Tag<util::get_in_place>, Constexpr<0zu>, Self&& self)
+    constexpr friend auto tag_invoke(types::Tag<util::get_in_place>, Constexpr<0ZU>, Self&& self)
         -> meta::Like<Self, Iter> {
         return util::forward_like<Self>(self.m_iterator);
     }
 
     template<concepts::DecaySameAs<View> Self>
-    constexpr friend auto tag_invoke(types::Tag<util::get_in_place>, Constexpr<1zu>, Self&& self)
+    constexpr friend auto tag_invoke(types::Tag<util::get_in_place>, Constexpr<1ZU>, Self&& self)
         -> meta::Like<Self, Sent> {
         return util::forward_like<Self>(self.m_sentinel);
     }

@@ -46,7 +46,8 @@ namespace detail {
         auto result = iros::sys_path_metadata(path, &info);
         if (result == di::Unexpected(PosixError::NoSuchFileOrDirectory)) {
             return FileStatus(FileType::NotFound);
-        } else if (!result) {
+        }
+        if (!result) {
             return di::Unexpected(di::move(result).error());
         }
 
@@ -58,7 +59,8 @@ namespace detail {
         auto result = iros::sys_path_metadata(path, &info);
         if (result == di::Unexpected(PosixError::NoSuchFileOrDirectory)) {
             return FileStatus(FileType::NotFound);
-        } else if (!result) {
+        }
+        if (!result) {
             return di::Unexpected(di::move(result).error());
         }
 

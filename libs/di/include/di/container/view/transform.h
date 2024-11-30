@@ -25,7 +25,7 @@ namespace detail {
     };
 }
 
-constexpr inline auto transform = function::curry_back(detail::TransformFunction {}, meta::c_<2zu>);
+constexpr inline auto transform = function::curry_back(detail::TransformFunction {}, meta::c_<2ZU>);
 }
 
 namespace di {

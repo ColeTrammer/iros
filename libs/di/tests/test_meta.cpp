@@ -25,12 +25,12 @@ static_assert(di::SameAs<di::meta::Like<int&&, i32>, i32&&>);
 static_assert(di::SameAs<di::meta::Like<int&, i32>, i32&>);
 static_assert(di::SameAs<di::meta::Like<int, i32>, i32>);
 
-static_assert(di::SameAs<di::meta::MakeIndexSequence<6>, di::meta::ListV<0zu, 1zu, 2zu, 3zu, 4zu, 5zu>>);
-static_assert(di::SameAs<di::meta::MakeIndexSequence<5>, di::meta::ListV<0zu, 1zu, 2zu, 3zu, 4zu>>);
-static_assert(di::SameAs<di::meta::MakeIndexSequence<4>, di::meta::ListV<0zu, 1zu, 2zu, 3zu>>);
-static_assert(di::SameAs<di::meta::MakeIndexSequence<3>, di::meta::ListV<0zu, 1zu, 2zu>>);
-static_assert(di::SameAs<di::meta::MakeIndexSequence<2>, di::meta::ListV<0zu, 1zu>>);
-static_assert(di::SameAs<di::meta::MakeIndexSequence<1>, di::meta::ListV<0zu>>);
+static_assert(di::SameAs<di::meta::MakeIndexSequence<6>, di::meta::ListV<0ZU, 1ZU, 2ZU, 3ZU, 4ZU, 5ZU>>);
+static_assert(di::SameAs<di::meta::MakeIndexSequence<5>, di::meta::ListV<0ZU, 1ZU, 2ZU, 3ZU, 4ZU>>);
+static_assert(di::SameAs<di::meta::MakeIndexSequence<4>, di::meta::ListV<0ZU, 1ZU, 2ZU, 3ZU>>);
+static_assert(di::SameAs<di::meta::MakeIndexSequence<3>, di::meta::ListV<0ZU, 1ZU, 2ZU>>);
+static_assert(di::SameAs<di::meta::MakeIndexSequence<2>, di::meta::ListV<0ZU, 1ZU>>);
+static_assert(di::SameAs<di::meta::MakeIndexSequence<1>, di::meta::ListV<0ZU>>);
 static_assert(di::SameAs<di::meta::MakeIndexSequence<0>, di::meta::ListV<>>);
 
 static_assert(

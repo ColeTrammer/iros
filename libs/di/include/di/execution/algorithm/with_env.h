@@ -104,7 +104,7 @@ namespace with_env_ns {
 /// @see with
 /// @see make_env
 /// @see read
-constexpr inline auto with_env = function::curry(with_env_ns::Function {}, c_<2zu>);
+constexpr inline auto with_env = function::curry(with_env_ns::Function {}, c_<2ZU>);
 
 /// @brief Adapts a sender to run with a debug environment.
 ///

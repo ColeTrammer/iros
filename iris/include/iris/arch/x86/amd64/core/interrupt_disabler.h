@@ -22,7 +22,7 @@ static inline auto interrupts_disabled() -> bool {
                  : "=r"(rflags)
                  :
                  : "cc");
-    return (rflags & arch::interrupt_enable_flag) == 0u;
+    return (rflags & arch::interrupt_enable_flag) == 0U;
 }
 
 static inline auto raw_disable_interrupts_and_save_previous_state() -> bool {
@@ -34,10 +34,9 @@ static inline auto raw_disable_interrupts_and_save_previous_state() -> bool {
                  : "cc");
     if (!(rflags & arch::interrupt_enable_flag)) {
         return true;
-    } else {
-        raw_disable_interrupts();
-        return false;
     }
+    raw_disable_interrupts();
+    return false;
 }
 
 class InterruptDisabler {

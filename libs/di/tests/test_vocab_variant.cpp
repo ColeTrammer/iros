@@ -4,7 +4,7 @@
 
 namespace vocab_variant {
 constexpr void basic() {
-    auto v = di::Variant<int, short, long>(di::c_<1zu>, 1);
+    auto v = di::Variant<int, short, long>(di::c_<1ZU>, 1);
     auto w = di::Variant<int, short, long>();
 
     auto s = di::get<1>(v);
@@ -48,22 +48,22 @@ constexpr void basic() {
     auto a = di::Variant<int, long>(di::in_place_type<int>, 42);
     auto b = di::Variant<int, long>(di::in_place_type<int>, 45);
     auto c = di::Variant<int, long>(di::in_place_type<int>, 42);
-    auto d = di::Variant<int, long>(di::in_place_type<long>, 1l);
+    auto d = di::Variant<int, long>(di::in_place_type<long>, 1L);
     ASSERT_NOT_EQ(a, b);
     ASSERT_LT(a, b);
     ASSERT_EQ(a, c);
     ASSERT_LT(a, d);
 
     auto e = di::Variant<int, double>(1);
-    ASSERT_EQ(e.index(), 0u);
+    ASSERT_EQ(e.index(), 0U);
     ASSERT_EQ(e, 1);
 
     auto f = di::Variant<int, double>(1.5);
-    ASSERT_EQ(f.index(), 1u);
+    ASSERT_EQ(f.index(), 1U);
     ASSERT_EQ(f, 1.5);
 
     f = 1;
-    ASSERT_EQ(f.index(), 0u);
+    ASSERT_EQ(f.index(), 0U);
     ASSERT_EQ(f, 1);
 
     static_assert(di::SameAs<unsigned char, di::math::SmallestUnsignedType<6>>);

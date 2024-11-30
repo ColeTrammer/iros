@@ -22,7 +22,7 @@ namespace detail {
 
         template<concepts::Copyable T, typename Proj = function::Identity,
                  concepts::IndirectStrictWeakOrder<meta::Projected<T const*, Proj>> Comp = function::Compare>
-        constexpr auto operator()(std::initializer_list<T> list, Comp comp = {}, Proj proj = {}) const -> T const {
+        constexpr auto operator()(std::initializer_list<T> list, Comp comp = {}, Proj proj = {}) const -> T {
             return *min_element(list, util::ref(comp), util::ref(proj));
         }
 

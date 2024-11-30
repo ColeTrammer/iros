@@ -56,7 +56,7 @@ namespace let_each_ns {
 ///
 /// @see let_value
 /// @see transform_each
-constexpr inline auto let_value_each = function::curry_back(let_each_ns::ValueFunction {}, meta::c_<2zu>);
+constexpr inline auto let_value_each = function::curry_back(let_each_ns::ValueFunction {}, meta::c_<2ZU>);
 
 /// @brief Transform the errors of a sequence into new senders.
 ///
@@ -73,7 +73,7 @@ constexpr inline auto let_value_each = function::curry_back(let_each_ns::ValueFu
 ///
 /// @see let_error
 /// @see transform_each
-constexpr inline auto let_error_each = function::curry_back(let_each_ns::ErrorFunction {}, meta::c_<2zu>);
+constexpr inline auto let_error_each = function::curry_back(let_each_ns::ErrorFunction {}, meta::c_<2ZU>);
 
 /// @brief Transform the stopped signal of a sequence into new senders.
 ///
@@ -87,5 +87,5 @@ constexpr inline auto let_error_each = function::curry_back(let_each_ns::ErrorFu
 ///
 /// @see let_stopped
 /// @see transform_each
-constexpr inline auto let_stopped_each = function::curry_back(let_each_ns::StoppedFunction {}, meta::c_<2zu>);
+constexpr inline auto let_stopped_each = function::curry_back(let_each_ns::StoppedFunction {}, meta::c_<2ZU>);
 }

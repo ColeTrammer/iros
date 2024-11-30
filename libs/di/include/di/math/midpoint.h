@@ -33,7 +33,7 @@ namespace detail {
     };
 }
 
-constexpr inline auto midpoint = function::curry_back(detail::MidpointFunction {}, meta::c_<2zu>);
+constexpr inline auto midpoint = function::curry_back(detail::MidpointFunction {}, meta::c_<2ZU>);
 }
 
 namespace di {

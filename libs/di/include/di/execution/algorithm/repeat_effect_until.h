@@ -127,5 +127,5 @@ namespace repeat_effect_until_ns {
     };
 }
 
-constexpr inline auto repeat_effect_until = function::curry_back(repeat_effect_until_ns::Function {}, meta::c_<2zu>);
+constexpr inline auto repeat_effect_until = function::curry_back(repeat_effect_until_ns::Function {}, meta::c_<2ZU>);
 }

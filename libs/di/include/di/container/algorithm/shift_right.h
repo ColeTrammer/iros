@@ -28,6 +28,7 @@ namespace detail {
                     return { last_it, last_it };
                 }
 
+                // NOLINTNEXTLINE(readability-suspicious-call-argument)
                 auto real_start = container::move_backward(first, new_start, last_it).out;
                 return { real_start, last_it };
             } else {

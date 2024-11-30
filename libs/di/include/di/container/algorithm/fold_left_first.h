@@ -21,7 +21,7 @@ namespace detail {
     };
 }
 
-constexpr inline auto fold_left_first = function::curry_back(detail::FoldLeftFirstFunction {}, meta::c_<2zu>);
+constexpr inline auto fold_left_first = function::curry_back(detail::FoldLeftFirstFunction {}, meta::c_<2ZU>);
 }
 
 namespace di {

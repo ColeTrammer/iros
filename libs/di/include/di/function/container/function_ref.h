@@ -208,7 +208,7 @@ namespace function_ref_ns {
         }
 
     private:
-        ErasedStorage m_storage {};
+        ErasedStorage m_storage;
         ErasedFunctionPointer m_impl { nullptr };
     };
 

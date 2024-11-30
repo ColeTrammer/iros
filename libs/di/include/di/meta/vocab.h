@@ -38,7 +38,7 @@ template<concepts::Expected T>
 using ExpectedError = meta::RemoveCVRef<T>::Error;
 
 template<typename T>
-constexpr inline auto ExpectedRank = 0zu;
+constexpr inline auto ExpectedRank = 0ZU;
 
 template<concepts::Expected T>
 constexpr inline auto ExpectedRank<T> = 1 + ExpectedRank<ExpectedValue<T>>;
@@ -82,7 +82,7 @@ template<concepts::Optional T>
 using OptionalValue = meta::RemoveCVRef<T>::Value;
 
 template<typename T>
-constexpr inline auto OptionalRank = 0zu;
+constexpr inline auto OptionalRank = 0ZU;
 
 template<concepts::Optional T>
 constexpr inline auto OptionalRank<T> = 1 + OptionalRank<OptionalValue<T>>;

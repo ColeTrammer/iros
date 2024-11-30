@@ -74,7 +74,7 @@ namespace utf8 {
             auto length = byte_sequence_length(*m_data);
             auto first_byte_mask = 0b11111111 >> length;
             auto result = static_cast<c32>(*m_data & first_byte_mask);
-            for (auto i : view::range(1u, length)) {
+            for (auto i : view::range(1U, length)) {
                 result <<= 6;
                 result |= m_data[i] & 0b00111111;
             }
@@ -157,7 +157,7 @@ private:
     }
 
     constexpr friend auto tag_invoke(types::Tag<encoding::convert_to_code_units>, Utf8Encoding const&, c32 code_point) {
-        auto result = container::StaticVector<c8, meta::Constexpr<4zu>> {};
+        auto result = container::StaticVector<c8, meta::Constexpr<4ZU>> {};
         auto code_point_value = static_cast<u32>(code_point);
         if (code_point_value <= 0x7F) {
             (void) result.resize(1);

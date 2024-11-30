@@ -20,7 +20,7 @@ struct Equal {
     }
 };
 
-constexpr inline auto equal = curry_back(Equal {}, meta::c_<2zu>);
+constexpr inline auto equal = curry_back(Equal {}, meta::c_<2ZU>);
 }
 
 namespace di {

@@ -20,7 +20,7 @@ struct Less {
     }
 };
 
-constexpr inline auto less = curry_back(Less {}, meta::c_<2zu>);
+constexpr inline auto less = curry_back(Less {}, meta::c_<2ZU>);
 }
 
 namespace di {

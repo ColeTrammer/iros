@@ -14,7 +14,7 @@ namespace detail {
     };
 }
 
-constexpr inline auto align_up = function::curry_back(detail::AlignUpFunction {}, meta::c_<2zu>);
+constexpr inline auto align_up = function::curry_back(detail::AlignUpFunction {}, meta::c_<2ZU>);
 }
 
 namespace di {

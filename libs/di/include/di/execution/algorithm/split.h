@@ -358,5 +358,5 @@ namespace split_ns {
 /// The underlying sender is only started when the first operation is started.
 ///
 /// @note The returned sender does not copy-out the values, but passes them by const reference.
-constexpr inline auto split = function::curry_back(split_ns::Function {}, c_<2zu>);
+constexpr inline auto split = function::curry_back(split_ns::Function {}, c_<2ZU>);
 }

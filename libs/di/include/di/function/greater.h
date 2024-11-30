@@ -20,7 +20,7 @@ struct Greater {
     }
 };
 
-constexpr inline auto greater = curry_back(Greater {}, meta::c_<2zu>);
+constexpr inline auto greater = curry_back(Greater {}, meta::c_<2ZU>);
 }
 
 namespace di {

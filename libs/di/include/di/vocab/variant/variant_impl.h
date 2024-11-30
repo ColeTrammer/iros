@@ -28,7 +28,7 @@ public:
     {}
 
     template<concepts::RemoveCVRefSameAs<VariantImpl> Self>
-    constexpr static auto static_get(Constexpr<0zu>, Self&& self) -> meta::Like<Self, T>&& {
+    constexpr static auto static_get(Constexpr<0ZU>, Self&& self) -> meta::Like<Self, T>&& {
         return util::forward<Self>(self).m_value.value();
     }
 
@@ -38,7 +38,7 @@ public:
         return VariantImpl<Rest...>::static_get(c_<index - 1>, util::forward<Self>(self).m_rest);
     }
 
-    constexpr void destroy_impl(Constexpr<0zu>) { util::destroy_at(util::addressof(m_value)); }
+    constexpr void destroy_impl(Constexpr<0ZU>) { util::destroy_at(util::addressof(m_value)); }
 
     template<size_t index>
     constexpr void destroy_impl(Constexpr<index>) {
@@ -46,7 +46,7 @@ public:
     }
 
     template<typename... Args>
-    constexpr auto emplace_impl(Constexpr<0zu>, Args&&... args) -> T& {
+    constexpr auto emplace_impl(Constexpr<0ZU>, Args&&... args) -> T& {
         util::construct_at(util::addressof(m_value), in_place, util::forward<Args>(args)...);
         return m_value.value();
     }
@@ -82,14 +82,14 @@ public:
     {}
 
     template<concepts::RemoveCVRefSameAs<VariantImpl> Self>
-    constexpr static auto static_get(Constexpr<0zu>, Self&& self) -> meta::Like<Self, T>&& {
+    constexpr static auto static_get(Constexpr<0ZU>, Self&& self) -> meta::Like<Self, T>&& {
         return util::forward<Self>(self).m_value.value();
     }
 
-    constexpr void destroy_impl(Constexpr<0zu>) { util::destroy_at(util::addressof(m_value)); }
+    constexpr void destroy_impl(Constexpr<0ZU>) { util::destroy_at(util::addressof(m_value)); }
 
     template<typename... Args>
-    constexpr auto emplace_impl(Constexpr<0zu>, Args&&... args) -> T& {
+    constexpr auto emplace_impl(Constexpr<0ZU>, Args&&... args) -> T& {
         util::construct_at(util::addressof(m_value), in_place, util::forward<Args>(args)...);
         return m_value.value();
     }

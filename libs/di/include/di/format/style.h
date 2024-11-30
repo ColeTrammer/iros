@@ -60,7 +60,7 @@ public:
     template<concepts::Encoding Enc>
     constexpr auto render_to_ansi_escapes() const {
         // Use a bounded context to avoid allocating a string.
-        using TargetContext = format::BoundedFormatContext<Enc, meta::Constexpr<32zu>>;
+        using TargetContext = format::BoundedFormatContext<Enc, meta::Constexpr<32ZU>>;
 
         auto context = TargetContext {};
         (void) present_encoded_context<Enc>("\033[{};{};{}m"_sv, context, util::to_underlying(effect()),
@@ -150,7 +150,7 @@ private:
     }
 
     T&& m_argument;
-    Style m_style {};
+    Style m_style;
 };
 
 template<typename T>

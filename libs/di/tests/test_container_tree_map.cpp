@@ -34,9 +34,9 @@ constexpr void basic() {
                            [](auto x) {
                                return di::get<0>(x) == 1;
                            }),
-              1u);
+              1U);
     ASSERT_EQ(z.at(2), 2);
-    ASSERT_EQ(z.size(), 1u);
+    ASSERT_EQ(z.size(), 1U);
 }
 
 TESTC(container_tree_map, basic)

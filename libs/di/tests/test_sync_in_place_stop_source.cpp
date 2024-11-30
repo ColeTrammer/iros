@@ -30,14 +30,15 @@ static void basic() {
 
     ErasedDeleter xx;
 
-    auto bad_cb = new di::InPlaceStopCallback(token, [&] {
+    auto* bad_cb = new di::InPlaceStopCallback(token, [&] {
         xx.deleter(xx.obj);
     });
 
     xx.obj = bad_cb;
 
     xx.deleter = [](void* ptr) {
-        return delete reinterpret_cast<decltype(bad_cb)>(ptr);
+        delete reinterpret_cast<decltype(bad_cb)>(ptr);
+        return;
     };
 
     ASSERT(!source.stop_requested());

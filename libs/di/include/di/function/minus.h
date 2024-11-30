@@ -12,7 +12,7 @@ struct Minus {
     }
 };
 
-constexpr inline auto minus = function::curry_back(Minus {}, meta::c_<2zu>);
+constexpr inline auto minus = function::curry_back(Minus {}, meta::c_<2ZU>);
 }
 
 namespace di {

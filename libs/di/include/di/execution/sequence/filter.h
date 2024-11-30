@@ -466,5 +466,5 @@ namespace filter_ns {
 ///
 /// @warning If the underlying sequence is not always lock-step, the predicate function must be thread-safe. If using
 /// a non-thread-safe predicate function, first call execution::into_lockstep_sequence() on the sequence.
-constexpr inline auto filter = function::curry_back(filter_ns::Function {}, meta::c_<2zu>);
+constexpr inline auto filter = function::curry_back(filter_ns::Function {}, meta::c_<2ZU>);
 }

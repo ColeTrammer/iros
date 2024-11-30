@@ -112,8 +112,9 @@ private:
                 *did_destruct_in_same_thread = true;
             } else {
                 // Otherwise, wait for the callback's execution to complete before finishing.
-                while (!callback->m_already_executed.load(MemoryOrder::Acquire))
+                while (!callback->m_already_executed.load(MemoryOrder::Acquire)) {
                     ;
+                }
             }
         }
     }
@@ -137,8 +138,9 @@ private:
 
     void lock(bool set_stop) const {
         u8 flags = set_stop ? (stop_flag | locked_flag) : locked_flag;
-        while (!m_state.exchange(flags, MemoryOrder::Acquire))
+        while (!m_state.exchange(flags, MemoryOrder::Acquire)) {
             ;
+        }
     }
 
     void unlock(bool set_stop) const {
@@ -148,6 +150,6 @@ private:
 
     mutable container::IntrusiveList<detail::InPlaceStopCallbackBase> m_callbacks;
     mutable Atomic<u8> m_state { 0 };
-    ThreadId m_stopper_thread {};
+    ThreadId m_stopper_thread;
 };
 }

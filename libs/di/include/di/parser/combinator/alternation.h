@@ -41,7 +41,8 @@ namespace detail {
                     auto result = util::get<index>(m_parsers).parse(context);
                     if (!result) {
                         return self(c_<index + 1>);
-                    } else if constexpr (should_be_void) {
+                    }
+                    if constexpr (should_be_void) {
                         return Result();
                     } else if constexpr (concepts::LanguageVoid<Value>) {
                         return Result(in_place, c_<index>);
@@ -51,7 +52,7 @@ namespace detail {
                 }
             });
 
-            return process_index(c_<0zu>);
+            return process_index(c_<0ZU>);
         }
 
         Tuple<Parsers...> m_parsers;

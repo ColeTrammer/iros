@@ -22,7 +22,7 @@ namespace detail {
     struct RBTreeValidForLookup {
         template<typename U>
         struct Type {
-            constexpr static inline bool value = concepts::StrictWeakOrder<Comp&, Value, U>;
+            constexpr static bool value = concepts::StrictWeakOrder<Comp&, Value, U>;
         };
     };
 }
@@ -169,7 +169,8 @@ public:
             auto result = compare(needle, node_value(*node));
             if (result == 0) {
                 return Iterator(node, false);
-            } else if (result < 0) {
+            }
+            if (result < 0) {
                 node = node->left;
             } else {
                 node = node->right;

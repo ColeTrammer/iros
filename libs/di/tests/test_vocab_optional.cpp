@@ -207,7 +207,7 @@ constexpr void compare() {
     static_assert(!di::concepts::EqualityComparableWith<X, X>);
     static_assert(!di::concepts::EqualityComparableWith<di::Optional<X>, di::Optional<X>>);
     auto x = di::make_optional(3);
-    auto y = di::make_optional(3l);
+    auto y = di::make_optional(3L);
     auto z = di::Optional<di::Optional<di::Optional<int>>> { di::in_place, di::in_place, di::in_place, 2 };
 
     ASSERT_EQ(x, y);
@@ -227,7 +227,7 @@ constexpr void compare() {
     static_assert(!di::concepts::ThreeWayComparableWith<di::Optional<X>, di::Optional<X>>);
 
     ASSERT_LT_EQ(x, y);
-    ASSERT_LT(x, di::make_optional(4l));
+    ASSERT_LT(x, di::make_optional(4L));
     ASSERT_GT(x, di::Optional<int>(di::nullopt));
     ASSERT_GT(x, di::nullopt);
     ASSERT_GT_EQ(x, 2);
@@ -239,7 +239,7 @@ constexpr void compare() {
 constexpr void container() {
     auto x = di::make_optional(2);
     ASSERT(!x.empty());
-    ASSERT_EQ(x.size(), 1u);
+    ASSERT_EQ(x.size(), 1U);
     for (auto y : x) {
         ASSERT_EQ(y, 2);
     }

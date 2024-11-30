@@ -208,9 +208,11 @@ public:
              (concepts::Integer<T> && concepts::Integer<Bound>) || (concepts::SizedSentinelFor<Bound, T>) )
     {
         if constexpr (concepts::Integer<T> && concepts::Integer<Bound>) {
-            return (m_value < 0) ? ((m_bound < 0) ? math::to_unsigned(-m_value) - math::to_unsigned(-m_value)
-                                                  : math::to_unsigned(m_bound) + math::to_unsigned(-m_value))
-                                 : math::to_unsigned(m_bound) - math::to_unsigned(m_value);
+            if (m_value < 0) {
+                return ((m_bound < 0) ? math::to_unsigned(-m_value) - math::to_unsigned(-m_value)
+                                      : math::to_unsigned(m_bound) + math::to_unsigned(-m_value));
+            }
+            return math::to_unsigned(m_bound) - math::to_unsigned(m_value);
         } else {
             return math::to_unsigned(m_bound - m_value);
         }

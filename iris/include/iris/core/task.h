@@ -43,7 +43,7 @@ public:
         m_address_space->load();
         m_fpu_state.load();
         if (m_kernel_stack.raw_value() != 0) {
-            arch::load_kernel_stack(m_kernel_stack + 0x2000zu);
+            arch::load_kernel_stack(m_kernel_stack + 0x2000ZU);
         }
         arch::load_userspace_thread_pointer(userspace_thread_pointer(), m_task_state);
 
@@ -84,8 +84,8 @@ public:
     auto task_status() const -> di::Arc<TaskStatus> { return m_task_status; }
 
     auto waiting() const -> bool { return m_waiting.load(di::MemoryOrder::Relaxed); }
-    void set_waiting() { return m_waiting.store(true, di::MemoryOrder::Relaxed); }
-    void set_runnable() { return m_waiting.store(false, di::MemoryOrder::Relaxed); }
+    void set_waiting() { m_waiting.store(true, di::MemoryOrder::Relaxed); }
+    void set_runnable() { m_waiting.store(false, di::MemoryOrder::Relaxed); }
 
     auto kernel_stack() const -> mm::VirtualAddress { return m_kernel_stack; }
     void set_kernel_stack(mm::VirtualAddress kernel_stack) { m_kernel_stack = kernel_stack; }

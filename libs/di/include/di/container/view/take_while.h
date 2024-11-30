@@ -30,7 +30,7 @@ namespace detail {
     };
 }
 
-constexpr inline auto take_while = function::curry_back(detail::TakeWhileFunction {}, meta::c_<2zu>);
+constexpr inline auto take_while = function::curry_back(detail::TakeWhileFunction {}, meta::c_<2ZU>);
 }
 
 namespace di {

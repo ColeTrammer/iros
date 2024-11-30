@@ -69,7 +69,7 @@ public:
     constexpr Variant()
     requires(concepts::DefaultConstructible<meta::Front<List>>)
     {
-        do_emplace(c_<0zu>);
+        do_emplace(c_<0ZU>);
     }
 
     constexpr Variant(Variant const& other)
@@ -234,6 +234,7 @@ private:
     }
 
     template<size_t index, concepts::DerivedFrom<Variant> Self = Variant>
+    // NOLINTNEXTLINE(readability-const-return-type)
     constexpr friend auto tag_invoke(types::Tag<variant_alternative>, InPlaceType<Self const>, Constexpr<index>)
         -> meta::At<List, index> const {
         return {};

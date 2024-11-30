@@ -37,7 +37,7 @@ auto LockedAddressSpace::allocate_region(di::Arc<BackingObject> backing_object, 
     auto heap_start = global_state().heap_start;
     auto default_address = base().m_kernel ? heap_start : mm::VirtualAddress(0x10000000000);
     auto last_virtual_address = m_regions.back().transform(&Region::end).value_or(default_address);
-    auto new_virtual_address = last_virtual_address + 8192zu * 0x1000zu;
+    auto new_virtual_address = last_virtual_address + 8192ZU * 0x1000ZU;
 
     region->set_base(new_virtual_address);
     auto [new_region, did_insert] = m_regions.insert(*region.release());

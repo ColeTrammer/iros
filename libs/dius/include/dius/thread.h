@@ -60,7 +60,7 @@ public:
             return di::Unexpected(PosixError::InvalidArgument);
         }
         auto guard = di::ScopeExit([&] {
-            (void) m_platform_thread.reset();
+            m_platform_thread.reset();
         });
         return m_platform_thread->join();
     }
@@ -70,6 +70,6 @@ private:
         di::swap(a.m_platform_thread, b.m_platform_thread);
     }
 
-    di::Box<PlatformThread, PlatformThreadDeleter> m_platform_thread {};
+    di::Box<PlatformThread, PlatformThreadDeleter> m_platform_thread;
 };
 }

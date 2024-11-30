@@ -51,7 +51,7 @@ void DirectoryIterator::advance_one() {
 
 void DirectoryIterator::advance() {
     // Re-fill the buffer of directory entries.
-    if (m_buffer.size() == 0) {
+    if (m_buffer.empty()) {
         auto result =
             iros::sys_read_directory(m_directory_handle.file_descriptor(), m_buffer.data(), m_buffer.capacity());
         if (!result) {
@@ -67,10 +67,11 @@ void DirectoryIterator::advance() {
         m_buffer.assume_size(*result);
     }
 
-    auto* dirent = m_buffer.span().typed_pointer_unchecked<iris::DirectoryRecord const>(m_current_offset);
+    auto const* dirent = m_buffer.span().typed_pointer_unchecked<iris::DirectoryRecord const>(m_current_offset);
     if (dirent->size == 0) {
         m_buffer.clear();
-        return advance_one();
+        advance_one();
+        return;
     }
 
     ASSERT_GT_EQ(dirent->size, sizeof(*dirent));

@@ -28,8 +28,8 @@ public:
 
     constexpr explicit Region(VirtualAddress base, usize length, RegionFlags flags)
         : m_base(base), m_length(length), m_flags(flags) {
-        ASSERT_GT(length, 0u);
-        ASSERT_EQ(length % 0x1000, 0u);
+        ASSERT_GT(length, 0U);
+        ASSERT_EQ(length % 0x1000, 0U);
     }
 
     constexpr auto base() const -> VirtualAddress { return m_base; }

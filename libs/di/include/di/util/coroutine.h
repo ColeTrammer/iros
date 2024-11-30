@@ -34,9 +34,9 @@ public:
     constexpr explicit operator bool() const noexcept { return bool(m_frame_pointer); }
 
     void operator()() const { resume(); }
-    void resume() const { return __builtin_coro_resume(m_frame_pointer); }
+    void resume() const { __builtin_coro_resume(m_frame_pointer); }
 
-    void destroy() const { return __builtin_coro_destroy(m_frame_pointer); }
+    void destroy() const { __builtin_coro_destroy(m_frame_pointer); }
 
     constexpr auto address() const noexcept -> void* { return m_frame_pointer; }
     constexpr static auto from_address(void* address) noexcept -> coroutine_handle {
@@ -67,9 +67,9 @@ public:
     constexpr explicit operator bool() const noexcept { return bool(m_frame_pointer); }
 
     void operator()() const { resume(); }
-    void resume() const { return __builtin_coro_resume(m_frame_pointer); }
+    void resume() const { __builtin_coro_resume(m_frame_pointer); }
 
-    void destroy() const { return __builtin_coro_destroy(m_frame_pointer); }
+    void destroy() const { __builtin_coro_destroy(m_frame_pointer); }
 
     auto promise() const -> Promise& {
         void* promise_pointer = __builtin_coro_promise(m_frame_pointer, alignof(Promise), false);

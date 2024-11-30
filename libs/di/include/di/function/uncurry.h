@@ -14,7 +14,7 @@
 
 namespace di::function::detail {
 template<concepts::TupleLike Tup>
-constexpr inline auto tuple_forward(Tup&& tuple) {
+constexpr auto tuple_forward(Tup&& tuple) {
     return di::apply(
         []<typename... Args>(Args&&... args) {
             return di::forward_as_tuple<Args...>(di::forward<Args>(args)...);
@@ -23,12 +23,12 @@ constexpr inline auto tuple_forward(Tup&& tuple) {
 }
 
 template<typename T>
-constexpr inline auto tuple_forward(T&& value) {
+constexpr auto tuple_forward(T&& value) {
     return di::forward_as_tuple<T>(di::forward<T>(value));
 }
 
 template<typename... Args>
-constexpr inline auto do_tuple_cat(Args&&... args) {
+constexpr auto do_tuple_cat(Args&&... args) {
     return di::tuple_cat(detail::tuple_forward(di::forward<Args>(args))...);
 }
 

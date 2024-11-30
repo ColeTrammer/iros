@@ -16,7 +16,7 @@ struct Compare {
     }
 };
 
-constexpr inline auto compare = function::curry_back(Compare {}, meta::c_<2zu>);
+constexpr inline auto compare = function::curry_back(Compare {}, meta::c_<2ZU>);
 }
 
 namespace di {

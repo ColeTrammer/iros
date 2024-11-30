@@ -15,7 +15,7 @@ constexpr void basic() {
     auto q = di::present(u8"{{{}"_sv, -42);
     ASSERT_EQ(q, u8"{-42"_sv);
 
-    auto u = di::present(u8"{{{}}}"_sv, 153u);
+    auto u = di::present(u8"{{{}}}"_sv, 153U);
     ASSERT_EQ(u, u8"{153}"_sv);
 
     auto a = di::present(u8"{}"_sv, di::Array { 1, 2, 3 });

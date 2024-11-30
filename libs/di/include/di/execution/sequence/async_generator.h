@@ -162,7 +162,7 @@ namespace async_generator_ns {
             };
 
             meta::AddPointer<Yield> m_pointer { nullptr };
-            vocab::Optional<vocab::Error> m_error {};
+            vocab::Optional<vocab::Error> m_error;
         };
     };
 

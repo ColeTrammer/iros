@@ -25,7 +25,7 @@ namespace detail {
     struct NodeHashTableValidForLookup {
         template<typename U>
         struct Type {
-            constexpr static inline bool value =
+            constexpr static bool value =
                 concepts::Predicate<Eq&, Value const&, U const&> && concepts::HashSame<Value, U>;
         };
     };
@@ -34,7 +34,7 @@ namespace detail {
     struct NodeHashTableMapValidForLookup {
         template<typename U>
         struct Type {
-            constexpr static inline bool value =
+            constexpr static bool value =
                 (concepts::Predicate<Eq&, Key const&, U const&> && concepts::HashSame<Key, U>) ||
                 (concepts::RemoveCVRefSameAs<U, Tuple<Key, Value>>);
         };
@@ -315,13 +315,13 @@ protected:
                     Tag::did_insert(down_cast_self(), static_cast<ConcreteNode&>(node));
                 }
                 return Iterator { m_buckets.span(), bucket_index, it };
-            } else {
-                bucket.push_front(node);
-                if (call_insertion_hook) {
-                    Tag::did_insert(down_cast_self(), static_cast<ConcreteNode&>(node));
-                }
-                return Iterator { m_buckets.span(), bucket_index, bucket.before_begin() };
             }
+            bucket.push_front(node);
+            if (call_insertion_hook) {
+                Tag::did_insert(down_cast_self(), static_cast<ConcreteNode&>(node));
+            }
+            return Iterator { m_buckets.span(), bucket_index, bucket.before_begin() };
+
         } else {
             if (it == bucket.end()) {
                 ++m_size;
@@ -330,9 +330,8 @@ protected:
                     Tag::did_insert(down_cast_self(), static_cast<ConcreteNode&>(node));
                 }
                 return vocab::Tuple(Iterator { m_buckets.span(), bucket_index, bucket.before_begin() }, true);
-            } else {
-                return vocab::Tuple(Iterator { m_buckets.span(), bucket_index, before_it }, false);
             }
+            return vocab::Tuple(Iterator { m_buckets.span(), bucket_index, before_it }, false);
         }
     }
 

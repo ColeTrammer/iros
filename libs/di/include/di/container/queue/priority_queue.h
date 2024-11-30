@@ -73,7 +73,7 @@ public:
     constexpr auto top() -> Optional<Value&> { return m_container.front(); }
     constexpr auto top() const -> Optional<Value const&> { return m_container.front(); }
 
-    constexpr auto empty() const -> bool { return size() == 0u; }
+    constexpr auto empty() const -> bool { return size() == 0U; }
     constexpr auto size() const { return m_container.size(); }
 
     constexpr auto push(Value const& value) -> decltype(auto)
@@ -98,7 +98,7 @@ public:
         return invoke_as_fallible([&] {
                    return m_container.append_container(util::forward<Other>(container));
                }) % [&] {
-            for (auto i = old_size + 1u; i <= size(); i++) {
+            for (auto i = old_size + 1U; i <= size(); i++) {
                 container::push_heap(m_container.begin(), m_container.begin() + i, util::ref(m_comp));
             }
         } | try_infallible;

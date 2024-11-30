@@ -42,7 +42,7 @@ extern "C" [[noreturn]] void dius_entry(int argc, char** argv, char** envp) {
                                       program_header_count };
 
     s_tls_info = [&] -> dius::runtime::TlsInfo {
-        auto tls_segment = di::find_if(program_headers, [](auto const& header) {
+        auto const* tls_segment = di::find_if(program_headers, [](auto const& header) {
             return header.type == di::exec::ElfProgramHeaderType::Tls;
         });
 

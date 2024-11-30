@@ -267,7 +267,7 @@ namespace counting_scope_ns {
 
             friend auto tag_invoke(Tag<get_env>, Type const& self) {
                 return make_env(CountingScopeT<Alloc>::get_data(self.scope)->get_env(),
-                                with(get_sequence_cardinality, c_<1zu>));
+                                with(get_sequence_cardinality, c_<1ZU>));
             }
         };
     };

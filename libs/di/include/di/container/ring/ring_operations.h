@@ -69,7 +69,7 @@ constexpr auto front(concepts::detail::ConstantRing auto& ring) {
 constexpr auto back(concepts::detail::ConstantRing auto& ring) {
     // NOTE: This is safe because unsigned underflow is defined behavior. If the ring is empty, then at() will return
     // nullopt.
-    return ring::at(ring, ring::size(ring) - 1u);
+    return ring::at(ring, ring::size(ring) - 1U);
 }
 
 template<concepts::detail::MutableRing Ring, typename Value = meta::detail::RingValue<Ring>>

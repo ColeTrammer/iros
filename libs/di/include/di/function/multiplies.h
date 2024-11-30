@@ -12,7 +12,7 @@ struct Multiplies {
     }
 };
 
-constexpr inline auto multiplies = function::curry_back(Multiplies {}, meta::c_<2zu>);
+constexpr inline auto multiplies = function::curry_back(Multiplies {}, meta::c_<2ZU>);
 }
 
 namespace di {

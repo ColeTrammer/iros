@@ -34,7 +34,7 @@ public:
     auto operator=(GenericDomain const&) -> GenericDomain& = default;
     auto operator=(GenericDomain&&) -> GenericDomain& = default;
 
-    constexpr static inline auto get() -> GenericDomain const&;
+    constexpr static auto get() -> GenericDomain const&;
 
     virtual auto name() const -> container::ErasedString override {
         return container::ErasedString(u8"Generic Domain");
@@ -108,7 +108,7 @@ constexpr auto generic_domain = GenericDomain {};
 constexpr inline auto generic_domain = GenericDomain {};
 #endif
 
-constexpr inline auto GenericDomain::get() -> GenericDomain const& {
+constexpr auto GenericDomain::get() -> GenericDomain const& {
     return generic_domain;
 }
 }

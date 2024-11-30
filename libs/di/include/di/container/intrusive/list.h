@@ -263,7 +263,7 @@ private:
     requires(concepts::Predicate<F&, T const&>)
     constexpr friend auto tag_invoke(di::Tag<erase_if>, ConcreteSelf& self, F&& function) -> usize {
         auto it = self.begin();
-        auto result = 0zu;
+        auto result = 0ZU;
         while (it != self.end()) {
             if (function(*it)) {
                 it = self.erase(it);

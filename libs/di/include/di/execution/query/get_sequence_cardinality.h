@@ -54,6 +54,6 @@ namespace di::meta {
 template<typename Sequence>
 constexpr inline auto SequenceCardinality =
     !concepts::SequenceSender<Sequence>
-        ? 1zu
+        ? 1ZU
         : meta::InvokeResult<decltype(execution::get_sequence_cardinality), meta::EnvOf<Sequence>>::value;
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/container/algorithm/all_of.h>
 #include <di/container/view/range.h>
 #include <di/math/numeric_limits.h>
 #include <di/math/to_unsigned.h>
@@ -20,7 +21,7 @@ private:
     constexpr static auto dynamic_index(size_t index) -> size_t {
         auto result = Array<size_t, rank() + 1> {};
         size_t count = 0;
-        for (auto i : container::view::range(1zu, rank() + 1)) {
+        for (auto i : container::view::range(1ZU, rank() + 1)) {
             if (static_extent(i - 1) == dynamic_extent) {
                 ++count;
             }
@@ -108,7 +109,8 @@ public:
         auto extent = static_extent(index);
         if (extent != dynamic_extent) {
             return extent;
-        } else if constexpr (rank_dynamic() != 0) {
+        }
+        if constexpr (rank_dynamic() != 0) {
             return m_dynamic_extents[dynamic_index(index)];
         } else {
             util::unreachable();
@@ -146,12 +148,9 @@ private:
         if (a.rank() != b.rank()) {
             return false;
         }
-        for (auto i : container::view::range(rank())) {
-            if (a.extent(i) != b.extent(i)) {
-                return false;
-            }
-        }
-        return true;
+        return di::all_of(container::view::range(rank()), [&](usize i) {
+            return a.extent(i) == b.extent(i);
+        });
     }
 
     [[no_unique_address]] Array<SizeType, rank_dynamic()> m_dynamic_extents {};

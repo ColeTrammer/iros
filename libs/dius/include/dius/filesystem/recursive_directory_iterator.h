@@ -44,7 +44,7 @@ public:
             m_stack.clear();
             return;
         }
-        auto& current = **top;
+        auto const& current = **top;
 
         // If recursion is pending and the current entry is a directory,
         // recurse by pushing to the stack.

@@ -48,7 +48,7 @@ private:
 
         constexpr explicit Iterator(Iter<is_const> first, Sent<is_const> last) {
             m_iterators[0] = util::move(first);
-            for (auto i : view::range(1zu, N)) {
+            for (auto i : view::range(1ZU, N)) {
                 m_iterators[i] = container::next(m_iterators[i - 1], 1, last);
             }
         }
@@ -142,8 +142,7 @@ private:
         requires(concepts::IndirectlySwappable<Iter<is_const>>)
         {
             return function::unpack<meta::MakeIndexSequence<N>>([&]<size_t... indices>(meta::ListV<indices...>) {
-                return (void) (iterator_swap(util::get<indices>(a.m_iterators), util::get<indices>(b.m_iterators)),
-                               ...);
+                (void) (iterator_swap(util::get<indices>(a.m_iterators), util::get<indices>(b.m_iterators)), ...);
             });
         }
 

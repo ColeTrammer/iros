@@ -34,7 +34,7 @@ namespace detail {
                                                     meta::TypeIdentity<SSizeType> n) -> It {
             while (n != 0) {
                 SSizeType left_length = n >> 1;
-                auto mid = container::next(first, left_length);
+                auto* mid = container::next(first, left_length);
                 if (function::invoke(comp, needle, function::invoke(proj, *mid)) >= 0) {
                     // needle is greater than every element in the range [first, mid].
                     n -= left_length + 1;

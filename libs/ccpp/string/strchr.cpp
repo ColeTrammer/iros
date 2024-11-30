@@ -1,19 +1,20 @@
 #include <string.h>
 
-extern "C" auto strchr(char const* str, int ch) -> char* {
-    auto needle = (unsigned char) (char) ch;
-    auto* str_typed = (unsigned char*) str;
+extern "C" auto strchr(char const* haystack, int needle) -> char* {
+    auto needle_typed = (unsigned char) (char) needle;
+    auto* haystack_typed = (unsigned char*) haystack;
 
-    if (*str_typed == needle) {
-        return (char*) str_typed;
-    } else if (*str_typed == '\0') {
+    if (*haystack_typed == needle_typed) {
+        return (char*) haystack_typed;
+    }
+    if (*haystack_typed == '\0') {
         return nullptr;
     }
 
     do {
-        if (*++str_typed == needle) {
-            return (char*) str_typed;
+        if (*++haystack_typed == needle_typed) {
+            return (char*) haystack_typed;
         }
-    } while (*str_typed != '\0');
+    } while (*haystack_typed != '\0');
     return nullptr;
 }

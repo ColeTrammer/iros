@@ -29,7 +29,8 @@ constexpr void front() {
         return x + y + z;
     };
 
-    auto a = 2, b = 3;
+    auto a = 2;
+    auto b = 3;
     auto j = di::bind_front(h, di::ref(a), di::ref(b));
     ASSERT_EQ(j(4), 9);
 }

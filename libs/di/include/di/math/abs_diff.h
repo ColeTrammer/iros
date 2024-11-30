@@ -11,9 +11,8 @@ namespace detail {
         constexpr auto operator()(T a, T b) const -> U {
             if (a < b) {
                 return U(b) - U(a);
-            } else {
-                return U(a) - U(b);
             }
+            return U(a) - U(b);
         }
 
         template<concepts::Pointer T>
@@ -21,14 +20,13 @@ namespace detail {
         constexpr auto operator()(T a, T b) const -> uptr {
             if (a < b) {
                 return b - a;
-            } else {
-                return a - b;
             }
+            return a - b;
         }
     };
 }
 
-constexpr inline auto abs_diff = function::curry_back(detail::AbsDiffFunction {}, meta::c_<2zu>);
+constexpr inline auto abs_diff = function::curry_back(detail::AbsDiffFunction {}, meta::c_<2ZU>);
 }
 
 namespace di {

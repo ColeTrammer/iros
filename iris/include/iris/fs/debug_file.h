@@ -8,7 +8,7 @@
 namespace iris {
 struct DebugFile {
 private:
-    friend auto tag_invoke(di::Tag<read_file>, DebugFile&, UserspaceBuffer<byte> data) -> di::AnySenderOf<usize>;
+    friend auto tag_invoke(di::Tag<read_file>, DebugFile&, UserspaceBuffer<byte> buffer) -> di::AnySenderOf<usize>;
 
     friend auto tag_invoke(di::Tag<write_file>, DebugFile& self, UserspaceBuffer<byte const> data)
         -> di::AnySenderOf<usize>;

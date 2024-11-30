@@ -16,7 +16,7 @@ namespace detail {
     };
 }
 
-constexpr inline auto run_parser_partial = function::curry(detail::RunParserPartialFunction {}, meta::c_<2zu>);
+constexpr inline auto run_parser_partial = function::curry(detail::RunParserPartialFunction {}, meta::c_<2ZU>);
 }
 
 namespace di {

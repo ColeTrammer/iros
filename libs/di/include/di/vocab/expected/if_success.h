@@ -28,7 +28,7 @@ namespace detail {
     };
 }
 
-constexpr inline auto if_success = function::curry_back(detail::IfSuccessFunction {}, meta::c_<2zu>);
+constexpr inline auto if_success = function::curry_back(detail::IfSuccessFunction {}, meta::c_<2ZU>);
 }
 
 namespace di {

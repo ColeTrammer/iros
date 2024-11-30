@@ -231,7 +231,7 @@ private:
         auto it = self.before_begin();
         auto jt = next(it);
 
-        auto result = 0zu;
+        auto result = 0ZU;
         while (jt != self.end()) {
             if (function(*jt)) {
                 jt = self.erase_after(it);

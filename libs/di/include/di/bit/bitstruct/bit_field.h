@@ -7,12 +7,12 @@ namespace di::bit {
 template<size_t index, size_t bit_count>
 requires(bit_count <= 63)
 struct BitField {
-    using Value = math::SmallestUnsignedType<(1ull << bit_count) - 1>;
+    using Value = math::SmallestUnsignedType<(1ULL << bit_count) - 1>;
 
     template<size_t bit_size>
     constexpr static void value_into_bits(BitSet<bit_size>& bit_set, Value value) {
         for (size_t i = 0; i < bit_count; i++) {
-            bit_set[index + i] = !!(value & (1ull << i));
+            bit_set[index + i] = !!(value & (1ULL << i));
         }
     }
 

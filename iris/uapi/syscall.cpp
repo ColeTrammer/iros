@@ -254,7 +254,7 @@ auto do_syscall(Task& current_task, arch::TaskState& task_state) -> Expected<u64
         }
         case SystemCall::truncate: {
             auto file_handle = i32(task_state.syscall_arg1());
-            auto length = u64(task_state.syscall_arg2());
+            auto length = task_state.syscall_arg2();
 
             auto& handle = TRY(current_task.file_table().lookup_file_handle(file_handle));
             return TRY_UNERASE_ERROR(di::execution::sync_wait(file_truncate(handle, length)) % di::function::value(0));

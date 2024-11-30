@@ -10,13 +10,13 @@
 
 namespace iris::mm {
 // Store enough for 4 GiB of physical memory.
-constexpr usize physical_page_count = 4llu * 1024u * 1024u * 1024u / 4096u;
+constexpr usize physical_page_count = 4LLU * 1024U * 1024U * 1024U / 4096U;
 
 static auto page_frame_bitmap = di::Synchronized<di::BitSet<physical_page_count>> {};
 
 void reserve_page_frames(PhysicalAddress base_address, usize page_count) {
-    return page_frame_bitmap.with_lock([&](auto& bitmap) {
-        for (auto address = base_address; address < base_address + 4096 * page_count; address += 4096zu) {
+    page_frame_bitmap.with_lock([&](auto& bitmap) {
+        for (auto address = base_address; address < base_address + 4096 * page_count; address += 4096ZU) {
             if (address.raw_value() / 4096 >= physical_page_count) {
                 break;
             }
@@ -26,8 +26,8 @@ void reserve_page_frames(PhysicalAddress base_address, usize page_count) {
 }
 
 void unreserve_page_frames(PhysicalAddress base_address, usize page_count) {
-    return page_frame_bitmap.with_lock([&](auto& bitmap) {
-        for (auto address = base_address; address < base_address + 4096 * page_count; address += 4096zu) {
+    page_frame_bitmap.with_lock([&](auto& bitmap) {
+        for (auto address = base_address; address < base_address + 4096 * page_count; address += 4096ZU) {
             if (address.raw_value() / 4096 >= physical_page_count) {
                 break;
             }
@@ -80,7 +80,7 @@ auto allocate_physically_contiguous_page_frames(usize page_count) -> Expected<Ph
 
 void deallocate_page_frame(PhysicalAddress address) {
     ASSERT(address.raw_value() % 4096 == 0);
-    return page_frame_bitmap.with_lock([&](auto& bitmap) {
+    page_frame_bitmap.with_lock([&](auto& bitmap) {
         bitmap[address.raw_value() / 4096] = true;
     });
 }

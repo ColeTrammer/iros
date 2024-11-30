@@ -1,6 +1,8 @@
 #include <dius/linux/io_uring_context.h>
 
 namespace dius::linux {
+IoUringContext::~IoUringContext() = default;
+
 void IoUringContext::run() {
     for (;;) {
         // Reap any pending completions.

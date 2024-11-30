@@ -60,7 +60,7 @@ static void atol_() {
     ASSERT_EQ(do_atol("0x2A"), 0);
     ASSERT_EQ(do_atol("HI"), 0);
     ASSERT_EQ(do_atol("9223372036854775807"), 9223372036854775807);
-    ASSERT_EQ(do_atol("-9223372036854775808"), (long) -9223372036854775808u);
+    ASSERT_EQ(do_atol("-9223372036854775808"), (long) -9223372036854775808U);
 }
 
 static void atoll_() {
@@ -71,7 +71,7 @@ static void atoll_() {
     ASSERT_EQ(do_atoll("0x2A"), 0);
     ASSERT_EQ(do_atoll("HI"), 0);
     ASSERT_EQ(do_atoll("9223372036854775807"), 9223372036854775807);
-    ASSERT_EQ(do_atoll("-9223372036854775808"), (long long) -9223372036854775808u);
+    ASSERT_EQ(do_atoll("-9223372036854775808"), (long long) -9223372036854775808U);
 }
 
 static auto cstring_to_tsv(char const* ptr) -> di::TransparentStringView {
@@ -102,7 +102,7 @@ static void strtol_() {
     ASSERT_EQ(do_strtol("9223372036854775807", &end, 10), 9223372036854775807);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
-    ASSERT_EQ(do_strtol("-9223372036854775808", &end, 10), (long long) -9223372036854775808u);
+    ASSERT_EQ(do_strtol("-9223372036854775808", &end, 10), (long long) -9223372036854775808U);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
     ASSERT_EQ(do_strtol("92233720368547758079", &end, 10), 9223372036854775807);
@@ -113,11 +113,11 @@ static void strtol_() {
     ASSERT_EQ(errno, ERANGE);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
-    ASSERT_EQ(do_strtol("-92233720368547758089", &end, 10), (long long) -9223372036854775808u);
+    ASSERT_EQ(do_strtol("-92233720368547758089", &end, 10), (long long) -9223372036854775808U);
     ASSERT_EQ(errno, ERANGE);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
-    ASSERT_EQ(do_strtol("-9223372036854775809", &end, 10), (long long) -9223372036854775808u);
+    ASSERT_EQ(do_strtol("-9223372036854775809", &end, 10), (long long) -9223372036854775808U);
     ASSERT_EQ(errno, ERANGE);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
@@ -179,7 +179,7 @@ static void strtoll_() {
     ASSERT_EQ(do_strtoll("9223372036854775807", &end, 10), 9223372036854775807);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
-    ASSERT_EQ(do_strtoll("-9223372036854775808", &end, 10), (long long) -9223372036854775808u);
+    ASSERT_EQ(do_strtoll("-9223372036854775808", &end, 10), (long long) -9223372036854775808U);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
     ASSERT_EQ(do_strtoll("92233720368547758079", &end, 10), 9223372036854775807);
@@ -190,11 +190,11 @@ static void strtoll_() {
     ASSERT_EQ(errno, ERANGE);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
-    ASSERT_EQ(do_strtoll("-92233720368547758089", &end, 10), (long long) -9223372036854775808u);
+    ASSERT_EQ(do_strtoll("-92233720368547758089", &end, 10), (long long) -9223372036854775808U);
     ASSERT_EQ(errno, ERANGE);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
-    ASSERT_EQ(do_strtoll("-9223372036854775809", &end, 10), (long long) -9223372036854775808u);
+    ASSERT_EQ(do_strtoll("-9223372036854775809", &end, 10), (long long) -9223372036854775808U);
     ASSERT_EQ(errno, ERANGE);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
@@ -233,7 +233,7 @@ static void strtoll_() {
 
 static void strtoul_() {
     char* end = nullptr;
-    ASSERT_EQ(do_strtoul("   -12345HI", &end, 10), -12345ull);
+    ASSERT_EQ(do_strtoul("   -12345HI", &end, 10), -12345ULL);
     ASSERT_EQ(cstring_to_tsv(end), "HI"_tsv);
 
     ASSERT_EQ(do_strtoul("   +12345HI", &end, 10), 12345);
@@ -252,21 +252,21 @@ static void strtoul_() {
     ASSERT(errno == 0 || errno == EINVAL);
     ASSERT_EQ(cstring_to_tsv(end), "HI"_tsv);
 
-    ASSERT_EQ(do_strtoul("18446744073709551615", &end, 10), 18446744073709551615u);
+    ASSERT_EQ(do_strtoul("18446744073709551615", &end, 10), 18446744073709551615U);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
-    ASSERT_EQ(do_strtoul("18446744073709551616", &end, 10), 18446744073709551615u);
+    ASSERT_EQ(do_strtoul("18446744073709551616", &end, 10), 18446744073709551615U);
     ASSERT_EQ(errno, ERANGE);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
-    ASSERT_EQ(do_strtoul("18446744073709551617", &end, 10), 18446744073709551615u);
+    ASSERT_EQ(do_strtoul("18446744073709551617", &end, 10), 18446744073709551615U);
     ASSERT_EQ(errno, ERANGE);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
-    ASSERT_EQ(do_strtoul("-18446744073709551615", &end, 10), -18446744073709551615u);
+    ASSERT_EQ(do_strtoul("-18446744073709551615", &end, 10), -18446744073709551615U);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
-    ASSERT_EQ(do_strtoul("-18446744073709551616", &end, 10), 18446744073709551615u);
+    ASSERT_EQ(do_strtoul("-18446744073709551616", &end, 10), 18446744073709551615U);
     ASSERT_EQ(errno, ERANGE);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
@@ -305,7 +305,7 @@ static void strtoul_() {
 
 static void strtoull_() {
     char* end = nullptr;
-    ASSERT_EQ(do_strtoull("   -12345HI", &end, 10), -12345ull);
+    ASSERT_EQ(do_strtoull("   -12345HI", &end, 10), -12345ULL);
     ASSERT_EQ(cstring_to_tsv(end), "HI"_tsv);
 
     ASSERT_EQ(do_strtoull("   +12345HI", &end, 10), 12345);
@@ -324,21 +324,21 @@ static void strtoull_() {
     ASSERT(errno == 0 || errno == EINVAL);
     ASSERT_EQ(cstring_to_tsv(end), "HI"_tsv);
 
-    ASSERT_EQ(do_strtoull("18446744073709551615", &end, 10), 18446744073709551615u);
+    ASSERT_EQ(do_strtoull("18446744073709551615", &end, 10), 18446744073709551615U);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
-    ASSERT_EQ(do_strtoull("18446744073709551616", &end, 10), 18446744073709551615u);
+    ASSERT_EQ(do_strtoull("18446744073709551616", &end, 10), 18446744073709551615U);
     ASSERT_EQ(errno, ERANGE);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
-    ASSERT_EQ(do_strtoull("184467440737095516159", &end, 10), 18446744073709551615u);
+    ASSERT_EQ(do_strtoull("184467440737095516159", &end, 10), 18446744073709551615U);
     ASSERT_EQ(errno, ERANGE);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
-    ASSERT_EQ(do_strtoull("-18446744073709551615", &end, 10), -18446744073709551615u);
+    ASSERT_EQ(do_strtoull("-18446744073709551615", &end, 10), -18446744073709551615U);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 
-    ASSERT_EQ(do_strtoull("-18446744073709551616", &end, 10), 18446744073709551615u);
+    ASSERT_EQ(do_strtoull("-18446744073709551616", &end, 10), 18446744073709551615U);
     ASSERT_EQ(errno, ERANGE);
     ASSERT_EQ(cstring_to_tsv(end), ""_tsv);
 

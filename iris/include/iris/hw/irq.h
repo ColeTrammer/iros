@@ -26,6 +26,6 @@ extern "C" void generic_irq_handler(GlobalIrqNumber irq, iris::arch::TaskState& 
 
 auto irq_number_for_legacy_isa_interrupt_number(IrqLine irq_line) -> Expected<GlobalIrqNumber>;
 auto register_external_irq_handler(IrqLine line, IrqHandler handler) -> Expected<usize>;
-auto register_exception_handler(GlobalIrqNumber number, IrqHandler handler) -> Expected<void>;
+auto register_exception_handler(GlobalIrqNumber irq, IrqHandler handler) -> Expected<void>;
 void unregister_external_irq_handler(IrqLine line, usize handler_id);
 }

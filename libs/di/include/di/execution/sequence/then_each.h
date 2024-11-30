@@ -55,7 +55,7 @@ namespace then_each_ns {
 /// @see then
 /// @see transform_each
 /// @see view::transform
-constexpr inline auto then_each = function::curry_back(then_each_ns::Function {}, meta::c_<2zu>);
+constexpr inline auto then_each = function::curry_back(then_each_ns::Function {}, meta::c_<2ZU>);
 
 /// @brief Transform the errors of a sequence directly.
 ///
@@ -73,7 +73,7 @@ constexpr inline auto then_each = function::curry_back(then_each_ns::Function {}
 /// @see upon_error
 /// @see then_each
 /// @see transform_each
-constexpr inline auto upon_error_each = function::curry_back(then_each_ns::ErrorFunction {}, meta::c_<2zu>);
+constexpr inline auto upon_error_each = function::curry_back(then_each_ns::ErrorFunction {}, meta::c_<2ZU>);
 
 /// @brief Transform stopped values of a sequence directly.
 ///
@@ -88,5 +88,5 @@ constexpr inline auto upon_error_each = function::curry_back(then_each_ns::Error
 /// @see upon_stopped
 /// @see then_each
 /// @see transform_each
-constexpr inline auto upon_stopped_each = function::curry_back(then_each_ns::StoppedFunction {}, meta::c_<2zu>);
+constexpr inline auto upon_stopped_each = function::curry_back(then_each_ns::StoppedFunction {}, meta::c_<2ZU>);
 }

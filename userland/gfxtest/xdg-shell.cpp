@@ -38,14 +38,6 @@
 #undef WL_EXPORT
 #define WL_EXPORT
 
-extern const struct wl_interface wl_output_interface;
-extern const struct wl_interface wl_seat_interface;
-extern const struct wl_interface wl_surface_interface;
-extern const struct wl_interface xdg_popup_interface;
-extern const struct wl_interface xdg_positioner_interface;
-extern const struct wl_interface xdg_surface_interface;
-extern const struct wl_interface xdg_toplevel_interface;
-
 static const struct wl_interface* xdg_shell_types[] = {
     NULL,
     NULL,

@@ -21,7 +21,7 @@ IoApic::IoApic(mm::PhysicalAddress access_base, u8 global_offset) : m_global_off
     println("IO APIC version: {}"_sv, version.get<IoApicVersion>());
     println("IO APIC max redirection entry: {}"_sv, m_max_redirection_entry);
 
-    for (auto i : di::range(m_max_redirection_entry + 1u)) {
+    for (auto i : di::range(m_max_redirection_entry + 1U)) {
         write_redirection_entry(i, IoApicRedirectionTableEntry(IoApicRedirectionTableEntryMask(true)));
     }
 }

@@ -33,7 +33,7 @@ namespace detail {
     };
 }
 
-constexpr inline auto drop = function::curry_back(detail::DropFunction {}, meta::c_<2zu>);
+constexpr inline auto drop = function::curry_back(detail::DropFunction {}, meta::c_<2ZU>);
 }
 
 namespace di {

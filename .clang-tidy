@@ -12,6 +12,17 @@ Checks: >
   -bugprone-inc-dec-in-conditions,
   -bugprone-macro-parentheses,
   -bugprone-reserved-identifier,
+  readability-*,
+  -readability-avoid-nested-conditional-operator,
+  -readability-convert-member-functions-to-static,
+  -readability-function-size,
+  -readability-identifier-length,
+  -readability-implicit-bool-conversion,
+  -readability-magic-numbers,
+  -readability-make-member-function-const,
+  -readability-math-missing-parentheses,
+  -readability-named-parameter,
+  -readability-static-accessed-through-instance,
 # modernize-use-trailing-return-type,
 # cert-*,
 # concurrency-*,
@@ -34,10 +45,6 @@ Checks: >
 # -misc-include-cleaner,
 # -performance-noexcept-move-constructor,
 # -performance-no-int-to-ptr,
-# -readability-identifier-length,
-# -readability-magic-numbers,
-# -readability-named-parameter,
-# -readability-uppercase-literal-suffix,
 CheckOptions:
   - key: bugprone-dangling-handle.HandleClasses
     value: "di::StringView;di::Span"
@@ -49,3 +56,7 @@ CheckOptions:
     value: true
   - key: readability-function-cognitive-complexity.Threshold
     value: 60
+  - key: readability-function-cognitive-complexity.IgnoreMacros
+    value: true
+  - key: readability-uppercase-literal-suffix.NewSuffixes
+    value: L;UL;ULL;L;LL;LU;LLU;Z;ZU

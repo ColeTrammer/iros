@@ -101,7 +101,7 @@ public:
             // integer in the range [0, 15]. And finally, discard the value if it is out of bounds.
             U const generated_size = U(generated_range + 1);
             for (;;) {
-                U const base_index = generated_size * (*this)(generator, Param(0u, desired_range / generated_size));
+                U const base_index = generated_size * (*this)(generator, Param(0U, desired_range / generated_size));
                 U const index = generate();
                 U const result = base_index + index;
 

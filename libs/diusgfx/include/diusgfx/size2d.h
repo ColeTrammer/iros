@@ -8,7 +8,7 @@
 namespace gfx {
 struct Size2dType {
     using Type = f32;
-    constexpr static auto extent = 2zu;
+    constexpr static auto extent = 2ZU;
 
     struct Mixin {
         using Self = di::math::linalg::Vec<Size2dType>;

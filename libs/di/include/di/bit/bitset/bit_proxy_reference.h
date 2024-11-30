@@ -12,9 +12,9 @@ public:
 
     constexpr auto operator=(bool value) const -> BitProxyReference const& {
         if (value) {
-            *m_byte |= (1u << m_bit_offset);
+            *m_byte |= (1U << m_bit_offset);
         } else {
-            *m_byte &= ~(1u << m_bit_offset);
+            *m_byte &= ~(1U << m_bit_offset);
         }
         return *this;
     }
@@ -24,12 +24,12 @@ public:
         return *this = bool(other);
     }
 
-    constexpr operator bool() const { return !!(*m_byte & (1u << m_bit_offset)); }
+    constexpr operator bool() const { return !!(*m_byte & (1U << m_bit_offset)); }
 
     constexpr auto operator~() const -> bool { return !bool(*this); }
 
     constexpr auto flip() const -> BitProxyReference const& {
-        *m_byte ^= (1u << m_bit_offset);
+        *m_byte ^= (1U << m_bit_offset);
         return *this;
     }
 

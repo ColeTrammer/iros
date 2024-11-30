@@ -20,7 +20,7 @@ using TimerResolution = di::Picoseconds;
 namespace detail {
     template<typename R = void>
     struct TimerDefaultNotSupported {
-        inline auto operator()(auto&&...) const -> Expected<R> { return di::Unexpected(Error::NotSupported); }
+        auto operator()(auto&&...) const -> Expected<R> { return di::Unexpected(Error::NotSupported); }
     };
 }
 

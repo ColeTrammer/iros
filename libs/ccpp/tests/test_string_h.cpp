@@ -255,11 +255,11 @@ static void strlen_() {
     auto const* e = di::black_box((char const*) "");
 
     auto r1 = do_strlen(s);
-    auto e1 = 5u;
+    auto e1 = 5U;
     ASSERT_EQ(r1, e1);
 
     auto r2 = do_strlen(e);
-    auto e2 = 0u;
+    auto e2 = 0U;
     ASSERT_EQ(r2, e2);
 }
 
@@ -308,14 +308,14 @@ static void memchr_() {
     auto bytes = di::black_box(di::Array { 4_b, 5_b, 6_b, 7_b });
     auto e = di::black_box(di::Array { 4_b, 5_b, 6_b, 7_b });
 
-    auto* r1 = do_memchr(bytes.data(), 5, bytes.size());
+    auto const* r1 = do_memchr(bytes.data(), 5, bytes.size());
     ASSERT_EQ(r1, bytes.data() + 1);
 
-    auto* r2 = do_memchr(bytes.data(), 8, bytes.size());
+    auto const* r2 = do_memchr(bytes.data(), 8, bytes.size());
     auto e2 = nullptr;
     ASSERT_EQ(r2, e2);
 
-    auto* r3 = do_memchr(e.data(), 8, e.size());
+    auto const* r3 = do_memchr(e.data(), 8, e.size());
     auto e3 = nullptr;
     ASSERT_EQ(r3, e3);
 }
@@ -338,7 +338,7 @@ static void strxfrm_() {
     auto buffer = di::Array<char, 6> {};
 
     auto r1 = do_strxfrm(buffer.data(), a, buffer.size());
-    auto e1 = 5u;
+    auto e1 = 5U;
     ASSERT_EQ(r1, e1);
 
     auto e2 = di::Array<char, 6> { 'H', 'e', 'l', 'l', 'o', '\0' };
@@ -346,7 +346,7 @@ static void strxfrm_() {
 
     buffer.fill(1);
     auto r3 = do_strxfrm(buffer.data(), a, 3);
-    auto e3 = 5u;
+    auto e3 = 5U;
     ASSERT_EQ(r3, e3);
 
     auto e4 = di::Array<char, 6> { 'H', 'e', 'l', '\x01', '\x01', '\x01' };

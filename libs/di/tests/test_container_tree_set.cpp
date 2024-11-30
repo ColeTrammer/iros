@@ -42,10 +42,10 @@ constexpr void accessors() {
     ASSERT_EQ(y.at(6), di::nullopt);
     ASSERT_EQ(*y.front(), 1);
     ASSERT_EQ(*y.back(), 5);
-    ASSERT_EQ(y.count(3), 1u);
+    ASSERT_EQ(y.count(3), 1U);
     ASSERT(y.lower_bound(10) == y.end());
     ASSERT(y.upper_bound(10) == y.end());
-    ASSERT_EQ(y.count(10), 0u);
+    ASSERT_EQ(y.count(10), 0U);
 }
 
 constexpr void erase() {
@@ -53,15 +53,15 @@ constexpr void erase() {
 
     ASSERT_EQ(*x.erase(x.find(2)), 3);
     ASSERT_EQ(*x.erase(x.find(3), x.find(5)), 5);
-    ASSERT_EQ(x.erase(1), 1u);
-    ASSERT_EQ(x.erase(6), 0u);
+    ASSERT_EQ(x.erase(1), 1U);
+    ASSERT_EQ(x.erase(6), 0U);
 
     auto y = di::to<di::TreeSet>(di::range(1, 10));
     ASSERT_EQ(di::erase_if(y,
                            [](auto x) {
                                return x % 2 == 0;
                            }),
-              4u);
+              4U);
     ASSERT_EQ(di::distance(y), 5);
 }
 

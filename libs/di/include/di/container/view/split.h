@@ -32,7 +32,7 @@ namespace detail {
     };
 }
 
-constexpr inline auto split = function::curry_back(detail::SplitFunction {}, meta::c_<2zu>);
+constexpr inline auto split = function::curry_back(detail::SplitFunction {}, meta::c_<2ZU>);
 }
 
 namespace di {

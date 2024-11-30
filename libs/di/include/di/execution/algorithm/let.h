@@ -205,7 +205,7 @@ namespace let_ns {
     };
 }
 
-constexpr inline auto let_value = function::curry_back(let_ns::Function<SetValue> {}, meta::c_<2zu>);
-constexpr inline auto let_error = function::curry_back(let_ns::Function<SetError> {}, meta::c_<2zu>);
-constexpr inline auto let_stopped = function::curry_back(let_ns::Function<SetStopped> {}, meta::c_<2zu>);
+constexpr inline auto let_value = function::curry_back(let_ns::Function<SetValue> {}, meta::c_<2ZU>);
+constexpr inline auto let_error = function::curry_back(let_ns::Function<SetError> {}, meta::c_<2ZU>);
+constexpr inline auto let_stopped = function::curry_back(let_ns::Function<SetStopped> {}, meta::c_<2ZU>);
 }

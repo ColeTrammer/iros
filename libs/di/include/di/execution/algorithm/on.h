@@ -91,7 +91,7 @@ namespace on_ns {
             : scheduler(util::move(scheduler_))
             , sender(util::forward<S>(sender_))
             , receiver(util::move(receiver_))
-            , operation_state(c_<0zu>, util::DeferConstruct([&] {
+            , operation_state(c_<0ZU>, util::DeferConstruct([&] {
                                   return execution::connect(execution::schedule(scheduler),
                                                             Receiver<Send, Rec, Sched> { this });
                               })) {}

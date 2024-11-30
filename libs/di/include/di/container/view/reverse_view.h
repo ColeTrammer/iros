@@ -49,10 +49,9 @@ public:
     constexpr auto begin() -> ReverseIterator<Iter> {
         if (m_begin_cache.value.has_value()) {
             return *m_begin_cache.value;
-        } else {
-            return m_begin_cache.value.emplace(
-                container::make_reverse_iterator(container::next(container::begin(m_view), container::end(m_view))));
         }
+        return m_begin_cache.value.emplace(
+            container::make_reverse_iterator(container::next(container::begin(m_view), container::end(m_view))));
     }
 
     constexpr auto begin() -> ReverseIterator<Iter>

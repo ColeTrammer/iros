@@ -4,10 +4,10 @@
 
 namespace di::exec {
 enum class ElfFormat {
-    LittleEndian32,
-    BigEndian32,
-    LittleEndian64,
-    BigEndian64,
+    LittleEndian32 = 0,
+    BigEndian32 = 1,
+    LittleEndian64 = 2,
+    BigEndian64 = 3,
     Native = sizeof(long) == 8
                  ? (Endian::Native == Endian::Little ? ElfFormat::LittleEndian64 : ElfFormat::BigEndian64)
                  : (Endian::Native == Endian::Little ? ElfFormat::LittleEndian32 : ElfFormat::BigEndian32),

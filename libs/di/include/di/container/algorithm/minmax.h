@@ -15,9 +15,8 @@ namespace detail {
             -> MinMaxResult<T const&> {
             if (function::invoke(comp, function::invoke(proj, a), function::invoke(proj, b)) <= 0) {
                 return { a, b };
-            } else {
-                return { b, a };
             }
+            return { b, a };
         }
 
         template<concepts::Copyable T, typename Proj = function::Identity,

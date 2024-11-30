@@ -4,7 +4,7 @@
 
 namespace iris {
 void TaskStatus::set_exited() {
-    return m_wait_queue.notify_all([&] {
+    m_wait_queue.notify_all([&] {
         m_exited = true;
     });
 }

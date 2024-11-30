@@ -8,7 +8,7 @@
 
 namespace iris {
 enum class ProcessorFeatures {
-    None,
+    None = 0,
     Smep = (1 << 0),
     Smap = (1 << 1),
     Sse = (1 << 2),
@@ -36,7 +36,7 @@ struct ProcessorInfo {
     u32 fpu_max_state_size { 0 };
     u64 fpu_valid_xcr0 { 0 };
     di::container::string::StringImpl<di::container::string::TransparentEncoding,
-                                      di::StaticVector<char, di::Constexpr<12zu>>>
+                                      di::StaticVector<char, di::Constexpr<12ZU>>>
         vendor_string;
 
     void print_to_console();

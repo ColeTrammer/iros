@@ -32,7 +32,7 @@ namespace detail {
     };
 }
 
-constexpr inline auto join_with = function::curry_back(detail::JoinWithFunction {}, meta::c_<2zu>);
+constexpr inline auto join_with = function::curry_back(detail::JoinWithFunction {}, meta::c_<2ZU>);
 }
 
 namespace di {

@@ -67,7 +67,7 @@ auto LockedAddressSpace::destroy_region(VirtualAddress base, usize length) -> Ex
     auto object = it->backing_object().arc_from_this();
     m_regions.erase(it);
 
-    for (auto page = base; page < base + length; page += 4096zu) {
+    for (auto page = base; page < base + length; page += 4096ZU) {
         auto decomposed = decompose_virtual_address(page);
         auto pml4_offset = decomposed.get<page_structure::Pml4Offset>();
         auto& pml4 = TRY(map_physical_address(this->base().architecture_page_table_base(), 0x1000))
@@ -293,7 +293,7 @@ auto LockedAddressSpace::create_low_identity_mapping(VirtualAddress base, usize 
 }
 
 auto LockedAddressSpace::remove_low_identity_mapping(VirtualAddress base, usize page_aligned_length) -> Expected<void> {
-    for (auto page = base; page < base + page_aligned_length; page += 4096zu) {
+    for (auto page = base; page < base + page_aligned_length; page += 4096ZU) {
         auto decomposed = decompose_virtual_address(page);
         auto pml4_offset = decomposed.get<page_structure::Pml4Offset>();
         auto& pml4 = TRY(map_physical_address(this->base().architecture_page_table_base(), 0x1000))
@@ -397,7 +397,7 @@ auto LockedAddressSpace::setup_physical_memory_map(PhysicalAddress start, Physic
                 page_structure::PhysicalAddress(phys_address.raw_value() >> 12), page_structure::Present(true),
                 page_structure::Writable(true), page_structure::HugePage(true));
             base().m_structure_pages.fetch_add(1, di::MemoryOrder::Relaxed);
-            phys_address += 1zu * 1024 * 1024 * 1024;
+            phys_address += 1ZU * 1024 * 1024 * 1024;
             continue;
         }
 
@@ -417,7 +417,7 @@ auto LockedAddressSpace::setup_physical_memory_map(PhysicalAddress start, Physic
                                                        page_structure::Present(true), page_structure::Writable(true),
                                                        page_structure::HugePage(true));
         base().m_structure_pages.fetch_add(1, di::MemoryOrder::Relaxed);
-        phys_address += 2zu * 1024 * 1024;
+        phys_address += 2ZU * 1024 * 1024;
     }
 
     return {};

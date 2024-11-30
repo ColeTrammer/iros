@@ -21,7 +21,8 @@ namespace detail {
                     function::invoke(comp, function::invoke(proj1, *first1), function::invoke(proj2, *first2));
                 if (result > 0) {
                     return false;
-                } else if (result == 0) {
+                }
+                if (result == 0) {
                     ++first1;
                     ++first2;
                 } else {

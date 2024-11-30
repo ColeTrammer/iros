@@ -614,7 +614,7 @@ private:
     requires(concepts::Predicate<F&, Value const&>)
     constexpr friend auto tag_invoke(T, Self& self, F&& function) -> usize {
         auto it = self.begin();
-        auto result = 0zu;
+        auto result = 0ZU;
         while (it != self.end()) {
             if (function(*it)) {
                 it = self.erase(it);

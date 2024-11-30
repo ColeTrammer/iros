@@ -66,12 +66,12 @@ struct GlobalState {
     mutable di::Array<mm::Region, 6> inital_kernel_regions;
     mutable di::Array<mm::BackingObject, 5> inital_kernel_backing_objects;
     mutable TaskNamespace task_namespace;
-    mutable di::Queue<byte, di::StaticRing<byte, di::Constexpr<128zu>>> input_data_queue;
+    mutable di::Queue<byte, di::StaticRing<byte, di::Constexpr<128ZU>>> input_data_queue;
     mutable WaitQueue input_wait_queue;
-    mutable di::Queue<TaskFinalizationRequest, di::StaticRing<TaskFinalizationRequest, di::Constexpr<128zu>>>
+    mutable di::Queue<TaskFinalizationRequest, di::StaticRing<TaskFinalizationRequest, di::Constexpr<128ZU>>>
         task_finalization_data_queue;
     mutable WaitQueue task_finalization_wait_queue;
-    mutable di::Synchronized<di::Array<di::StaticVector<IrqHandler, di::Constexpr<8zu>>, 256>> irq_handlers;
+    mutable di::Synchronized<di::Array<di::StaticVector<IrqHandler, di::Constexpr<8ZU>>, 256>> irq_handlers;
     mutable arch::MutableGlobalState arch_mutable_state;
     mutable di::Atomic<bool> all_aps_booted { false };
     mutable Spinlock debug_output_lock;

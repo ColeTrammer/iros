@@ -16,7 +16,7 @@ struct CompareBackwards {
     }
 };
 
-constexpr inline auto compare_backwards = function::curry_back(CompareBackwards {}, meta::c_<2zu>);
+constexpr inline auto compare_backwards = function::curry_back(CompareBackwards {}, meta::c_<2ZU>);
 }
 
 namespace di {

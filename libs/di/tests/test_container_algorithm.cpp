@@ -327,7 +327,7 @@ constexpr void partition() {
     auto ex3 = di::Array { 4, 2, 6, 7, 1, 3, 5 };
     ASSERT_EQ(d, ex3);
 
-    auto r4 = di::partition_point(d, [](int x) {
+    auto* r4 = di::partition_point(d, [](int x) {
         return x % 2 == 0;
     });
     ASSERT_EQ(r4, d.begin() + 3);
@@ -492,11 +492,11 @@ constexpr void binary_search() {
     }
 
     {
-        auto it = di::lower_bound(a, 3);
+        auto* it = di::lower_bound(a, 3);
         ASSERT_EQ(it, a.begin() + 2);
     }
     {
-        auto it = di::upper_bound(a, 3);
+        auto* it = di::upper_bound(a, 3);
         ASSERT_EQ(it, a.begin() + 5);
     }
     {

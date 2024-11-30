@@ -64,15 +64,15 @@ private:
     Heap() = default;
 
     constexpr static auto block_sizes = di::Array {
-        di::Tuple { 64zu, 64zu },     di::Tuple { 128zu, 128zu },    di::Tuple { 256zu, 256zu },
-        di::Tuple { 512zu, 512zu },   di::Tuple { 1024zu, 1024zu },  di::Tuple { 2048zu, 2048zu },
-        di::Tuple { 4096zu, 4096zu }, di::Tuple { 16384zu, 4096zu },
+        di::Tuple { 64ZU, 64ZU },     di::Tuple { 128ZU, 128ZU },    di::Tuple { 256ZU, 256ZU },
+        di::Tuple { 512ZU, 512ZU },   di::Tuple { 1024ZU, 1024ZU },  di::Tuple { 2048ZU, 2048ZU },
+        di::Tuple { 4096ZU, 4096ZU }, di::Tuple { 16384ZU, 4096ZU },
     };
 
     constexpr static auto block_size_count = block_sizes.size();
 
     constexpr static auto get_block_index(usize size, usize align) -> di::Optional<usize> {
-        for (auto i = 0zu; i < block_size_count; ++i) {
+        for (auto i = 0ZU; i < block_size_count; ++i) {
             auto [block_size, block_align] = block_sizes[i];
             if (size <= block_size && align <= block_align) {
                 return i;

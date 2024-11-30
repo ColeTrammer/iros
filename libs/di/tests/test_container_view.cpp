@@ -106,7 +106,7 @@ constexpr void single() {
         ASSERT_EQ(sum, 5);
     }
 
-    ASSERT_EQ(c.size(), 1u);
+    ASSERT_EQ(c.size(), 1U);
 }
 
 constexpr void iota() {
@@ -465,7 +465,7 @@ constexpr void chunk() {
     auto ex2 = di::Array { 8, 7, 6 } | di::to<di::Vector>();
     ASSERT_EQ(r2, ex2);
 
-    ASSERT_EQ(di::size(in1 | di::chunk(3)), 3u);
+    ASSERT_EQ(di::size(in1 | di::chunk(3)), 3U);
 }
 
 void chunk_generator() {
@@ -526,7 +526,7 @@ constexpr void cartesian_product() {
     auto r2 = di::cartesian_product(di::range(2), di::range(3), di::range(4), di::range(5));
     auto ex2 = r2 | di::to<di::Vector>();
 
-    ASSERT_EQ(r2.size(), 2u * 3u * 4u * 5u);
+    ASSERT_EQ(r2.size(), 2U * 3U * 4U * 5U);
 
     auto b = r2.begin();
     auto e = r2.end();
@@ -568,7 +568,7 @@ constexpr void concat() {
     auto ex1 = di::Array { 2, 3, 4, 7, 6, 5, 1, 8, 0 } | di::to<di::Vector>();
     ASSERT_EQ(r1, ex1);
 
-    ASSERT_EQ(v1.size(), 9u);
+    ASSERT_EQ(v1.size(), 9U);
 
     ASSERT_EQ((v1.begin() + 6) - (v1.begin() + 1), 5);
     ASSERT_EQ((v1.begin() + 7) - (v1.begin() + 2), 5);

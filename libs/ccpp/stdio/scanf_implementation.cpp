@@ -50,7 +50,8 @@ static auto determine_base(int c) -> int {
 static auto is_valid_char_for_base(char c, int base) -> bool {
     if (isdigit(c)) {
         return (c - '0') < base;
-    } else if (isalpha(c)) {
+    }
+    if (isalpha(c)) {
         return (tolower(c) - 'a') < (base - 10);
     }
 
@@ -88,6 +89,7 @@ static auto is_valid_char_for_set(char c, char const* set, int set_end, bool inv
     return invert;
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 auto scanf_implementation(di::FunctionRef<di::Expected<di::Optional<char>, di::GenericCode>()> read_next,
                           char const* format, va_list args) -> di::Expected<int, di::GenericCode> {
     void* state = nullptr;
@@ -109,8 +111,9 @@ auto scanf_implementation(di::FunctionRef<di::Expected<di::Optional<char>, di::G
     while (!done && format[format_off] != '\0') {
         if (isspace(format[format_off])) {
             int ret;
-            while (isspace(ret = get_character(state)))
+            while (isspace(ret = get_character(state))) {
                 ;
+            }
             if (ret == EOF) {
                 return num_read;
             }
@@ -168,22 +171,20 @@ auto scanf_implementation(di::FunctionRef<di::Expected<di::Optional<char>, di::G
                     specifier.length = SCANF_LENGTH_CHAR;
                     format_off += 2;
                     break;
-                } else {
-                    specifier.length = SCANF_LENGTH_SHORT;
-                    format_off++;
-                    break;
                 }
+                specifier.length = SCANF_LENGTH_SHORT;
+                format_off++;
+                break;
             }
             case 'l': {
                 if (format[format_off + 1] == 'l') {
                     specifier.length = SCANF_LENGTH_LONG_LONG;
                     format_off += 2;
                     break;
-                } else {
-                    specifier.length = SCANF_LENGTH_LONG;
-                    format_off++;
-                    break;
                 }
+                specifier.length = SCANF_LENGTH_LONG;
+                format_off++;
+                break;
             }
             case 'j':
                 specifier.length = SCANF_LENGTH_INTMAX;
@@ -420,7 +421,7 @@ auto scanf_implementation(di::FunctionRef<di::Expected<di::Optional<char>, di::G
                     }
                     case SCANF_LENGTH_LONG_LONG: {
                         long long* place_here = va_arg(args, long long*);
-                        *place_here = (long long) value;
+                        *place_here = value;
                         break;
                     }
                     case SCANF_LENGTH_INTMAX: {
@@ -523,7 +524,7 @@ auto scanf_implementation(di::FunctionRef<di::Expected<di::Optional<char>, di::G
                     }
                     case SCANF_LENGTH_LONG_LONG: {
                         unsigned long long* place_here = va_arg(args, unsigned long long*);
-                        *place_here = (unsigned long long) value;
+                        *place_here = value;
                         break;
                     }
                     case SCANF_LENGTH_INTMAX: {

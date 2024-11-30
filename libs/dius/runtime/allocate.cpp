@@ -50,7 +50,7 @@ namespace detail {
         }
 
         // Allocate a new block.
-        auto const block_size = 2zu * 1024zu * 1024zu;
+        auto const block_size = 2ZU * 1024ZU * 1024ZU;
         auto* pointer = TRY(platform_allocate(block_size));
         auto* block = di::construct_at(static_cast<FreeList*>(pointer));
 

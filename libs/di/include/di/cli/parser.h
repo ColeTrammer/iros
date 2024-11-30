@@ -27,8 +27,8 @@ namespace detail {
     template<concepts::Object Base>
     class Parser {
     private:
-        constexpr static auto max_options = 100zu;
-        constexpr static auto max_arguments = 100zu;
+        constexpr static auto max_options = 100ZU;
+        constexpr static auto max_arguments = 100ZU;
 
     public:
         constexpr explicit Parser(StringView app_name, StringView description)
@@ -63,6 +63,7 @@ namespace detail {
             return di::move(*this);
         }
 
+        // NOLINTNEXTLINE(readability-function-cognitive-complexity)
         constexpr auto parse(Span<TransparentStringView> args) -> Result<Base> {
             using namespace di::string_literals;
 
@@ -170,7 +171,8 @@ namespace detail {
                 auto value = ""_tsv;
                 if (!equal && i + 1 >= args.size()) {
                     return Unexpected(BasicError::InvalidArgument);
-                } else if (!equal) {
+                }
+                if (!equal) {
                     value = args[arg_index + 1];
                     send_arg_to_back(arg_index);
                     send_arg_to_back(arg_index);
@@ -305,14 +307,14 @@ namespace detail {
         constexpr auto argument_count() const -> usize { return m_arguments.size(); }
 
         constexpr auto lookup_short_name(char short_name) const -> Optional<usize> {
-            auto it = di::find(m_options, short_name, &Option::short_name);
+            auto const* it = di::find(m_options, short_name, &Option::short_name);
             return lift_bool(it != m_options.end()) % [&] {
                 return usize(it - m_options.begin());
             };
         }
 
         constexpr auto lookup_long_name(TransparentStringView long_name) const -> Optional<usize> {
-            auto it = di::find(m_options, long_name, &Option::long_name);
+            auto const* it = di::find(m_options, long_name, &Option::long_name);
             return lift_bool(it != m_options.end()) % [&] {
                 return usize(it - m_options.begin());
             };

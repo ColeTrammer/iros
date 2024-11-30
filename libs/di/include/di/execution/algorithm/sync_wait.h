@@ -172,9 +172,9 @@ namespace sync_wait_ns {
 constexpr inline auto sync_wait = sync_wait_ns::Function {};
 constexpr inline auto sync_wait_with_variant = sync_wait_ns::WithVariantFunction {};
 
-constexpr inline auto sync_wait_on = function::curry(sync_wait_ns::OnFunction {}, meta::c_<2zu>);
+constexpr inline auto sync_wait_on = function::curry(sync_wait_ns::OnFunction {}, meta::c_<2ZU>);
 constexpr inline auto sync_wait_with_variant_on =
-    function::curry(sync_wait_ns::WithVariantOnFunction {}, meta::c_<2zu>);
+    function::curry(sync_wait_ns::WithVariantOnFunction {}, meta::c_<2ZU>);
 }
 
 namespace di {

@@ -70,9 +70,8 @@ private:
     constexpr friend auto tag_invoke(types::Tag<function::monad::bind>, Self&& self, F&& f) -> R {
         if (self.has_value()) {
             return function::invoke(util::forward<F>(f));
-        } else {
-            return R();
         }
+        return R();
     }
 
     template<concepts::DecaySameAs<Optional> Self, typename F, typename U = meta::UnwrapRefDecay<meta::InvokeResult<F>>>

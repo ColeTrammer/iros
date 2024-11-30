@@ -54,7 +54,7 @@ namespace detail {
                 }
             });
 
-            return process_index(c_<0zu>);
+            return process_index(c_<0ZU>);
         }
 
         Tuple<Parsers...> m_parsers;

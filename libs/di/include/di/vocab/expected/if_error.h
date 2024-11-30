@@ -25,7 +25,7 @@ namespace detail {
     };
 }
 
-constexpr inline auto if_error = function::curry_back(detail::IfErrorFunction {}, meta::c_<2zu>);
+constexpr inline auto if_error = function::curry_back(detail::IfErrorFunction {}, meta::c_<2ZU>);
 }
 
 namespace di {

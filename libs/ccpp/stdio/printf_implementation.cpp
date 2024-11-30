@@ -18,6 +18,7 @@ static auto parseInt(char const* num, size_t length) -> int {
     return n;
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 auto printf_implementation(
     di::FunctionRef<di::Expected<void, di::GenericCode>(di::TransparentStringView)> write_exactly, char const* format,
     va_list args) -> di::Expected<int, di::GenericCode> {
@@ -135,9 +136,7 @@ auto printf_implementation(
         if (*format == 'c') {
             format++;
             char c = (char) va_arg(args, int /* char promotes to int */);
-            if (width < 1) {
-                width = 1;
-            }
+            width = di::max(width, 1);
             if (maxrem < width) {
                 // TODO: Set errno to EOVERFLOW.
                 return -1;
@@ -173,9 +172,7 @@ auto printf_implementation(
 
             format++;
             auto len = (int) strlen(str);
-            if (len > width) {
-                width = len;
-            }
+            width = di::max(len, width);
             if (precision >= 0 && precision < width) {
                 width = precision;
             }
@@ -239,9 +236,7 @@ auto printf_implementation(
             if (flags & 0b00000010) {
                 len_width += 2;
             }
-            if (width < len_width) {
-                width = len_width;
-            }
+            width = di::max(width, len_width);
             if (maxrem < width) {
                 // TODO: Set errno to EOVERFLOW.
                 return -1;
@@ -355,9 +350,7 @@ auto printf_implementation(
                 if (flags & 0b00000010) {
                     len_width += 2;
                 }
-                if (width < len_width) {
-                    width = len_width;
-                }
+                width = di::max(width, len_width);
                 if (maxrem < width) {
                     // TODO: Set errno to EOVERFLOW.
                     return -1;
@@ -491,9 +484,7 @@ auto printf_implementation(
                 if (flags & 0b00000010) {
                     len_width += 2;
                 }
-                if (width < len_width) {
-                    width = len_width;
-                }
+                width = di::max(width, len_width);
                 if (maxrem < width) {
                     // TODO: Set errno to EOVERFLOW.
                     return -1;
@@ -612,9 +603,7 @@ auto printf_implementation(
             if (flags & 0b00000010) {
                 len_width += 2;
             }
-            if (width < len_width) {
-                width = len_width;
-            }
+            width = di::max(width, len_width);
             if (maxrem < width) {
                 // TODO: Set errno to EOVERFLOW.
                 return -1;
@@ -722,9 +711,7 @@ auto printf_implementation(
             if (num < 0) {
                 len_width++;
             }
-            if (width < len_width) {
-                width = len_width;
-            }
+            width = di::max(width, len_width);
             if (maxrem < width) {
                 // TODO: Set errno to EOVERFLOW.
                 return -1;

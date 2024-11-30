@@ -35,7 +35,7 @@ static void aligned_alloc_() {
     //       does ccpp's implementation.
     //       https://en.cppreference.com/w/c/memory/aligned_alloc
 #if !defined(DI_SANITIZER)
-    constexpr auto size = 8zu;
+    constexpr auto size = 8ZU;
 #else
     constexpr auto size = 64zu;
 #endif

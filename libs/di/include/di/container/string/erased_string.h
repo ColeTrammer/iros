@@ -30,7 +30,7 @@ protected:
 
     using ThunkFunction = void (*)(ErasedString* dest, ErasedString const* src, ThunkOp op);
 
-    Span<c8 const> m_data {};
+    Span<c8 const> m_data;
     void* m_state[3] {};
     ThunkFunction const m_thunk { nullptr };
 

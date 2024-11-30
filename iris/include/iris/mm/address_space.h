@@ -24,7 +24,7 @@ public:
     auto allocate_region(di::Arc<BackingObject> backing_object, di::Box<Region> region) -> Expected<VirtualAddress>;
     auto allocate_region_at(di::Arc<BackingObject> backing_object, di::Box<Region> region) -> Expected<void>;
 
-    auto destroy_region(VirtualAddress start, usize length) -> Expected<void>;
+    auto destroy_region(VirtualAddress base, usize length) -> Expected<void>;
 
     auto create_low_identity_mapping(VirtualAddress base, usize page_aligned_length) -> Expected<void>;
     auto remove_low_identity_mapping(VirtualAddress base, usize page_aligned_length) -> Expected<void>;

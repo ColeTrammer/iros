@@ -273,7 +273,7 @@ namespace then_ns {
 /// @snippet{trimleft} tests/test_execution.cpp then
 ///
 /// @see let_value
-constexpr inline auto then = function::curry_back(then_ns::ValueFunction {}, c_<2zu>);
+constexpr inline auto then = function::curry_back(then_ns::ValueFunction {}, c_<2ZU>);
 
 /// @brief A sender that maps an error into a value.
 ///
@@ -286,7 +286,7 @@ constexpr inline auto then = function::curry_back(then_ns::ValueFunction {}, c_<
 /// value. Additionally, the function can return an di::Expected, which will be mapped into a value or an error.
 ///
 /// @see then
-constexpr inline auto upon_error = function::curry_back(then_ns::ErrorFunction {}, c_<2zu>);
+constexpr inline auto upon_error = function::curry_back(then_ns::ErrorFunction {}, c_<2ZU>);
 
 /// @brief A sender that maps the stop signal into a value.
 ///
@@ -299,5 +299,5 @@ constexpr inline auto upon_error = function::curry_back(then_ns::ErrorFunction {
 /// into a value. Additionally, the function can return an di::Expected, which will be mapped into a value or an error.
 ///
 /// @see then
-constexpr inline auto upon_stopped = function::curry_back(then_ns::StoppedFunction {}, c_<2zu>);
+constexpr inline auto upon_stopped = function::curry_back(then_ns::StoppedFunction {}, c_<2ZU>);
 }

@@ -52,7 +52,7 @@ public:
     constexpr auto read_some(Span<byte> bytes) -> Result<usize> {
         auto* bytes_it = bytes.data();
         auto max_to_read = bytes.size();
-        auto nread = 0zu;
+        auto nread = 0ZU;
         for (; nread < max_to_read && m_iterator != m_sentinel; ++m_iterator, ++nread) {
             *bytes_it++ = *m_iterator;
         }

@@ -30,7 +30,7 @@ namespace detail {
     };
 }
 
-constexpr inline auto drop_while = function::curry_back(detail::DropWhileFunction {}, meta::c_<2zu>);
+constexpr inline auto drop_while = function::curry_back(detail::DropWhileFunction {}, meta::c_<2ZU>);
 }
 
 namespace di {
