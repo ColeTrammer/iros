@@ -3,7 +3,7 @@
 #include <dius/test/prelude.h>
 
 namespace vocab_variant {
-constexpr void basic() {
+constexpr static void basic() {
     auto v = di::Variant<int, short, long>(di::c_<1ZU>, 1);
     auto w = di::Variant<int, short, long>();
 

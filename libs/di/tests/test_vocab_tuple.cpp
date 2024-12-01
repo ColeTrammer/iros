@@ -26,7 +26,7 @@ static_assert(di::concepts::detail::HasTupleGet<X, 0>);
 static_assert(di::concepts::TupleLike<X>);
 static_assert(di::concepts::detail::CanStructuredBind<X>);
 
-constexpr void enable_structed_bindings() {
+constexpr static void enable_structed_bindings() {
     auto x = X {};
     auto [y] = x;
 
@@ -74,7 +74,7 @@ static_assert(sizeof(XXX) == sizeof(di::Tuple<int, long, int>));
 static_assert(sizeof(XXXX) == sizeof(di::Tuple<long, int, int>));
 static_assert(sizeof(XXXXX) == sizeof(di::Tuple<int, long, int, long, int, long>));
 
-constexpr void basic() {
+constexpr static void basic() {
     static_assert(di::concepts::TupleLike<di::Tuple<int, int, int>>);
 
     auto x = di::Tuple<int, int, int> {};
@@ -118,7 +118,7 @@ constexpr void basic() {
     static_assert(di::concepts::SameAs<std::tuple_element<0, di::Tuple<int, int> const>::type, int const>);
 }
 
-constexpr void assignment() {
+constexpr static void assignment() {
     int a = 2;
     int b = 3;
     int c = 4;
@@ -145,13 +145,13 @@ constexpr void assignment() {
     ASSERT_EQ(di::get<2>(y), 1);
 }
 
-constexpr void tuple_transform() {
+constexpr static void tuple_transform() {
     auto x = di::make_tuple(3, 2, 1);
     auto y = di::tuple_transform(di::identity, x);
     ASSERT_EQ(di::get<0>(x), di::get<0>(y));
 }
 
-constexpr void tuple_for_each() {
+constexpr static void tuple_for_each() {
     auto x = di::make_tuple(3, 2, 1);
     auto s = 0;
     di::tuple_for_each(
@@ -162,7 +162,7 @@ constexpr void tuple_for_each() {
     ASSERT_EQ(s, 6);
 }
 
-constexpr void tuple_equal() {
+constexpr static void tuple_equal() {
     auto a = di::make_tuple(5, 3, 2);
     auto b = di::make_tuple(5, 3, 2);
     ASSERT_EQ(a, b);
@@ -178,7 +178,7 @@ constexpr void tuple_equal() {
     static_assert(!di::concepts::EqualityComparableWith<di::Tuple<int, di::Void>, di::Tuple<int, int>>);
 }
 
-constexpr void tuple_cat() {
+constexpr static void tuple_cat() {
     auto a = di::make_tuple(1, 2);
     int x = 5;
     int y = 6;

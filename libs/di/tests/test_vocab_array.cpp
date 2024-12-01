@@ -2,7 +2,7 @@
 #include <dius/test/prelude.h>
 
 namespace vocab_array {
-constexpr void to_array() {
+constexpr static void to_array() {
     {
         int array[] = { 1, 2, 3, 4, 5 };
         auto x = di::to_array(array);
@@ -17,7 +17,7 @@ constexpr void to_array() {
     }
 }
 
-constexpr void span() {
+constexpr static void span() {
     {
         auto x = di::to_array({ 1, 2, 3, 4 });
         auto [a, b] = x.first<2>();
@@ -37,7 +37,7 @@ constexpr void span() {
     }
 }
 
-constexpr void tuple() {
+constexpr static void tuple() {
     auto x = di::Array { 1, 2, 3 };
     auto [a, b, c] = x;
     ASSERT_EQ(a, 1);
@@ -48,7 +48,7 @@ constexpr void tuple() {
     static_assert(di::concepts::TupleLike<decltype(x)>);
 }
 
-constexpr void compare() {
+constexpr static void compare() {
     auto a = di::to_array({ 1, 2, 3 });
     auto b = di::to_array({ 1, 2, 4 });
     ASSERT_NOT_EQ(a, b);

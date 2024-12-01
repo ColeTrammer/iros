@@ -3,7 +3,7 @@
 #include <dius/test/prelude.h>
 
 namespace math_checked {
-constexpr void add_sub() {
+constexpr static void add_sub() {
     auto a = di::Checked(1);
     auto b = di::Checked(2);
 
@@ -32,7 +32,7 @@ constexpr void add_sub() {
     ASSERT(c.invalid());
 }
 
-constexpr void mul_div_mod() {
+constexpr static void mul_div_mod() {
     auto a = di::Checked(1);
     auto b = di::Checked(2);
 
@@ -68,7 +68,7 @@ constexpr void mul_div_mod() {
     ASSERT(b.invalid());
 }
 
-constexpr void bit_ops() {
+constexpr static void bit_ops() {
     auto a = di::Checked(1);
     auto b = di::Checked(2);
 

@@ -9,7 +9,7 @@
 #endif
 
 extern "C++" {
-[[gnu::weak]] void* __dso_handle;
+[[gnu::weak]] void* __dso_handle; // NOLINT(misc-use-internal-linkage)
 }
 
 extern "C" [[gnu::weak]] auto strlen(char const* string) -> size_t {

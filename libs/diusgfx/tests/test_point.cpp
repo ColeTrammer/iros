@@ -3,7 +3,7 @@
 #include <diusgfx/point.h>
 
 namespace gfx_point {
-constexpr void basic() {
+constexpr static void basic() {
     auto p = gfx::Point(1, 2);
     p.x() += 2;
 

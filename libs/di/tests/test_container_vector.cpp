@@ -3,7 +3,7 @@
 #include <dius/test/prelude.h>
 
 namespace container_vector {
-constexpr void basic() {
+constexpr static void basic() {
     auto v = di::Vector<int> {};
     ASSERT(v.empty());
 
@@ -57,7 +57,7 @@ constexpr void basic() {
     ASSERT(v.empty());
 }
 
-constexpr void reserve() {
+constexpr static void reserve() {
     auto v = di::Vector<int> {};
     v.push_back(0);
     v.push_back(1);
@@ -79,7 +79,7 @@ struct M {
     constexpr friend auto operator==(M const& a, M const& b) -> bool { return a.x == b.x; }
 };
 
-constexpr void move_only() {
+constexpr static void move_only() {
     auto v = di::Vector<M> {};
     v.push_back(M { 2 });
     v.push_back(M { 4 });
@@ -93,7 +93,7 @@ constexpr void move_only() {
     ASSERT(v.empty()); // NOLINT(bugprone-use-after-move)
 }
 
-constexpr void to() {
+constexpr static void to() {
     auto v = di::create<di::Vector<int>>(di::range(6));
     ASSERT_EQ(v.size(), 6U);
     ASSERT_EQ(v[0], 0);
@@ -131,7 +131,7 @@ constexpr void to() {
     ASSERT_EQ(a[4].size(), 4U);
 }
 
-constexpr void clone() {
+constexpr static void clone() {
     auto v = di::range(6) | di::container::to<di::Vector>();
     ASSERT_EQ(v.size(), 6U);
 
@@ -150,7 +150,7 @@ constexpr void clone() {
     ASSERT_EQ(b[4].size(), 4U);
 }
 
-constexpr void compare() {
+constexpr static void compare() {
     auto a = di::create<di::Vector>(di::range(6));
     auto b = di::create<di::Vector>(di::range(4));
     auto c = di::create<di::Vector>(di::range(8, 100));
@@ -160,7 +160,7 @@ constexpr void compare() {
     ASSERT_LT(a, c);
 }
 
-constexpr void static_() {
+constexpr static void static_() {
     auto a = di::StaticVector<int, di::Constexpr<2ZU>> {};
     (void) a.push_back(1);
     (void) a.push_back(2);
@@ -192,7 +192,7 @@ constexpr void static_() {
     ASSERT_EQ(w.size(), 2U);
 }
 
-constexpr void erase() {
+constexpr static void erase() {
     auto v = di::create<di::Vector>(di::range(6));
     ASSERT_EQ(v.size(), 6U);
 

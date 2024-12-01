@@ -3,15 +3,15 @@
 #include <dius/test/prelude.h>
 
 namespace function_container {
-constexpr auto do_calc(i32 x) noexcept -> i32 {
+constexpr static auto do_calc(i32 x) noexcept -> i32 {
     return x + 2;
 }
 
-constexpr auto do_calc2(i32 x) -> i32 {
+constexpr static auto do_calc2(i32 x) -> i32 {
     return x + 3;
 }
 
-constexpr void function_ref_basic() {
+constexpr static void function_ref_basic() {
     if (!di::is_constant_evaluated()) {
         auto const f = di::FunctionRef { do_calc };
         ASSERT_EQ(f(5), 7);
@@ -46,7 +46,7 @@ constexpr void function_ref_basic() {
     static_assert(di::SameAs<decltype(j), di::FunctionRef<i32(i32)> const>);
 }
 
-constexpr void function_basic() {
+constexpr static void function_basic() {
     auto f = di::Function<i32(i32)> { [](i32 x) -> i32 {
         return x + 3;
     } };

@@ -8,7 +8,7 @@
 #include <dius/test/prelude.h>
 
 namespace serialization {
-constexpr void json_basic() {
+constexpr static void json_basic() {
     static_assert(di::Impl<di::StringWriter<>, di::Writer>);
 
     {
@@ -52,7 +52,7 @@ constexpr void json_basic() {
     }
 }
 
-constexpr void json_pretty() {
+constexpr static void json_pretty() {
     {
         auto writer = di::StringWriter {};
         auto serializer = di::JsonSerializer(di::move(writer), di::JsonSerializerConfig().pretty());
@@ -117,7 +117,7 @@ struct MyType {
 
 enum class MyEnum { Foo, Bar, Baz };
 
-constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyEnum>) {
+constexpr static auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyEnum>) {
     using enum MyEnum;
     return di::make_enumerators(di::enumerator<"Foo", Foo>, di::enumerator<"Bar", Bar>, di::enumerator<"Baz", Baz>);
 }
@@ -136,7 +136,7 @@ struct MySuperType {
     }
 };
 
-constexpr void json_reflect() {
+constexpr static void json_reflect() {
     {
         auto const x = MyType { 1, 2, 3, true, "hello"_sv };
         auto result = di::to_json_string(x);
@@ -203,7 +203,7 @@ constexpr void json_reflect() {
     }
 }
 
-constexpr void json_value() {
+constexpr static void json_value() {
     auto r1 = di::to_json_string(di::json::null);
     ASSERT_EQ(r1, "null"_sv);
 
@@ -216,7 +216,7 @@ constexpr void json_value() {
     ASSERT_EQ(r3, R"({"key":true})"_sv);
 }
 
-constexpr void binary() {
+constexpr static void binary() {
     auto do_test = [](auto const& value, auto const& expected) {
         auto writer = di::VectorWriter<>();
         ASSERT(di::serialize_binary(writer, value));

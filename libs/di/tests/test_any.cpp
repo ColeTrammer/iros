@@ -19,15 +19,15 @@ struct B {
     di::Box<i32> nothing;
 };
 
-constexpr auto tag_invoke(X, i32 const& x, i32 y) -> i32 {
+constexpr static auto tag_invoke(X, i32 const& x, i32 y) -> i32 {
     return x + y;
 }
 
-constexpr auto tag_invoke(X, A const&, i32 y) -> i32 {
+constexpr static auto tag_invoke(X, A const&, i32 y) -> i32 {
     return y + 4;
 }
 
-constexpr auto tag_invoke(X, B const&, i32 y) -> i32 {
+constexpr static auto tag_invoke(X, B const&, i32 y) -> i32 {
     return y + 5;
 }
 
@@ -39,7 +39,7 @@ struct Y : di::Dispatcher<Y, i32(di::This&), decltype(return_1)> {};
 
 constexpr inline auto yf = Y {};
 
-constexpr auto tag_invoke(Y, i32& x) -> i32 {
+constexpr static auto tag_invoke(Y, i32& x) -> i32 {
     return x + 2;
 }
 
@@ -48,7 +48,7 @@ using YM = di::Method<Y, i32(di::This&)>;
 
 using Interface = di::meta::List<X, YM>;
 
-constexpr void meta() {
+constexpr static void meta() {
     static_assert(di::concepts::Interface<Interface>);
 
     using S = di::meta::MethodErasedSignature<di::meta::Type<X>>;
@@ -61,7 +61,7 @@ constexpr void meta() {
     static_assert(di::concepts::MethodCallableWith<YM, i32>);
 }
 
-constexpr void vtable() {
+constexpr static void vtable() {
     using Storage = di::any::RefStorage;
 
     using VTable = di::any::InlineVTable::Invoke<Interface>;
@@ -75,7 +75,7 @@ constexpr void vtable() {
     (void) vtable2;
 }
 
-constexpr void ref() {
+constexpr static void ref() {
     using Any = di::any::AnyRef<Interface>;
 
     i32 v = 4;
@@ -126,7 +126,7 @@ static void inline_() {
     ASSERT_EQ(yf(z), 5);
 }
 
-constexpr void unique() {
+constexpr static void unique() {
     using Any = di::any::AnyUnique<Interface>;
 
     auto x = Any::create(4);
@@ -157,7 +157,7 @@ constexpr void unique() {
     ASSERT_EQ(yf(z), 5);
 }
 
-constexpr void hybrid() {
+constexpr static void hybrid() {
     using Any = di::Any<Interface>;
 
     auto x = Any(4);
@@ -193,7 +193,7 @@ constexpr void hybrid() {
     ASSERT_EQ(yf(q), 1);
 }
 
-constexpr void shared() {
+constexpr static void shared() {
     using Any = di::any::AnyShared<Interface>;
 
     auto x = Any::create(4);
@@ -234,15 +234,15 @@ struct Z : di::Immovable {
     int x;
 };
 
-constexpr auto tag_invoke(X, Z const& z, i32 y) -> i32 {
+constexpr static auto tag_invoke(X, Z const& z, i32 y) -> i32 {
     return y + z.x;
 }
 
-constexpr auto tag_invoke(Y, di::meta::Type<Y>, Z& z) -> i32 {
+constexpr static auto tag_invoke(Y, di::meta::Type<Y>, Z& z) -> i32 {
     return 4 + z.x;
 }
 
-constexpr void immovable() {
+constexpr static void immovable() {
     using Any = di::any::AnyHybrid<Interface, di::StorageCategory::Immovable>;
 
     auto x = Any(di::in_place_type<Z>, 3);
@@ -263,13 +263,13 @@ constexpr void immovable() {
 
 struct ZF : di::Dispatcher<ZF, void(di::This&&, i32)> {};
 
-constexpr void tag_invoke(ZF, A&&, i32 x) {
+constexpr static void tag_invoke(ZF, A&&, i32 x) {
     ASSERT_EQ(x, 12);
 }
 
 constexpr inline auto zf = ZF {};
 
-constexpr void rvalue() {
+constexpr static void rvalue() {
     using Any = di::Any<di::meta::List<ZF>>;
 
     auto x = Any(di::in_place_type<A>);

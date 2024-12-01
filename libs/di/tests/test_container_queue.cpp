@@ -3,7 +3,7 @@
 #include <dius/test/prelude.h>
 
 namespace container_queue {
-constexpr void priority_queue_basic() {
+constexpr static void priority_queue_basic() {
     auto x = di::PriorityQueue<i32> {};
     x.push(3);
     x.push(1);
@@ -16,7 +16,7 @@ constexpr void priority_queue_basic() {
     ASSERT(x.empty());
 }
 
-constexpr void priority_queue_to() {
+constexpr static void priority_queue_to() {
     auto x = di::range(5) | di::to<di::PriorityQueue>();
 
     ASSERT_EQ(x.pop(), 4);
@@ -32,7 +32,7 @@ constexpr void priority_queue_to() {
     ASSERT(di::container::equal(z, di::range(100)));
 }
 
-constexpr void stack() {
+constexpr static void stack() {
     auto a = di::Stack<int> {};
 
     a.push(1);
@@ -50,7 +50,7 @@ constexpr void stack() {
     ASSERT(b.empty());
 }
 
-constexpr void queue() {
+constexpr static void queue() {
     auto queue = di::Queue<int> {};
     queue.push(1);
     queue.push(2);

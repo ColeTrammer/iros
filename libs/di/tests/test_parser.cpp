@@ -3,7 +3,7 @@
 #include <dius/test/prelude.h>
 
 namespace parser {
-constexpr void set() {
+constexpr static void set() {
     auto pred = U'A'_m - U'Z'_m;
 
     ASSERT(pred(U'B'));
@@ -18,7 +18,7 @@ constexpr void set() {
     ASSERT(not_alpha_num(U'-'));
 }
 
-constexpr void code_point() {
+constexpr static void code_point() {
     ASSERT(!di::parse<c32>(u8""_sv));
     ASSERT_EQ(*di::parse<c32>(u8"A"_sv), U'A');
     ASSERT(!di::parse<c32>(u8"AB"_sv));
@@ -28,7 +28,7 @@ constexpr void code_point() {
     ASSERT_EQ(*di::parse_partial<c32>(u8"AB"_sv), U'A');
 }
 
-constexpr void integer() {
+constexpr static void integer() {
     ASSERT_EQ(*di::parse<i32>(u8"0"_sv), 0);
     ASSERT(!di::parse<i32>(u8"0qwer"_sv));
     ASSERT_EQ(*di::parse<i32>(u8"123"_sv), 123);
@@ -55,12 +55,12 @@ constexpr void integer() {
     ASSERT(!di::parse<u8>(u8"256"_sv));
 }
 
-constexpr void integral_constant() {
+constexpr static void integral_constant() {
     ASSERT_EQ(1_zic, 1U);
     ASSERT_EQ(4161_zic, 4161U);
 }
 
-constexpr void alternation() {
+constexpr static void alternation() {
     auto parser = di::parser::integer<i32>() | di::parser::match_one('='_m);
 
     ASSERT_EQ(*di::run_parser(parser, "128"_sv), 128);

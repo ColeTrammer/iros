@@ -132,7 +132,7 @@ static auto write_super_block(FSNode& root, dius::SyncFile& output, usize total_
     return output.write_exactly(0, di::as_bytes(di::Span { &super_block, 1 }));
 }
 
-auto find_parent(FSNode& root, di::PathView path) -> di::Result<FSNode&> {
+static auto find_parent(FSNode& root, di::PathView path) -> di::Result<FSNode&> {
     if (path.empty()) {
         return root;
     }
@@ -148,7 +148,7 @@ auto find_parent(FSNode& root, di::PathView path) -> di::Result<FSNode&> {
     return di::Unexpected(di::BasicError::InvalidArgument);
 }
 
-auto main(Args& args) -> di::Result<void> {
+static auto main(Args& args) -> di::Result<void> {
     auto root = FSNode {};
     root.type = Type::Directory;
 

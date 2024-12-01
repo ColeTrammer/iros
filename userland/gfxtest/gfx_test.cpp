@@ -27,7 +27,7 @@ static wl_compositor* compositor;
 static wl_shm* shm;
 static xdg_wm_base* shell;
 
-void draw(gfx::Painter& painter) {
+static void draw(gfx::Painter& painter) {
     // Clear
     gfx::draw_rect(painter, gfx::Rect(0, 0, width, height), gfx::Color());
 

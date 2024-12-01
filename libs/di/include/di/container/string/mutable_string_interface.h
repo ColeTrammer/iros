@@ -19,7 +19,7 @@
 #include <di/container/view/concat.h>
 #include <di/container/view/single.h>
 #include <di/meta/core.h>
-#include <di/platform/custom.h>
+#include <di/platform/prelude.h>
 #include <di/util/create_in_place.h>
 #include <di/util/reference_wrapper.h>
 #include <di/vocab/error/meta/common_error.h>

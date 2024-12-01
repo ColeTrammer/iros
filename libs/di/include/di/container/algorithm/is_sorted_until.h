@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/container/algorithm/is_sorted_until.h>
 #include <di/container/concepts/prelude.h>
 #include <di/container/meta/prelude.h>
 #include <di/function/compare.h>

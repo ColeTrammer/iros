@@ -3,7 +3,7 @@
 #include <dius/thread.h>
 
 namespace tls {
-constinit thread_local int x = 42;
+constinit thread_local static int x = 42;
 
 static void basic() {
     ASSERT_EQ(x, 42);

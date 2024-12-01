@@ -3,7 +3,7 @@
 
 namespace math_integer {
 template<di::concepts::SignedIntegral T>
-constexpr void do_midpoint_signed_test() {
+constexpr static void do_midpoint_signed_test() {
     T a = di::NumericLimits<T>::min;
     T b = di::NumericLimits<T>::max;
 
@@ -28,7 +28,7 @@ constexpr void do_midpoint_signed_test() {
 }
 
 template<di::concepts::UnsignedIntegral T>
-constexpr void do_midpoint_unsigned_test() {
+constexpr static void do_midpoint_unsigned_test() {
     T a = di::NumericLimits<T>::min;
     T b = di::NumericLimits<T>::max;
 
@@ -41,7 +41,7 @@ constexpr void do_midpoint_unsigned_test() {
     ASSERT_EQ(r2, ex2);
 }
 
-constexpr void midpoint() {
+constexpr static void midpoint() {
     do_midpoint_signed_test<signed char>();
     do_midpoint_signed_test<signed short>();
     do_midpoint_signed_test<signed int>();
@@ -58,7 +58,7 @@ constexpr void midpoint() {
 }
 
 template<di::concepts::Integral T>
-constexpr void do_abs_diff_test() {
+constexpr static void do_abs_diff_test() {
     using U = di::meta::MakeUnsigned<T>;
 
     auto a = di::NumericLimits<T>::min;
@@ -75,7 +75,7 @@ constexpr void do_abs_diff_test() {
     ASSERT_EQ(r2, ex2);
 }
 
-constexpr void abs_diff() {
+constexpr static void abs_diff() {
     do_abs_diff_test<signed char>();
     do_abs_diff_test<signed short>();
     do_abs_diff_test<signed int>();

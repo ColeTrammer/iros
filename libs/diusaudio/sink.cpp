@@ -1,6 +1,6 @@
 #include <diusaudio/sink.h>
 
-#include <di/platform/custom.h>
+#include <di/platform/prelude.h>
 #include <diusaudio/frame.h>
 #include <diusaudio/frame_info.h>
 

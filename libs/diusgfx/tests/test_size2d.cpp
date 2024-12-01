@@ -3,7 +3,7 @@
 #include <diusgfx/size2d.h>
 
 namespace gfx_Size2d {
-constexpr void basic() {
+constexpr static void basic() {
     auto p = gfx::Size2d(1, 2);
     p.width() += 2;
 

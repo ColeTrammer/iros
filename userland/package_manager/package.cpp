@@ -2,7 +2,7 @@
 
 #include <di/container/string/string_view.h>
 #include <di/function/tag_invoke.h>
-#include <di/platform/custom.h>
+#include <di/platform/prelude.h>
 #include <di/reflect/prelude.h>
 #include <di/serialization/json_deserializer.h>
 #include <di/serialization/json_value.h>
@@ -15,7 +15,7 @@ enum class PackageJsonDownloadType {
     Git,
 };
 
-constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<PackageJsonDownloadType>) {
+constexpr static auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<PackageJsonDownloadType>) {
     using enum PackageJsonDownloadType;
     return di::make_enumerators(di::enumerator<"git", Git>);
 }
@@ -26,7 +26,7 @@ struct PackageJsonDownload {
     di::Optional<di::String> tag;
 };
 
-constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<PackageJsonDownload>) {
+constexpr static auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<PackageJsonDownload>) {
     return di::make_fields(di::field<"type", &PackageJsonDownload::type>, di::field<"url", &PackageJsonDownload::url>,
                            di::field<"tag", &PackageJsonDownload::tag>);
 }
@@ -35,7 +35,7 @@ struct PackageJsonPatchFormat {
     di::Vector<di::String> files;
 };
 
-constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<PackageJsonPatchFormat>) {
+constexpr static auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<PackageJsonPatchFormat>) {
     return di::make_fields(di::field<"files", &PackageJsonPatchFormat::files>);
 }
 
@@ -47,7 +47,7 @@ struct PackageJsonFormat {
     di::json::Object build_system;
 };
 
-constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<PackageJsonFormat>) {
+constexpr static auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<PackageJsonFormat>) {
     return di::make_fields(
         di::field<"name", &PackageJsonFormat::name>, di::field<"version", &PackageJsonFormat::version>,
         di::field<"download", &PackageJsonFormat::download>, di::field<"patch", &PackageJsonFormat::patch>,

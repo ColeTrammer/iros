@@ -13,7 +13,7 @@ struct Args {
     }
 };
 
-constexpr void basic() {
+constexpr static void basic() {
     auto parser = di::get_cli_parser<Args>();
 
     {
@@ -70,7 +70,7 @@ struct Args2 {
     }
 };
 
-constexpr void arguments() {
+constexpr static void arguments() {
     auto parser = di::get_cli_parser<Args2>();
 
     {
@@ -92,7 +92,7 @@ struct Args3 {
     }
 };
 
-constexpr void variadic_arguments() {
+constexpr static void variadic_arguments() {
     auto parser = di::get_cli_parser<Args3>();
 
     {
@@ -105,7 +105,7 @@ constexpr void variadic_arguments() {
     }
 }
 
-constexpr void help() {
+constexpr static void help() {
     auto h1 = di::get_cli_parser<Args>().help_string();
     ASSERT_EQ(h1, R"~(NAME:
   test: Long Description

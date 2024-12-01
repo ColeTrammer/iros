@@ -11,7 +11,7 @@ struct Y : X {};
 
 struct Z {};
 
-constexpr void function() {
+constexpr static void function() {
     auto f = [](int y, int z) -> int {
         return y + z;
     };
@@ -29,7 +29,7 @@ constexpr void function() {
     ASSERT_EQ(di::invoke(f, 3, 6), 9);
 }
 
-constexpr void member_object() {
+constexpr static void member_object() {
     auto f = &X::y;
 
     static_assert(di::concepts::Invocable<decltype(f), X>);
@@ -51,7 +51,7 @@ constexpr void member_object() {
     ASSERT_EQ(di::invoke(f, &y), 13);
 }
 
-constexpr void member_function() {
+constexpr static void member_function() {
     auto f = &X::z;
 
     static_assert(di::concepts::Invocable<decltype(f), X, int>);
@@ -73,7 +73,7 @@ constexpr void member_function() {
     ASSERT_EQ(di::invoke(&X::z, &y, 3), 16);
 }
 
-constexpr void invoke_r_void() {
+constexpr static void invoke_r_void() {
     auto f = [] {
         return 32;
     };

@@ -2,7 +2,7 @@
 #include <dius/test/prelude.h>
 
 namespace container_ring {
-constexpr void basic() {
+constexpr static void basic() {
     di::concepts::RandomAccessContainer auto v = di::Ring<int> {};
     ASSERT(v.empty());
     ASSERT(!v.front());
@@ -75,7 +75,7 @@ constexpr void basic() {
     ASSERT(v.empty());
 }
 
-constexpr void reserve() {
+constexpr static void reserve() {
     auto v = di::Ring<int> {};
     v.push_back(0);
     v.push_back(1);
@@ -97,7 +97,7 @@ struct M {
     constexpr friend auto operator==(M const& a, M const& b) -> bool { return a.x == b.x; }
 };
 
-constexpr void move_only() {
+constexpr static void move_only() {
     auto v = di::Ring<M> {};
     v.push_back(M { 2 });
     v.push_back(M { 4 });
@@ -113,7 +113,7 @@ constexpr void move_only() {
     ASSERT(v.empty());
 }
 
-constexpr void to() {
+constexpr static void to() {
     auto v = di::create<di::Ring<int>>(di::range(6));
     ASSERT_EQ(v.size(), 6U);
     ASSERT_EQ(v[0], 0);
@@ -151,7 +151,7 @@ constexpr void to() {
     ASSERT_EQ(a[4].size(), 4U);
 }
 
-constexpr void clone() {
+constexpr static void clone() {
     auto v = di::range(6) | di::container::to<di::Ring>();
     ASSERT_EQ(v.size(), 6U);
 
@@ -170,7 +170,7 @@ constexpr void clone() {
     ASSERT_EQ(b[4].size(), 4U);
 }
 
-constexpr void compare() {
+constexpr static void compare() {
     auto a = di::create<di::Ring>(di::range(6));
     auto b = di::create<di::Ring>(di::range(4));
     auto c = di::create<di::Ring>(di::range(8, 100));
@@ -180,7 +180,7 @@ constexpr void compare() {
     ASSERT_LT(a, c);
 }
 
-constexpr void static_() {
+constexpr static void static_() {
     auto a = di::StaticRing<int, di::Constexpr<2ZU>> {};
     (void) a.push_back(1);
     (void) a.push_back(2);

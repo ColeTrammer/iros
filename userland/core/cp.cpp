@@ -23,7 +23,7 @@ struct Args {
             dius::eprintln(format, __VA_ARGS__ __VA_OPT__(, ) error.message()); \
         }))
 
-auto main(Args const& args) -> di::Result<void> {
+static auto main(Args const& args) -> di::Result<void> {
     auto context = TRY_OR_ERROR_LOG(di::create<dius::IoContext>(), "Failed to create execution context: {}"_sv);
     auto scheduler = context.get_scheduler();
 

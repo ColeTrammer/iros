@@ -4,7 +4,7 @@
 #include <diusgfx/rect.h>
 
 namespace gfx_rect {
-constexpr void basic() {
+constexpr static void basic() {
     auto rect = gfx::Rect(0, 0, 50, 50);
     ASSERT_EQ(rect.x(), 0);
     ASSERT_EQ(rect.width(), 50);

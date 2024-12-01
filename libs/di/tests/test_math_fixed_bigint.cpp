@@ -2,7 +2,7 @@
 #include <dius/test/prelude.h>
 
 namespace math_fixed_bigint {
-constexpr void unsigned_() {
+constexpr static void unsigned_() {
     auto x = di::u256(0x1234567890abcdef);
     auto y = di::u256(0x1234567890abcdef);
 
@@ -10,7 +10,7 @@ constexpr void unsigned_() {
     ASSERT_EQ(x % y, di::u256(0));
 }
 
-constexpr void signed_() {
+constexpr static void signed_() {
     auto x = di::i256(0x1234567890abcdef);
     auto y = di::i256(0x1234567890abcdef);
     auto z = di::i256(0x1234567890abcdee);

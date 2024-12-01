@@ -5,7 +5,7 @@
 #include <dius/test/prelude.h>
 
 namespace container_string {
-constexpr void basic() {
+constexpr static void basic() {
     auto x = u8"QWER"_sv;
     (void) x;
 
@@ -22,7 +22,7 @@ constexpr void basic() {
     ASSERT_EQ(x, y);
 }
 
-constexpr void push_back() {
+constexpr static void push_back() {
     auto x = di::String {};
     x.push_back('a');
     x.push_back('b');
@@ -43,7 +43,7 @@ constexpr void push_back() {
     ASSERT_EQ(y, "a"_sv);
 }
 
-constexpr void mutation() {
+constexpr static void mutation() {
     auto s = u8"Hello, 世界, Hello 友達!"_s;
 
     ASSERT_EQ(s.erase(s.rfind(U',').begin()), s.iterator_at_offset(13));
@@ -96,7 +96,7 @@ constexpr void mutation() {
     ASSERT_EQ(w, u8"Hello, , Hello 友達!"_sv);
 }
 
-constexpr void to() {
+constexpr static void to() {
     auto x = u8"abc"_sv | di::to<di::String>();
     ASSERT_EQ(x, u8"abc"_sv);
 
@@ -113,12 +113,12 @@ constexpr void to() {
     ASSERT_EQ(b, "abc"_tsv);
 }
 
-constexpr void erased() {
+constexpr static void erased() {
     di::ErasedString s = u8"abc"_sv;
     ASSERT_EQ(s, u8"abc"_sv);
 }
 
-constexpr void do_utf8_test(di::StringView view, di::Vector<char32_t> const& desired) {
+constexpr static void do_utf8_test(di::StringView view, di::Vector<char32_t> const& desired) {
     // Check the iteration produces the same results forwards and backwards.
     auto forwards = view | di::to<di::Vector>();
     auto backwards = view | di::reverse | di::to<di::Vector>();
@@ -129,7 +129,7 @@ constexpr void do_utf8_test(di::StringView view, di::Vector<char32_t> const& des
     ASSERT_EQ(backwards, desired);
 };
 
-constexpr void utf8() {
+constexpr static void utf8() {
     auto x = u8"$¢€𐍈"_sv;
 
     ASSERT(x.starts_with(u8"$"_sv));
@@ -175,7 +175,7 @@ constexpr void utf8() {
     ASSERT(!validate(u8"\xF0\x82\x82\xAC", 4));
 }
 
-constexpr void readonly_api() {
+constexpr static void readonly_api() {
     auto s = u8"Hello, 世界, Hello 友達!"_sv;
 
     ASSERT(s.starts_with("Hel"_sv));
@@ -207,7 +207,7 @@ constexpr void readonly_api() {
     ASSERT_EQ(t.substr(4, 2), ""_tsv);
 }
 
-constexpr void null_terminated() {
+constexpr static void null_terminated() {
     auto s = di::TransparentString {};
 
     s.push_back('a');

@@ -3,7 +3,7 @@
 #include <dius/test/prelude.h>
 
 namespace util {
-constexpr void scope_exit() {
+constexpr static void scope_exit() {
     int value = 5;
     {
         auto guard = di::ScopeExit([&] {
@@ -23,7 +23,7 @@ constexpr void scope_exit() {
     ASSERT_EQ(value, 42);
 }
 
-constexpr void uuid() {
+constexpr static void uuid() {
     // Standard Endian Format.
     auto x = "00112233-4455-6677-8899-aabbccddeeff"_uuid;
     auto ex = di::Array {
@@ -51,7 +51,7 @@ constexpr void uuid() {
     ASSERT(!y.null());
 }
 
-constexpr void strong_int() {
+constexpr static void strong_int() {
     struct XTag {
         using Type = i32;
         struct Mixin {
@@ -83,11 +83,11 @@ struct Bar : di::NamedArgument<Bar, i32> {};
 template<di::concepts::Integral T>
 struct Baz : di::NamedArgument<di::InPlaceTemplate<Baz>, T> {};
 template<typename T>
-Baz(T&&) -> Baz<T>;
+Baz(T&&) -> Baz<T>; // NOLINT(misc-use-internal-linkage)
 
 template<typename... Args>
 requires(di::ValidNamedArguments<di::meta::List<Foo, Bar, di::InPlaceTemplate<Baz>>, Args...>)
-constexpr auto f(Args&&... args) -> i32 {
+constexpr static auto f(Args&&... args) -> i32 {
     auto named = di::NamedArguments(di::forward<Args>(args)...);
 
     auto foo_value = di::get_named_argument_or<Foo>(named, 1);

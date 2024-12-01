@@ -54,7 +54,7 @@
 #include <di/meta/operations.h>
 #include <di/meta/util.h>
 #include <di/platform/compiler.h>
-#include <di/platform/custom.h>
+#include <di/platform/prelude.h>
 #include <di/serialization/binary_deserializer.h>
 #include <di/serialization/binary_serializer.h>
 #include <di/serialization/deserialize.h>

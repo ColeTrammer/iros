@@ -12,7 +12,7 @@ namespace iros {
 namespace detail {
     auto CreateRegularFileFunction::operator()(di::PathView path) const -> di::Result<bool> {
         auto result = iros::create_node(path, FileType::Regular,
-                                        Perms::All & ~(Perms::OwnerExec | Perms::GroupExec | Perms::OwnerExec));
+                                        Perms::All & ~(Perms::OwnerExec | Perms::GroupExec | Perms::OthersExec));
         if (!result) {
             if (result.error() == PosixError::FileExists) {
                 return false;

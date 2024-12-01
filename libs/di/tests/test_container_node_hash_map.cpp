@@ -5,7 +5,7 @@
 #include <dius/test/prelude.h>
 
 namespace container_node_hash_map {
-constexpr void basic() {
+constexpr static void basic() {
     auto x = di::NodeHashMap<int, int> {};
     x.reserve(10);
 
@@ -54,7 +54,7 @@ constexpr void basic() {
     ASSERT_EQ(x.size(), 3);
 }
 
-constexpr void multi() {
+constexpr static void multi() {
     auto x = di::NodeHashMultiMap<int, int> {};
     x.insert({ 1, 1 });
     x.insert({ 1, 2 });
@@ -68,7 +68,7 @@ constexpr void multi() {
     ASSERT_EQ(r1, ex1);
 }
 
-constexpr void stress() {
+constexpr static void stress() {
     auto const iters = di::is_constant_evaluated() ? 100 : 10000;
 
     auto x = di::NodeHashMap<int, int> {};

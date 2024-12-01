@@ -8,7 +8,7 @@
 #include <dius/test/prelude.h>
 
 namespace deserialization {
-constexpr void json_value() {
+constexpr static void json_value() {
     auto x = di::json::Value {};
     ASSERT(x.is_null());
     auto r1 = di::visit(di::overload(
@@ -59,7 +59,7 @@ constexpr void json_value() {
 })"_sv);
 }
 
-constexpr void json_literal() {
+constexpr static void json_literal() {
     auto object = R"( {
     "hello" : 32 , "world" : [ "x" , null ]
 } )"_json;
@@ -98,7 +98,7 @@ struct MyType {
 
 enum class MyEnum { Foo, Bar, Baz };
 
-constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyEnum>) {
+constexpr static auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyEnum>) {
     using enum MyEnum;
     return di::make_enumerators(di::enumerator<"Foo", Foo>, di::enumerator<"Bar", Bar>, di::enumerator<"Baz", Baz>);
 }
@@ -117,7 +117,7 @@ struct MySuperType {
     }
 };
 
-constexpr void json_reflect() {
+constexpr static void json_reflect() {
     {
         auto r = *di::from_json_string<MyEnum>(R"("Foo")"_sv);
         auto e = MyEnum::Foo;
@@ -171,7 +171,7 @@ constexpr void json_reflect() {
     }
 }
 
-constexpr void binary() {
+constexpr static void binary() {
     auto do_test = []<di::concepts::EqualityComparable T>(T const& value) {
         auto writer = di::VectorWriter<>();
         ASSERT(di::serialize_binary(writer, value));

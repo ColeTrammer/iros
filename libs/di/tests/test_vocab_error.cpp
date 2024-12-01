@@ -4,7 +4,7 @@
 #include <dius/test/prelude.h>
 
 namespace vocab_error {
-constexpr void basic() {
+constexpr static void basic() {
     di::GenericCode e = di::BasicError::ResultOutOfRange;
     ASSERT(!e.success());
     ASSERT_EQ(e.message(), u8"Result out of range"_sv);
@@ -13,7 +13,7 @@ constexpr void basic() {
     ASSERT_NOT_EQ(di::BasicError::Success, e);
 }
 
-void erased() {
+static void erased() {
     di::Error e = di::BasicError::ResultOutOfRange;
     ASSERT(!e.success());
     ASSERT_EQ(e.message(), u8"Result out of range"_sv);
@@ -22,7 +22,7 @@ void erased() {
     ASSERT_NOT_EQ(di::BasicError::Success, e);
 }
 
-constexpr void common_error() {
+constexpr static void common_error() {
     using W = int;
     using X = di::Error;
     using Y = di::BasicError;

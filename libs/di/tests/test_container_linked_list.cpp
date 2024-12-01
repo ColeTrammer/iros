@@ -4,7 +4,7 @@
 #include <dius/test/prelude.h>
 
 namespace container_linked_list {
-constexpr void basic() {
+constexpr static void basic() {
     auto x = di::LinkedList<int> {};
 
     x.push_back(1);
@@ -37,7 +37,7 @@ constexpr void basic() {
     ASSERT_EQ(a, b);
 }
 
-constexpr void splice() {
+constexpr static void splice() {
     auto a = di::range(5) | di::to<di::LinkedList>();
     auto b = di::range(8, 17) | di::to<di::LinkedList>();
 

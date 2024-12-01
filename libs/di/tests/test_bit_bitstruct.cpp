@@ -12,7 +12,7 @@ static_assert(di::concepts::BitTag<Type>);
 
 using IdtEntry = di::BitStruct<16, Granular, Type>;
 
-constexpr void basic() {
+constexpr static void basic() {
     auto x = IdtEntry(Granular(true), Type(IdtType::Y));
     ASSERT_EQ(x.get<Granular>(), true);
     ASSERT_EQ(x.get<Type>(), IdtType::Y);

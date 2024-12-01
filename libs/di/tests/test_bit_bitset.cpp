@@ -3,7 +3,7 @@
 #include <dius/test/prelude.h>
 
 namespace bit_bitset {
-constexpr void basic() {
+constexpr static void basic() {
     auto set = di::BitSet<13> {};
     set[2] = true;
     set[10] = true;
@@ -11,7 +11,7 @@ constexpr void basic() {
     ASSERT_EQ(set[10], true);
 }
 
-constexpr void wide() {
+constexpr static void wide() {
     auto set = di::BitSet<64> {};
     set[1] = true;
     set[63] = true;

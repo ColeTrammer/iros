@@ -2,7 +2,7 @@
 #include <dius/test/prelude.h>
 
 namespace util_swap {
-constexpr void basic() {
+constexpr static void basic() {
     static_assert(di::concepts::Swappable<int>);
     static_assert(!di::concepts::SwappableWith<int, long>);
     static_assert(!di::concepts::SwappableWith<char, char const*>);
@@ -24,7 +24,7 @@ private:
     }
 };
 
-constexpr void custom() {
+constexpr static void custom() {
     static_assert(di::concepts::Swappable<X>);
 
     int c = 0;
@@ -44,7 +44,7 @@ struct Y {
     constexpr auto operator=(Y&&) -> Y& = delete;
 };
 
-constexpr void non_assignable() {
+constexpr static void non_assignable() {
     static_assert(!di::concepts::Swappable<Y>);
     static_assert(di::concepts::Swappable<di::util::RebindableBox<Y>>);
 
@@ -68,7 +68,7 @@ struct Z {
     constexpr auto operator=(Z const&) -> Z& = delete;
 };
 
-constexpr void move_only() {
+constexpr static void move_only() {
     static_assert(di::concepts::Swappable<Z>);
 
     auto a = Z { 2 };

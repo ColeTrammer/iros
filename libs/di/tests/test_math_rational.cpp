@@ -2,7 +2,7 @@
 #include <dius/test/prelude.h>
 
 namespace math_rational {
-constexpr void basic() {
+constexpr static void basic() {
     auto a = di::Rational { 3, 6 };
     ASSERT_EQ(a.numerator(), 1);
     ASSERT_EQ(a.denominator(), 2);
@@ -34,7 +34,7 @@ constexpr void basic() {
     ASSERT_EQ(x, di::Rational(8, 5));
 }
 
-constexpr void ratio() {
+constexpr static void ratio() {
     using X = di::Ratio<4, 5>;
     using Y = di::Ratio<4, 1>;
     using Z = di::RatioDivide<X, Y>;

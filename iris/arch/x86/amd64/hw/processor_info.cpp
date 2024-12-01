@@ -61,7 +61,7 @@ namespace cpuid {
         u32 edx;
     };
 
-    inline auto query(Function function, u32 sublevel = 0) -> Result {
+    static inline auto query(Function function, u32 sublevel = 0) -> Result {
         u32 eax = di::to_underlying(function);
         u32 ebx = 0;
         u32 ecx = sublevel;

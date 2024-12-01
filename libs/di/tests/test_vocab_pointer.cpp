@@ -18,7 +18,7 @@ struct Y : X {
     int y;
 };
 
-constexpr void box() {
+constexpr static void box() {
     auto x = di::make_box<i32>(42);
     ASSERT_EQ(*x, 42);
 
@@ -34,7 +34,7 @@ constexpr void box() {
     ASSERT_EQ(**w, 13);
 }
 
-constexpr void rc() {
+constexpr static void rc() {
     struct X : di::IntrusiveThreadUnsafeRefCount<X> {
     private:
         friend di::IntrusiveThreadUnsafeRefCount<X>;
@@ -55,7 +55,7 @@ constexpr void rc() {
     ASSERT_NOT_EQ(y, nullptr);
 }
 
-constexpr void arc() {
+constexpr static void arc() {
     struct X : di::IntrusiveRefCount<X> {
     private:
         friend di::IntrusiveRefCount<X>;

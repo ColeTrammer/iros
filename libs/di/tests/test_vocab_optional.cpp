@@ -5,7 +5,7 @@
 namespace vocab_optional {
 static_assert(sizeof(di::Optional<int&>) == sizeof(int*));
 
-constexpr void basic() {
+constexpr static void basic() {
     auto x = di::Optional<int> {};
     ASSERT(!x.has_value());
 
@@ -24,7 +24,7 @@ constexpr void basic() {
     ASSERT_EQ(*y, 2);
 }
 
-constexpr void conversions() {
+constexpr static void conversions() {
     struct X {
         int x;
     };
@@ -49,7 +49,7 @@ constexpr void conversions() {
     ASSERT_EQ(z.value().x, 5);
 }
 
-constexpr void make_optional() {
+constexpr static void make_optional() {
     auto x = di::make_optional(5);
     ASSERT_EQ(x.value(), 5);
 
@@ -65,7 +65,7 @@ constexpr void make_optional() {
     ASSERT_EQ(b, 3);
 }
 
-constexpr void references() {
+constexpr static void references() {
     int i = 32;
     auto x = di::make_optional(di::ref(i));
     ASSERT_EQ(*x, 32);
@@ -85,7 +85,7 @@ struct Z {
     constexpr auto operator&(Z&&) -> Z& = delete;
 };
 
-constexpr void trivial() {
+constexpr static void trivial() {
     static_assert(!di::concepts::TriviallyDefaultConstructible<di::Optional<int>>);
     static_assert(di::concepts::TriviallyCopyConstructible<di::Optional<int>>);
     static_assert(di::concepts::TriviallyMoveConstructible<di::Optional<int>>);
@@ -121,7 +121,7 @@ struct M {
     constexpr auto operator=(M&&) -> M& = default;
 };
 
-constexpr void monad() {
+constexpr static void monad() {
     auto x = di::Optional<int>();
     auto y = x.or_else([] {
         return di::make_optional<int>(42);
@@ -186,7 +186,7 @@ constexpr void monad() {
     ASSERT_EQ(*xxx, 2);
 }
 
-constexpr void swap() {
+constexpr static void swap() {
     auto x = di::make_optional(3);
     auto y = di::make_optional(7);
     di::swap(x, y);
@@ -197,7 +197,7 @@ constexpr void swap() {
 
 struct X {};
 
-constexpr void compare() {
+constexpr static void compare() {
     static_assert(di::concepts::EqualityComparable<di::Optional<int>>);
     static_assert(di::concepts::EqualityComparableWith<di::Optional<int>, di::Optional<long>>);
     static_assert(di::concepts::EqualityComparableWith<di::Optional<int>, di::vocab::NullOpt>);
@@ -236,7 +236,7 @@ constexpr void compare() {
     ASSERT_GT(z, 1);
 }
 
-constexpr void container() {
+constexpr static void container() {
     auto x = di::make_optional(2);
     ASSERT(!x.empty());
     ASSERT_EQ(x.size(), 1U);
@@ -264,7 +264,7 @@ constexpr void container() {
     }
 }
 
-constexpr void void_optional() {
+constexpr static void void_optional() {
     auto x = di::lift_bool(true) % [] {
         return 2;
     };

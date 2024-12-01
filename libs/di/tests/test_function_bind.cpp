@@ -14,7 +14,7 @@ struct M {
     M(M&&) = default;
 };
 
-constexpr void front() {
+constexpr static void front() {
     auto f = [](int x, int y, int z) {
         return x + y + z;
     };
@@ -35,7 +35,7 @@ constexpr void front() {
     ASSERT_EQ(j(4), 9);
 }
 
-constexpr void back() {
+constexpr static void back() {
     auto f = [](int x, int y) {
         return x / y;
     };
@@ -56,7 +56,7 @@ constexpr void back() {
     ASSERT_EQ(a(6), 3);
 }
 
-constexpr void compose() {
+constexpr static void compose() {
     auto f = [](int x, int y) {
         return x + y;
     };
@@ -76,7 +76,7 @@ constexpr void compose() {
     ASSERT_EQ(k(1, 2, 3), 8);
 }
 
-constexpr void pipeline() {
+constexpr static void pipeline() {
     auto f = [](int x, int y, int z) {
         return x + y + z;
     };
@@ -85,14 +85,14 @@ constexpr void pipeline() {
     ASSERT_EQ(x, 4);
 }
 
-constexpr void curry() {
+constexpr static void curry() {
     auto f = [](int x, int y, int z) {
         return x + y + z;
     };
     ASSERT_EQ(6, 3 | di::curry(f)(1)(2));
 }
 
-constexpr void curry_back() {
+constexpr static void curry_back() {
     auto f = [](int x, int y, int z) {
         return x + y + z;
     };
@@ -105,7 +105,7 @@ struct X : di::Immovable {
     int x;
 };
 
-constexpr void make_deferred() {
+constexpr static void make_deferred() {
     auto f = di::make_deferred<int>(42);
     ASSERT_EQ(f(), 42);
 
@@ -113,7 +113,7 @@ constexpr void make_deferred() {
     ASSERT_EQ(g().x, 42);
 }
 
-constexpr void proj() {
+constexpr static void proj() {
     auto f = [](int x, int y) {
         return x + y;
     };
@@ -127,7 +127,7 @@ constexpr void proj() {
     ASSERT_EQ(i(2, 3), 13);
 }
 
-constexpr void uncurry() {
+constexpr static void uncurry() {
     auto f = [](int x, int y, int z) {
         return x + y + z;
     };

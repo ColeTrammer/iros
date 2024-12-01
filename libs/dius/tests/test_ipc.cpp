@@ -46,7 +46,7 @@ struct ServerMessage {
 
 using MyProtocol = di::Protocol<di::meta::List<ClientMessage1, ClientMessage2>, di::meta::List<ServerMessage>>;
 
-void basic() {
+static void basic() {
     auto context = *di::create<dius::IoContext>();
 
     // auto context = *di::create<dius::IoContext>();

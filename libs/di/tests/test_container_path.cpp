@@ -4,7 +4,7 @@
 #include <dius/test/prelude.h>
 
 namespace container_path {
-constexpr void iteration() {
+constexpr static void iteration() {
     auto do_test = [](auto&& path_view, auto&& expected_components) {
         auto r1 = path_view | di::to<di::Vector>();
         auto ex1 = expected_components | di::to<di::Vector>();
@@ -23,7 +23,7 @@ constexpr void iteration() {
     do_test("./a/././b/./../."_pv, di::Array { "."_tsv, "a"_tsv, "b"_tsv, ".."_tsv });
 }
 
-constexpr void equal() {
+constexpr static void equal() {
     ASSERT_EQ("/a/b/ttt"_pv, "/a/b/ttt"_pv);
     ASSERT_EQ("/a/b/ttt"_pv, "/a/b/ttt/"_pv);
     ASSERT_EQ("//////a////b///ttt"_pv, "/a/b/ttt/"_pv);
@@ -36,7 +36,7 @@ constexpr void equal() {
     ASSERT_NOT_EQ("/a/b/.."_pv, "/a/"_pv);
 }
 
-constexpr void compare() {
+constexpr static void compare() {
     auto paths = di::Array {
         "/etc/resolv.conf"_pv, "/etc/passwd"_pv,    "/usr"_pv, "/usr/include/unistd.h"_pv, "/"_pv, "./.bashrc"_pv,
         "./Downloads/"_pv,     "CMakeLists.txt"_pv, ""_pv,     "/usr/include/"_pv,
@@ -60,7 +60,7 @@ constexpr void compare() {
     ASSERT_EQ(paths, sorted_paths);
 }
 
-constexpr void extension() {
+constexpr static void extension() {
     ASSERT_EQ("/a/b/test.txt"_pv.extension(), "txt"_tsv);
     ASSERT_EQ("/a/b/test.txt.gz"_pv.extension(), "gz"_tsv);
     ASSERT_EQ("/a/b/.bashrc"_pv.extension(), di::nullopt);
@@ -69,7 +69,7 @@ constexpr void extension() {
     ASSERT_EQ("/a/b/test."_pv.extension(), ""_tsv);
 }
 
-constexpr void filename() {
+constexpr static void filename() {
     ASSERT_EQ("/a/b/xyz.abc"_pv.filename(), "xyz.abc"_tsv);
     ASSERT_EQ("a/xyz.abc"_pv.filename(), "xyz.abc"_tsv);
     ASSERT_EQ("test"_pv.filename(), "test"_tsv);
@@ -79,7 +79,7 @@ constexpr void filename() {
     ASSERT_EQ(""_pv.filename(), di::nullopt);
 }
 
-constexpr void is_absolute() {
+constexpr static void is_absolute() {
     ASSERT("///a/b/c"_pv.is_absolute());
     ASSERT(!"///a/b/c"_pv.is_relative());
 
@@ -87,7 +87,7 @@ constexpr void is_absolute() {
     ASSERT("a/b/c"_pv.is_relative());
 }
 
-constexpr void parent() {
+constexpr static void parent() {
     ASSERT_EQ("/a/b/test.txt"_pv.parent_path(), "/a/b"_pv);
     ASSERT_EQ("/a/b/"_pv.parent_path(), "/a"_pv);
     ASSERT_EQ("/a"_pv.parent_path(), "/"_pv);
@@ -103,7 +103,7 @@ constexpr void parent() {
     ASSERT_EQ("."_pv.parent_path(), di::nullopt);
 }
 
-constexpr void stem() {
+constexpr static void stem() {
     ASSERT_EQ("/a/b/test.txt"_pv.stem(), "test"_tsv);
     ASSERT_EQ("/a/b/test.txt.gz"_pv.stem(), "test.txt"_tsv);
     ASSERT_EQ("/a/b/.bashrc"_pv.stem(), ".bashrc"_tsv);
@@ -112,7 +112,7 @@ constexpr void stem() {
     ASSERT_EQ("/a/b/test."_pv.stem(), "test"_tsv);
 }
 
-constexpr void starts_with() {
+constexpr static void starts_with() {
     ASSERT("/a/b/c"_pv.starts_with("/a/"_pv));
     ASSERT("/a/b/c"_pv.starts_with("///a///b///"_pv));
     ASSERT("/a/b/c"_pv.starts_with("///a///b///c///"_pv));
@@ -123,7 +123,7 @@ constexpr void starts_with() {
     ASSERT(!"./a/b"_pv.starts_with("a"_pv));
 }
 
-constexpr void ends_with() {
+constexpr static void ends_with() {
     ASSERT("/etc/resolv.conf"_pv.ends_with("resolv.conf"_pv));
     ASSERT("/etc/resolv.conf"_pv.ends_with("etc/resolv.conf"_pv));
     ASSERT("/etc/resolv.conf"_pv.ends_with("///etc///resolv.conf//"_pv));
@@ -131,18 +131,18 @@ constexpr void ends_with() {
     ASSERT(!"/etc/resolv.conf"_pv.ends_with("/etc"_pv));
 }
 
-constexpr void filename_ends_with() {
+constexpr static void filename_ends_with() {
     ASSERT("/opt/bash.tar.gz"_pv.filename_ends_with(".tar.gz"_tsv));
     ASSERT(!"/opt/bash.tar.gz/"_pv.filename_ends_with(".tar.gz"_tsv));
     ASSERT(!"/opt/bash.gz/"_pv.filename_ends_with(".tar.gz"_tsv));
 }
 
-constexpr void path_basic() {
+constexpr static void path_basic() {
     auto path = "/opt/bash.tar.gz"_tsv | di::to<di::Path>();
     ASSERT_EQ(path, "/opt/bash.tar.gz"_pv);
 }
 
-constexpr void path_addition() {
+constexpr static void path_addition() {
     auto a = "/opt/"_tsv | di::to<di::Path>();
     auto b = "opt/"_tsv | di::to<di::Path>();
     auto c = "opt"_tsv | di::to<di::Path>();
@@ -154,7 +154,7 @@ constexpr void path_addition() {
     ASSERT_EQ(c.data(), "opt/hello/world"_tsv);
 }
 
-constexpr void strip_prefix() {
+constexpr static void strip_prefix() {
     ASSERT_EQ("hello/world"_pv.strip_prefix("hello"_pv), "world"_pv);
     ASSERT_EQ("/hello/world"_pv.strip_prefix("/hello"_pv), "world"_pv);
     ASSERT_EQ("/hello/world"_pv.strip_prefix("/"_pv), "hello/world"_pv);

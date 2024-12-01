@@ -6,23 +6,23 @@
 #include <iris/uapi/open.h>
 
 namespace dius {
-auto sys_read(int fd, u64 offset, di::Span<byte> data) -> di::Expected<usize, di::GenericCode> {
+static auto sys_read(int fd, u64 offset, di::Span<byte> data) -> di::Expected<usize, di::GenericCode> {
     return system::system_call<usize>(system::Number::read, fd, data.data(), data.size(), offset);
 }
 
-auto sys_write(int fd, u64 offset, di::Span<byte const> data) -> di::Expected<usize, di::GenericCode> {
+static auto sys_write(int fd, u64 offset, di::Span<byte const> data) -> di::Expected<usize, di::GenericCode> {
     return system::system_call<usize>(system::Number::write, fd, data.data(), data.size(), offset);
 }
 
-auto sys_close(int fd) -> di::Expected<void, di::GenericCode> {
+static auto sys_close(int fd) -> di::Expected<void, di::GenericCode> {
     return system::system_call<int>(system::Number::close, fd) % di::into_void;
 }
 
-auto sys_truncate(int fd, u64 size) -> di::Expected<void, di::GenericCode> {
+static auto sys_truncate(int fd, u64 size) -> di::Expected<void, di::GenericCode> {
     return system::system_call<int>(system::Number::truncate, fd, size) % di::into_void;
 }
 
-auto sys_open(di::PathView path, iris::OpenMode mode) -> di::Expected<int, di::GenericCode> {
+static auto sys_open(di::PathView path, iris::OpenMode mode) -> di::Expected<int, di::GenericCode> {
     return system::system_call<int>(system::Number::open, path.data().data(), path.data().size(), mode);
 }
 

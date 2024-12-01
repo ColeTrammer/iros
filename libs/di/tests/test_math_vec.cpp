@@ -15,7 +15,7 @@ struct IntTag {
 
 using Ints = di::math::linalg::Vec<IntTag>;
 
-constexpr void basic() {
+constexpr static void basic() {
     auto p = Ints(1, 2);
     ASSERT_EQ(1, di::get<0>(p));
     ASSERT_EQ(1, p.get<0>());
@@ -34,7 +34,7 @@ constexpr void basic() {
     ASSERT(p2 == Ints(0, 3));
 }
 
-constexpr void format() {
+constexpr static void format() {
     auto p = Ints(1, 2);
     auto s = di::to_string(p);
 

@@ -2,7 +2,7 @@
 #include <dius/test/prelude.h>
 
 namespace vocab_md {
-constexpr void extents() {
+constexpr static void extents() {
     static_assert(
         di::SameAs<di::Dextents<size_t, 5>, di::Extents<size_t, di::dynamic_extent, di::dynamic_extent,
                                                         di::dynamic_extent, di::dynamic_extent, di::dynamic_extent>>);
@@ -39,7 +39,7 @@ constexpr void extents() {
     ASSERT_EQ(c.rev_prod_of_extents(4), 1U);
 }
 
-constexpr void layout_left() {
+constexpr static void layout_left() {
     di::concepts::MDLayoutMapping auto mapping = di::LayoutLeft::Mapping<di::Extents<size_t, 4, 2, 3>> {};
 
     ASSERT_EQ(mapping.required_span_size(), 4U * 2U * 3U);
@@ -50,7 +50,7 @@ constexpr void layout_left() {
     ASSERT_EQ(mapping(1, 1, 1), 1U + 4U + 8U);
 }
 
-constexpr void layout_right() {
+constexpr static void layout_right() {
     di::concepts::MDLayoutMapping auto mapping = di::LayoutRight::Mapping<di::Extents<size_t, 4, 2, 3>> {};
 
     ASSERT_EQ(mapping.required_span_size(), 4U * 2U * 3U);
@@ -61,7 +61,7 @@ constexpr void layout_right() {
     ASSERT_EQ(mapping(1, 1, 1), 6U + 3U + 1U);
 }
 
-constexpr void default_accessor() {
+constexpr static void default_accessor() {
     di::concepts::MDAccessor auto accessor = di::DefaultAccessor<int> {};
 
     int p[] = { 1, 2, 3, 4, 5 };
@@ -69,7 +69,7 @@ constexpr void default_accessor() {
     ASSERT_EQ(accessor.offset(p, 2), p + 2);
 }
 
-constexpr void mdspan() {
+constexpr static void mdspan() {
     auto storage = di::Array { 1, 2, 3, 4, 5, 6, 7, 8 };
     auto span = di::MDSpan { storage.data(), di::Extents<size_t, 2, 2, 2> {} };
 

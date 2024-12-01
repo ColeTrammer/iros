@@ -5,7 +5,7 @@
 #include <dius/test/prelude.h>
 
 namespace container_hash {
-constexpr void hash() {
+constexpr static void hash() {
     di::hash(42);
 
     auto x = di::make_tuple(1, 2, 3);
@@ -18,7 +18,7 @@ constexpr void hash() {
     di::hash(z);
 }
 
-constexpr void hash_same() {
+constexpr static void hash_same() {
     static_assert(di::HashSame<int, int>);
     static_assert(!di::HashSame<int, long>);
 

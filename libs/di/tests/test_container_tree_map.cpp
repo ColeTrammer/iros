@@ -4,7 +4,7 @@
 #include <dius/test/prelude.h>
 
 namespace container_tree_map {
-constexpr void basic() {
+constexpr static void basic() {
     auto x = di::zip(di::range(4), di::range(4)) | di::to<di::TreeMap>();
 
     ASSERT_EQ(x.at(1), 1);

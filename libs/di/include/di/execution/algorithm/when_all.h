@@ -68,7 +68,8 @@ namespace when_all_ns {
     concept ValidSenders = (concepts::SenderIn<Sends, Env> && ...) && ((set_value_count<Env, Sends> < 2) && ...);
 
     template<typename Env, typename... Sends>
-    constexpr inline bool never_sends_value = ((set_value_count<Env, Sends> == 0) || ...);
+    constexpr inline bool never_sends_value =
+        ((set_value_count<Env, Sends> == 0) || ...); // NOLINT(misc-redundant-expression)
 
     template<typename Env, typename... Sends>
     using NonValueCompletions = meta::Unique<

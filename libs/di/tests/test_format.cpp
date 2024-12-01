@@ -3,7 +3,7 @@
 #include <dius/test/prelude.h>
 
 namespace format {
-constexpr void basic() {
+constexpr static void basic() {
     auto s = di::present(u8"a{}"_sv, 42);
     ASSERT_EQ(s, u8"a42"_sv);
     ASSERT_NOT_EQ(s, u8"43"_sv);

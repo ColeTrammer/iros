@@ -3,7 +3,7 @@
 #include <dius/test/prelude.h>
 
 namespace container_intrusive {
-constexpr void forward_list() {
+constexpr static void forward_list() {
     struct Node : di::IntrusiveForwardListNode<> {
         constexpr explicit Node(int v) : value(v) {}
 
@@ -51,7 +51,7 @@ constexpr void forward_list() {
     ASSERT_EQ(list.pop_front().transform(&Node::value), di::nullopt);
 }
 
-constexpr void list() {
+constexpr static void list() {
     struct Node : di::IntrusiveListNode<> {
         constexpr explicit Node(int v) : value(v) {}
 

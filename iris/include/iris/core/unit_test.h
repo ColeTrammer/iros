@@ -44,16 +44,16 @@ private:
 };
 }
 
-#define IRIS_TEST(suite_name, case_name)                                                                          \
-    static void suite_name##_##case_name();                                                                       \
-    static void register_##suite_name##_##case_name() {                                                           \
-        iris::test::TestManager::the().register_test_case(                                                        \
-            iris::test::TestCase("" #suite_name ""_tsv, "" #case_name ""_tsv, suite_name##_##case_name));         \
-    }                                                                                                             \
-    [[maybe_unused]] [[gnu::section(".unit_test_init_array")]] void (*__unit_test_##suite_name##_##case_name)() = \
-        register_##suite_name##_##case_name;                                                                      \
-    static void suite_name##_##case_name() {                                                                      \
-        case_name();                                                                                              \
+#define IRIS_TEST(suite_name, case_name)                                                                  \
+    static void suite_name##_##case_name();                                                               \
+    static void register_##suite_name##_##case_name() {                                                   \
+        iris::test::TestManager::the().register_test_case(                                                \
+            iris::test::TestCase("" #suite_name ""_tsv, "" #case_name ""_tsv, suite_name##_##case_name)); \
+    }                                                                                                     \
+    [[maybe_unused]] [[gnu::section(".unit_test_init_array")]] static void (                              \
+        *__unit_test_##suite_name##_##case_name)() = register_##suite_name##_##case_name;                 \
+    static void suite_name##_##case_name() {                                                              \
+        case_name();                                                                                      \
     }
 
 #define TEST IRIS_TEST

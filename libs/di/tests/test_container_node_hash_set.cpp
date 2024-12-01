@@ -4,7 +4,7 @@
 #include <dius/test/prelude.h>
 
 namespace container_node_hash_set {
-constexpr void basic() {
+constexpr static void basic() {
     auto x = di::NodeHashSet<int> {};
     x.reserve(10);
 
@@ -46,7 +46,7 @@ constexpr void basic() {
     ASSERT_EQ(x.size(), 2);
 }
 
-constexpr void multi() {
+constexpr static void multi() {
     auto x = di::NodeHashMultiSet<int> {};
     x.insert(1);
     x.insert(1);

@@ -7,7 +7,7 @@
 #include "package_database.h"
 
 namespace pm {
-auto main(Args& arguments) -> di::Result<> {
+static auto main(Args& arguments) -> di::Result<> {
     auto config = Config(arguments);
 
     auto database = PackageDatabase();

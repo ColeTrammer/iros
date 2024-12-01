@@ -8,7 +8,7 @@
 #include <dius/test/prelude.h>
 
 namespace container_algorithm {
-constexpr void access() {
+constexpr static void access() {
     auto v = di::Array { 1, 2, 3, 4, 5 };
     auto v2 = di::Vector<i32> {};
 
@@ -36,7 +36,7 @@ constexpr void access() {
     ASSERT_EQ(di::at_unchecked(m, "a"_sv), "b"_sv);
 }
 
-constexpr void minmax() {
+constexpr static void minmax() {
     ASSERT_EQ(di::min(1, 2), 1);
     ASSERT_EQ(di::min({ 5, 4, 3, 2, 1 }), 1);
     ASSERT_EQ(di::min(di::range(5, 10)), 5);
@@ -71,7 +71,7 @@ constexpr void minmax() {
     }
 }
 
-constexpr void compare() {
+constexpr static void compare() {
     auto a = di::range(6);
     auto b = di::Array { 0, 1, 2, 3, 4, 5 };
     auto c = std::initializer_list<int> { 0, 1, 2 };
@@ -89,7 +89,7 @@ constexpr void compare() {
     ASSERT(di::container::compare(a, e) < 0);
 }
 
-constexpr void fold() {
+constexpr static void fold() {
     auto a = di::range(6);
     ASSERT_EQ(di::sum(a), 15);
     ASSERT_EQ(di::fold_left(a | di::drop(1), 1, di::multiplies), 120);
@@ -110,7 +110,7 @@ constexpr void fold() {
     ASSERT_EQ(*r3, 15);
 }
 
-constexpr void is_sorted() {
+constexpr static void is_sorted() {
     auto a = di::Array { 1, 2, 3, 4, 5 };
     ASSERT(di::is_sorted(a));
 
@@ -118,7 +118,7 @@ constexpr void is_sorted() {
     ASSERT(!di::is_sorted(b));
 }
 
-constexpr void permute() {
+constexpr static void permute() {
     auto a = di::Array { 1, 2, 3, 4, 5 };
     auto b = a;
     di::container::reverse(a);
@@ -147,7 +147,7 @@ constexpr void permute() {
     ASSERT_EQ(d, ex2);
 }
 
-constexpr void contains() {
+constexpr static void contains() {
     auto a = di::range(5);
     auto b = di::range(3);
     auto c = di::range(3, 5);
@@ -168,7 +168,7 @@ constexpr void contains() {
     ASSERT_EQ(r1.end(), d.begin() + 5);
 }
 
-constexpr void predicate() {
+constexpr static void predicate() {
     ASSERT(di::all_of(di::range(5), di::curry_back(di::less)(5)));
     ASSERT(di::none_of(di::range(5), di::curry_back(di::greater)(4)));
     ASSERT(di::any_of(di::range(5), di::curry(di::equal)(4)));
@@ -181,7 +181,7 @@ constexpr void predicate() {
               2);
 }
 
-constexpr void for_each() {
+constexpr static void for_each() {
     int sum = 0;
     di::for_each(di::range(6), [&](int x) {
         sum += x;
@@ -189,7 +189,7 @@ constexpr void for_each() {
     ASSERT_EQ(sum, 15);
 }
 
-constexpr void sort() {
+constexpr static void sort() {
     auto v = di::Array { 3, 5, 1, 2 };
     di::sort(v);
     ASSERT_EQ(v, (di::Array { 1, 2, 3, 5 }));
@@ -227,7 +227,7 @@ constexpr void sort() {
     ASSERT(di::is_sorted(s, di::compare, &X::a));
 }
 
-constexpr void shift() {
+constexpr static void shift() {
     auto x = di::Array { 1, 2, 3, 4, 5 };
 
     auto r1 = di::shift_left(x, 2);
@@ -286,7 +286,7 @@ constexpr void shift() {
     //        using di::ForwardList.
 }
 
-constexpr void partition() {
+constexpr static void partition() {
     auto a = di::Array { 2, 1, 3, 4, 6, 5 };
 
     auto r1 = di::partition(a, [](int x) {
@@ -333,7 +333,7 @@ constexpr void partition() {
     ASSERT_EQ(r4, d.begin() + 3);
 }
 
-constexpr void permutation() {
+constexpr static void permutation() {
     auto a = di::Array { 1, 5, 1, 2, 3 };
     auto b = di::Array { 5, 3, 1, 1, 2 };
     auto c = di::Array { 5, 1, 3, 1, 1 };
@@ -458,7 +458,7 @@ constexpr void permutation() {
     }
 }
 
-constexpr void binary_search() {
+constexpr static void binary_search() {
     auto a = di::Array { 1, 2, 3, 3, 3, 4, 6 };
     for (auto& x : a) {
         auto [it, found] = di::binary_search(a, x);
@@ -506,7 +506,7 @@ constexpr void binary_search() {
     }
 }
 
-constexpr void set() {
+constexpr static void set() {
     auto a = di::Array { 1, 1, 2, 4, 5, 6 };
     auto b = di::Array { 1, 2, 3, 4, 5 };
 

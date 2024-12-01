@@ -29,7 +29,7 @@ struct Args {
     }
 };
 
-auto main(Args& args) -> di::Result<void> {
+static auto main(Args& args) -> di::Result<void> {
     if (args.wav_file) {
         dius::println("Trying to open WAV file: {}"_sv, *args.wav_file);
         auto result = TRY(audio::formats::parse_wav(*args.wav_file));

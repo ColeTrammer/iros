@@ -15,7 +15,7 @@
 #include <di/meta/core.h>
 #include <di/meta/language.h>
 #include <di/meta/operations.h>
-#include <di/platform/custom.h>
+#include <di/platform/prelude.h>
 #include <di/serialization/binary_serializer.h>
 #include <di/serialization/deserialize.h>
 #include <di/types/byte.h>

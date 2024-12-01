@@ -1,7 +1,6 @@
 #pragma once
 
 #include <di/function/tag_invoke.h>
-#include <di/meta/common.h>
 #include <di/meta/core.h>
 #include <di/meta/language.h>
 #include <di/meta/operations.h>

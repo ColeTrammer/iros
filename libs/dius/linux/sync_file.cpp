@@ -6,27 +6,27 @@
 #include <dius/system/system_call.h>
 
 namespace dius {
-auto sys_read(int fd, di::Span<byte> data) -> di::Expected<usize, di::GenericCode> {
+static auto sys_read(int fd, di::Span<byte> data) -> di::Expected<usize, di::GenericCode> {
     return system::system_call<usize>(system::Number::read, fd, data.data(), data.size());
 }
 
-auto sys_write(int fd, di::Span<byte const> data) -> di::Expected<usize, di::GenericCode> {
+static auto sys_write(int fd, di::Span<byte const> data) -> di::Expected<usize, di::GenericCode> {
     return system::system_call<usize>(system::Number::write, fd, data.data(), data.size());
 }
 
-auto sys_pread(int fd, u64 offset, di::Span<byte> data) -> di::Expected<usize, di::GenericCode> {
+static auto sys_pread(int fd, u64 offset, di::Span<byte> data) -> di::Expected<usize, di::GenericCode> {
     return system::system_call<usize>(system::Number::pread, fd, data.data(), data.size(), offset);
 }
 
-auto sys_pwrite(int fd, u64 offset, di::Span<byte const> data) -> di::Expected<usize, di::GenericCode> {
+static auto sys_pwrite(int fd, u64 offset, di::Span<byte const> data) -> di::Expected<usize, di::GenericCode> {
     return system::system_call<usize>(system::Number::pwrite, fd, data.data(), data.size(), offset);
 }
 
-auto sys_close(int fd) -> di::Expected<void, di::GenericCode> {
+static auto sys_close(int fd) -> di::Expected<void, di::GenericCode> {
     return system::system_call<int>(system::Number::close, fd) % di::into_void;
 }
 
-auto sys_open(di::PathView path, int flags, u16 create_mode) -> di::Expected<int, di::GenericCode> {
+static auto sys_open(di::PathView path, int flags, u16 create_mode) -> di::Expected<int, di::GenericCode> {
     auto raw_data = path.data();
     char null_terminated_string[4097];
     ASSERT_LT(raw_data.size(), sizeof(null_terminated_string) - 1);
@@ -37,11 +37,11 @@ auto sys_open(di::PathView path, int flags, u16 create_mode) -> di::Expected<int
     return system::system_call<int>(system::Number::openat, AT_FDCWD, null_terminated_string, flags, create_mode);
 }
 
-auto sys_ftruncate(int fd, u64 size) -> di::Expected<void, di::GenericCode> {
+static auto sys_ftruncate(int fd, u64 size) -> di::Expected<void, di::GenericCode> {
     return system::system_call<int>(system::Number::ftruncate, fd, size) % di::into_void;
 }
 
-auto sys_mmap(void* addr, usize length, Protection prot, MapFlags flags, int fd, u64 offset)
+static auto sys_mmap(void* addr, usize length, Protection prot, MapFlags flags, int fd, u64 offset)
     -> di::Expected<byte*, di::GenericCode> {
     return system::system_call<byte*>(system::Number::mmap, addr, length, prot, flags, fd, offset);
 }

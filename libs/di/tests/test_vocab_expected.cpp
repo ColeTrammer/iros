@@ -2,7 +2,7 @@
 #include <dius/test/prelude.h>
 
 namespace vocab_expected {
-constexpr void void_value() {
+constexpr static void void_value() {
     auto x = di::Expected<void, int> {};
     ASSERT(x.has_value());
     ASSERT(!!x);
@@ -44,7 +44,7 @@ constexpr void void_value() {
     ASSERT_EQ(q, di::Unexpected { 8 });
 }
 
-constexpr void void_error() {
+constexpr static void void_error() {
     auto x = di::Expected { 2 };
     ASSERT_EQ(*x, 2);
 
@@ -77,7 +77,7 @@ constexpr void void_error() {
     ASSERT_EQ(w, di::Unexpected { 8 });
 }
 
-constexpr void basic() {
+constexpr static void basic() {
     auto x = di::Expected<int, int> { di::unexpect, 5 };
     ASSERT_EQ(x, di::Unexpected { 5 });
 
@@ -114,7 +114,7 @@ struct M {
     constexpr friend auto operator==(M const& a, M const& b) -> bool { return a.x == b.x; }
 };
 
-constexpr void move_only() {
+constexpr static void move_only() {
     auto x = di::Expected<M, int> { M(2) };
     ASSERT_EQ(x, M(2));
 
@@ -132,7 +132,7 @@ constexpr void move_only() {
     ASSERT_EQ(z, di::Unexpected { 2 });
 }
 
-constexpr void fallible() {
+constexpr static void fallible() {
     auto x = 2;
     auto y = di::as_fallible(auto(x));
     static_assert(di::SameAs<decltype(y), di::Expected<int, void>>);
@@ -157,7 +157,7 @@ constexpr void fallible() {
     ASSERT_EQ(c, 6);
 }
 
-constexpr void reference() {
+constexpr static void reference() {
     int a = 2;
     auto x = di::Expected { di::ref(a) };
     ASSERT_EQ(*x, a);

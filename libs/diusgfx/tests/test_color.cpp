@@ -3,7 +3,7 @@
 #include <diusgfx/color.h>
 
 namespace gfx_color {
-constexpr void basic() {
+constexpr static void basic() {
     auto p = gfx::Color(255, 0, 0);
     auto q = p.with_green(123);
 

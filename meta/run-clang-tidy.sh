@@ -48,4 +48,4 @@ while getopts ":s:a:" opt; do
 done
 
 set -x
-! run-clang-tidy $tidy_args 2>&1 | grep -vE 'clang-tidy|[[:digit:]]+ warnings? generated'
+! run-clang-tidy $tidy_args 2>&1 | grep -vE '^$|Applying fixes|clang-tidy|[[:digit:]]+ warnings? generated'

@@ -5,7 +5,7 @@
 #include <dius/test/prelude.h>
 
 namespace container_view {
-constexpr void basic() {
+constexpr static void basic() {
     int arr[] = { 1, 2, 3, 4, 5 };
     auto x = di::View { di::begin(arr), di::end(arr) };
 
@@ -30,7 +30,7 @@ constexpr void basic() {
     }
 }
 
-constexpr void all() {
+constexpr static void all() {
     int arr[] = { 1, 2, 3, 4, 5 };
     auto x = di::view::all(arr);
 
@@ -86,7 +86,7 @@ constexpr void all() {
     }
 }
 
-constexpr void empty() {
+constexpr static void empty() {
     auto c = di::view::empty<int>;
     for (auto x : c) {
         (void) x;
@@ -95,7 +95,7 @@ constexpr void empty() {
     ASSERT(c.empty());
 }
 
-constexpr void single() {
+constexpr static void single() {
     auto c = di::single(5);
 
     {
@@ -109,7 +109,7 @@ constexpr void single() {
     ASSERT_EQ(c.size(), 1U);
 }
 
-constexpr void iota() {
+constexpr static void iota() {
     static_assert(di::concepts::Iterator<decltype(di::view::iota(1, 6).begin())>);
     static_assert(di::concepts::RandomAccessContainer<decltype(di::view::iota(1, 6))>);
     static_assert(di::concepts::RandomAccessContainer<decltype(di::view::iota(1))>);
@@ -132,7 +132,7 @@ constexpr void iota() {
     }
 }
 
-constexpr void repeat() {
+constexpr static void repeat() {
     static_assert(di::concepts::RandomAccessContainer<decltype(di::repeat(5, 5))>);
     static_assert(di::concepts::RandomAccessContainer<decltype(di::repeat(5))>);
 
@@ -145,7 +145,7 @@ constexpr void repeat() {
     }
 }
 
-constexpr void reverse() {
+constexpr static void reverse() {
     int arr[] = { 1, 2, 3, 4, 5 };
     static_assert(!di::concepts::ContiguousIterator<di::container::ReverseIterator<int*>>);
     static_assert(di::concepts::RandomAccessIterator<di::container::ReverseIterator<int*>>);
@@ -183,7 +183,7 @@ constexpr void reverse() {
     }
 }
 
-constexpr void as_const() {
+constexpr static void as_const() {
     int arr[] = { 1, 2, 3, 4, 5 };
 
     static_assert(di::concepts::BidirectionalContainer<decltype(di::view::as_const(arr))>);
@@ -195,7 +195,7 @@ constexpr void as_const() {
     ASSERT_EQ(di::sum(di::view::as_const(arr)), 15);
 }
 
-constexpr void as_rvalue() {
+constexpr static void as_rvalue() {
     int arr[] = { 1, 2, 3, 4, 5 };
     static_assert(!di::concepts::ContiguousIterator<di::container::MoveIterator<int*>>);
     static_assert(di::concepts::RandomAccessIterator<di::container::MoveIterator<int*>>);
@@ -223,7 +223,7 @@ constexpr void as_rvalue() {
     }
 }
 
-constexpr void transform() {
+constexpr static void transform() {
     int arr[] = { 0, 1, 2, 3, 4 };
 
     static_assert(di::concepts::View<decltype(di::transform(di::view::all(arr), di::identity))>);
@@ -243,7 +243,7 @@ constexpr void transform() {
     }
 }
 
-constexpr void zip() {
+constexpr static void zip() {
     int arr[] = { 0, 1, 2, 3, 4 };
     int ar[] = { 4, 3, 2, 1, 0 };
 
@@ -260,7 +260,7 @@ constexpr void zip() {
     static_assert(di::concepts::RandomAccessContainer<decltype(di::zip(arr, ar))>);
 }
 
-constexpr void zip_transform() {
+constexpr static void zip_transform() {
     int arr[] = { 0, 1, 2, 3, 4 };
     int ar[] = { 4, 3, 2, 1, 0 };
 
@@ -279,7 +279,7 @@ constexpr void zip_transform() {
     static_assert(di::concepts::RandomAccessContainer<decltype(di::zip_transform(di::plus, arr, ar))>);
 }
 
-constexpr void adjacent() {
+constexpr static void adjacent() {
     int arr[] = { 1, 2, 3, 4, 5, 6 };
 
     static_assert(di::concepts::RandomAccessContainer<decltype(di::pairwise(arr))>);
@@ -295,7 +295,7 @@ constexpr void adjacent() {
     ASSERT(di::container::equal(windows, di::Array { 6, 9, 12, 15 }));
 }
 
-constexpr void adjacent_transform() {
+constexpr static void adjacent_transform() {
     int arr[] = { 1, 2, 3, 4, 5, 6 };
 
     static_assert(di::concepts::RandomAccessContainer<decltype(di::pairwise_transform(arr, di::plus))>);
@@ -310,7 +310,7 @@ constexpr void adjacent_transform() {
     ASSERT(di::container::equal(windows, di::Array { 6, 9, 12, 15 }));
 }
 
-constexpr void counted() {
+constexpr static void counted() {
     auto x = di::Array { 5, 4, 3, 2, 1 };
     auto y = di::view::counted(x.begin(), 3);
     auto r = di::range(3, 8);
@@ -319,7 +319,7 @@ constexpr void counted() {
     ASSERT(di::container::equal(z, di::Array { 5, 4, 3 }));
 }
 
-constexpr void take() {
+constexpr static void take() {
     auto a = di::Array { 1, 2, 3, 4, 5 };
     auto x = a | di::take(3);
     static_assert(di::SameAs<decltype(x), di::Span<int>>);
@@ -329,7 +329,7 @@ constexpr void take() {
     ASSERT(di::container::equal(z, di::Array { 1, 2, 3 }));
 }
 
-constexpr void drop() {
+constexpr static void drop() {
     auto a = di::Array { 1, 2, 3, 4, 5 };
     auto x = a | di::drop(2);
     static_assert(di::SameAs<decltype(x), di::Span<int>>);
@@ -339,7 +339,7 @@ constexpr void drop() {
     ASSERT(di::container::equal(z, di::Array { 3, 4, 5 }));
 }
 
-constexpr void split() {
+constexpr static void split() {
     auto a = di::Array { 1, 2, 4, 3, 5, 4, 1, 2, 4, 4, 4, 4 } | di::split(4);
     auto b = di::move(a) | di::transform(di::sum);
 
@@ -355,7 +355,7 @@ constexpr void split() {
     ASSERT(di::container::equal(d, di::Array { u8"Hello"_sv, u8"world"_sv, u8"friends"_sv }));
 }
 
-constexpr void join() {
+constexpr static void join() {
     auto a = di::Array { di::Array { 1, 2 }, di::Array { 3, 4 } };
 
     ASSERT(di::container::equal(a | di::join, di::Array { 1, 2, 3, 4 }));
@@ -366,7 +366,7 @@ constexpr void join() {
     ASSERT(di::container::equal(b | di::join, di::Array { 1, 2, 1, 2 }));
 }
 
-constexpr void join_with() {
+constexpr static void join_with() {
     auto a = di::Array { di::Array { 1, 2 }, di::Array { 3, 4 } };
 
     ASSERT(di::container::equal(a | di::join_with(5), di::Array { 1, 2, 5, 3, 4 }));
@@ -377,7 +377,7 @@ constexpr void join_with() {
     ASSERT(di::container::equal(b | di::join_with(di::Array { 3, 4 }), di::Array { 1, 2, 3, 4, 1, 2 }));
 }
 
-constexpr void filter() {
+constexpr static void filter() {
     auto x = di::Array { 1, 2, 3, 4, 5 };
     auto y = di::filter(x, [](auto x) {
         return x % 2 == 1;
@@ -401,17 +401,17 @@ constexpr void filter() {
                                 di::Array { 5, 3, 1 }));
 }
 
-constexpr void take_while() {
+constexpr static void take_while() {
     ASSERT(
         di::container::equal(di::range(10) | di::take_while(di::curry_back(di::less)(5)), di::Array { 0, 1, 2, 3, 4 }));
 }
 
-constexpr void drop_while() {
+constexpr static void drop_while() {
     ASSERT(
         di::container::equal(di::range(10) | di::drop_while(di::curry_back(di::less)(5)), di::Array { 5, 6, 7, 8, 9 }));
 }
 
-constexpr void elements() {
+constexpr static void elements() {
     auto x = di::zip(di::range(5), di::range(5));
     auto y = x | di::to<di::Vector>();
     ASSERT(di::container::equal(di::keys(x), di::values(x)));
@@ -419,7 +419,7 @@ constexpr void elements() {
     ASSERT(di::container::equal(di::keys(y) | di::reverse, di::values(y) | di::reverse));
 }
 
-constexpr void stride() {
+constexpr static void stride() {
     auto x = di::range(5) | di::stride(2);
     auto y = di::range(5) | di::stride(3);
     auto z = di::range(5) | di::stride(1);
@@ -428,14 +428,14 @@ constexpr void stride() {
     ASSERT(di::container::equal(z, di::Array { 0, 1, 2, 3, 4 }));
 }
 
-constexpr void enumerate() {
+constexpr static void enumerate() {
     ASSERT(di::all_of(di::range(10) | di::enumerate, [](auto pair) {
         auto [index, value] = pair;
         return index == di::to_unsigned(value);
     }));
 }
 
-constexpr void cycle() {
+constexpr static void cycle() {
     auto n = di::Array { 1, 2, 3, 4, 5 };
     auto x = n.span() | di::cycle;
 
@@ -454,7 +454,7 @@ constexpr void cycle() {
     ASSERT_EQ(di::distance(a, b), 50);
 }
 
-constexpr void chunk() {
+constexpr static void chunk() {
     auto in1 = di::Array { 1, 2, 3, 8, 2, -3, 9, -1 };
 
     auto r1 = in1 | di::chunk(3) | di::transform(di::sum) | di::to<di::Vector>();
@@ -468,7 +468,7 @@ constexpr void chunk() {
     ASSERT_EQ(di::size(in1 | di::chunk(3)), 3U);
 }
 
-void chunk_generator() {
+static void chunk_generator() {
     auto in3 = []() -> di::Generator<int> {
         co_yield 1;
         co_yield 2;
@@ -485,7 +485,7 @@ void chunk_generator() {
     ASSERT_EQ(r3, ex3);
 }
 
-constexpr void slide() {
+constexpr static void slide() {
     auto in1 = di::Array { 1, 2, 3, 4, 5 };
     auto r1 = in1 | di::slide(3) | di::transform(di::sum) | di::to<di::Vector>();
     auto ex1 = di::Array { 6, 9, 12 } | di::to<di::Vector>();
@@ -502,7 +502,7 @@ constexpr void slide() {
     ASSERT_EQ(r3, ex3);
 }
 
-constexpr void chunk_by() {
+constexpr static void chunk_by() {
     auto in1 = di::Array { 1, 2, 2, 3, 0, 4, 5, 2 };
     auto r1 = di::chunk_by(in1, di::equal_or_less) | di::to<di::Vector>();
     auto ex1 = di::Array { *in1.subspan(0, 4), *in1.subspan(4, 3), *in1.subspan(7) } | di::to<di::Vector>();
@@ -514,7 +514,7 @@ constexpr void chunk_by() {
     ASSERT_EQ(r2, ex2);
 }
 
-constexpr void cartesian_product() {
+constexpr static void cartesian_product() {
     auto r1 = di::cartesian_product(di::range(2), di::range(2), di::range(2)) | di::to<di::Vector>();
     auto ex1 = di::Array {
         di::Tuple { 0, 0, 0 }, di::Tuple { 0, 0, 1 }, di::Tuple { 0, 1, 0 }, di::Tuple { 0, 1, 1 },
@@ -543,7 +543,7 @@ constexpr void cartesian_product() {
     ASSERT_EQ(r3.begin(), r3.end());
 }
 
-constexpr void common() {
+constexpr static void common() {
     auto in1 = di::range(1, 4) | di::cycle | di::take(9) | di::common;
     static_assert(di::concepts::CommonContainer<decltype(in1)>);
 
@@ -552,7 +552,7 @@ constexpr void common() {
     ASSERT_EQ(r3, ex3);
 }
 
-constexpr void concat() {
+constexpr static void concat() {
     auto in1 = di::Array { 2, 3, 4 };
     auto in2 = di::Array { 7, 6, 5 };
     auto in3 = di::Array { 1, 8, 0 };
@@ -593,7 +593,7 @@ constexpr void concat() {
     ASSERT_EQ(r2, ex2);
 }
 
-constexpr void cache_last() {
+constexpr static void cache_last() {
     auto count = 0;
     auto square = [&](int x) {
         count++;

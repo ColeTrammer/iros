@@ -6,7 +6,7 @@
 #include <dius/test/prelude.h>
 
 namespace container_tree_set {
-constexpr void basic() {
+constexpr static void basic() {
     di::TreeSet<int> x;
     x.clear();
     ASSERT_EQ(di::distance(x), 0);
@@ -31,7 +31,7 @@ constexpr void basic() {
     ASSERT(y.contains(4));
 }
 
-constexpr void accessors() {
+constexpr static void accessors() {
     auto x = di::range(1, 6) | di::to<di::TreeSet>(di::compare);
 
     auto const& y = x;
@@ -48,7 +48,7 @@ constexpr void accessors() {
     ASSERT_EQ(y.count(10), 0U);
 }
 
-constexpr void erase() {
+constexpr static void erase() {
     auto x = di::to<di::TreeSet>(di::range(1, 6));
 
     ASSERT_EQ(*x.erase(x.find(2)), 3);
@@ -65,7 +65,7 @@ constexpr void erase() {
     ASSERT_EQ(di::distance(y), 5);
 }
 
-constexpr void property() {
+constexpr static void property() {
     auto do_test = [](di::UniformRandomBitGenerator auto rng) {
         auto x = di::TreeMultiSet<unsigned int> {};
 
@@ -98,7 +98,7 @@ constexpr void property() {
     }
 }
 
-constexpr void property2() {
+constexpr static void property2() {
     auto do_test = [](di::UniformRandomBitGenerator auto rng) {
         auto x = di::TreeSet<unsigned int> {};
 
@@ -133,7 +133,7 @@ constexpr void property2() {
     }
 }
 
-constexpr void property3() {
+constexpr static void property3() {
     auto do_test = [](di::UniformRandomBitGenerator auto rng) {
         auto x = di::TreeSet<unsigned int> {};
 

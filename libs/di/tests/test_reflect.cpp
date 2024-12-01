@@ -31,7 +31,7 @@ public:
     }
 };
 
-constexpr void hash_fields(di::Hasher auto& hasher, di::ReflectableToFields auto const& object) {
+constexpr static void hash_fields(di::Hasher auto& hasher, di::ReflectableToFields auto const& object) {
     di::tuple_for_each(
         [&](auto field) {
             di::hash_write(hasher, field.get(object));
@@ -39,7 +39,7 @@ constexpr void hash_fields(di::Hasher auto& hasher, di::ReflectableToFields auto
         di::reflect(object));
 }
 
-constexpr void basic() {
+constexpr static void basic() {
     static_assert(di::Reflectable<MyType>);
 
     auto x = MyType { 1, 2, 3 };
@@ -58,7 +58,7 @@ constexpr void basic() {
     ASSERT_EQ(di::hash(x), ex1);
 }
 
-constexpr void private_fields() {
+constexpr static void private_fields() {
     auto y = MyClass { 1, 2, 3 };
 
     auto hasher = di::DefaultHasher {};
@@ -74,7 +74,7 @@ constexpr void private_fields() {
     ASSERT_EQ(r2, ex2);
 }
 
-constexpr void format() {
+constexpr static void format() {
     auto x = MyType { 1, 2, 3 };
     auto s = di::to_string(x);
 
@@ -83,12 +83,12 @@ constexpr void format() {
 
 enum class MyEnum { Foo, Bar, Baz };
 
-constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyEnum>) {
+constexpr static auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyEnum>) {
     using enum MyEnum;
     return di::make_enumerators(di::enumerator<"Foo", Foo>, di::enumerator<"Bar", Bar>, di::enumerator<"Baz", Baz>);
 }
 
-constexpr void enum_() {
+constexpr static void enum_() {
     ASSERT_EQ(di::enum_to_string(MyEnum::Foo), "Foo"_sv);
     ASSERT_EQ(di::enum_to_string(MyEnum::Bar), "Bar"_sv);
     ASSERT_EQ(di::enum_to_string(MyEnum::Baz), "Baz"_sv);

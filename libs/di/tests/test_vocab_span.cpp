@@ -3,7 +3,7 @@
 #include <dius/test/prelude.h>
 
 namespace vocab_span {
-constexpr void basic() {
+constexpr static void basic() {
     auto x = di::to_array({ 1, 2, 3, 4, 5 });
     auto y = di::Span { x };
 
@@ -28,7 +28,7 @@ constexpr void basic() {
     ASSERT_EQ(c, x);
 }
 
-constexpr void tuple() {
+constexpr static void tuple() {
     int array[] = { 6, 7, 8 };
     auto x = di::Span<int> { array };
 

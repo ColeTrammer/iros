@@ -2,7 +2,7 @@
 #include <dius/test/prelude.h>
 
 namespace chrono_duration {
-constexpr void basic() {
+constexpr static void basic() {
     auto x = 100_ms;
     x += 50_ms;
 

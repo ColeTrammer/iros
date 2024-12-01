@@ -91,7 +91,7 @@ enum class CMakeTestExecutionNoTestsAction {
     Ignore,
 };
 
-constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<CMakeTestExecutionNoTestsAction>) {
+constexpr static auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<CMakeTestExecutionNoTestsAction>) {
     return di::make_enumerators(di::enumerator<"default", CMakeTestExecutionNoTestsAction::Default>,
                                 di::enumerator<"error", CMakeTestExecutionNoTestsAction::Error>,
                                 di::enumerator<"ignore", CMakeTestExecutionNoTestsAction::Ignore>);
@@ -103,7 +103,7 @@ enum class CMakeTestExecutionRepeatMode {
     AfterTimeout,
 };
 
-constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<CMakeTestExecutionRepeatMode>) {
+constexpr static auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<CMakeTestExecutionRepeatMode>) {
     return di::make_enumerators(di::enumerator<"until-fail", CMakeTestExecutionRepeatMode::UntilFail>,
                                 di::enumerator<"until-pass", CMakeTestExecutionRepeatMode::UntilPass>,
                                 di::enumerator<"after-timeout", CMakeTestExecutionRepeatMode::AfterTimeout>);
@@ -496,7 +496,7 @@ static auto make_configure_presets() -> di::Tuple<di::Vector<CMakeConfigurePrese
     return { di::move(presets), di::move(preset_names) };
 }
 
-auto make_build_presets(di::Span<di::String const> preset_names) -> di::Vector<CMakeBuildPreset> {
+static auto make_build_presets(di::Span<di::String const> preset_names) -> di::Vector<CMakeBuildPreset> {
     auto presets = di::Vector<CMakeBuildPreset> {};
 
     auto base_presets = *di::from_json_string<di::Vector<CMakeBuildPreset>>(R"([
@@ -558,7 +558,7 @@ auto make_build_presets(di::Span<di::String const> preset_names) -> di::Vector<C
     return presets;
 }
 
-auto make_test_presets(di::Span<di::String const> preset_names) -> di::Vector<CMakeTestPreset> {
+static auto make_test_presets(di::Span<di::String const> preset_names) -> di::Vector<CMakeTestPreset> {
     auto presets = di::Vector<CMakeTestPreset> {};
 
     auto base_presets = *di::from_json_string<di::Vector<CMakeTestPreset>>(R"([
@@ -621,7 +621,7 @@ auto make_test_presets(di::Span<di::String const> preset_names) -> di::Vector<CM
     return presets;
 }
 
-auto main(Args& args) -> di::Result<void> {
+static auto main(Args& args) -> di::Result<void> {
     auto [configure_presets, configure_preset_names] = make_configure_presets();
     auto build_presets = make_build_presets(configure_preset_names.span());
     auto test_presets = make_test_presets(configure_preset_names.span());

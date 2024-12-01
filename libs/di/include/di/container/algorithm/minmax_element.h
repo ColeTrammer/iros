@@ -1,7 +1,6 @@
 #pragma once
 
 #include <di/container/algorithm/min_max_result.h>
-#include <di/container/algorithm/minmax_element.h>
 #include <di/container/concepts/prelude.h>
 #include <di/container/iterator/prelude.h>
 #include <di/container/meta/prelude.h>

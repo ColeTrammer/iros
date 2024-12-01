@@ -96,7 +96,7 @@ template<int irq_number>
 }
 
 template<int irq_number>
-constexpr auto get_irq_handler() {
+constexpr static auto get_irq_handler() {
     // For a list of x86_64 IRQ with push an error code onto the stack, see the exception table
     // on the OSDEV wiki: https://wiki.osdev.org/Exceptions.
     constexpr auto exceptions_with_error_code = di::Array { 8, 10, 11, 12, 13, 14, 17, 21, 28, 29, 30 };
