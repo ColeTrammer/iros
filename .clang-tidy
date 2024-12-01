@@ -27,6 +27,11 @@ Checks: >
   -modernize-use-designated-initializers,
   -modernize-use-nodiscard,
   -modernize-use-std-numbers,
+  performance-*,
+  -performance-avoid-endl,
+  -performance-enum-size,
+  -performance-no-int-to-ptr,
+  -performance-noexcept-move-constructor,
   readability-*,
   -readability-avoid-nested-conditional-operator,
   -readability-convert-member-functions-to-static,
@@ -38,9 +43,6 @@ Checks: >
   -readability-math-missing-parentheses,
   -readability-named-parameter,
   -readability-static-accessed-through-instance,
-# performance-*,
-# -performance-noexcept-move-constructor,
-# -performance-no-int-to-ptr,
 CheckOptions:
   - key: bugprone-dangling-handle.HandleClasses
     value: "di::StringView;di::Span"
@@ -54,6 +56,8 @@ CheckOptions:
     value: dius::println
   - key: modernize-use-std-print.PrintHeader
     value: <dius/print.h>
+  - key: performance-move-const-arg.CheckTriviallyCopyableMove
+    value: false
   - key: readability-implicit-bool-conversion.AllowPointerConditions
     value: true
   - key: readability-implicit-bool-conversion.AllowIntegerConditions

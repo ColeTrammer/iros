@@ -151,7 +151,7 @@ struct AnyT {
 
         constexpr Type(Type&& other)
         requires(is_moveable)
-            : m_vtable(other.m_vtable) {
+            : m_vtable(di::move(other.m_vtable)) {
             Storage::move_construct(other.m_vtable, this, util::addressof(other));
         }
 
