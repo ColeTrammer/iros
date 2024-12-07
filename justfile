@@ -17,9 +17,9 @@ alias r := run
 alias br := build_run
 alias vh := verify_headers
 
-# Default command: configure and build
+# Default command: list rules
 default:
-    @just preset={{ preset }} configure_build
+    @just --list
 
 # Configure
 configure *args="":
