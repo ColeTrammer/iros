@@ -13,3 +13,17 @@ e85f4af4525470a544993fc2f79d95a8a177f0c9
 271d1328537229ba74bdee4bae9b7d8dd6d9d34e
 # Autoformatted code with clang-format-19 and modified config
 9fe9f6125b3cce21045ce2467522d4179b9d120e
+# Use trailing return types
+17467917ec66fc362295a1830c17f3f17e159763
+# Add bugprone clang-tidy rules
+fabbd69a02f537c49862d3762a0991bd51eb3159
+# Add readability clang-tidy rules
+d371aace19a018f34d7de4b841c3b3575bdcab2b
+# Add modernize clang-tidy rules
+bd5ddb6b5b6ca8b95919797cc77b162259a28279
+# Add misc clang-tidy rules
+07bb7b735298b0e48af6b0c73f8ad025bb5670a5
+# Add performance clang-tidy rules
+c17c4c8243581cc3c1032f0746f798a1b9749f6c
+# Switch include styles to double quotes
+db6f56bdc80b2643c21efed9c6d55602fea741f7
