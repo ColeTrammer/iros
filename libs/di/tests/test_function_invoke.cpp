@@ -1,5 +1,5 @@
-#include <di/function/prelude.h>
-#include <dius/test/prelude.h>
+#include "di/function/prelude.h"
+#include "dius/test/prelude.h"
 
 namespace function_invoke {
 struct X {

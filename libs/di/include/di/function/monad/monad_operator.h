@@ -1,11 +1,11 @@
 #pragma once
 
-#include <di/function/monad/monad_bind.h>
-#include <di/function/monad/monad_concept.h>
-#include <di/function/monad/monad_fail.h>
-#include <di/function/monad/monad_fmap.h>
-#include <di/function/monad/monad_fmap_right.h>
-#include <di/util/forward.h>
+#include "di/function/monad/monad_bind.h"
+#include "di/function/monad/monad_concept.h"
+#include "di/function/monad/monad_fail.h"
+#include "di/function/monad/monad_fmap.h"
+#include "di/function/monad/monad_fmap_right.h"
+#include "di/util/forward.h"
 
 namespace di::function::monad {
 template<typename M, typename F>

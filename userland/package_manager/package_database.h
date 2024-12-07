@@ -1,10 +1,9 @@
 #pragma once
 
-#include <di/container/string/string_view.h>
-#include <di/container/tree/tree_set.h>
-#include <di/vocab/error/result.h>
-
 #include "config.h"
+#include "di/container/string/string_view.h"
+#include "di/container/tree/tree_set.h"
+#include "di/vocab/error/result.h"
 #include "package.h"
 
 namespace pm {

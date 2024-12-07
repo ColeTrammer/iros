@@ -1,10 +1,10 @@
-#include <iris/core/scheduler.h>
+#include "iris/core/scheduler.h"
 
-#include <iris/core/global_state.h>
-#include <iris/core/interrupt_disabler.h>
-#include <iris/core/print.h>
-#include <iris/hw/irq.h>
-#include <iris/hw/timer.h>
+#include "iris/core/global_state.h"
+#include "iris/core/interrupt_disabler.h"
+#include "iris/core/print.h"
+#include "iris/hw/irq.h"
+#include "iris/hw/timer.h"
 
 namespace iris {
 void Scheduler::schedule_task(Task& task) {

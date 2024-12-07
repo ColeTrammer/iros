@@ -1,14 +1,14 @@
 #pragma once
 
-#include <di/function/index_dispatch.h>
-#include <di/function/invoke.h>
-#include <di/meta/algorithm.h>
-#include <di/meta/constexpr.h>
-#include <di/platform/compiler.h>
-#include <di/vocab/array/array.h>
-#include <di/vocab/md/prelude.h>
-#include <di/vocab/variant/variant_like.h>
-#include <di/vocab/variant/variant_value.h>
+#include "di/function/index_dispatch.h"
+#include "di/function/invoke.h"
+#include "di/meta/algorithm.h"
+#include "di/meta/constexpr.h"
+#include "di/platform/compiler.h"
+#include "di/vocab/array/array.h"
+#include "di/vocab/md/prelude.h"
+#include "di/vocab/variant/variant_like.h"
+#include "di/vocab/variant/variant_value.h"
 
 namespace di::vocab {
 namespace detail {

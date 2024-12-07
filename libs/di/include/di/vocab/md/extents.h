@@ -1,11 +1,11 @@
 #pragma once
 
-#include <di/container/algorithm/all_of.h>
-#include <di/container/view/range.h>
-#include <di/math/numeric_limits.h>
-#include <di/math/to_unsigned.h>
-#include <di/types/prelude.h>
-#include <di/vocab/array/prelude.h>
+#include "di/container/algorithm/all_of.h"
+#include "di/container/view/range.h"
+#include "di/math/numeric_limits.h"
+#include "di/math/to_unsigned.h"
+#include "di/types/prelude.h"
+#include "di/vocab/array/prelude.h"
 
 namespace di::vocab {
 template<concepts::Integer T, size_t... extents>

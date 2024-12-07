@@ -1,4 +1,4 @@
-#include <dius/print.h>
+#include "dius/print.h"
 
 extern "C" auto main() -> int {
     for (unsigned int i = 0; i < 2; i++) {

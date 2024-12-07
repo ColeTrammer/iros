@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/meta/common.h>
-#include <di/meta/core.h>
-#include <di/meta/operations.h>
+#include "di/meta/common.h"
+#include "di/meta/core.h"
+#include "di/meta/operations.h"
 
 namespace di::concepts {
 template<typename T>

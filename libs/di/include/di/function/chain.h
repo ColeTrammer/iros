@@ -1,12 +1,12 @@
 #pragma once
 
-#include <di/function/invoke.h>
-#include <di/function/pipeable.h>
-#include <di/function/piped.h>
-#include <di/meta/operations.h>
-#include <di/meta/util.h>
-#include <di/util/forward.h>
-#include <di/util/move.h>
+#include "di/function/invoke.h"
+#include "di/function/pipeable.h"
+#include "di/function/piped.h"
+#include "di/meta/operations.h"
+#include "di/meta/util.h"
+#include "di/util/forward.h"
+#include "di/util/move.h"
 
 namespace di::function {
 namespace detail {

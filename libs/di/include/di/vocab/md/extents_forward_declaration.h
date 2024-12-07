@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/math/to_unsigned.h>
-#include <di/meta/language.h>
-#include <di/types/size_t.h>
-#include <di/vocab/span/span_forward_declaration.h>
+#include "di/math/to_unsigned.h"
+#include "di/meta/language.h"
+#include "di/types/size_t.h"
+#include "di/vocab/span/span_forward_declaration.h"
 
 namespace di::vocab {
 template<concepts::Integer T, types::size_t... extents>

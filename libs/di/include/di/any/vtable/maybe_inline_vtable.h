@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/any/vtable/inline_vtable.h>
-#include <di/any/vtable/out_of_line_vtable.h>
-#include <di/meta/algorithm.h>
+#include "di/any/vtable/inline_vtable.h"
+#include "di/any/vtable/out_of_line_vtable.h"
+#include "di/meta/algorithm.h"
 
 namespace di::any {
 template<size_t threshold>

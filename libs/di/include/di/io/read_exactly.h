@@ -1,11 +1,11 @@
 #pragma once
 
-#include <di/any/concepts/impl.h>
-#include <di/assert/assert_bool.h>
-#include <di/container/string/encoding.h>
-#include <di/container/string/transparent_encoding.h>
-#include <di/container/string/utf8_encoding.h>
-#include <di/io/interface/reader.h>
+#include "di/any/concepts/impl.h"
+#include "di/assert/assert_bool.h"
+#include "di/container/string/encoding.h"
+#include "di/container/string/transparent_encoding.h"
+#include "di/container/string/utf8_encoding.h"
+#include "di/io/interface/reader.h"
 
 namespace di::io {
 namespace detail {

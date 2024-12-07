@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/container/types/contiguous_iterator_tag.h>
-#include <di/function/tag_invoke.h>
-#include <di/types/in_place_type.h>
+#include "di/container/types/contiguous_iterator_tag.h"
+#include "di/function/tag_invoke.h"
+#include "di/types/in_place_type.h"
 
 namespace di::container {
 constexpr inline struct IteratorCategoryFunction {

@@ -1,4 +1,4 @@
-#include <dius/thread.h>
+#include "dius/thread.h"
 
 namespace dius {
 auto Thread::do_start(di::Function<void()> entry) -> di::Result<Thread> {

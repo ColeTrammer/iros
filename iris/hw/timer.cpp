@@ -1,7 +1,7 @@
-#include <iris/hw/timer.h>
+#include "iris/hw/timer.h"
 
-#include <iris/core/global_state.h>
-#include <iris/core/print.h>
+#include "iris/core/global_state.h"
+#include "iris/core/print.h"
 
 namespace iris {
 void init_timer_assignments() {

@@ -1,10 +1,10 @@
-#include <iris/arch/x86/amd64/hw/io_apic.h>
+#include "iris/arch/x86/amd64/hw/io_apic.h"
 
-#include <iris/arch/x86/amd64/hw/local_apic.h>
-#include <iris/arch/x86/amd64/msr.h>
-#include <iris/core/global_state.h>
-#include <iris/core/print.h>
-#include <iris/mm/map_physical_address.h>
+#include "iris/arch/x86/amd64/hw/local_apic.h"
+#include "iris/arch/x86/amd64/msr.h"
+#include "iris/core/global_state.h"
+#include "iris/core/print.h"
+#include "iris/mm/map_physical_address.h"
 
 namespace iris::x86::amd64 {
 static_assert(di::Impl<IoApic, IrqControllerInterface>);

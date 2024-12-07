@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/container/iterator/iterator_value.h>
-#include <di/meta/core.h>
+#include "di/container/iterator/iterator_value.h"
+#include "di/meta/core.h"
 
 namespace di::meta {
 template<typename T>

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/function/curry.h>
-#include <di/parser/concepts/parser.h>
-#include <di/parser/into_parser_context.h>
+#include "di/function/curry.h"
+#include "di/parser/concepts/parser.h"
+#include "di/parser/into_parser_context.h"
 
 namespace di::parser {
 namespace detail {

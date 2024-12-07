@@ -1,10 +1,10 @@
 #pragma once
 
-#include <di/container/concepts/indirectly_readable.h>
-#include <di/container/meta/iterator_reference.h>
-#include <di/function/invoke.h>
-#include <di/meta/operations.h>
-#include <di/meta/util.h>
+#include "di/container/concepts/indirectly_readable.h"
+#include "di/container/meta/iterator_reference.h"
+#include "di/function/invoke.h"
+#include "di/meta/operations.h"
+#include "di/meta/util.h"
 
 namespace di::concepts {
 namespace detail {

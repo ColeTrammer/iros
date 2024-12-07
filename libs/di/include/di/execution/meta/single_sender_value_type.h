@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/execution/concepts/sender_in.h>
-#include <di/execution/meta/value_types_of.h>
+#include "di/execution/concepts/sender_in.h"
+#include "di/execution/meta/value_types_of.h"
 
 namespace di::meta {
 namespace detail {

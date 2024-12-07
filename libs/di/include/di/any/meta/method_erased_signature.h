@@ -1,10 +1,10 @@
 #pragma once
 
-#include <di/any/concepts/method.h>
-#include <di/any/meta/method_signature.h>
-#include <di/meta/algorithm.h>
-#include <di/meta/core.h>
-#include <di/meta/language.h>
+#include "di/any/concepts/method.h"
+#include "di/any/meta/method_signature.h"
+#include "di/meta/algorithm.h"
+#include "di/meta/core.h"
+#include "di/meta/language.h"
 
 namespace di::meta {
 template<concepts::Method Method>

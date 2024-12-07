@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/container/interface/size.h>
-#include <di/util/declval.h>
+#include "di/container/interface/size.h"
+#include "di/util/declval.h"
 
 namespace di::meta {
 template<typename T>

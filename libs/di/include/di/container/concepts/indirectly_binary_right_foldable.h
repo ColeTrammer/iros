@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/container/concepts/indirectly_binary_left_foldable.h>
-#include <di/function/flip.h>
-#include <di/util/declval.h>
+#include "di/container/concepts/indirectly_binary_left_foldable.h"
+#include "di/function/flip.h"
+#include "di/util/declval.h"
 
 namespace di::concepts {
 namespace detail {

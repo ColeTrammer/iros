@@ -1,5 +1,6 @@
-#include <di/container/algorithm/prelude.h>
 #include <string.h>
+
+#include "di/container/algorithm/prelude.h"
 
 extern "C" auto memcmp(void const* lhs, void const* rhs, size_t count) -> int {
     auto const* lhs_typed = (unsigned char const*) lhs;

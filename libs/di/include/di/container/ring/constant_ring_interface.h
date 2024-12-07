@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/container/algorithm/compare.h>
-#include <di/container/algorithm/equal.h>
-#include <di/container/ring/ring_operations.h>
+#include "di/container/algorithm/compare.h"
+#include "di/container/algorithm/equal.h"
+#include "di/container/ring/ring_operations.h"
 
 namespace di::container {
 template<typename Self, typename Value>

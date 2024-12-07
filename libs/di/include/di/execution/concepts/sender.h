@@ -1,10 +1,10 @@
 #pragma once
 
-#include <di/execution/concepts/queryable.h>
-#include <di/execution/interface/enable_sender.h>
-#include <di/execution/interface/get_env.h>
-#include <di/meta/core.h>
-#include <di/meta/operations.h>
+#include "di/execution/concepts/queryable.h"
+#include "di/execution/interface/enable_sender.h"
+#include "di/execution/interface/get_env.h"
+#include "di/meta/core.h"
+#include "di/meta/operations.h"
 
 namespace di::concepts {
 template<typename Send>

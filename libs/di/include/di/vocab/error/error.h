@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/vocab/error/erased_status_code.h>
+#include "di/vocab/error/erased_status_code.h"
 
 namespace di::vocab {
 /// The error module is nearly an implementation of P1028R4.

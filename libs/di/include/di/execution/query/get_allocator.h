@@ -1,12 +1,12 @@
 #pragma once
 
-#include <di/container/allocator/allocator.h>
-#include <di/container/allocator/fallible_allocator.h>
-#include <di/container/allocator/infallible_allocator.h>
-#include <di/execution/query/forwarding_query.h>
-#include <di/function/tag_invoke.h>
-#include <di/platform/prelude.h>
-#include <di/util/as_const.h>
+#include "di/container/allocator/allocator.h"
+#include "di/container/allocator/fallible_allocator.h"
+#include "di/container/allocator/infallible_allocator.h"
+#include "di/execution/query/forwarding_query.h"
+#include "di/function/tag_invoke.h"
+#include "di/platform/prelude.h"
+#include "di/util/as_const.h"
 
 namespace di::execution {
 namespace detail {

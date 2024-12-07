@@ -1,6 +1,6 @@
-#include <dius/print.h>
-#include <dius/system/process.h>
-#include <dius/test/prelude.h>
+#include "dius/print.h"
+#include "dius/system/process.h"
+#include "dius/test/prelude.h"
 
 #ifndef DIUS_USE_RUNTIME
 #include <signal.h>

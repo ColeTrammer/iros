@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/container/string/string_view.h>
-#include <di/format/builtin_formatter/base.h>
-#include <di/format/formatter.h>
+#include "di/container/string/string_view.h"
+#include "di/format/builtin_formatter/base.h"
+#include "di/format/formatter.h"
 
 namespace di::format {
 template<concepts::Encoding Enc>
@@ -19,7 +19,6 @@ constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<bool>, For
             return detail::present_integer_to<Enc>(context, format.fill_and_align, format.sign, format.hash_tag,
                                                    format.zero, width, static_cast<detail::IntegerType>(type), false,
                                                    static_cast<i8>(value));
-           
         };
     };
 }

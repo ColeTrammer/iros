@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/container/algorithm/max.h>
-#include <di/vocab/error/status_code.h>
-#include <dius/config.h>
+#include "di/container/algorithm/max.h"
+#include "di/vocab/error/status_code.h"
+#include "dius/config.h"
 
 #include DIUS_PLATFORM_PATH(error.h)
 

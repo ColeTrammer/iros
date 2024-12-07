@@ -1,7 +1,7 @@
-#include <iris/arch/x86/amd64/idt.h>
+#include "iris/arch/x86/amd64/idt.h"
 
-#include <iris/arch/x86/amd64/system_instructions.h>
-#include <iris/core/global_state.h>
+#include "iris/arch/x86/amd64/system_instructions.h"
+#include "iris/core/global_state.h"
 
 namespace iris::x86::amd64::idt {
 template<int irq_number>

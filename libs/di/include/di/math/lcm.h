@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/math/gcd.h>
+#include "di/math/gcd.h"
 
 namespace di::math {
 namespace detail {

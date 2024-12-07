@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/container/algorithm/fold_left.h>
-#include <di/function/pipeline.h>
-#include <di/function/plus.h>
-#include <di/meta/operations.h>
+#include "di/container/algorithm/fold_left.h"
+#include "di/function/pipeline.h"
+#include "di/function/plus.h"
+#include "di/meta/operations.h"
 
 namespace di::container {
 namespace detail {

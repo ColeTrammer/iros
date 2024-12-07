@@ -1,23 +1,23 @@
 #pragma once
 
-#include <di/function/index_dispatch.h>
-#include <di/math/smallest_unsigned_type.h>
-#include <di/meta/algorithm.h>
-#include <di/meta/constexpr.h>
-#include <di/meta/core.h>
-#include <di/meta/operations.h>
-#include <di/meta/trivial.h>
-#include <di/util/add_member_get.h>
-#include <di/util/forward.h>
-#include <di/util/get.h>
-#include <di/util/initializer_list.h>
-#include <di/util/move.h>
-#include <di/vocab/variant/variant_alternative.h>
-#include <di/vocab/variant/variant_forward_declaration.h>
-#include <di/vocab/variant/variant_impl.h>
-#include <di/vocab/variant/variant_index.h>
-#include <di/vocab/variant/variant_size.h>
-#include <di/vocab/variant/variant_types.h>
+#include "di/function/index_dispatch.h"
+#include "di/math/smallest_unsigned_type.h"
+#include "di/meta/algorithm.h"
+#include "di/meta/constexpr.h"
+#include "di/meta/core.h"
+#include "di/meta/operations.h"
+#include "di/meta/trivial.h"
+#include "di/util/add_member_get.h"
+#include "di/util/forward.h"
+#include "di/util/get.h"
+#include "di/util/initializer_list.h"
+#include "di/util/move.h"
+#include "di/vocab/variant/variant_alternative.h"
+#include "di/vocab/variant/variant_forward_declaration.h"
+#include "di/vocab/variant/variant_impl.h"
+#include "di/vocab/variant/variant_index.h"
+#include "di/vocab/variant/variant_size.h"
+#include "di/vocab/variant/variant_types.h"
 
 namespace di::vocab {
 namespace detail {

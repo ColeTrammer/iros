@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/types/prelude.h>
-#include <di/util/exchange.h>
-#include <di/vocab/pointer/intrusive_ptr_cpo.h>
+#include "di/types/prelude.h"
+#include "di/util/exchange.h"
+#include "di/vocab/pointer/intrusive_ptr_cpo.h"
 
 #if __GNUC__ >= 12
 #pragma GCC diagnostic push

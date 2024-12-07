@@ -1,4 +1,4 @@
-#include <iris/core/global_state.h>
+#include "iris/core/global_state.h"
 
 namespace iris {
 // Wrapper type which disables construction. This is needed to prevent GCC

@@ -1,18 +1,18 @@
 #pragma once
 
-#include <di/execution/concepts/operation_state.h>
-#include <di/execution/concepts/receiver.h>
-#include <di/execution/concepts/sender.h>
-#include <di/execution/concepts/sender_of.h>
-#include <di/execution/interface/connect.h>
-#include <di/execution/interface/get_env.h>
-#include <di/execution/query/get_allocator.h>
-#include <di/execution/query/get_delegatee_scheduler.h>
-#include <di/execution/query/get_scheduler.h>
-#include <di/execution/query/get_stop_token.h>
-#include <di/function/invoke.h>
-#include <di/meta/util.h>
-#include <di/util/immovable.h>
+#include "di/execution/concepts/operation_state.h"
+#include "di/execution/concepts/receiver.h"
+#include "di/execution/concepts/sender.h"
+#include "di/execution/concepts/sender_of.h"
+#include "di/execution/interface/connect.h"
+#include "di/execution/interface/get_env.h"
+#include "di/execution/query/get_allocator.h"
+#include "di/execution/query/get_delegatee_scheduler.h"
+#include "di/execution/query/get_scheduler.h"
+#include "di/execution/query/get_stop_token.h"
+#include "di/function/invoke.h"
+#include "di/meta/util.h"
+#include "di/util/immovable.h"
 
 namespace di::execution {
 namespace read_ns {

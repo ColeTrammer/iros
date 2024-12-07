@@ -1,15 +1,15 @@
 #pragma once
 
-#include <di/execution/algorithm/let_value_with.h>
-#include <di/execution/concepts/sender.h>
-#include <di/execution/interface/run.h>
-#include <di/execution/sequence/first_value.h>
-#include <di/execution/sequence/let_each.h>
-#include <di/execution/sequence/zip.h>
-#include <di/function/invoke.h>
-#include <di/function/tag_invoke.h>
-#include <di/meta/util.h>
-#include <di/util/move.h>
+#include "di/execution/algorithm/let_value_with.h"
+#include "di/execution/concepts/sender.h"
+#include "di/execution/interface/run.h"
+#include "di/execution/sequence/first_value.h"
+#include "di/execution/sequence/let_each.h"
+#include "di/execution/sequence/zip.h"
+#include "di/function/invoke.h"
+#include "di/function/tag_invoke.h"
+#include "di/meta/util.h"
+#include "di/util/move.h"
 
 namespace di::execution {
 namespace use_resources_ns {

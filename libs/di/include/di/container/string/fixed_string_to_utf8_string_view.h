@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/container/string/fixed_string.h>
-#include <di/container/string/string_view_impl.h>
-#include <di/container/string/utf8_encoding.h>
-#include <di/meta/algorithm.h>
+#include "di/container/string/fixed_string.h"
+#include "di/container/string/string_view_impl.h"
+#include "di/container/string/utf8_encoding.h"
+#include "di/meta/algorithm.h"
 
 namespace di::container {
 namespace detail {

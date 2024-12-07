@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/bit/endian/big_endian.h>
-#include <di/bit/endian/endian.h>
-#include <di/bit/endian/little_endian.h>
+#include "di/bit/endian/big_endian.h"
+#include "di/bit/endian/endian.h"
+#include "di/bit/endian/little_endian.h"
 
 namespace di::bit {
 template<concepts::IntegralOrEnum T, Endian endian>

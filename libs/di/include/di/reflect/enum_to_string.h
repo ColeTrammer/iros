@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/container/string/string_view.h>
-#include <di/reflect/reflect.h>
+#include "di/container/string/string_view.h"
+#include "di/reflect/reflect.h"
 
 namespace di::reflection {
 namespace detail {

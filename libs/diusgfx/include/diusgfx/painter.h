@@ -1,13 +1,13 @@
 #pragma once
 
-#include <di/any/container/any.h>
-#include <di/any/dispatch/dispatcher.h>
-#include <di/any/types/this.h>
-#include <di/meta/core.h>
-#include <diusgfx/bitmap.h>
-#include <diusgfx/color.h>
-#include <diusgfx/point.h>
-#include <diusgfx/rect.h>
+#include "di/any/container/any.h"
+#include "di/any/dispatch/dispatcher.h"
+#include "di/any/types/this.h"
+#include "di/meta/core.h"
+#include "diusgfx/bitmap.h"
+#include "diusgfx/color.h"
+#include "diusgfx/point.h"
+#include "diusgfx/rect.h"
 
 namespace gfx {
 namespace painter {

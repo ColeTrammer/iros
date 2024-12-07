@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/sync/atomic.h>
-#include <di/util/immovable.h>
-#include <iris/core/interrupt_disabler.h>
+#include "di/sync/atomic.h"
+#include "di/util/immovable.h"
+#include "iris/core/interrupt_disabler.h"
 
 namespace iris {
 class Spinlock : di::util::Immovable {

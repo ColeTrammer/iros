@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/meta/operations.h>
-#include <di/util/clone.h>
-#include <di/util/move.h>
+#include "di/meta/operations.h"
+#include "di/util/clone.h"
+#include "di/util/move.h"
 
 namespace di::util {
 namespace detail {

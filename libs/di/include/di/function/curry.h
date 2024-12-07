@@ -1,13 +1,13 @@
 #pragma once
 
-#include <di/function/bind_front.h>
-#include <di/function/invoke.h>
-#include <di/function/pipeable.h>
-#include <di/math/numeric_limits.h>
-#include <di/meta/callable.h>
-#include <di/meta/operations.h>
-#include <di/meta/util.h>
-#include <di/types/integers.h>
+#include "di/function/bind_front.h"
+#include "di/function/invoke.h"
+#include "di/function/pipeable.h"
+#include "di/math/numeric_limits.h"
+#include "di/meta/callable.h"
+#include "di/meta/operations.h"
+#include "di/meta/util.h"
+#include "di/types/integers.h"
 
 namespace di::function::curry_ns {
 template<typename Self>

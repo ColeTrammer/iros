@@ -1,14 +1,14 @@
 #pragma once
 
-#include <di/assert/assert_bool.h>
-#include <di/function/invoke.h>
-#include <di/function/monad/monad_interface.h>
-#include <di/meta/language.h>
-#include <di/meta/util.h>
-#include <di/meta/vocab.h>
-#include <di/types/prelude.h>
-#include <di/vocab/optional/nullopt.h>
-#include <di/vocab/optional/optional_forward_declaration.h>
+#include "di/assert/assert_bool.h"
+#include "di/function/invoke.h"
+#include "di/function/monad/monad_interface.h"
+#include "di/meta/language.h"
+#include "di/meta/util.h"
+#include "di/meta/vocab.h"
+#include "di/types/prelude.h"
+#include "di/vocab/optional/nullopt.h"
+#include "di/vocab/optional/optional_forward_declaration.h"
 
 namespace di::vocab {
 template<>

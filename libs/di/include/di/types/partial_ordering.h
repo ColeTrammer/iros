@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/types/compare_outcome.h>
+#include "di/types/compare_outcome.h"
 
 #ifndef DI_NO_USE_STD
 #include <compare>

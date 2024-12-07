@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/container/string/constant_string.h>
-#include <di/container/string/encoding.h>
+#include "di/container/string/constant_string.h"
+#include "di/container/string/encoding.h"
 
 namespace di::container::string {
 template<concepts::detail::ConstantString Str, typename Enc = meta::Encoding<Str>>

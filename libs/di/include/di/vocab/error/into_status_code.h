@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/function/tag_invoke.h>
-#include <di/vocab/error/concepts/status_code.h>
+#include "di/function/tag_invoke.h"
+#include "di/vocab/error/concepts/status_code.h"
 
 namespace di::vocab {
 namespace detail {

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/function/pipeable.h>
-#include <di/vocab/optional/optional_void.h>
+#include "di/function/pipeable.h"
+#include "di/vocab/optional/optional_void.h"
 
 namespace di::vocab {
 namespace detail {

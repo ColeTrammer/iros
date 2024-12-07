@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/function/tag_invoke.h>
-#include <di/types/prelude.h>
-#include <di/util/declval.h>
+#include "di/function/tag_invoke.h"
+#include "di/types/prelude.h"
+#include "di/util/declval.h"
 
 namespace di::util {
 namespace detail {

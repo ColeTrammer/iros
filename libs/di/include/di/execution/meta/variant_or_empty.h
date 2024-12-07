@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/meta/algorithm.h>
-#include <di/meta/core.h>
-#include <di/vocab/variant/variant_forward_declaration.h>
+#include "di/meta/algorithm.h"
+#include "di/meta/core.h"
+#include "di/vocab/variant/variant_forward_declaration.h"
 
 namespace di::meta {
 namespace detail {

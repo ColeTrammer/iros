@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/format/concepts/format_arg.h>
-#include <di/vocab/span/prelude.h>
+#include "di/format/concepts/format_arg.h"
+#include "di/vocab/span/prelude.h"
 
 namespace di::format {
 template<concepts::FormatArg Arg>

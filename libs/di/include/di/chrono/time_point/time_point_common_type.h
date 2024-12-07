@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/chrono/concepts/clock.h>
-#include <di/chrono/duration/duration_common_type.h>
-#include <di/chrono/time_point/time_point_forward_declaration.h>
+#include "di/chrono/concepts/clock.h"
+#include "di/chrono/duration/duration_common_type.h"
+#include "di/chrono/time_point/time_point_forward_declaration.h"
 
 namespace di {
 template<concepts::Clock Clock, typename D1, typename D2>

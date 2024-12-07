@@ -1,12 +1,12 @@
 #pragma once
 
-#include <di/function/overload.h>
-#include <di/function/ycombinator.h>
-#include <di/meta/constexpr.h>
-#include <di/parser/concepts/parser.h>
-#include <di/parser/concepts/parser_context.h>
-#include <di/parser/meta/parser_context_result.h>
-#include <di/vocab/prelude.h>
+#include "di/function/overload.h"
+#include "di/function/ycombinator.h"
+#include "di/meta/constexpr.h"
+#include "di/parser/concepts/parser.h"
+#include "di/parser/concepts/parser_context.h"
+#include "di/parser/meta/parser_context_result.h"
+#include "di/vocab/prelude.h"
 
 namespace di::parser {
 namespace detail {

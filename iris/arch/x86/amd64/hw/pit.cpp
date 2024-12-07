@@ -1,12 +1,12 @@
-#include <iris/arch/x86/amd64/hw/pit.h>
+#include "iris/arch/x86/amd64/hw/pit.h"
 
-#include <iris/arch/x86/amd64/io_instructions.h>
-#include <iris/core/global_state.h>
-#include <iris/core/interrupt_disabler.h>
-#include <iris/core/print.h>
-#include <iris/hw/irq.h>
-#include <iris/hw/irq_controller.h>
-#include <iris/hw/timer.h>
+#include "iris/arch/x86/amd64/io_instructions.h"
+#include "iris/core/global_state.h"
+#include "iris/core/interrupt_disabler.h"
+#include "iris/core/print.h"
+#include "iris/hw/irq.h"
+#include "iris/hw/irq_controller.h"
+#include "iris/hw/timer.h"
 
 namespace iris::x86::amd64 {
 constexpr static auto pit_frequency = 1193182;

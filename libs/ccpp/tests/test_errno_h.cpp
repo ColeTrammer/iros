@@ -1,6 +1,7 @@
-#include <dius/test/prelude.h>
-#include <dius/thread.h>
 #include <errno.h>
+
+#include "dius/test/prelude.h"
+#include "dius/thread.h"
 
 namespace errno_h {
 static void errno_() {

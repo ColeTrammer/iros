@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/meta/compare.h>
-#include <di/meta/operations.h>
+#include "di/meta/compare.h"
+#include "di/meta/operations.h"
 
 namespace di::concepts {
 namespace detail {

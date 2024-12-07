@@ -1,11 +1,11 @@
 #pragma once
 
-#include <di/function/invoke.h>
-#include <di/meta/operations.h>
-#include <di/meta/util.h>
-#include <di/util/exchange.h>
-#include <di/util/forward.h>
-#include <di/util/move.h>
+#include "di/function/invoke.h"
+#include "di/meta/operations.h"
+#include "di/meta/util.h"
+#include "di/util/exchange.h"
+#include "di/util/forward.h"
+#include "di/util/move.h"
 
 namespace di::util {
 template<concepts::InvocableTo<void> F>

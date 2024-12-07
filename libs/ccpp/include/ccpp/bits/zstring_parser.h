@@ -1,10 +1,10 @@
 #pragma once
 
-#include <di/container/meta/container_iterator.h>
-#include <di/container/string/zstring.h>
-#include <di/parser/basic/integer.h>
-#include <di/parser/prelude.h>
-#include <di/types/prelude.h>
+#include "di/container/meta/container_iterator.h"
+#include "di/container/string/zstring.h"
+#include "di/parser/basic/integer.h"
+#include "di/parser/prelude.h"
+#include "di/types/prelude.h"
 
 namespace di::parser {
 namespace detail {

@@ -1,19 +1,6 @@
 #ifdef DIUSAUDIO_HAVE_PIPEWIRE
 #include "pipewire.h"
 
-#include <di/assert/assert_bool.h>
-#include <di/container/algorithm/min.h>
-#include <di/function/container/function.h>
-#include <di/types/integers.h>
-#include <di/util/as_const_pointer.h>
-#include <di/util/exchange.h>
-#include <di/util/unreachable.h>
-#include <di/vocab/bytes/byte_buffer.h>
-#include <di/vocab/pointer/box.h>
-#include <dius/print.h>
-#include <diusaudio/frame.h>
-#include <diusaudio/frame_info.h>
-#include <diusaudio/sink.h>
 #include <pipewire/core.h>
 #include <pipewire/main-loop.h>
 #include <pipewire/pipewire.h>
@@ -24,6 +11,20 @@
 #include <spa/param/audio/raw-utils.h>
 #include <spa/param/audio/raw.h>
 #include <spa/param/param.h>
+
+#include "di/assert/assert_bool.h"
+#include "di/container/algorithm/min.h"
+#include "di/function/container/function.h"
+#include "di/types/integers.h"
+#include "di/util/as_const_pointer.h"
+#include "di/util/exchange.h"
+#include "di/util/unreachable.h"
+#include "di/vocab/bytes/byte_buffer.h"
+#include "di/vocab/pointer/box.h"
+#include "dius/print.h"
+#include "diusaudio/frame.h"
+#include "diusaudio/frame_info.h"
+#include "diusaudio/sink.h"
 
 namespace audio::linux {
 PipewireLibrary::PipewireLibrary() : m_active(true) {

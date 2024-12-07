@@ -1,6 +1,7 @@
-#include <dius/system/system_call.h>
 #include <errno.h>
 #include <unistd.h>
+
+#include "dius/system/system_call.h"
 
 // https://pubs.opengroup.org/onlinepubs/9699919799/functions/write.html
 extern "C" auto write(int fd, void const* buffer, size_t count) -> ssize_t {

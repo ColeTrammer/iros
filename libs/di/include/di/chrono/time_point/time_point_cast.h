@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/chrono/duration/duration_cast.h>
-#include <di/chrono/time_point/time_point_forward_declaration.h>
-#include <di/meta/core.h>
+#include "di/chrono/duration/duration_cast.h"
+#include "di/chrono/time_point/time_point_forward_declaration.h"
+#include "di/meta/core.h"
 
 namespace di::chrono {
 namespace detail {

@@ -1,11 +1,11 @@
 #pragma once
 
-#include <di/meta/language.h>
-#include <di/meta/operations.h>
-#include <di/meta/util.h>
-#include <di/meta/vocab.h>
-#include <di/util/declval.h>
-#include <di/util/forward.h>
+#include "di/meta/language.h"
+#include "di/meta/operations.h"
+#include "di/meta/util.h"
+#include "di/meta/vocab.h"
+#include "di/util/declval.h"
+#include "di/util/forward.h"
 
 namespace di::function {
 namespace detail {

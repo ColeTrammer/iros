@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/function/monad/monad_concept.h>
-#include <di/util/forward.h>
+#include "di/function/monad/monad_concept.h"
+#include "di/util/forward.h"
 
 namespace di::function::monad {
 template<template<typename...> typename M, typename T>

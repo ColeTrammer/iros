@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/function/pipeline.h>
-#include <di/meta/language.h>
+#include "di/function/pipeline.h"
+#include "di/meta/language.h"
 
 namespace di::math {
 namespace detail {

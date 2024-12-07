@@ -1,10 +1,10 @@
 #pragma once
 
-#include <di/parser/concepts/parser.h>
-#include <di/parser/concepts/parser_context.h>
-#include <di/parser/meta/parser_context_result.h>
-#include <di/parser/meta/parser_value.h>
-#include <di/parser/parser_base.h>
+#include "di/parser/concepts/parser.h"
+#include "di/parser/concepts/parser_context.h"
+#include "di/parser/meta/parser_context_result.h"
+#include "di/parser/meta/parser_value.h"
+#include "di/parser/parser_base.h"
 
 namespace di::parser {
 namespace detail {

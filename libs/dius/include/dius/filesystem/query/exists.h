@@ -1,7 +1,7 @@
 #pragma once
 
-#include <dius/filesystem/query/status.h>
-#include <dius/filesystem/query/status_known.h>
+#include "dius/filesystem/query/status.h"
+#include "dius/filesystem/query/status_known.h"
 
 namespace dius::filesystem {
 namespace detail {

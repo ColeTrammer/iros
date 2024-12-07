@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/container/string/constant_string.h>
-#include <di/container/string/string_end.h>
-#include <di/container/string/string_view_impl_forward_declaration.h>
+#include "di/container/string/constant_string.h"
+#include "di/container/string/string_end.h"
+#include "di/container/string/string_view_impl_forward_declaration.h"
 
 namespace di::container::string {
 template<concepts::detail::ConstantString Str, typename Enc = meta::Encoding<Str>>

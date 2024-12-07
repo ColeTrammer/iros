@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/function/curry_back.h>
-#include <di/util/forward.h>
+#include "di/function/curry_back.h"
+#include "di/util/forward.h"
 
 namespace di::function {
 struct Plus {

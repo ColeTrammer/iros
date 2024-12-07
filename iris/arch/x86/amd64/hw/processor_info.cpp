@@ -1,5 +1,5 @@
-#include <iris/core/global_state.h>
-#include <iris/core/print.h>
+#include "iris/core/global_state.h"
+#include "iris/core/print.h"
 
 namespace iris {
 /// See this [link](https://sandpile.org/x86/cpuid.htm) for a list of CPU id queries and bits.

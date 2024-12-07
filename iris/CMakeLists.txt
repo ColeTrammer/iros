@@ -45,7 +45,7 @@ add_library(iris_headers INTERFACE)
 add_library(Iris::iris_headers ALIAS iris_headers)
 
 target_include_directories(
-    iris_headers INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
+    iris_headers SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
 )
 
 target_sources(

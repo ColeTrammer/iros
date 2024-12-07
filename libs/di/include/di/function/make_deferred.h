@@ -1,10 +1,10 @@
 #pragma once
 
-#include <di/meta/operations.h>
-#include <di/meta/util.h>
-#include <di/types/prelude.h>
-#include <di/vocab/tuple/make_from_tuple.h>
-#include <di/vocab/tuple/tuple.h>
+#include "di/meta/operations.h"
+#include "di/meta/util.h"
+#include "di/types/prelude.h"
+#include "di/vocab/tuple/make_from_tuple.h"
+#include "di/vocab/tuple/tuple.h"
 
 namespace di::function {
 namespace detail {

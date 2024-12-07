@@ -1,12 +1,12 @@
 #pragma once
 
-#include <di/any/concepts/method.h>
-#include <di/any/meta/method_tag.h>
-#include <di/any/types/method.h>
-#include <di/any/types/prelude.h>
-#include <di/function/invoke.h>
-#include <di/function/tag_invoke.h>
-#include <di/meta/util.h>
+#include "di/any/concepts/method.h"
+#include "di/any/meta/method_tag.h"
+#include "di/any/types/method.h"
+#include "di/any/types/prelude.h"
+#include "di/function/invoke.h"
+#include "di/function/tag_invoke.h"
+#include "di/meta/util.h"
 
 namespace di::concepts {
 namespace detail {

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/util/forward.h>
-#include <di/util/std_new.h>
+#include "di/util/forward.h"
+#include "di/util/std_new.h"
 
 #ifndef DI_NO_USE_STD
 #include <memory>

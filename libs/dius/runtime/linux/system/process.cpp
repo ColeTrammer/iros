@@ -1,10 +1,11 @@
-#include <dius/system/process.h>
+#include "dius/system/process.h"
 
-#include <dius/print.h>
-#include <dius/system/system_call.h>
 #include <linux/sched.h>
 #include <linux/signal.h>
 #include <linux/wait.h>
+
+#include "dius/print.h"
+#include "dius/system/system_call.h"
 
 namespace dius::system {
 static auto s_envp = static_cast<char**>(nullptr);

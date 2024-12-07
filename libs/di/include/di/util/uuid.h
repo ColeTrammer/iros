@@ -1,14 +1,14 @@
 #pragma once
 
-#include <di/bit/endian/prelude.h>
-#include <di/format/prelude.h>
-#include <di/parser/prelude.h>
-#include <di/platform/compiler.h>
-#include <di/random/prelude.h>
-#include <di/types/prelude.h>
-#include <di/util/bit_cast.h>
-#include <di/util/to_underlying.h>
-#include <di/vocab/array/prelude.h>
+#include "di/bit/endian/prelude.h"
+#include "di/format/prelude.h"
+#include "di/parser/prelude.h"
+#include "di/platform/compiler.h"
+#include "di/random/prelude.h"
+#include "di/types/prelude.h"
+#include "di/util/bit_cast.h"
+#include "di/util/to_underlying.h"
+#include "di/vocab/array/prelude.h"
 
 namespace di::util {
 namespace detail {

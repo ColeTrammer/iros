@@ -1,12 +1,12 @@
 #pragma once
 
-#include <di/function/monad/monad_interface.h>
-#include <di/meta/language.h>
-#include <di/meta/operations.h>
-#include <di/meta/util.h>
-#include <di/types/in_place.h>
-#include <di/util/unreachable.h>
-#include <di/vocab/expected/expected_forward_declaration.h>
+#include "di/function/monad/monad_interface.h"
+#include "di/meta/language.h"
+#include "di/meta/operations.h"
+#include "di/meta/util.h"
+#include "di/types/in_place.h"
+#include "di/util/unreachable.h"
+#include "di/vocab/expected/expected_forward_declaration.h"
 
 namespace di::vocab {
 template<>

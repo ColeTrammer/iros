@@ -1,24 +1,24 @@
 #pragma once
 
-#include <di/bit/endian/little_endian.h>
-#include <di/container/action/sequence.h>
-#include <di/container/concepts/input_container.h>
-#include <di/container/concepts/sized_container.h>
-#include <di/container/interface/size.h>
-#include <di/function/monad/monad_try.h>
-#include <di/io/interface/reader.h>
-#include <di/io/interface/writer.h>
-#include <di/io/write_exactly.h>
-#include <di/meta/language.h>
-#include <di/meta/operations.h>
-#include <di/meta/util.h>
-#include <di/serialization/serialize.h>
-#include <di/types/integers.h>
-#include <di/util/bit_cast.h>
-#include <di/util/to_underlying.h>
-#include <di/vocab/array/array.h>
-#include <di/vocab/tuple/tuple_like.h>
-#include <di/vocab/variant/variant_like.h>
+#include "di/bit/endian/little_endian.h"
+#include "di/container/action/sequence.h"
+#include "di/container/concepts/input_container.h"
+#include "di/container/concepts/sized_container.h"
+#include "di/container/interface/size.h"
+#include "di/function/monad/monad_try.h"
+#include "di/io/interface/reader.h"
+#include "di/io/interface/writer.h"
+#include "di/io/write_exactly.h"
+#include "di/meta/language.h"
+#include "di/meta/operations.h"
+#include "di/meta/util.h"
+#include "di/serialization/serialize.h"
+#include "di/types/integers.h"
+#include "di/util/bit_cast.h"
+#include "di/util/to_underlying.h"
+#include "di/vocab/array/array.h"
+#include "di/vocab/tuple/tuple_like.h"
+#include "di/vocab/variant/variant_like.h"
 
 namespace di::serialization {
 struct BinaryFormat;

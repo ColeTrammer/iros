@@ -1,9 +1,9 @@
-#include <iris/arch/x86/amd64/hw/pic.h>
+#include "iris/arch/x86/amd64/hw/pic.h"
 
-#include <iris/arch/x86/amd64/io_instructions.h>
-#include <iris/core/global_state.h>
-#include <iris/core/print.h>
-#include <iris/hw/irq.h>
+#include "iris/arch/x86/amd64/io_instructions.h"
+#include "iris/core/global_state.h"
+#include "iris/core/print.h"
+#include "iris/hw/irq.h"
 
 namespace iris::x86::amd64 {
 // See OSDEV for details on the x86 Programmable Interrupt Controller.

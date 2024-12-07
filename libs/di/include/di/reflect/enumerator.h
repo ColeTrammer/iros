@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/container/string/fixed_string.h>
-#include <di/meta/core.h>
-#include <di/meta/language.h>
-#include <di/vocab/tuple/tuple.h>
+#include "di/container/string/fixed_string.h"
+#include "di/meta/core.h"
+#include "di/meta/language.h"
+#include "di/vocab/tuple/tuple.h"
 
 namespace di::reflection {
 template<container::FixedString enumerator_name, auto enumerator_value>

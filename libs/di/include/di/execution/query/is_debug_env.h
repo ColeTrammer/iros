@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/execution/query/forwarding_query.h>
-#include <di/function/invoke.h>
-#include <di/meta/constexpr.h>
+#include "di/execution/query/forwarding_query.h"
+#include "di/function/invoke.h"
+#include "di/meta/constexpr.h"
 
 namespace di::execution {
 namespace is_debug_env_ns {

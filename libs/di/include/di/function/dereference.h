@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/function/pipeable.h>
-#include <di/function/pipeline.h>
-#include <di/util/forward.h>
+#include "di/function/pipeable.h"
+#include "di/function/pipeline.h"
+#include "di/util/forward.h"
 
 namespace di::function {
 struct Dereference : function::pipeline::EnablePipeline {

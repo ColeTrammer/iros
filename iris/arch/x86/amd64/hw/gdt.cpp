@@ -1,8 +1,8 @@
-#include <iris/arch/x86/amd64/gdt.h>
+#include "iris/arch/x86/amd64/gdt.h"
 
-#include <iris/arch/x86/amd64/msr.h>
-#include <iris/arch/x86/amd64/system_instructions.h>
-#include <iris/core/global_state.h>
+#include "iris/arch/x86/amd64/msr.h"
+#include "iris/arch/x86/amd64/system_instructions.h"
+#include "iris/core/global_state.h"
 
 namespace iris {
 void setup_current_processor_access() {

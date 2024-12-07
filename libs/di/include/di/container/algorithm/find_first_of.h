@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/container/algorithm/any_of.h>
-#include <di/container/algorithm/find_if.h>
-#include <di/function/equal.h>
+#include "di/container/algorithm/any_of.h"
+#include "di/container/algorithm/find_if.h"
+#include "di/function/equal.h"
 
 namespace di::container {
 namespace detail {

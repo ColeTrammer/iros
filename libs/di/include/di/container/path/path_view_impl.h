@@ -1,14 +1,14 @@
 #pragma once
 
-#include <di/container/algorithm/all_of.h>
-#include <di/container/algorithm/compare.h>
-#include <di/container/algorithm/equal.h>
-#include <di/container/path/constant_path_interface.h>
-#include <di/container/path/path_iterator.h>
-#include <di/container/string/string_view.h>
-#include <di/util/to_owned.h>
-#include <di/vocab/optional/prelude.h>
-#include <di/vocab/tuple/prelude.h>
+#include "di/container/algorithm/all_of.h"
+#include "di/container/algorithm/compare.h"
+#include "di/container/algorithm/equal.h"
+#include "di/container/path/constant_path_interface.h"
+#include "di/container/path/path_iterator.h"
+#include "di/container/string/string_view.h"
+#include "di/util/to_owned.h"
+#include "di/vocab/optional/prelude.h"
+#include "di/vocab/tuple/prelude.h"
 
 namespace di::container {
 template<concepts::InstanceOf<string::StringImpl> Str>

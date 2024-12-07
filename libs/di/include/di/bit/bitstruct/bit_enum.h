@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/bit/bitstruct/bit_field.h>
-#include <di/util/to_underlying.h>
+#include "di/bit/bitstruct/bit_field.h"
+#include "di/util/to_underlying.h"
 
 namespace di::bit {
 template<typename T, size_t index, size_t bit_count>

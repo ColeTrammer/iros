@@ -1,13 +1,13 @@
 #pragma once
 
-#include <di/bit/endian/endian.h>
-#include <di/math/abs.h>
-#include <di/math/constants.h>
-#include <di/meta/language.h>
-#include <di/types/byte.h>
-#include <di/types/floats.h>
-#include <di/util/bit_cast.h>
-#include <di/vocab/array/array.h>
+#include "di/bit/endian/endian.h"
+#include "di/math/abs.h"
+#include "di/math/constants.h"
+#include "di/meta/language.h"
+#include "di/types/byte.h"
+#include "di/types/floats.h"
+#include "di/util/bit_cast.h"
+#include "di/vocab/array/array.h"
 
 namespace di::math::detail {
 struct Signbit {

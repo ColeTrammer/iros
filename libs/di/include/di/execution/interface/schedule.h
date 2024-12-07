@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/execution/concepts/sender.h>
-#include <di/function/tag_invoke.h>
+#include "di/execution/concepts/sender.h"
+#include "di/function/tag_invoke.h"
 
 namespace di::execution {
 namespace detail {

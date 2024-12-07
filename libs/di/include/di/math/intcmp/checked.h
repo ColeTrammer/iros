@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/math/numeric_limits.h>
-#include <di/meta/language.h>
-#include <di/vocab/optional/lift_bool.h>
-#include <di/vocab/optional/prelude.h>
+#include "di/math/numeric_limits.h"
+#include "di/meta/language.h"
+#include "di/vocab/optional/lift_bool.h"
+#include "di/vocab/optional/prelude.h"
 
 namespace di::math {
 template<concepts::Integer T>

@@ -1,11 +1,11 @@
 #pragma once
 
-#include <di/execution/algorithm/schedule_from.h>
-#include <di/execution/concepts/prelude.h>
-#include <di/execution/meta/prelude.h>
-#include <di/execution/receiver/prelude.h>
-#include <di/execution/types/prelude.h>
-#include <di/function/curry_back.h>
+#include "di/execution/algorithm/schedule_from.h"
+#include "di/execution/concepts/prelude.h"
+#include "di/execution/meta/prelude.h"
+#include "di/execution/receiver/prelude.h"
+#include "di/execution/types/prelude.h"
+#include "di/function/curry_back.h"
 
 namespace di::execution {
 namespace transfer_ns {

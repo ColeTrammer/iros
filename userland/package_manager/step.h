@@ -1,9 +1,8 @@
 #pragma once
 
-#include <di/function/container/function.h>
-#include <di/reflect/prelude.h>
-
 #include "config.h"
+#include "di/function/container/function.h"
+#include "di/reflect/prelude.h"
 
 namespace pm {
 class Package;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/platform/compiler.h>
+#include "di/platform/compiler.h"
 
 #ifndef DI_CLANG
 #define __builtin_COLUMN() 0

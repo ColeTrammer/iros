@@ -1,21 +1,21 @@
-#include <di/cli/parser.h>
-#include <di/container/algorithm/copy.h>
-#include <di/container/algorithm/fill.h>
-#include <di/container/algorithm/fill_n.h>
-#include <di/container/algorithm/min.h>
-#include <di/container/path/path_view.h>
-#include <di/container/view/range.h>
-#include <di/function/monad/monad_try.h>
-#include <di/math/align_down.h>
-#include <di/math/constants.h>
-#include <di/math/functions.h>
-#include <dius/main.h>
-#include <dius/print.h>
-#include <dius/system/process.h>
-#include <diusaudio/formats/wav.h>
-#include <diusaudio/frame.h>
-#include <diusaudio/frame_info.h>
-#include <diusaudio/sink.h>
+#include "di/cli/parser.h"
+#include "di/container/algorithm/copy.h"
+#include "di/container/algorithm/fill.h"
+#include "di/container/algorithm/fill_n.h"
+#include "di/container/algorithm/min.h"
+#include "di/container/path/path_view.h"
+#include "di/container/view/range.h"
+#include "di/function/monad/monad_try.h"
+#include "di/math/align_down.h"
+#include "di/math/constants.h"
+#include "di/math/functions.h"
+#include "dius/main.h"
+#include "dius/print.h"
+#include "dius/system/process.h"
+#include "diusaudio/formats/wav.h"
+#include "diusaudio/frame.h"
+#include "diusaudio/frame_info.h"
+#include "diusaudio/sink.h"
 
 namespace audiotest {
 struct Args {

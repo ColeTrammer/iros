@@ -1,5 +1,6 @@
-#include <di/container/algorithm/prelude.h>
 #include <string.h>
+
+#include "di/container/algorithm/prelude.h"
 
 extern "C" auto memcpy(void* __restrict dest, void const* __restrict src, size_t count) -> void* {
     auto* dest_typed = (unsigned char*) dest;

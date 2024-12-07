@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/function/curry_back.h>
-#include <di/math/intcmp/cmp_greater.h>
-#include <di/meta/operations.h>
+#include "di/function/curry_back.h"
+#include "di/math/intcmp/cmp_greater.h"
+#include "di/meta/operations.h"
 
 namespace di::function {
 struct Greater {

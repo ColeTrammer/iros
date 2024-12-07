@@ -1,7 +1,8 @@
-#include <di/container/algorithm/prelude.h>
-#include <di/container/string/prelude.h>
-#include <di/container/view/prelude.h>
 #include <string.h>
+
+#include "di/container/algorithm/prelude.h"
+#include "di/container/string/prelude.h"
+#include "di/container/view/prelude.h"
 
 extern "C" auto strncpy(char* __restrict dest, char const* __restrict src, size_t count) -> char* {
     auto* end = di::copy(di::ZCString(src) | di::take(count), dest).out;

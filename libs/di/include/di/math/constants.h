@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/math/numeric_limits.h>
-#include <di/meta/language.h>
-#include <di/types/floats.h>
+#include "di/math/numeric_limits.h"
+#include "di/meta/language.h"
+#include "di/types/floats.h"
 
 namespace di::numbers {
 // NOTE: a 128 bit float has between 33 to 36 digits of precision. So we should define each

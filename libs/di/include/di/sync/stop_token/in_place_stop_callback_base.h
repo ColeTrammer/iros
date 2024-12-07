@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/container/intrusive/prelude.h>
-#include <di/sync/atomic.h>
-#include <di/sync/stop_token/forward_declaration.h>
+#include "di/container/intrusive/prelude.h"
+#include "di/sync/atomic.h"
+#include "di/sync/stop_token/forward_declaration.h"
 
 namespace di::sync::detail {
 class InPlaceStopCallbackBase : public container::IntrusiveListNode<> {

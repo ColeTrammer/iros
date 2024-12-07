@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/math/intcmp/cmp_equal.h>
+#include "di/math/intcmp/cmp_equal.h"
 
 namespace di::math {
 namespace detail {

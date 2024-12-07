@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/meta/language.h>
-#include <di/meta/operations.h>
-#include <di/meta/trivial.h>
-#include <di/util/addressof.h>
+#include "di/meta/language.h"
+#include "di/meta/operations.h"
+#include "di/meta/trivial.h"
+#include "di/util/addressof.h"
 
 namespace di::util {
 namespace detail {

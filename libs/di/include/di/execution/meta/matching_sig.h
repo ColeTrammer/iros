@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/meta/core.h>
+#include "di/meta/core.h"
 
 namespace di::meta {
 template<typename A, typename B>

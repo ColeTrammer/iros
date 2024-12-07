@@ -1,6 +1,6 @@
-#include <di/assert/assert_binary.h>
-#include <dius/test/prelude.h>
-#include <diusgfx/color.h>
+#include "di/assert/assert_binary.h"
+#include "dius/test/prelude.h"
+#include "diusgfx/color.h"
 
 namespace gfx_color {
 constexpr static void basic() {

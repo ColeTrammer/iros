@@ -1,10 +1,10 @@
 #pragma once
 
-#include <di/bit/bitset/prelude.h>
-#include <di/meta/core.h>
-#include <di/meta/operations.h>
-#include <di/types/prelude.h>
-#include <di/util/declval.h>
+#include "di/bit/bitset/prelude.h"
+#include "di/meta/core.h"
+#include "di/meta/operations.h"
+#include "di/types/prelude.h"
+#include "di/util/declval.h"
 
 namespace di::meta {
 template<typename T>

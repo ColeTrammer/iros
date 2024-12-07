@@ -1,7 +1,7 @@
 #pragma once
 
-#include <diusgfx/point.h>
-#include <diusgfx/size2d.h>
+#include "diusgfx/point.h"
+#include "diusgfx/size2d.h"
 
 namespace gfx {
 class Rect {

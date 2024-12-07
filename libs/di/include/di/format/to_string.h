@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/container/string/string.h>
-#include <di/format/concepts/formattable.h>
-#include <di/format/present.h>
+#include "di/container/string/string.h"
+#include "di/format/concepts/formattable.h"
+#include "di/format/present.h"
 
 namespace di::format {
 namespace detail {

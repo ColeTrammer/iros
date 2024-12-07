@@ -1,12 +1,12 @@
 #pragma once
 
-#include <di/container/concepts/indirect_strict_weak_order.h>
-#include <di/container/concepts/indirectly_copyable.h>
-#include <di/container/concepts/input_iterator.h>
-#include <di/container/concepts/weakly_incrementable.h>
-#include <di/container/meta/projected.h>
-#include <di/function/compare.h>
-#include <di/function/identity.h>
+#include "di/container/concepts/indirect_strict_weak_order.h"
+#include "di/container/concepts/indirectly_copyable.h"
+#include "di/container/concepts/input_iterator.h"
+#include "di/container/concepts/weakly_incrementable.h"
+#include "di/container/meta/projected.h"
+#include "di/function/compare.h"
+#include "di/function/identity.h"
 
 namespace di::concepts {
 template<typename It1, typename It2, typename Out, typename Comp = function::Compare,

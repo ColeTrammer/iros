@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/util/bitwise_enum.h>
+#include "di/util/bitwise_enum.h"
 
 namespace dius::filesystem {
 enum class Perms {

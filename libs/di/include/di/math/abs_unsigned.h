@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/function/pipeline.h>
-#include <di/math/numeric_limits.h>
-#include <di/meta/language.h>
+#include "di/function/pipeline.h"
+#include "di/math/numeric_limits.h"
+#include "di/meta/language.h"
 
 namespace di::math {
 namespace detail {

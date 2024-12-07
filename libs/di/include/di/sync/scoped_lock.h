@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/sync/concepts/lock.h>
-#include <di/vocab/tuple/prelude.h>
+#include "di/sync/concepts/lock.h"
+#include "di/vocab/tuple/prelude.h"
 
 namespace di::sync {
 template<concepts::Lock... Locks>

@@ -1,9 +1,9 @@
-#include <iris/core/task.h>
+#include "iris/core/task.h"
 
-#include <iris/arch/x86/amd64/system_instructions.h>
-#include <iris/core/global_state.h>
-#include <iris/core/interrupt_disabler.h>
-#include <iris/core/print.h>
+#include "iris/arch/x86/amd64/system_instructions.h"
+#include "iris/core/global_state.h"
+#include "iris/core/interrupt_disabler.h"
+#include "iris/core/print.h"
 
 namespace iris::arch {
 TaskState::TaskState(bool userspace) {

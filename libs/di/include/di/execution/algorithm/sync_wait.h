@@ -1,17 +1,17 @@
 #pragma once
 
-#include <di/execution/algorithm/into_result.h>
-#include <di/execution/algorithm/into_variant.h>
-#include <di/execution/concepts/sender_in.h>
-#include <di/execution/context/run_loop.h>
-#include <di/execution/meta/decayed_tuple.h>
-#include <di/execution/query/get_delegatee_scheduler.h>
-#include <di/execution/query/get_scheduler.h>
-#include <di/execution/sequence/sequence_sender.h>
-#include <di/function/curry.h>
-#include <di/function/pipeline.h>
-#include <di/meta/core.h>
-#include <di/meta/util.h>
+#include "di/execution/algorithm/into_result.h"
+#include "di/execution/algorithm/into_variant.h"
+#include "di/execution/concepts/sender_in.h"
+#include "di/execution/context/run_loop.h"
+#include "di/execution/meta/decayed_tuple.h"
+#include "di/execution/query/get_delegatee_scheduler.h"
+#include "di/execution/query/get_scheduler.h"
+#include "di/execution/sequence/sequence_sender.h"
+#include "di/function/curry.h"
+#include "di/function/pipeline.h"
+#include "di/meta/core.h"
+#include "di/meta/util.h"
 
 namespace di::execution {
 namespace sync_wait_ns {

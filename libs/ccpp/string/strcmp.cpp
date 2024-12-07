@@ -1,6 +1,7 @@
-#include <di/container/algorithm/prelude.h>
-#include <di/container/string/prelude.h>
 #include <string.h>
+
+#include "di/container/algorithm/prelude.h"
+#include "di/container/string/prelude.h"
 
 extern "C" auto strcmp(char const* lhs, char const* rhs) -> int {
     auto a = di::ZCUString((unsigned char const*) lhs);

@@ -1,12 +1,12 @@
 #pragma once
 
-#include <di/meta/core.h>
-#include <di/meta/language.h>
-#include <di/sync/memory_order.h>
-#include <di/types/prelude.h>
-#include <di/util/addressof.h>
-#include <di/util/exchange.h>
-#include <di/util/to_underlying.h>
+#include "di/meta/core.h"
+#include "di/meta/language.h"
+#include "di/sync/memory_order.h"
+#include "di/types/prelude.h"
+#include "di/util/addressof.h"
+#include "di/util/exchange.h"
+#include "di/util/to_underlying.h"
 
 namespace di::sync {
 template<typename T>

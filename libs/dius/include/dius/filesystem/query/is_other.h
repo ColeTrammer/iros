@@ -1,10 +1,10 @@
 #pragma once
 
-#include <dius/filesystem/query/exists.h>
-#include <dius/filesystem/query/is_directory.h>
-#include <dius/filesystem/query/is_regular_file.h>
-#include <dius/filesystem/query/is_symlink.h>
-#include <dius/filesystem/query/status.h>
+#include "dius/filesystem/query/exists.h"
+#include "dius/filesystem/query/is_directory.h"
+#include "dius/filesystem/query/is_regular_file.h"
+#include "dius/filesystem/query/is_symlink.h"
+#include "dius/filesystem/query/status.h"
 
 namespace dius::filesystem {
 namespace detail {

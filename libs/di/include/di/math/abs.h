@@ -1,11 +1,11 @@
 #pragma once
 
-#include <di/bit/endian/endian.h>
-#include <di/function/tag_invoke.h>
-#include <di/meta/core.h>
-#include <di/meta/language.h>
-#include <di/util/bit_cast.h>
-#include <di/vocab/array/array.h>
+#include "di/bit/endian/endian.h"
+#include "di/function/tag_invoke.h"
+#include "di/meta/core.h"
+#include "di/meta/language.h"
+#include "di/util/bit_cast.h"
+#include "di/vocab/array/array.h"
 
 namespace di::math {
 namespace detail {

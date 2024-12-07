@@ -1,12 +1,12 @@
 #pragma once
 
-#include <di/execution/concepts/sender_in.h>
-#include <di/execution/meta/gather_signatures.h>
-#include <di/execution/meta/matching_sig.h>
-#include <di/execution/meta/value_types_of.h>
-#include <di/execution/types/empty_env.h>
-#include <di/meta/algorithm.h>
-#include <di/meta/util.h>
+#include "di/execution/concepts/sender_in.h"
+#include "di/execution/meta/gather_signatures.h"
+#include "di/execution/meta/matching_sig.h"
+#include "di/execution/meta/value_types_of.h"
+#include "di/execution/types/empty_env.h"
+#include "di/meta/algorithm.h"
+#include "di/meta/util.h"
 
 namespace di::concepts {
 namespace detail {

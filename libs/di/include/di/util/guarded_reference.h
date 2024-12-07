@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/meta/operations.h>
-#include <di/util/forward.h>
+#include "di/meta/operations.h"
+#include "di/util/forward.h"
 
 namespace di::util {
 template<typename T, typename Guard>

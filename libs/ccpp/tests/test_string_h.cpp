@@ -1,6 +1,7 @@
-#include <dius/test/prelude.h>
 #include <errno.h>
 #include <string.h>
+
+#include "dius/test/prelude.h"
 
 namespace string_h {
 [[gnu::noinline]] static auto do_strchr(char const* s, int ch) -> char const* {

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/any/prelude.h>
-#include <di/vocab/error/prelude.h>
-#include <di/vocab/span/prelude.h>
+#include "di/any/prelude.h"
+#include "di/vocab/error/prelude.h"
+#include "di/vocab/span/prelude.h"
 
 namespace di::io {
 namespace detail {

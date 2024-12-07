@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/function/pipeline.h>
-#include <di/vocab/tuple/apply.h>
-#include <di/vocab/tuple/tuple_like.h>
+#include "di/function/pipeline.h"
+#include "di/vocab/tuple/apply.h"
+#include "di/vocab/tuple/tuple_like.h"
 
 namespace di::vocab {
 namespace detail {

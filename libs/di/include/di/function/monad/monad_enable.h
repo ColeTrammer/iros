@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/function/tag_invoke.h>
-#include <di/types/in_place_type.h>
+#include "di/function/tag_invoke.h"
+#include "di/types/in_place_type.h"
 
 namespace di::function::monad {
 struct EnableMonadFunction {

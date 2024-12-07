@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/chrono/duration/duration_forward_declaration.h>
-#include <di/meta/common.h>
+#include "di/chrono/duration/duration_forward_declaration.h"
+#include "di/meta/common.h"
 
 namespace di {
 template<typename Rep1, math::detail::IsRatio Period1, typename Rep2, math::detail::IsRatio Period2>

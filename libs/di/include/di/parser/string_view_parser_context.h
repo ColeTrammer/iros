@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/container/string/prelude.h>
-#include <di/vocab/error/error.h>
+#include "di/container/string/prelude.h"
+#include "di/vocab/error/error.h"
 
 namespace di::parser {
 template<concepts::Encoding Enc>

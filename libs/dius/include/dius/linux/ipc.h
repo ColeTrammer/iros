@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/execution/io/ipc_protocol.h>
-#include <di/meta/core.h>
+#include "di/execution/io/ipc_protocol.h"
+#include "di/meta/core.h"
 namespace dius {
 namespace ipc {
     template<typename Proto>

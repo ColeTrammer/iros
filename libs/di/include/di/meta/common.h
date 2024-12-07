@@ -1,12 +1,12 @@
 #pragma once
 
-#include <di/function/tag_invoke.h>
-#include <di/meta/core.h>
-#include <di/meta/language.h>
-#include <di/meta/operations.h>
-#include <di/meta/util.h>
-#include <di/types/prelude.h>
-#include <di/util/declval.h>
+#include "di/function/tag_invoke.h"
+#include "di/meta/core.h"
+#include "di/meta/language.h"
+#include "di/meta/operations.h"
+#include "di/meta/util.h"
+#include "di/types/prelude.h"
+#include "di/util/declval.h"
 
 namespace di::meta {
 template<typename T, typename U>

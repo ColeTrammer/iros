@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/util/to_underlying.h>
+#include "di/util/to_underlying.h"
 
 #define DI_DEFINE_ENUM_BITWISE_OPERATIONS(Type)                                                \
     static_assert(::di::concepts::Enum<Type>);                                                 \

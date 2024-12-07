@@ -1,6 +1,7 @@
-#include <di/container/algorithm/prelude.h>
-#include <di/container/string/prelude.h>
 #include <string.h>
+
+#include "di/container/algorithm/prelude.h"
+#include "di/container/string/prelude.h"
 
 extern "C" auto strstr(char const* haystack, char const* needle) -> char* {
     auto haystack_zstring = di::ZUString { (unsigned char*) haystack };

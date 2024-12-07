@@ -1,5 +1,5 @@
-#include <dius/system/process.h>
-#include <dius/test/prelude.h>
+#include "dius/system/process.h"
+#include "dius/test/prelude.h"
 
 namespace process {
 static void arg_passing() {

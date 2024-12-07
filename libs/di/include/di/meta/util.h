@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/meta/core.h>
-#include <di/meta/language.h>
-#include <di/meta/operations.h>
+#include "di/meta/core.h"
+#include "di/meta/language.h"
+#include "di/meta/operations.h"
 
 namespace di::meta {
 template<bool is_const, typename T>

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/chrono/duration/duration_forward_declaration.h>
-#include <di/meta/core.h>
+#include "di/chrono/duration/duration_forward_declaration.h"
+#include "di/meta/core.h"
 
 namespace di::chrono {
 namespace detail {

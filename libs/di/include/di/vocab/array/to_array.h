@@ -1,11 +1,11 @@
 #pragma once
 
-#include <di/meta/algorithm.h>
-#include <di/meta/core.h>
-#include <di/meta/language.h>
-#include <di/meta/operations.h>
-#include <di/util/move.h>
-#include <di/vocab/array/array.h>
+#include "di/meta/algorithm.h"
+#include "di/meta/core.h"
+#include "di/meta/language.h"
+#include "di/meta/operations.h"
+#include "di/util/move.h"
+#include "di/vocab/array/array.h"
 
 namespace di::vocab {
 template<typename T, types::size_t size>

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/meta/algorithm.h>
-#include <di/vocab/variant/variant_like.h>
-#include <di/vocab/variant/variant_types.h>
+#include "di/meta/algorithm.h"
+#include "di/vocab/variant/variant_like.h"
+#include "di/vocab/variant/variant_types.h"
 
 namespace di::vocab {
 namespace detail {

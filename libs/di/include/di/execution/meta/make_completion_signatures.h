@@ -1,11 +1,11 @@
 #pragma once
 
-#include <di/execution/concepts/sender_in.h>
-#include <di/execution/concepts/valid_completion_signatures.h>
-#include <di/execution/meta/error_types_of.h>
-#include <di/execution/meta/sends_stopped.h>
-#include <di/execution/meta/value_types_of.h>
-#include <di/execution/types/empty_env.h>
+#include "di/execution/concepts/sender_in.h"
+#include "di/execution/concepts/valid_completion_signatures.h"
+#include "di/execution/meta/error_types_of.h"
+#include "di/execution/meta/sends_stopped.h"
+#include "di/execution/meta/value_types_of.h"
+#include "di/execution/types/empty_env.h"
 
 namespace di::meta {
 namespace detail {

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/execution/concepts/sender.h>
-#include <di/execution/query/get_sequence_cardinality.h>
-#include <di/execution/sequence/sequence_sender.h>
-#include <di/function/tag_invoke.h>
+#include "di/execution/concepts/sender.h"
+#include "di/execution/query/get_sequence_cardinality.h"
+#include "di/execution/sequence/sequence_sender.h"
+#include "di/function/tag_invoke.h"
 
 namespace di::execution {
 namespace run_ns {

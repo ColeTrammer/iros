@@ -1,6 +1,6 @@
 #pragma once
 
-#include <iris/hw/acpi/system_tables.h>
+#include "iris/hw/acpi/system_tables.h"
 
 namespace iris::acpi {
 struct AcpiInformation {

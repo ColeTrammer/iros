@@ -1,6 +1,6 @@
-#include <dius/system/process.h>
+#include "dius/system/process.h"
 
-#include <dius/system/system_call.h>
+#include "dius/system/system_call.h"
 
 namespace dius::system {
 auto Process::spawn_and_wait() && -> di::Result<ProcessResult> {

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/exec/elf/types.h>
-#include <di/util/bitwise_enum.h>
+#include "di/exec/elf/types.h"
+#include "di/util/bitwise_enum.h"
 
 namespace di::exec {
 enum class ElfProgramHeaderType : i32 {

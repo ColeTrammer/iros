@@ -1,5 +1,6 @@
-#include <di/container/algorithm/prelude.h>
 #include <string.h>
+
+#include "di/container/algorithm/prelude.h"
 
 extern "C" auto memchr(void const* haystack, int needle, size_t count) -> void* {
     auto const* haystack_unsigned = static_cast<unsigned char const*>(haystack);

@@ -50,7 +50,7 @@ To use the automatic serialization and deserialization facilities, the message t
 [reflection](static_reflection.md) information included.
 
 ```cpp
-#include <di/reflect/prelude.h>
+#include "di/reflect/prelude.h"
 
 // Define a simple message type.
 struct ClientMessage1 {

@@ -1,6 +1,6 @@
-#include <di/assert/assert_binary.h>
-#include <dius/test/prelude.h>
-#include <diusgfx/point.h>
+#include "di/assert/assert_binary.h"
+#include "dius/test/prelude.h"
+#include "diusgfx/point.h"
 
 namespace gfx_point {
 constexpr static void basic() {

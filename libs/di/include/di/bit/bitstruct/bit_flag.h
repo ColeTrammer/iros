@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/bit/bitstruct/bit_tag.h>
+#include "di/bit/bitstruct/bit_tag.h"
 
 namespace di::bit {
 template<size_t index>

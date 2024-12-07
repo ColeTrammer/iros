@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/meta/language.h>
-#include <di/types/prelude.h>
+#include "di/meta/language.h"
+#include "di/types/prelude.h"
 
 namespace di::random {
 template<concepts::UnsignedInteger T, T a, T c, T m>

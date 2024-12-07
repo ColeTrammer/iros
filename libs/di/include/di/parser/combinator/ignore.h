@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/function/into_void.h>
-#include <di/meta/util.h>
-#include <di/parser/combinator/transform.h>
+#include "di/function/into_void.h"
+#include "di/meta/util.h"
+#include "di/parser/combinator/transform.h"
 
 namespace di::parser {
 namespace detail {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/bit/endian/prelude.h>
+#include "di/bit/endian/prelude.h"
 
 namespace di::exec {
 enum class ElfFormat {

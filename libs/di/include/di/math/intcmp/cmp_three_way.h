@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/meta/language.h>
-#include <di/types/strong_ordering.h>
+#include "di/meta/language.h"
+#include "di/types/strong_ordering.h"
 
 namespace di::math {
 namespace detail {

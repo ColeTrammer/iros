@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/meta/core.h>
-#include <di/meta/operations.h>
-#include <di/meta/util.h>
+#include "di/meta/core.h"
+#include "di/meta/operations.h"
+#include "di/meta/util.h"
 
 namespace di::function::pipeline {
 struct EnablePipeline {};

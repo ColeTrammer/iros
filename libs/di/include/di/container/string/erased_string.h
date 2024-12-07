@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/container/string/constant_string_interface.h>
-#include <di/container/string/utf8_encoding.h>
-#include <di/meta/util.h>
-#include <di/vocab/span/prelude.h>
+#include "di/container/string/constant_string_interface.h"
+#include "di/container/string/utf8_encoding.h"
+#include "di/meta/util.h"
+#include "di/vocab/span/prelude.h"
 
 namespace di::container {
 namespace detail {

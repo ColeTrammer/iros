@@ -1,7 +1,7 @@
 #pragma once
 
-#include <iris/core/task.h>
-#include <iris/hw/irq_controller.h>
+#include "iris/core/task.h"
+#include "iris/hw/irq_controller.h"
 
 namespace iris {
 struct IrqContext {

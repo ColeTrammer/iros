@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/execution/algorithm/then.h>
-#include <di/execution/sequence/transform_each.h>
+#include "di/execution/algorithm/then.h"
+#include "di/execution/sequence/transform_each.h"
 
 namespace di::execution {
 namespace then_each_ns {

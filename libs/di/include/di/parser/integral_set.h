@@ -1,11 +1,11 @@
 #pragma once
 
-#include <di/container/algorithm/any_of.h>
-#include <di/function/unpack.h>
-#include <di/meta/algorithm.h>
-#include <di/meta/compare.h>
-#include <di/meta/language.h>
-#include <di/vocab/array/prelude.h>
+#include "di/container/algorithm/any_of.h"
+#include "di/function/unpack.h"
+#include "di/meta/algorithm.h"
+#include "di/meta/compare.h"
+#include "di/meta/language.h"
+#include "di/vocab/array/prelude.h"
 
 namespace di::parser {
 template<concepts::Integral T>

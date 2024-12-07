@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/meta/operations.h>
-#include <di/types/prelude.h>
+#include "di/meta/operations.h"
+#include "di/types/prelude.h"
 
 namespace di::container {
 template<typename NodeType>

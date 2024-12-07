@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/math/intcmp/cmp_less.h>
+#include "di/math/intcmp/cmp_less.h"
 
 namespace di::math {
 namespace detail {

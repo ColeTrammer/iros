@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/meta/core.h>
-#include <di/vocab/error/erased.h>
+#include "di/meta/core.h"
+#include "di/vocab/error/erased.h"
 
 namespace di::meta {
 namespace detail {

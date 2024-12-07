@@ -1,11 +1,11 @@
 #pragma once
 
-#include <di/container/algorithm/in_found_result.h>
-#include <di/container/algorithm/reverse.h>
-#include <di/container/concepts/prelude.h>
-#include <di/container/iterator/prelude.h>
-#include <di/container/meta/prelude.h>
-#include <di/function/compare.h>
+#include "di/container/algorithm/in_found_result.h"
+#include "di/container/algorithm/reverse.h"
+#include "di/container/concepts/prelude.h"
+#include "di/container/iterator/prelude.h"
+#include "di/container/meta/prelude.h"
+#include "di/function/compare.h"
 
 namespace di::container {
 namespace detail {

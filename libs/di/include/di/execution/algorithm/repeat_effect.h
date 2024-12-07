@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/execution/algorithm/repeat_effect_until.h>
-#include <di/execution/receiver/set_value.h>
+#include "di/execution/algorithm/repeat_effect_until.h"
+#include "di/execution/receiver/set_value.h"
 
 namespace di::execution {
 namespace repeat_effect_ns {

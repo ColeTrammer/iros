@@ -1,5 +1,6 @@
-#include <dius/test/prelude.h>
 #include <stdlib.h>
+
+#include "dius/test/prelude.h"
 
 namespace stdlib_h {
 static void malloc_free() {

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/execution/concepts/await_suspend_result.h>
-#include <di/meta/core.h>
-#include <di/meta/language.h>
-#include <di/meta/operations.h>
+#include "di/execution/concepts/await_suspend_result.h"
+#include "di/meta/core.h"
+#include "di/meta/language.h"
+#include "di/meta/operations.h"
 
 namespace di::concepts {
 namespace detail {

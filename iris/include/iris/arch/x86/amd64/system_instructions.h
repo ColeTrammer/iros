@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/assert/prelude.h>
-#include <di/types/prelude.h>
-#include <iris/mm/virtual_address.h>
+#include "di/assert/prelude.h"
+#include "di/types/prelude.h"
+#include "iris/mm/virtual_address.h"
 
 namespace iris::x86::amd64 {
 struct [[gnu::packed]] IDTR {

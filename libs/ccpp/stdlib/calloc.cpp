@@ -1,7 +1,8 @@
-#include <di/math/intcmp/prelude.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "di/math/intcmp/prelude.h"
 
 extern "C" auto calloc(size_t count, size_t size) -> void* {
     auto true_size = di::Checked(count) * size;

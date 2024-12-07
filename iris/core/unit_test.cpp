@@ -1,6 +1,6 @@
-#include <iris/core/global_state.h>
-#include <iris/core/print.h>
-#include <iris/hw/power.h>
+#include "iris/core/global_state.h"
+#include "iris/core/print.h"
+#include "iris/hw/power.h"
 
 namespace iris::test {
 auto TestManager::the() -> TestManager& {

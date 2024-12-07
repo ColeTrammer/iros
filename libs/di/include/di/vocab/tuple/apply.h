@@ -1,12 +1,12 @@
 #pragma once
 
-#include <di/function/invoke.h>
-#include <di/meta/algorithm.h>
-#include <di/types/size_t.h>
-#include <di/util/forward.h>
-#include <di/util/get.h>
-#include <di/vocab/tuple/tuple_like.h>
-#include <di/vocab/tuple/tuple_size.h>
+#include "di/function/invoke.h"
+#include "di/meta/algorithm.h"
+#include "di/types/size_t.h"
+#include "di/util/forward.h"
+#include "di/util/get.h"
+#include "di/vocab/tuple/tuple_like.h"
+#include "di/vocab/tuple/tuple_size.h"
 
 namespace di::vocab {
 namespace detail {

@@ -1,10 +1,10 @@
 #pragma once
 
-#include <di/function/invoke.h>
-#include <di/vocab/tuple/apply.h>
-#include <di/vocab/tuple/tuple.h>
-#include <di/vocab/tuple/tuple_like.h>
-#include <di/vocab/tuple/tuple_value.h>
+#include "di/function/invoke.h"
+#include "di/vocab/tuple/apply.h"
+#include "di/vocab/tuple/tuple.h"
+#include "di/vocab/tuple/tuple_like.h"
+#include "di/vocab/tuple/tuple_value.h"
 
 namespace di::vocab {
 namespace detail {

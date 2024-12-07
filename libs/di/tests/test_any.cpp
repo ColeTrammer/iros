@@ -1,10 +1,10 @@
-#include <di/any/prelude.h>
-#include <di/any/storage/prelude.h>
-#include <di/types/integers.h>
-#include <di/util/prelude.h>
-#include <di/vocab/array/prelude.h>
-#include <di/vocab/pointer/prelude.h>
-#include <dius/test/prelude.h>
+#include "di/any/prelude.h"
+#include "di/any/storage/prelude.h"
+#include "di/types/integers.h"
+#include "di/util/prelude.h"
+#include "di/vocab/array/prelude.h"
+#include "di/vocab/pointer/prelude.h"
+#include "dius/test/prelude.h"
 
 namespace any {
 struct X : di::Dispatcher<X, i32(di::This const&, i32)> {};

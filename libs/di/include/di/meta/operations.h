@@ -1,10 +1,10 @@
 #pragma once
 
-#include <di/meta/compare.h>
-#include <di/meta/core.h>
-#include <di/meta/language.h>
-#include <di/util/declval.h>
-#include <di/util/forward.h>
+#include "di/meta/compare.h"
+#include "di/meta/core.h"
+#include "di/meta/language.h"
+#include "di/util/declval.h"
+#include "di/util/forward.h"
 
 namespace di::concepts {
 template<typename T, typename... Args>

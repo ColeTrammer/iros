@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/execution/algorithm/just.h>
-#include <di/execution/algorithm/then.h>
-#include <di/function/invoke.h>
-#include <di/meta/util.h>
+#include "di/execution/algorithm/just.h"
+#include "di/execution/algorithm/then.h"
+#include "di/function/invoke.h"
+#include "di/meta/util.h"
 
 namespace di::execution {
 namespace just_from_ns {

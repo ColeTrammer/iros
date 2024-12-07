@@ -1,24 +1,24 @@
 #pragma once
 
-#include <di/container/algorithm/copy.h>
-#include <di/container/algorithm/min.h>
-#include <di/container/concepts/container_of.h>
-#include <di/container/concepts/input_container.h>
-#include <di/container/interface/begin.h>
-#include <di/container/meta/container_iterator.h>
-#include <di/container/vector/mutable_vector.h>
-#include <di/container/vector/vector.h>
-#include <di/container/vector/vector_append_container.h>
-#include <di/container/view/drop.h>
-#include <di/meta/operations.h>
-#include <di/meta/util.h>
-#include <di/types/byte.h>
-#include <di/types/in_place.h>
-#include <di/util/move.h>
-#include <di/vocab/error/result.h>
-#include <di/vocab/expected/invoke_as_fallible.h>
-#include <di/vocab/expected/try_infallible.h>
-#include <di/vocab/span/span_forward_declaration.h>
+#include "di/container/algorithm/copy.h"
+#include "di/container/algorithm/min.h"
+#include "di/container/concepts/container_of.h"
+#include "di/container/concepts/input_container.h"
+#include "di/container/interface/begin.h"
+#include "di/container/meta/container_iterator.h"
+#include "di/container/vector/mutable_vector.h"
+#include "di/container/vector/vector.h"
+#include "di/container/vector/vector_append_container.h"
+#include "di/container/view/drop.h"
+#include "di/meta/operations.h"
+#include "di/meta/util.h"
+#include "di/types/byte.h"
+#include "di/types/in_place.h"
+#include "di/util/move.h"
+#include "di/vocab/error/result.h"
+#include "di/vocab/expected/invoke_as_fallible.h"
+#include "di/vocab/expected/try_infallible.h"
+#include "di/vocab/span/span_forward_declaration.h"
 
 namespace di::io {
 template<concepts::InputContainer T = container::Vector<byte>>

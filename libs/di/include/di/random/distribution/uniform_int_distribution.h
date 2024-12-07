@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/math/numeric_limits.h>
-#include <di/meta/common.h>
-#include <di/meta/language.h>
-#include <di/random/concepts/uniform_random_bit_generator.h>
+#include "di/math/numeric_limits.h"
+#include "di/meta/common.h"
+#include "di/meta/language.h"
+#include "di/random/concepts/uniform_random_bit_generator.h"
 
 namespace di::random {
 template<concepts::Integer T = int>

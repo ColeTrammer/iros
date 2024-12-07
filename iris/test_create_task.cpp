@@ -1,5 +1,5 @@
-#include <dius/print.h>
-#include <dius/system/prelude.h>
+#include "dius/print.h"
+#include "dius/system/prelude.h"
 
 extern "C" auto main() -> int {
     auto* x = new int;

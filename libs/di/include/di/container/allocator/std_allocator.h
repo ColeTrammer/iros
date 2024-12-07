@@ -1,13 +1,13 @@
 #pragma once
 
-#include <di/types/ptrdiff_t.h>
-#include <di/types/size_t.h>
+#include "di/types/ptrdiff_t.h"
+#include "di/types/size_t.h"
 
 #ifndef DI_NO_USE_STD
 #include <memory>
 #else
-#include <di/util/std_new.h>
-#include <di/util/voidify.h>
+#include "di/util/std_new.h"
+#include "di/util/voidify.h"
 
 namespace std {
 template<typename T, T v>

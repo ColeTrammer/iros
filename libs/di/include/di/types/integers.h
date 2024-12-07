@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/types/ptrdiff_t.h>
-#include <di/types/size_t.h>
-#include <di/types/ssize_t.h>
-#include <di/types/uintptr_t.h>
+#include "di/types/ptrdiff_t.h"
+#include "di/types/size_t.h"
+#include "di/types/ssize_t.h"
+#include "di/types/uintptr_t.h"
 
 namespace di::types {
 using u8 = __UINT8_TYPE__;

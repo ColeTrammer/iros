@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/math/intcmp/cmp_greater_equal.h>
-#include <di/math/intcmp/cmp_less_equal.h>
-#include <di/math/numeric_limits.h>
+#include "di/math/intcmp/cmp_greater_equal.h"
+#include "di/math/intcmp/cmp_less_equal.h"
+#include "di/math/numeric_limits.h"
 
 namespace di::math {
 namespace detail {

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/container/string/constant_string.h>
-#include <di/container/vector/mutable_vector.h>
+#include "di/container/string/constant_string.h"
+#include "di/container/vector/mutable_vector.h"
 
 namespace di::concepts::detail {
 template<typename T>

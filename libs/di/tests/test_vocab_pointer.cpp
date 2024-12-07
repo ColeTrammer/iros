@@ -1,5 +1,5 @@
-#include <di/vocab/pointer/prelude.h>
-#include <dius/test/prelude.h>
+#include "di/vocab/pointer/prelude.h"
+#include "dius/test/prelude.h"
 
 namespace vocab_pointer {
 struct X {

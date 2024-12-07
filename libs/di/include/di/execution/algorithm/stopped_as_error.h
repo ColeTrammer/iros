@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/execution/algorithm/just.h>
-#include <di/execution/algorithm/let.h>
+#include "di/execution/algorithm/just.h"
+#include "di/execution/algorithm/let.h"
 
 namespace di::execution {
 namespace stopped_as_error_ns {

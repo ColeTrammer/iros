@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/types/integers.h>
-#include <di/types/strong_ordering.h>
+#include "di/types/integers.h"
+#include "di/types/strong_ordering.h"
 
 namespace gfx {
 struct RGBA32 {

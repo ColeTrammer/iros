@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/chrono/duration/duration.h>
+#include "di/chrono/duration/duration.h"
 
 namespace di::chrono {
 using Picoseconds = Duration<i64, math::Pico>;

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <dius/filesystem/file_type.h>
-#include <dius/filesystem/perms.h>
+#include "dius/filesystem/file_type.h"
+#include "dius/filesystem/perms.h"
 
 namespace dius::filesystem {
 class FileStatus {

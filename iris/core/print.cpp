@@ -1,8 +1,8 @@
-#include <iris/core/print.h>
+#include "iris/core/print.h"
 
-#include <di/math/prelude.h>
-#include <iris/core/global_state.h>
-#include <iris/hw/power.h>
+#include "di/math/prelude.h"
+#include "iris/core/global_state.h"
+#include "iris/hw/power.h"
 
 namespace iris {
 void log_prologue(detail::DebugFormatContext& context, di::SourceLocation location) {

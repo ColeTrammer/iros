@@ -1,5 +1,5 @@
-#include <di/function/prelude.h>
-#include <dius/test/prelude.h>
+#include "di/function/prelude.h"
+#include "dius/test/prelude.h"
 
 namespace function_generator {
 static auto f() -> di::Generator<int> {

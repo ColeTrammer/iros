@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/parser/run_parser.h>
+#include "di/parser/run_parser.h"
 
 namespace di::parser {
 namespace detail {

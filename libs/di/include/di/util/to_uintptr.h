@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/function/pipeline.h>
-#include <di/types/prelude.h>
+#include "di/function/pipeline.h"
+#include "di/types/prelude.h"
 
 namespace di::util {
 namespace detail {

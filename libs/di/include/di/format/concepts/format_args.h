@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/meta/core.h>
-#include <di/types/size_t.h>
+#include "di/meta/core.h"
+#include "di/types/size_t.h"
 
 namespace di::concepts {
 template<typename T>

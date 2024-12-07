@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/meta/operations.h>
-#include <di/util/exchange.h>
-#include <di/util/move.h>
+#include "di/meta/operations.h"
+#include "di/util/exchange.h"
+#include "di/util/move.h"
 
 namespace di::util {
 template<concepts::Copyable T>

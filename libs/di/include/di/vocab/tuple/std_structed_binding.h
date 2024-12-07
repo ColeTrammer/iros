@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/types/size_t.h>
+#include "di/types/size_t.h"
 
 #ifndef DI_NO_USE_STD
 #include <utility>

@@ -1,19 +1,19 @@
 #pragma once
 
-#include <di/execution/algorithm/ensure_started.h>
-#include <di/execution/algorithm/just.h>
-#include <di/execution/algorithm/start_detached.h>
-#include <di/execution/concepts/sender.h>
-#include <di/execution/concepts/sender_in.h>
-#include <di/execution/interface/get_env.h>
-#include <di/execution/meta/env_of.h>
-#include <di/execution/query/get_allocator.h>
-#include <di/execution/sequence/sequence_sender.h>
-#include <di/function/tag_invoke.h>
-#include <di/meta/operations.h>
-#include <di/meta/vocab.h>
-#include <di/util/reference_wrapper.h>
-#include <di/util/unwrap_reference.h>
+#include "di/execution/algorithm/ensure_started.h"
+#include "di/execution/algorithm/just.h"
+#include "di/execution/algorithm/start_detached.h"
+#include "di/execution/concepts/sender.h"
+#include "di/execution/concepts/sender_in.h"
+#include "di/execution/interface/get_env.h"
+#include "di/execution/meta/env_of.h"
+#include "di/execution/query/get_allocator.h"
+#include "di/execution/sequence/sequence_sender.h"
+#include "di/function/tag_invoke.h"
+#include "di/meta/operations.h"
+#include "di/meta/vocab.h"
+#include "di/util/reference_wrapper.h"
+#include "di/util/unwrap_reference.h"
 
 namespace di::execution {
 namespace request_stop_ns {

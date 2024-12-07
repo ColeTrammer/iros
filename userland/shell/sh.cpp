@@ -1,6 +1,6 @@
-#include <dius/main.h>
-#include <dius/print.h>
-#include <dius/system/process.h>
+#include "dius/main.h"
+#include "dius/print.h"
+#include "dius/system/process.h"
 
 namespace sh {
 struct Args {

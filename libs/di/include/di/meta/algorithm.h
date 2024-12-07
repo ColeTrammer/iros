@@ -1,11 +1,11 @@
 #pragma once
 
-#include <di/meta/constexpr.h>
-#include <di/meta/core.h>
-#include <di/meta/function.h>
-#include <di/meta/list.h>
-#include <di/types/integers.h>
-#include <di/vocab/tuple/tuple_forward_declaration.h>
+#include "di/meta/constexpr.h"
+#include "di/meta/core.h"
+#include "di/meta/function.h"
+#include "di/meta/list.h"
+#include "di/types/integers.h"
+#include "di/vocab/tuple/tuple_forward_declaration.h"
 
 namespace di::meta {
 namespace detail {

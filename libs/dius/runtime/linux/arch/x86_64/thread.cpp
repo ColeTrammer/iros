@@ -1,8 +1,9 @@
-#include <dius/thread.h>
+#include "dius/thread.h"
 
-#include <dius/system/process.h>
-#include <dius/system/system_call.h>
 #include <linux/sched.h>
+
+#include "dius/system/process.h"
+#include "dius/system/system_call.h"
 
 namespace dius {
 struct [[gnu::aligned(16)]] StackHead {

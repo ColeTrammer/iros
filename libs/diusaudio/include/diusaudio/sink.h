@@ -1,14 +1,14 @@
 #pragma once
 
-#include <di/any/container/any.h>
-#include <di/any/dispatch/dispatcher.h>
-#include <di/any/types/this.h>
-#include <di/function/container/function.h>
-#include <di/meta/core.h>
-#include <di/types/integers.h>
-#include <di/vocab/error/result.h>
-#include <diusaudio/frame.h>
-#include <diusaudio/frame_info.h>
+#include "di/any/container/any.h"
+#include "di/any/dispatch/dispatcher.h"
+#include "di/any/types/this.h"
+#include "di/function/container/function.h"
+#include "di/meta/core.h"
+#include "di/types/integers.h"
+#include "di/vocab/error/result.h"
+#include "diusaudio/frame.h"
+#include "diusaudio/frame_info.h"
 
 namespace audio {
 namespace sink {

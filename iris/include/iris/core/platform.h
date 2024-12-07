@@ -1,12 +1,12 @@
 #pragma once
 
-#include <di/container/algorithm/max.h>
-#include <di/container/allocator/allocation.h>
-#include <di/container/allocator/forward_declaration.h>
-#include <di/types/integers.h>
-#include <di/util/std_new.h>
-#include <iris/core/error.h>
-#include <iris/core/spinlock.h>
+#include "di/container/algorithm/max.h"
+#include "di/container/allocator/allocation.h"
+#include "di/container/allocator/forward_declaration.h"
+#include "di/types/integers.h"
+#include "di/util/std_new.h"
+#include "iris/core/error.h"
+#include "iris/core/spinlock.h"
 
 namespace di::sync {
 class DumbSpinlock;

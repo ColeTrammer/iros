@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/container/interface/reconstruct.h>
-#include <di/util/declval.h>
+#include "di/container/interface/reconstruct.h"
+#include "di/util/declval.h"
 
 namespace di::meta {
 template<typename It, typename Sent = It>

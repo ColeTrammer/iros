@@ -1,11 +1,11 @@
 #include <iris/uapi/initrd.h>
 
-#include <di/cli/prelude.h>
-#include <di/container/path/prelude.h>
-#include <di/math/prelude.h>
-#include <dius/filesystem/prelude.h>
-#include <dius/main.h>
-#include <dius/print.h>
+#include "di/cli/prelude.h"
+#include "di/container/path/prelude.h"
+#include "di/math/prelude.h"
+#include "dius/filesystem/prelude.h"
+#include "dius/main.h"
+#include "dius/print.h"
 
 namespace iris::initrd {
 struct Args {

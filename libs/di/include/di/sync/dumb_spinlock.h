@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/sync/atomic.h>
-#include <di/sync/concepts/lock.h>
+#include "di/sync/atomic.h"
+#include "di/sync/concepts/lock.h"
 
 namespace di::sync {
 inline void cpu_relax() {

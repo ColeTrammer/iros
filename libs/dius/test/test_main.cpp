@@ -1,5 +1,5 @@
-#include <dius/main.h>
-#include <dius/test/prelude.h>
+#include "dius/main.h"
+#include "dius/test/prelude.h"
 
 namespace dius::test {
 static auto main(TestManager::Args& args) -> di::Result<void> {

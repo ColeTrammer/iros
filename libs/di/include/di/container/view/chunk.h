@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/container/view/chunk_view.h>
-#include <di/function/curry_back.h>
+#include "di/container/view/chunk_view.h"
+#include "di/function/curry_back.h"
 
 namespace di::container::view {
 namespace detail {

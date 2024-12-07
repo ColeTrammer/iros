@@ -1,10 +1,10 @@
 #pragma once
 
-#include <di/meta/core.h>
-#include <di/types/partial_ordering.h>
-#include <di/types/strong_ordering.h>
-#include <di/types/weak_ordering.h>
-#include <di/util/declval.h>
+#include "di/meta/core.h"
+#include "di/types/partial_ordering.h"
+#include "di/types/strong_ordering.h"
+#include "di/types/weak_ordering.h"
+#include "di/util/declval.h"
 
 namespace di::meta {
 namespace detail {

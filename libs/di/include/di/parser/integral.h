@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/math/intcmp/prelude.h>
-#include <di/types/prelude.h>
-#include <di/util/compile_time_fail.h>
+#include "di/math/intcmp/prelude.h"
+#include "di/types/prelude.h"
+#include "di/util/compile_time_fail.h"
 
 namespace di {
 inline namespace literals {

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/execution/concepts/is_awaiter.h>
-#include <di/util/forward.h>
-#include <di/util/voidify.h>
+#include "di/execution/concepts/is_awaiter.h"
+#include "di/util/forward.h"
+#include "di/util/voidify.h"
 
 namespace di::concepts {
 namespace detail {

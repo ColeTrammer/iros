@@ -22,7 +22,7 @@ To enable static reflection for a given type, provide a hidden-friend overload o
 be done as follows:
 
 ```cpp
-#include <di/reflect/prelude.h>
+#include "di/reflect/prelude.h"
 
 struct MyType {
     int x;

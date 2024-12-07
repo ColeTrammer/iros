@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/types/compare_outcome.h>
-#include <di/types/partial_ordering.h>
-#include <di/types/weak_ordering.h>
+#include "di/types/compare_outcome.h"
+#include "di/types/partial_ordering.h"
+#include "di/types/weak_ordering.h"
 
 #ifndef DI_NO_USE_STD
 #include <compare>

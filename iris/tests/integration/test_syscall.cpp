@@ -1,6 +1,6 @@
-#include <di/math/prelude.h>
-#include <dius/system/system_call.h>
-#include <dius/test/prelude.h>
+#include "di/math/prelude.h"
+#include "dius/system/system_call.h"
+#include "dius/test/prelude.h"
 
 static void allocate_memory() {
     auto x = dius::system::system_call<uptr>(dius::system::Number::allocate_memory, 4096);

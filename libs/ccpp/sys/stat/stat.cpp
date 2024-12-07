@@ -1,7 +1,8 @@
 #include <sys/stat.h>
 
-#include <dius/system/system_call.h>
 #include <errno.h>
+
+#include "dius/system/system_call.h"
 
 extern "C" auto stat(char const* __restrict path, struct stat* __restrict info) -> int {
 #ifdef __linux__

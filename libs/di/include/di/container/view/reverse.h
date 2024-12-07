@@ -1,12 +1,12 @@
 #pragma once
 
-#include <di/container/concepts/view.h>
-#include <di/container/view/reverse_view.h>
-#include <di/container/view/view.h>
-#include <di/function/pipeline.h>
-#include <di/meta/core.h>
-#include <di/util/declval.h>
-#include <di/util/forward.h>
+#include "di/container/concepts/view.h"
+#include "di/container/view/reverse_view.h"
+#include "di/container/view/view.h"
+#include "di/function/pipeline.h"
+#include "di/meta/core.h"
+#include "di/util/declval.h"
+#include "di/util/forward.h"
 
 namespace di::container::view {
 namespace detail {

@@ -1,20 +1,20 @@
-#include <iris/arch/x86/amd64/hw/local_apic.h>
+#include "iris/arch/x86/amd64/hw/local_apic.h"
 
-#include <di/vocab/pointer/prelude.h>
-#include <iris/arch/x86/amd64/core/interrupt_disabler.h>
-#include <iris/arch/x86/amd64/core/processor.h>
-#include <iris/arch/x86/amd64/gdt.h>
-#include <iris/arch/x86/amd64/idt.h>
-#include <iris/arch/x86/amd64/io_instructions.h>
-#include <iris/arch/x86/amd64/msr.h>
-#include <iris/arch/x86/amd64/system_instructions.h>
-#include <iris/arch/x86/amd64/tss.h>
-#include <iris/core/global_state.h>
-#include <iris/core/print.h>
-#include <iris/hw/irq.h>
-#include <iris/hw/timer.h>
-#include <iris/mm/backing_object.h>
-#include <iris/mm/map_physical_address.h>
+#include "di/vocab/pointer/prelude.h"
+#include "iris/arch/x86/amd64/core/interrupt_disabler.h"
+#include "iris/arch/x86/amd64/core/processor.h"
+#include "iris/arch/x86/amd64/gdt.h"
+#include "iris/arch/x86/amd64/idt.h"
+#include "iris/arch/x86/amd64/io_instructions.h"
+#include "iris/arch/x86/amd64/msr.h"
+#include "iris/arch/x86/amd64/system_instructions.h"
+#include "iris/arch/x86/amd64/tss.h"
+#include "iris/core/global_state.h"
+#include "iris/core/print.h"
+#include "iris/hw/irq.h"
+#include "iris/hw/timer.h"
+#include "iris/mm/backing_object.h"
+#include "iris/mm/map_physical_address.h"
 
 namespace iris {
 void Processor::handle_pending_ipi_messages() {

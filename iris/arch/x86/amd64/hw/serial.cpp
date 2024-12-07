@@ -1,9 +1,9 @@
-#include <iris/arch/x86/amd64/hw/serial.h>
+#include "iris/arch/x86/amd64/hw/serial.h"
 
-#include <iris/arch/x86/amd64/io_instructions.h>
-#include <iris/core/global_state.h>
-#include <iris/core/print.h>
-#include <iris/hw/irq.h>
+#include "iris/arch/x86/amd64/io_instructions.h"
+#include "iris/core/global_state.h"
+#include "iris/core/print.h"
+#include "iris/hw/irq.h"
 
 namespace iris::x86::amd64 {
 void init_serial_early_boot() {

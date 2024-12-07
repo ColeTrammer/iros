@@ -1,13 +1,13 @@
 #pragma once
 
-#include <di/function/invoke.h>
-#include <di/meta/core.h>
-#include <di/meta/operations.h>
-#include <di/meta/util.h>
-#include <di/platform/prelude.h>
-#include <di/sync/concepts/lock.h>
-#include <di/sync/scoped_lock.h>
-#include <di/util/guarded_reference.h>
+#include "di/function/invoke.h"
+#include "di/meta/core.h"
+#include "di/meta/operations.h"
+#include "di/meta/util.h"
+#include "di/platform/prelude.h"
+#include "di/sync/concepts/lock.h"
+#include "di/sync/scoped_lock.h"
+#include "di/util/guarded_reference.h"
 
 namespace di::sync {
 template<typename Value, concepts::Lock Lock = DefaultLock>

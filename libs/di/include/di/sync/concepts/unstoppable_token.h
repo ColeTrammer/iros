@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/sync/concepts/stoppable_token.h>
+#include "di/sync/concepts/stoppable_token.h"
 
 namespace di::concepts {
 template<typename T>

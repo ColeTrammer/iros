@@ -1,12 +1,12 @@
 #pragma once
 
-#include <di/container/algorithm/is_sorted_until.h>
-#include <di/container/concepts/prelude.h>
-#include <di/container/meta/prelude.h>
-#include <di/function/compare.h>
-#include <di/function/identity.h>
-#include <di/util/move.h>
-#include <di/util/reference_wrapper.h>
+#include "di/container/algorithm/is_sorted_until.h"
+#include "di/container/concepts/prelude.h"
+#include "di/container/meta/prelude.h"
+#include "di/function/compare.h"
+#include "di/function/identity.h"
+#include "di/util/move.h"
+#include "di/util/reference_wrapper.h"
 
 namespace di::container {
 namespace detail {

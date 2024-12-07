@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/meta/core.h>
-#include <di/platform/compiler.h>
+#include "di/meta/core.h"
+#include "di/platform/compiler.h"
 
 namespace di::concepts {
 template<template<typename...> typename Fun, typename... Args>

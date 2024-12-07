@@ -1,15 +1,15 @@
 #pragma once
 
-#include <di/container/algorithm/max_element.h>
-#include <di/container/concepts/indirect_strict_weak_order.h>
-#include <di/container/concepts/prelude.h>
-#include <di/container/meta/prelude.h>
-#include <di/function/compare.h>
-#include <di/function/identity.h>
-#include <di/function/invoke.h>
-#include <di/meta/operations.h>
-#include <di/util/initializer_list.h>
-#include <di/util/reference_wrapper.h>
+#include "di/container/algorithm/max_element.h"
+#include "di/container/concepts/indirect_strict_weak_order.h"
+#include "di/container/concepts/prelude.h"
+#include "di/container/meta/prelude.h"
+#include "di/function/compare.h"
+#include "di/function/identity.h"
+#include "di/function/invoke.h"
+#include "di/meta/operations.h"
+#include "di/util/initializer_list.h"
+#include "di/util/reference_wrapper.h"
 
 namespace di::container {
 namespace detail {

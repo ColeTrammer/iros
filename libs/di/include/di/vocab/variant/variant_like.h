@@ -1,15 +1,15 @@
 #pragma once
 
-#include <di/meta/algorithm.h>
-#include <di/meta/core.h>
-#include <di/util/as_const.h>
-#include <di/util/forward.h>
-#include <di/util/get.h>
-#include <di/util/move.h>
-#include <di/vocab/variant/variant_alternative.h>
-#include <di/vocab/variant/variant_index.h>
-#include <di/vocab/variant/variant_size.h>
-#include <di/vocab/variant/variant_types.h>
+#include "di/meta/algorithm.h"
+#include "di/meta/core.h"
+#include "di/util/as_const.h"
+#include "di/util/forward.h"
+#include "di/util/get.h"
+#include "di/util/move.h"
+#include "di/vocab/variant/variant_alternative.h"
+#include "di/vocab/variant/variant_index.h"
+#include "di/vocab/variant/variant_size.h"
+#include "di/vocab/variant/variant_types.h"
 
 namespace di::concepts {
 namespace detail {

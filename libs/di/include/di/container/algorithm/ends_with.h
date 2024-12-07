@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/container/algorithm/equal.h>
-#include <di/container/iterator/distance.h>
+#include "di/container/algorithm/equal.h"
+#include "di/container/iterator/distance.h"
 
 namespace di::container {
 namespace detail {

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/meta/operations.h>
-#include <di/vocab/expected/expected_forward_declaration.h>
-#include <di/vocab/expected/unexpected.h>
+#include "di/meta/operations.h"
+#include "di/vocab/expected/expected_forward_declaration.h"
+#include "di/vocab/expected/unexpected.h"
 
 namespace di::concepts::detail {
 template<typename T, typename E, typename U, typename G>

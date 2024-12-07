@@ -1,9 +1,9 @@
 #pragma once
 
-#include <iris/arch/x86/amd64/hw/local_apic.h>
-#include <iris/arch/x86/amd64/segment_descriptor.h>
-#include <iris/arch/x86/amd64/tss.h>
-#include <iris/hw/irq.h>
+#include "iris/arch/x86/amd64/hw/local_apic.h"
+#include "iris/arch/x86/amd64/segment_descriptor.h"
+#include "iris/arch/x86/amd64/tss.h"
+#include "iris/hw/irq.h"
 
 namespace iris {
 class Processor;

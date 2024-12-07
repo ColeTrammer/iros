@@ -1,10 +1,10 @@
 #pragma once
 
-#include <di/cli/prelude.h>
-#include <di/container/string/prelude.h>
-#include <di/container/vector/prelude.h>
-#include <di/meta/core.h>
-#include <dius/print.h>
+#include "di/cli/prelude.h"
+#include "di/container/string/prelude.h"
+#include "di/container/vector/prelude.h"
+#include "di/meta/core.h"
+#include "dius/print.h"
 
 namespace dius::main::detail {
 template<typename T>

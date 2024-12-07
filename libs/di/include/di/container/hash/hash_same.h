@@ -1,16 +1,16 @@
 #pragma once
 
-#include <di/container/hash/default_hasher.h>
-#include <di/container/hash/hash_write.h>
-#include <di/function/tag_invoke.h>
-#include <di/function/unpack.h>
-#include <di/meta/algorithm.h>
-#include <di/meta/core.h>
-#include <di/meta/language.h>
-#include <di/types/prelude.h>
-#include <di/vocab/tuple/tuple_element.h>
-#include <di/vocab/tuple/tuple_like.h>
-#include <di/vocab/tuple/tuple_size.h>
+#include "di/container/hash/default_hasher.h"
+#include "di/container/hash/hash_write.h"
+#include "di/function/tag_invoke.h"
+#include "di/function/unpack.h"
+#include "di/meta/algorithm.h"
+#include "di/meta/core.h"
+#include "di/meta/language.h"
+#include "di/types/prelude.h"
+#include "di/vocab/tuple/tuple_element.h"
+#include "di/vocab/tuple/tuple_like.h"
+#include "di/vocab/tuple/tuple_size.h"
 
 namespace di::container {
 namespace detail {

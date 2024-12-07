@@ -1,13 +1,14 @@
 #include <ccpp/bits/scanf_implementation.h>
 
 #include <ctype.h>
-#include <di/assert/prelude.h>
-#include <di/math/prelude.h>
-#include <dius/print.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "di/assert/prelude.h"
+#include "di/math/prelude.h"
+#include "dius/print.h"
 
 namespace ccpp {
 struct scanf_specifier_state {

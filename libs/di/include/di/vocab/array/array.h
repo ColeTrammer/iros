@@ -1,26 +1,26 @@
 #pragma once
 
-#include <di/assert/assert_bool.h>
-#include <di/container/algorithm/compare.h>
-#include <di/container/algorithm/equal.h>
-#include <di/container/algorithm/fill.h>
-#include <di/container/algorithm/swap_ranges.h>
-#include <di/container/interface/reconstruct.h>
-#include <di/meta/compare.h>
-#include <di/meta/constexpr.h>
-#include <di/meta/operations.h>
-#include <di/meta/util.h>
-#include <di/types/size_t.h>
-#include <di/util/forward_like.h>
-#include <di/util/get_in_place.h>
-#include <di/util/move.h>
-#include <di/util/swap.h>
-#include <di/util/unreachable.h>
-#include <di/vocab/optional/prelude.h>
-#include <di/vocab/span/prelude.h>
-#include <di/vocab/tuple/enable_generate_structed_bindings.h>
-#include <di/vocab/tuple/tuple_element.h>
-#include <di/vocab/tuple/tuple_size.h>
+#include "di/assert/assert_bool.h"
+#include "di/container/algorithm/compare.h"
+#include "di/container/algorithm/equal.h"
+#include "di/container/algorithm/fill.h"
+#include "di/container/algorithm/swap_ranges.h"
+#include "di/container/interface/reconstruct.h"
+#include "di/meta/compare.h"
+#include "di/meta/constexpr.h"
+#include "di/meta/operations.h"
+#include "di/meta/util.h"
+#include "di/types/size_t.h"
+#include "di/util/forward_like.h"
+#include "di/util/get_in_place.h"
+#include "di/util/move.h"
+#include "di/util/swap.h"
+#include "di/util/unreachable.h"
+#include "di/vocab/optional/prelude.h"
+#include "di/vocab/span/prelude.h"
+#include "di/vocab/tuple/enable_generate_structed_bindings.h"
+#include "di/vocab/tuple/tuple_element.h"
+#include "di/vocab/tuple/tuple_size.h"
 
 namespace di::vocab {
 template<typename T, types::size_t extent>

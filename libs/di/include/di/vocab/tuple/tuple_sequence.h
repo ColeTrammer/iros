@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/function/invoke.h>
-#include <di/function/monad/monad_try.h>
-#include <di/vocab/tuple/apply.h>
-#include <di/vocab/tuple/tuple_like.h>
+#include "di/function/invoke.h"
+#include "di/function/monad/monad_try.h"
+#include "di/vocab/tuple/apply.h"
+#include "di/vocab/tuple/tuple_like.h"
 
 namespace di::vocab {
 namespace detail {

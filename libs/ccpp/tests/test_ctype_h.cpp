@@ -1,6 +1,7 @@
 #include <ctype.h>
-#include <dius/test/prelude.h>
 #include <stdio.h>
+
+#include "dius/test/prelude.h"
 
 namespace ctype_h {
 [[gnu::noinline]] static auto do_ctype(int (*f)(int), int ch) -> bool {

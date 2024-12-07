@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/container/string/prelude.h>
-#include <di/container/view/transform.h>
-#include <di/io/read_all.h>
+#include "di/container/string/prelude.h"
+#include "di/container/view/transform.h"
+#include "di/io/read_all.h"
 
 namespace di::io {
 namespace detail {

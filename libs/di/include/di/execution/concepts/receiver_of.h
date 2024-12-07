@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/execution/concepts/receiver.h>
-#include <di/execution/types/completion_signuatures.h>
-#include <di/function/tag_invoke.h>
+#include "di/execution/concepts/receiver.h"
+#include "di/execution/types/completion_signuatures.h"
+#include "di/function/tag_invoke.h"
 
 namespace di::concepts {
 namespace detail {

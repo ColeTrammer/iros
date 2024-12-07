@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/container/algorithm/make_heap.h>
-#include <di/container/algorithm/sort_heap.h>
+#include "di/container/algorithm/make_heap.h"
+#include "di/container/algorithm/sort_heap.h"
 
 namespace di::container {
 namespace detail {

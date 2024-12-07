@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/meta/operations.h>
-#include <di/util/addressof.h>
+#include "di/meta/operations.h"
+#include "di/util/addressof.h"
 
 namespace di::util {
 template<concepts::CopyConstructible T>

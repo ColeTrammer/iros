@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/function/curry_back.h>
-#include <di/meta/language.h>
-#include <di/types/prelude.h>
+#include "di/function/curry_back.h"
+#include "di/meta/language.h"
+#include "di/types/prelude.h"
 
 namespace di::math {
 namespace detail {

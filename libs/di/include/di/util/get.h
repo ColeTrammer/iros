@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/util/forward.h>
-#include <di/util/get_in_place.h>
+#include "di/util/forward.h"
+#include "di/util/get_in_place.h"
 
 namespace di::util {
 template<types::size_t index, typename T>

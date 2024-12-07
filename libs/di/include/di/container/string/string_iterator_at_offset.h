@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/container/string/constant_string.h>
+#include "di/container/string/constant_string.h"
 
 namespace di::container::string {
 constexpr auto iterator_at_offset(concepts::detail::ConstantString auto const& string, size_t index) {

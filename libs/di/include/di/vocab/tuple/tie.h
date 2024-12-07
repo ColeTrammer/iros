@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/vocab/tuple/tuple.h>
+#include "di/vocab/tuple/tuple.h"
 
 namespace di::vocab {
 namespace detail {

@@ -1,13 +1,13 @@
 #pragma once
 
-#include <di/execution/concepts/operation_state.h>
-#include <di/execution/concepts/receiver_of.h>
-#include <di/execution/concepts/sender.h>
-#include <di/execution/interface/connect_awaitable.h>
-#include <di/execution/meta/completion_signatures_of.h>
-#include <di/execution/meta/env_of.h>
-#include <di/execution/query/is_debug_env.h>
-#include <di/function/tag_invoke.h>
+#include "di/execution/concepts/operation_state.h"
+#include "di/execution/concepts/receiver_of.h"
+#include "di/execution/concepts/sender.h"
+#include "di/execution/interface/connect_awaitable.h"
+#include "di/execution/meta/completion_signatures_of.h"
+#include "di/execution/meta/env_of.h"
+#include "di/execution/query/is_debug_env.h"
+#include "di/function/tag_invoke.h"
 
 namespace di::execution {
 namespace detail {

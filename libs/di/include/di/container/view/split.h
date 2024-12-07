@@ -1,11 +1,11 @@
 #pragma once
 
-#include <di/container/concepts/prelude.h>
-#include <di/container/meta/prelude.h>
-#include <di/container/view/split_view.h>
-#include <di/function/curry_back.h>
-#include <di/function/tag_invoke.h>
-#include <di/util/forward.h>
+#include "di/container/concepts/prelude.h"
+#include "di/container/meta/prelude.h"
+#include "di/container/view/split_view.h"
+#include "di/function/curry_back.h"
+#include "di/function/tag_invoke.h"
+#include "di/util/forward.h"
 
 namespace di::container::view {
 namespace detail {

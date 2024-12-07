@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/meta/operations.h>
-#include <di/meta/util.h>
-#include <di/util/declval.h>
-#include <di/util/forward.h>
+#include "di/meta/operations.h"
+#include "di/meta/util.h"
+#include "di/util/declval.h"
+#include "di/util/forward.h"
 
 namespace di::function {
 namespace tag_invoke_detail {

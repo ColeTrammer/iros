@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/format/prelude.h>
-#include <di/meta/algorithm.h>
-#include <di/meta/core.h>
-#include <di/meta/language.h>
+#include "di/format/prelude.h"
+#include "di/meta/algorithm.h"
+#include "di/meta/core.h"
+#include "di/meta/language.h"
 
 namespace di::util {
 namespace detail {

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/function/curry.h>
-#include <di/function/invoke.h>
-#include <di/function/pipeable.h>
-#include <di/util/move.h>
+#include "di/function/curry.h"
+#include "di/function/invoke.h"
+#include "di/function/pipeable.h"
+#include "di/util/move.h"
 
 namespace di::function {
 namespace proj_ns {

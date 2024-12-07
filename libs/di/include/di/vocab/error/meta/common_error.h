@@ -1,12 +1,12 @@
 #pragma once
 
-#include <di/meta/algorithm.h>
-#include <di/meta/common.h>
-#include <di/meta/core.h>
-#include <di/meta/operations.h>
-#include <di/util/declval.h>
-#include <di/vocab/error/error.h>
-#include <di/vocab/variant/variant.h>
+#include "di/meta/algorithm.h"
+#include "di/meta/common.h"
+#include "di/meta/core.h"
+#include "di/meta/operations.h"
+#include "di/util/declval.h"
+#include "di/vocab/error/error.h"
+#include "di/vocab/variant/variant.h"
 
 namespace di::meta {
 template<typename T, typename U>

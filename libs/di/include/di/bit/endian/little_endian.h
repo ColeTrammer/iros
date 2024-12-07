@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/bit/endian/endian.h>
-#include <di/bit/operation/byteswap.h>
-#include <di/format/prelude.h>
+#include "di/bit/endian/endian.h"
+#include "di/bit/operation/byteswap.h"
+#include "di/format/prelude.h"
 
 namespace di::bit {
 namespace detail {

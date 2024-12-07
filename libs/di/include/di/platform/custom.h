@@ -3,9 +3,9 @@
 #ifdef DI_CUSTOM_PLATFORM
 #include DI_CUSTOM_PLATFORM
 #elifdef DI_NO_USE_STD
-#include <di/container/allocator/forward_declaration.h>
-#include <di/platform/default_generic_domain.h>
-#include <di/sync/dumb_spinlock.h>
+#include "di/container/allocator/forward_declaration.h"
+#include "di/platform/default_generic_domain.h"
+#include "di/sync/dumb_spinlock.h"
 
 namespace di::platform {
 using ThreadId = int;
@@ -19,12 +19,13 @@ using DefaultAllocator = container::InfallibleAllocator;
 using DefaultFallibleAllocator = container::FallibleAllocator;
 }
 #else
-#include <di/container/allocator/forward_declaration.h>
-#include <di/platform/default_generic_domain.h>
-#include <di/vocab/error/result.h>
-#include <di/vocab/expected/expected_forward_declaration.h>
 #include <mutex>
 #include <thread>
+
+#include "di/container/allocator/forward_declaration.h"
+#include "di/platform/default_generic_domain.h"
+#include "di/vocab/error/result.h"
+#include "di/vocab/expected/expected_forward_declaration.h"
 
 namespace di::platform {
 using ThreadId = std::thread::id;

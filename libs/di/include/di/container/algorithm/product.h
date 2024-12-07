@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/container/algorithm/fold_left.h>
-#include <di/function/multiplies.h>
-#include <di/function/pipeline.h>
+#include "di/container/algorithm/fold_left.h"
+#include "di/function/multiplies.h"
+#include "di/function/pipeline.h"
 
 namespace di::container {
 namespace detail {

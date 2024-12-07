@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/sync/stop_token/in_place_stop_source.h>
+#include "di/sync/stop_token/in_place_stop_source.h"
 
 namespace di::sync {
 class InPlaceStopToken {

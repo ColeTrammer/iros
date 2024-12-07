@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/bit/operation/bit_width.h>
+#include "di/bit/operation/bit_width.h"
 
 namespace di::bit {
 namespace detail {

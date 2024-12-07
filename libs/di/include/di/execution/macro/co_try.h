@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/execution/algorithm/just.h>
-#include <di/util/move.h>
-#include <di/vocab/error/error.h>
+#include "di/execution/algorithm/just.h"
+#include "di/util/move.h"
+#include "di/vocab/error/error.h"
 
 #if __GNUC__ >= 13
 // NOTE: GCC 13 thinks that calling DI_TRY() on a di::Result<int&> produces a dangling reference, because the result

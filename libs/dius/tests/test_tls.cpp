@@ -1,6 +1,6 @@
-#include <di/sync/prelude.h>
-#include <dius/test/prelude.h>
-#include <dius/thread.h>
+#include "di/sync/prelude.h"
+#include "dius/test/prelude.h"
+#include "dius/thread.h"
 
 namespace tls {
 constinit thread_local static int x = 42;

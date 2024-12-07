@@ -1,18 +1,19 @@
 #pragma once
 
-#include <di/container/tree/tree_map.h>
-#include <di/function/container/function.h>
-#include <di/util/exchange.h>
-#include <di/util/immovable.h>
-#include <di/util/noncopyable.h>
-#include <di/vocab/error/result.h>
-#include <diusaudio/frame.h>
-#include <diusaudio/frame_info.h>
-#include <diusaudio/sink.h>
 #include <pipewire/loop.h>
 #include <pipewire/main-loop.h>
 #include <pipewire/pipewire.h>
 #include <pipewire/stream.h>
+
+#include "di/container/tree/tree_map.h"
+#include "di/function/container/function.h"
+#include "di/util/exchange.h"
+#include "di/util/immovable.h"
+#include "di/util/noncopyable.h"
+#include "di/vocab/error/result.h"
+#include "diusaudio/frame.h"
+#include "diusaudio/frame_info.h"
+#include "diusaudio/sink.h"
 
 namespace audio::linux {
 class PipewireLibrary : di::NonCopyable {

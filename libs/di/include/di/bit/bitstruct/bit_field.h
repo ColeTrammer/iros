@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/bit/bitstruct/bit_tag.h>
-#include <di/math/smallest_unsigned_type.h>
+#include "di/bit/bitstruct/bit_tag.h"
+#include "di/math/smallest_unsigned_type.h"
 
 namespace di::bit {
 template<size_t index, size_t bit_count>

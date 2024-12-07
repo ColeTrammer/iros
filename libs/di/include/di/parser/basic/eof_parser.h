@@ -1,10 +1,10 @@
 #pragma once
 
-#include <di/container/interface/prelude.h>
-#include <di/parser/concepts/parser_context.h>
-#include <di/parser/meta/parser_context_result.h>
-#include <di/parser/parser_base.h>
-#include <di/vocab/expected/prelude.h>
+#include "di/container/interface/prelude.h"
+#include "di/parser/concepts/parser_context.h"
+#include "di/parser/meta/parser_context_result.h"
+#include "di/parser/parser_base.h"
+#include "di/vocab/expected/prelude.h"
 
 namespace di::parser {
 namespace detail {

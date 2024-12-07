@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/function/invoke.h>
-#include <di/meta/core.h>
-#include <di/types/prelude.h>
+#include "di/function/invoke.h"
+#include "di/meta/core.h"
+#include "di/types/prelude.h"
 
 namespace di::function {
 namespace detail {

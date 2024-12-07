@@ -1,8 +1,8 @@
-#include <diusaudio/sink.h>
+#include "diusaudio/sink.h"
 
-#include <di/platform/prelude.h>
-#include <diusaudio/frame.h>
-#include <diusaudio/frame_info.h>
+#include "di/platform/prelude.h"
+#include "diusaudio/frame.h"
+#include "diusaudio/frame_info.h"
 
 #ifdef DIUSAUDIO_HAVE_PIPEWIRE
 #include "linux/pipewire.h"

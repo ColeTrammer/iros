@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/function/compose.h>
-#include <di/function/invoke.h>
-#include <di/function/pipeable.h>
-#include <di/util/forward.h>
+#include "di/function/compose.h"
+#include "di/function/invoke.h"
+#include "di/function/pipeable.h"
+#include "di/util/forward.h"
 
 namespace di::function::pipeline {
 template<typename T, Pipeable F>

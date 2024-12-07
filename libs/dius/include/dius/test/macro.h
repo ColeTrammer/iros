@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/platform/compiler.h>
-#include <dius/test/test_manager.h>
+#include "di/platform/compiler.h"
+#include "dius/test/test_manager.h"
 
 #define DIUS_TEST(suite_name, case_name)                                                                  \
     static void suite_name##_##case_name();                                                               \

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/meta/core.h>
-#include <di/vocab/error/status_code_forward_declaration.h>
+#include "di/meta/core.h"
+#include "di/vocab/error/status_code_forward_declaration.h"
 
 namespace di::concepts {
 template<typename T>

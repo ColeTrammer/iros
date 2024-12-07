@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/util/declval.h>
+#include "di/util/declval.h"
 
 namespace di::meta {
 template<typename T>

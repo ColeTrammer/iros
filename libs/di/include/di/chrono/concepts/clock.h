@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/meta/constexpr.h>
-#include <di/meta/core.h>
+#include "di/meta/constexpr.h"
+#include "di/meta/core.h"
 
 namespace di::concepts {
 template<typename T>

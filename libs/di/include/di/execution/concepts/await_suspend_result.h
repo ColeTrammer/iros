@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/meta/core.h>
-#include <di/util/coroutine.h>
+#include "di/meta/core.h"
+#include "di/util/coroutine.h"
 
 namespace di::concepts {
 // The result of await_suspend() can either be void, a bool, or a coroutine handle.

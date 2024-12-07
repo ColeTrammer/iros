@@ -1,13 +1,13 @@
 #pragma once
 
-#include <di/function/identity.h>
-#include <di/function/monad/monad_bind.h>
-#include <di/function/monad/monad_enable.h>
-#include <di/function/monad/monad_fmap.h>
-#include <di/meta/core.h>
-#include <di/types/void.h>
-#include <di/util/forward.h>
-#include <di/util/reference_wrapper.h>
+#include "di/function/identity.h"
+#include "di/function/monad/monad_bind.h"
+#include "di/function/monad/monad_enable.h"
+#include "di/function/monad/monad_fmap.h"
+#include "di/meta/core.h"
+#include "di/types/void.h"
+#include "di/util/forward.h"
+#include "di/util/reference_wrapper.h"
 
 namespace di::concepts {
 namespace detail {

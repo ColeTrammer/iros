@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/parser/concepts/parser_context.h>
-#include <di/parser/concepts/parser_of.h>
+#include "di/parser/concepts/parser_context.h"
+#include "di/parser/concepts/parser_of.h"
 
 namespace di::parser {
 namespace detail {

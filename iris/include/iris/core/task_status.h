@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/vocab/pointer/prelude.h>
-#include <iris/core/wait_queue.h>
+#include "di/vocab/pointer/prelude.h"
+#include "iris/core/wait_queue.h"
 
 namespace iris {
 class TaskStatus : public di::IntrusiveRefCount<TaskStatus> {

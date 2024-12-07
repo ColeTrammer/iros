@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/meta/operations.h>
-#include <di/util/declval.h>
-#include <di/util/forward.h>
+#include "di/meta/operations.h"
+#include "di/util/declval.h"
+#include "di/util/forward.h"
 
 namespace di::concepts {
 template<typename F, typename... Args>

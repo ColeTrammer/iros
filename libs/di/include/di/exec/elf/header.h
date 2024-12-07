@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/exec/elf/types.h>
+#include "di/exec/elf/types.h"
 
 namespace di::exec {
 template<ElfFormat format = ElfFormat::Native>

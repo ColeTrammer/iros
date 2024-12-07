@@ -1,16 +1,16 @@
 #pragma once
 
-#include <di/function/invoke.h>
-#include <di/function/pipeable.h>
-#include <di/meta/operations.h>
-#include <di/meta/util.h>
-#include <di/types/in_place.h>
-#include <di/util/forward.h>
-#include <di/util/move.h>
-#include <di/vocab/tuple/apply.h>
-#include <di/vocab/tuple/forward_as_tuple.h>
-#include <di/vocab/tuple/tuple_cat.h>
-#include <di/vocab/tuple/tuple_like.h>
+#include "di/function/invoke.h"
+#include "di/function/pipeable.h"
+#include "di/meta/operations.h"
+#include "di/meta/util.h"
+#include "di/types/in_place.h"
+#include "di/util/forward.h"
+#include "di/util/move.h"
+#include "di/vocab/tuple/apply.h"
+#include "di/vocab/tuple/forward_as_tuple.h"
+#include "di/vocab/tuple/tuple_cat.h"
+#include "di/vocab/tuple/tuple_like.h"
 
 namespace di::function::detail {
 template<concepts::TupleLike Tup>

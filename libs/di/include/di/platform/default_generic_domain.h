@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/container/algorithm/max.h>
-#include <di/types/prelude.h>
-#include <di/vocab/error/status_code.h>
-#include <di/vocab/error/status_code_domain.h>
+#include "di/container/algorithm/max.h"
+#include "di/types/prelude.h"
+#include "di/vocab/error/status_code.h"
+#include "di/vocab/error/status_code_domain.h"
 
 namespace di::platform {
 inline namespace generic_error {

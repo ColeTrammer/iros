@@ -1,13 +1,13 @@
 #pragma once
 
-#include <di/meta/operations.h>
-#include <di/meta/util.h>
-#include <di/types/in_place.h>
-#include <di/util/forward.h>
-#include <di/util/initializer_list.h>
-#include <di/util/move.h>
-#include <di/util/rebindable_box.h>
-#include <di/util/swap.h>
+#include "di/meta/operations.h"
+#include "di/meta/util.h"
+#include "di/types/in_place.h"
+#include "di/util/forward.h"
+#include "di/util/initializer_list.h"
+#include "di/util/move.h"
+#include "di/util/rebindable_box.h"
+#include "di/util/swap.h"
 
 namespace di::vocab {
 template<typename E>

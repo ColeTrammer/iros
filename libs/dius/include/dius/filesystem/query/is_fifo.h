@@ -1,6 +1,6 @@
 #pragma once
 
-#include <dius/filesystem/query/status.h>
+#include "dius/filesystem/query/status.h"
 
 namespace dius::filesystem {
 namespace detail {

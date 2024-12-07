@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/sync/stop_token/in_place_stop_token.h>
+#include "di/sync/stop_token/in_place_stop_token.h"
 
 namespace di::sync {
 template<typename Callback>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/container/algorithm/next_permutation.h>
+#include "di/container/algorithm/next_permutation.h"
 
 namespace di::container {
 namespace detail {

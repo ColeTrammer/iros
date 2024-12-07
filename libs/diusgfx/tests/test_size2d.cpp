@@ -1,6 +1,6 @@
-#include <di/assert/assert_binary.h>
-#include <dius/test/prelude.h>
-#include <diusgfx/size2d.h>
+#include "di/assert/assert_binary.h"
+#include "dius/test/prelude.h"
+#include "diusgfx/size2d.h"
 
 namespace gfx_Size2d {
 constexpr static void basic() {

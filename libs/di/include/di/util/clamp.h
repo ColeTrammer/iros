@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/container/concepts/prelude.h>
-#include <di/container/meta/prelude.h>
-#include <di/function/compare.h>
-#include <di/function/identity.h>
+#include "di/container/concepts/prelude.h"
+#include "di/container/meta/prelude.h"
+#include "di/function/compare.h"
+#include "di/function/identity.h"
 
 namespace di::util {
 namespace detail {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/util/move.h>
+#include "di/util/move.h"
 
 #if __GNUC__ >= 13
 // NOTE: GCC 13 thinks that calling DI_TRY() on a di::Result<int&> produces a dangling reference, because the result

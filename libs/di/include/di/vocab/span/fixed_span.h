@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/types/prelude.h>
-#include <di/vocab/span/span_fixed_size.h>
+#include "di/types/prelude.h"
+#include "di/vocab/span/span_fixed_size.h"
 
 namespace di::vocab {
 template<size_t count, typename T>

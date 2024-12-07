@@ -1,13 +1,13 @@
 #pragma once
 
-#include <di/execution/meta/env_of.h>
-#include <di/execution/query/forwarding_query.h>
-#include <di/execution/sequence/sequence_sender.h>
-#include <di/function/invoke.h>
-#include <di/function/tag_invoke.h>
-#include <di/math/numeric_limits.h>
-#include <di/meta/constexpr.h>
-#include <di/types/integers.h>
+#include "di/execution/meta/env_of.h"
+#include "di/execution/query/forwarding_query.h"
+#include "di/execution/sequence/sequence_sender.h"
+#include "di/function/invoke.h"
+#include "di/function/tag_invoke.h"
+#include "di/math/numeric_limits.h"
+#include "di/meta/constexpr.h"
+#include "di/types/integers.h"
 
 namespace di::execution {
 namespace get_sequence_cardinality_ns {

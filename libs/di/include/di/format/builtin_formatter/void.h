@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/format/formatter.h>
-#include <di/types/prelude.h>
+#include "di/format/formatter.h"
+#include "di/types/prelude.h"
 
 namespace di::format {
 template<concepts::Encoding Enc>

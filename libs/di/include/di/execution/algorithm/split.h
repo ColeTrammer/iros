@@ -1,30 +1,30 @@
 #pragma once
 
-#include <di/assert/assert_bool.h>
-#include <di/container/allocator/allocate_one.h>
-#include <di/container/allocator/allocator.h>
-#include <di/container/allocator/deallocate_one.h>
-#include <di/container/allocator/fallible_allocator.h>
-#include <di/container/allocator/infallible_allocator.h>
-#include <di/execution/meta/connect_result.h>
-#include <di/execution/meta/make_completion_signatures.h>
-#include <di/execution/meta/stop_token_of.h>
-#include <di/execution/query/get_stop_token.h>
-#include <di/execution/query/make_env.h>
-#include <di/execution/receiver/set_error.h>
-#include <di/execution/receiver/set_stopped.h>
-#include <di/execution/receiver/set_value.h>
-#include <di/execution/types/completion_signuatures.h>
-#include <di/execution/types/empty_env.h>
-#include <di/function/curry_back.h>
-#include <di/meta/algorithm.h>
-#include <di/platform/compiler.h>
-#include <di/sync/atomic.h>
-#include <di/sync/memory_order.h>
-#include <di/sync/stop_token/in_place_stop_token.h>
-#include <di/util/addressof.h>
-#include <di/util/immovable.h>
-#include <di/vocab/tuple/tuple.h>
+#include "di/assert/assert_bool.h"
+#include "di/container/allocator/allocate_one.h"
+#include "di/container/allocator/allocator.h"
+#include "di/container/allocator/deallocate_one.h"
+#include "di/container/allocator/fallible_allocator.h"
+#include "di/container/allocator/infallible_allocator.h"
+#include "di/execution/meta/connect_result.h"
+#include "di/execution/meta/make_completion_signatures.h"
+#include "di/execution/meta/stop_token_of.h"
+#include "di/execution/query/get_stop_token.h"
+#include "di/execution/query/make_env.h"
+#include "di/execution/receiver/set_error.h"
+#include "di/execution/receiver/set_stopped.h"
+#include "di/execution/receiver/set_value.h"
+#include "di/execution/types/completion_signuatures.h"
+#include "di/execution/types/empty_env.h"
+#include "di/function/curry_back.h"
+#include "di/meta/algorithm.h"
+#include "di/platform/compiler.h"
+#include "di/sync/atomic.h"
+#include "di/sync/memory_order.h"
+#include "di/sync/stop_token/in_place_stop_token.h"
+#include "di/util/addressof.h"
+#include "di/util/immovable.h"
+#include "di/vocab/tuple/tuple.h"
 
 namespace di::execution {
 namespace split_ns {

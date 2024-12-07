@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/function/pipeable.h>
-#include <di/util/forward.h>
+#include "di/function/pipeable.h"
+#include "di/util/forward.h"
 
 namespace di::function {
 struct Identity : pipeline::EnablePipeline {

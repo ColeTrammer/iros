@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/execution/concepts/completion_signature.h>
+#include "di/execution/concepts/completion_signature.h"
 
 namespace di::types {
 template<concepts::CompletionSignature... Signatures>

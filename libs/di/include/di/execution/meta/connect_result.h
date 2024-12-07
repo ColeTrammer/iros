@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/execution/interface/connect.h>
+#include "di/execution/interface/connect.h"
 
 namespace di::meta {
 template<typename Send, typename Rec>

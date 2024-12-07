@@ -1,19 +1,19 @@
-#include <di/container/string/string_view.h>
-#include <di/math/abs_diff.h>
-#include <di/types/integers.h>
-#include <di/vocab/bytes/byte_buffer.h>
-#include <dius/print.h>
-#include <diusgfx/bitmap.h>
-#include <diusgfx/color.h>
-#include <diusgfx/painter.h>
-#include <diusgfx/point.h>
-#include <diusgfx/rect.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <syscall.h>
 #include <unistd.h>
 #include <wayland-client.h>
 
+#include "di/container/string/string_view.h"
+#include "di/math/abs_diff.h"
+#include "di/types/integers.h"
+#include "di/vocab/bytes/byte_buffer.h"
+#include "dius/print.h"
+#include "diusgfx/bitmap.h"
+#include "diusgfx/color.h"
+#include "diusgfx/painter.h"
+#include "diusgfx/point.h"
+#include "diusgfx/rect.h"
 #include "xdg-shell.h"
 
 // NOTE: this test code is heavily inspired from this tutorial:

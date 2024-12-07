@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/format/bounded_format_context.h>
-#include <di/format/present_encoded_context.h>
+#include "di/format/bounded_format_context.h"
+#include "di/format/present_encoded_context.h"
 
 namespace di::format::style {
 /// @brief Represent a ANSI terminal color.

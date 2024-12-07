@@ -1,11 +1,11 @@
 #pragma once
 
-#include <di/container/concepts/container_of.h>
-#include <di/container/concepts/forward_container.h>
-#include <di/container/string/encoding.h>
-#include <di/meta/core.h>
-#include <di/meta/language.h>
-#include <di/types/size_t.h>
+#include "di/container/concepts/container_of.h"
+#include "di/container/concepts/forward_container.h"
+#include "di/container/string/encoding.h"
+#include "di/meta/core.h"
+#include "di/meta/language.h"
+#include "di/types/size_t.h"
 
 namespace di::concepts {
 template<typename T>

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <iris/arch/x86/amd64/idt.h>
-#include <iris/hw/irq_controller.h>
+#include "iris/arch/x86/amd64/idt.h"
+#include "iris/hw/irq_controller.h"
 
 namespace iris::arch {
 struct ReadonlyGlobalState {

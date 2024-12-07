@@ -1,6 +1,7 @@
-#include <di/container/algorithm/prelude.h>
-#include <di/util/prelude.h>
 #include <string.h>
+
+#include "di/container/algorithm/prelude.h"
+#include "di/util/prelude.h"
 
 extern "C" auto memmove(void* dest, void const* src, size_t count) -> void* {
     auto* dest_typed = (unsigned char*) dest;

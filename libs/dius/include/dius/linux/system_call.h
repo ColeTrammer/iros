@@ -11,9 +11,9 @@
 #include <sys/mman.h>
 #endif
 
-#include <di/util/prelude.h>
-#include <dius/config.h>
-#include <dius/error.h>
+#include "di/util/prelude.h"
+#include "dius/config.h"
+#include "dius/error.h"
 
 #include DIUS_ARCH_PLATFORM_PATH(system_call.h)
 

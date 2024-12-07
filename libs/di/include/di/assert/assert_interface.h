@@ -5,8 +5,9 @@
 #error "Cannot use DI_NO_USE_STD with DI_CUSTOM_ASSERT_HANDLER"
 #endif
 #include <cstdlib>
-#include <di/util/source_location.h>
 #include <iostream>
+
+#include "di/util/source_location.h"
 
 namespace di::assert::detail {
 [[noreturn]] inline void assert_fail(char const* source_text, char const* lhs_message, char const* rhs_message,
@@ -24,7 +25,7 @@ namespace di::assert::detail {
 }
 }
 #else
-#include <di/util/source_location.h>
+#include "di/util/source_location.h"
 
 namespace di::assert::detail {
 void assert_fail(char const* source_text, char const* lhs_message, char const* rhs_message, util::SourceLocation loc);

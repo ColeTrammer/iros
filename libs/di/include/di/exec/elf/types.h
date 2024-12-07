@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/exec/elf/format.h>
-#include <di/types/prelude.h>
+#include "di/exec/elf/format.h"
+#include "di/types/prelude.h"
 
 namespace di::exec {
 template<ElfFormat format = ElfFormat::Native>

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/container/vector/prelude.h>
-#include <di/function/monad/monad_try.h>
-#include <di/io/interface/reader.h>
-#include <di/vocab/expected/prelude.h>
+#include "di/container/vector/prelude.h"
+#include "di/function/monad/monad_try.h"
+#include "di/io/interface/reader.h"
+#include "di/vocab/expected/prelude.h"
 
 namespace di::io {
 namespace detail {

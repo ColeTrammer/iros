@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/container/view/cycle_view.h>
-#include <di/function/pipeline.h>
+#include "di/container/view/cycle_view.h"
+#include "di/function/pipeline.h"
 
 namespace di::container::view {
 namespace detail {

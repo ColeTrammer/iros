@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/execution/concepts/sender.h>
-#include <di/execution/concepts/valid_completion_signatures.h>
-#include <di/execution/query/get_completion_signatures.h>
-#include <di/execution/types/empty_env.h>
+#include "di/execution/concepts/sender.h"
+#include "di/execution/concepts/valid_completion_signatures.h"
+#include "di/execution/query/get_completion_signatures.h"
+#include "di/execution/types/empty_env.h"
 
 namespace di::concepts {
 template<typename S, typename E = types::EmptyEnv>

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/container/algorithm/compare.h>
-#include <di/container/string/constant_string.h>
-#include <di/container/string/encoding.h>
-#include <di/meta/core.h>
+#include "di/container/algorithm/compare.h"
+#include "di/container/string/constant_string.h"
+#include "di/container/string/encoding.h"
+#include "di/meta/core.h"
 
 namespace di::container::string {
 template<concepts::detail::ConstantString S, concepts::detail::ConstantString T>

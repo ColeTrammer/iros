@@ -1,14 +1,14 @@
 #pragma once
 
-#include <di/meta/algorithm.h>
-#include <di/meta/core.h>
-#include <di/meta/vocab.h>
-#include <di/util/as_const.h>
-#include <di/util/forward.h>
-#include <di/util/get.h>
-#include <di/util/move.h>
-#include <di/vocab/tuple/tuple_element.h>
-#include <di/vocab/tuple/tuple_size.h>
+#include "di/meta/algorithm.h"
+#include "di/meta/core.h"
+#include "di/meta/vocab.h"
+#include "di/util/as_const.h"
+#include "di/util/forward.h"
+#include "di/util/get.h"
+#include "di/util/move.h"
+#include "di/vocab/tuple/tuple_element.h"
+#include "di/vocab/tuple/tuple_size.h"
 
 namespace di::concepts {
 namespace detail {

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/meta/compare.h>
-#include <di/meta/core.h>
-#include <di/meta/operations.h>
-#include <di/vocab/md/concepts/extents.h>
+#include "di/meta/compare.h"
+#include "di/meta/core.h"
+#include "di/meta/operations.h"
+#include "di/vocab/md/concepts/extents.h"
 
 namespace di::concepts {
 namespace detail {

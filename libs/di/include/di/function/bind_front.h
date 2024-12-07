@@ -1,16 +1,16 @@
 #pragma once
 
-#include <di/function/invoke.h>
-#include <di/function/pipeable.h>
-#include <di/meta/algorithm.h>
-#include <di/meta/operations.h>
-#include <di/meta/util.h>
-#include <di/types/in_place.h>
-#include <di/types/size_t.h>
-#include <di/util/forward.h>
-#include <di/util/get.h>
-#include <di/util/move.h>
-#include <di/vocab/tuple/prelude.h>
+#include "di/function/invoke.h"
+#include "di/function/pipeable.h"
+#include "di/meta/algorithm.h"
+#include "di/meta/operations.h"
+#include "di/meta/util.h"
+#include "di/types/in_place.h"
+#include "di/types/size_t.h"
+#include "di/util/forward.h"
+#include "di/util/get.h"
+#include "di/util/move.h"
+#include "di/vocab/tuple/prelude.h"
 
 namespace di::function {
 namespace detail {

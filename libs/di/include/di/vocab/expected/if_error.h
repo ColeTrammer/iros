@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/function/curry_back.h>
-#include <di/function/invoke.h>
-#include <di/meta/util.h>
-#include <di/meta/vocab.h>
+#include "di/function/curry_back.h"
+#include "di/function/invoke.h"
+#include "di/meta/util.h"
+#include "di/meta/vocab.h"
 
 namespace di::vocab {
 namespace detail {

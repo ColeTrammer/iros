@@ -1,12 +1,12 @@
 #pragma once
 
-#include <di/execution/concepts/completion_signature.h>
-#include <di/execution/concepts/sender_in.h>
-#include <di/execution/meta/completion_signatures_of.h>
-#include <di/meta/algorithm.h>
-#include <di/meta/core.h>
-#include <di/meta/language.h>
-#include <di/meta/util.h>
+#include "di/execution/concepts/completion_signature.h"
+#include "di/execution/concepts/sender_in.h"
+#include "di/execution/meta/completion_signatures_of.h"
+#include "di/meta/algorithm.h"
+#include "di/meta/core.h"
+#include "di/meta/language.h"
+#include "di/meta/util.h"
 
 namespace di::meta {
 namespace detail {

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/function/invoke.h>
-#include <di/meta/util.h>
+#include "di/function/invoke.h"
+#include "di/meta/util.h"
 
 namespace di::util {
 template<concepts::Invocable Fun>

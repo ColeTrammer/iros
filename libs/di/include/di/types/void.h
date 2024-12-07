@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/types/strong_ordering.h>
+#include "di/types/strong_ordering.h"
 
 namespace di::types {
 struct Void {

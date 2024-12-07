@@ -1,10 +1,10 @@
 #pragma once
 
-#include <di/container/string/prelude.h>
-#include <di/io/prelude.h>
-#include <di/serialization/serialize.h>
-#include <di/vocab/expected/invoke_as_fallible.h>
-#include <di/vocab/expected/try_infallible.h>
+#include "di/container/string/prelude.h"
+#include "di/io/prelude.h"
+#include "di/serialization/serialize.h"
+#include "di/vocab/expected/invoke_as_fallible.h"
+#include "di/vocab/expected/try_infallible.h"
 
 namespace di::serialization {
 namespace detail {

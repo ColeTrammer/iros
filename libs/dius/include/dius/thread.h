@@ -1,11 +1,11 @@
 #pragma once
 
-#include <di/assert/prelude.h>
-#include <di/function/prelude.h>
-#include <di/meta/util.h>
-#include <di/util/prelude.h>
-#include <dius/config.h>
-#include <dius/error.h>
+#include "di/assert/prelude.h"
+#include "di/function/prelude.h"
+#include "di/meta/util.h"
+#include "di/util/prelude.h"
+#include "dius/config.h"
+#include "dius/error.h"
 
 #include DIUS_PLATFORM_PATH(thread.h)
 

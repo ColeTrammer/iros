@@ -1,6 +1,7 @@
-#include <dius/test/prelude.h>
 #include <getopt.h>
 #include <string.h>
+
+#include "dius/test/prelude.h"
 
 namespace getopt_h {
 static int saw_bar = 0;

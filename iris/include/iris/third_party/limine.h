@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/platform/compiler.h>
-#include <di/types/prelude.h>
+#include "di/platform/compiler.h"
+#include "di/types/prelude.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"

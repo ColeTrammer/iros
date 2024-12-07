@@ -1,11 +1,11 @@
 #pragma once
 
-#include <di/container/algorithm/min.h>
-#include <di/container/interface/reconstruct.h>
-#include <di/container/interface/ssize.h>
-#include <di/container/view/drop_view.h>
-#include <di/function/curry_back.h>
-#include <di/function/tag_invoke.h>
+#include "di/container/algorithm/min.h"
+#include "di/container/interface/reconstruct.h"
+#include "di/container/interface/ssize.h"
+#include "di/container/view/drop_view.h"
+#include "di/function/curry_back.h"
+#include "di/function/tag_invoke.h"
 
 namespace di::container::view {
 namespace detail {

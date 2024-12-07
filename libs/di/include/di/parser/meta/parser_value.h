@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/meta/vocab.h>
-#include <di/parser/concepts/parser.h>
-#include <di/parser/concepts/parser_context.h>
-#include <di/util/declval.h>
+#include "di/meta/vocab.h"
+#include "di/parser/concepts/parser.h"
+#include "di/parser/concepts/parser_context.h"
+#include "di/util/declval.h"
 
 namespace di::meta {
 template<concepts::ParserContext Context, concepts::Parser<Context> Parser>

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/function/invoke.h>
-#include <di/meta/operations.h>
-#include <di/sync/concepts/stoppable_token.h>
+#include "di/function/invoke.h"
+#include "di/meta/operations.h"
+#include "di/sync/concepts/stoppable_token.h"
 
 namespace di::concepts {
 template<typename T, typename Callback, typename Init = Callback>

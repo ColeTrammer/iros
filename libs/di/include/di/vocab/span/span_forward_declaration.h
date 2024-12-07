@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/math/numeric_limits.h>
-#include <di/types/size_t.h>
+#include "di/math/numeric_limits.h"
+#include "di/types/size_t.h"
 
 namespace di::vocab {
 constexpr inline auto dynamic_extent = math::NumericLimits<types::size_t>::max;

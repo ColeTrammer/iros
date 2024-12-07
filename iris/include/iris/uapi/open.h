@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/types/prelude.h>
-#include <di/util/bitwise_enum.h>
+#include "di/types/prelude.h"
+#include "di/util/bitwise_enum.h"
 
 namespace iris {
 enum class OpenMode : u32 {

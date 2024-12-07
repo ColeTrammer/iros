@@ -1,26 +1,26 @@
 #pragma once
 
-#include <di/any/concepts/impl.h>
-#include <di/cli/argument.h>
-#include <di/cli/option.h>
-#include <di/container/algorithm/any_of.h>
-#include <di/container/algorithm/prelude.h>
-#include <di/container/algorithm/rotate.h>
-#include <di/container/algorithm/sum.h>
-#include <di/container/string/string_view.h>
-#include <di/container/string/utf8_encoding.h>
-#include <di/container/vector/static_vector.h>
-#include <di/format/style.h>
-#include <di/function/monad/monad_try.h>
-#include <di/function/not_fn.h>
-#include <di/function/prelude.h>
-#include <di/io/interface/writer.h>
-#include <di/io/string_writer.h>
-#include <di/io/writer_print.h>
-#include <di/io/writer_println.h>
-#include <di/meta/constexpr.h>
-#include <di/meta/language.h>
-#include <di/vocab/optional/lift_bool.h>
+#include "di/any/concepts/impl.h"
+#include "di/cli/argument.h"
+#include "di/cli/option.h"
+#include "di/container/algorithm/any_of.h"
+#include "di/container/algorithm/prelude.h"
+#include "di/container/algorithm/rotate.h"
+#include "di/container/algorithm/sum.h"
+#include "di/container/string/string_view.h"
+#include "di/container/string/utf8_encoding.h"
+#include "di/container/vector/static_vector.h"
+#include "di/format/style.h"
+#include "di/function/monad/monad_try.h"
+#include "di/function/not_fn.h"
+#include "di/function/prelude.h"
+#include "di/io/interface/writer.h"
+#include "di/io/string_writer.h"
+#include "di/io/writer_print.h"
+#include "di/io/writer_println.h"
+#include "di/meta/constexpr.h"
+#include "di/meta/language.h"
+#include "di/vocab/optional/lift_bool.h"
 
 namespace di::cli {
 namespace detail {

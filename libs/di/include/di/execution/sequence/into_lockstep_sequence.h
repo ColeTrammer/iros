@@ -1,10 +1,10 @@
 #pragma once
 
-#include <di/execution/concepts/sender.h>
-#include <di/execution/query/is_always_lockstep_sequence.h>
-#include <di/function/pipeable.h>
-#include <di/function/tag_invoke.h>
-#include <di/meta/util.h>
+#include "di/execution/concepts/sender.h"
+#include "di/execution/query/is_always_lockstep_sequence.h"
+#include "di/function/pipeable.h"
+#include "di/function/tag_invoke.h"
+#include "di/meta/util.h"
 
 namespace di::execution {
 namespace into_lockstep_sequence_ns {

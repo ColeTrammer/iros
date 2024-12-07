@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/math/rational/rational.h>
-#include <di/meta/constexpr.h>
-#include <di/types/prelude.h>
+#include "di/math/rational/rational.h"
+#include "di/meta/constexpr.h"
+#include "di/types/prelude.h"
 
 namespace di::math {
 #ifdef DI_HAVE_128_BIT_INTEGERS

@@ -1,12 +1,12 @@
 #pragma once
 
-#include <di/container/concepts/contiguous_container.h>
-#include <di/container/vector/constant_vector.h>
-#include <di/meta/core.h>
-#include <di/meta/language.h>
-#include <di/meta/operations.h>
-#include <di/meta/vocab.h>
-#include <di/types/prelude.h>
+#include "di/container/concepts/contiguous_container.h"
+#include "di/container/vector/constant_vector.h"
+#include "di/meta/core.h"
+#include "di/meta/language.h"
+#include "di/meta/operations.h"
+#include "di/meta/vocab.h"
+#include "di/types/prelude.h"
 
 namespace di::concepts::detail {
 template<typename T>

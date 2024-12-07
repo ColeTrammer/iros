@@ -1,9 +1,9 @@
-#include <di/assert/assert_bool.h>
-#include <di/math/prelude.h>
-#include <di/util/unreachable.h>
-#include <dius/print.h>
-#include <dius/runtime/allocate.h>
-#include <dius/system/prelude.h>
+#include "di/assert/assert_bool.h"
+#include "di/math/prelude.h"
+#include "di/util/unreachable.h"
+#include "dius/print.h"
+#include "dius/runtime/allocate.h"
+#include "dius/system/prelude.h"
 
 [[gnu::weak]] auto operator new(std::size_t size) -> void* {
     return ::operator new(size, std::align_val_t { alignof(void*) });

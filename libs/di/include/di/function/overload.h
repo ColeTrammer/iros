@@ -1,10 +1,10 @@
 #pragma once
 
-#include <di/function/piped.h>
-#include <di/function/pipeline.h>
-#include <di/meta/operations.h>
-#include <di/meta/util.h>
-#include <di/util/forward.h>
+#include "di/function/piped.h"
+#include "di/function/pipeline.h"
+#include "di/meta/operations.h"
+#include "di/meta/util.h"
+#include "di/util/forward.h"
 
 namespace di::function {
 namespace detail {

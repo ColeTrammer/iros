@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/vocab/error/status_code.h>
+#include "di/vocab/error/status_code.h"
 
 namespace di::vocab {
 template<typename T, typename U>

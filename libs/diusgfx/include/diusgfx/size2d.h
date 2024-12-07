@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/math/linalg/vec.h>
-#include <di/types/floats.h>
-#include <di/types/integers.h>
-#include <di/util/get.h>
+#include "di/math/linalg/vec.h"
+#include "di/types/floats.h"
+#include "di/types/integers.h"
+#include "di/util/get.h"
 
 namespace gfx {
 struct Size2dType {

@@ -1,5 +1,5 @@
-#include <di/sync/prelude.h>
-#include <dius/test/prelude.h>
+#include "di/sync/prelude.h"
+#include "dius/test/prelude.h"
 
 namespace sync_in_place_stop_source {
 static void basic() {

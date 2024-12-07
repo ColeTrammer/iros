@@ -1,9 +1,8 @@
 #include "package_manager.h"
 
-#include <di/function/monad/monad_try.h>
-#include <dius/main.h>
-
 #include "config.h"
+#include "di/function/monad/monad_try.h"
+#include "dius/main.h"
 #include "package_database.h"
 
 namespace pm {

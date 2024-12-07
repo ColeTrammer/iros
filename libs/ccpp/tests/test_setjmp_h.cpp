@@ -1,5 +1,6 @@
-#include <dius/test/prelude.h>
 #include <setjmp.h>
+
+#include "dius/test/prelude.h"
 
 namespace setjmp_h {
 // Silence clang-tidy warnings about using setjmp and longjmp (for these tests only).

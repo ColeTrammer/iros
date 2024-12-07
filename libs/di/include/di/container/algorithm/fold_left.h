@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/container/algorithm/fold_left_with_iter.h>
-#include <di/function/curry_back.h>
+#include "di/container/algorithm/fold_left_with_iter.h"
+#include "di/function/curry_back.h"
 
 namespace di::container {
 namespace detail {

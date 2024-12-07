@@ -1,4 +1,4 @@
-#include <dius/system/process.h>
+#include "dius/system/process.h"
 
 #include <errno.h>
 #include <pthread.h>

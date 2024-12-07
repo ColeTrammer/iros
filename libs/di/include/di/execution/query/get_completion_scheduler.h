@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/execution/concepts/queryable.h>
-#include <di/execution/concepts/scheduler.h>
-#include <di/execution/query/forwarding_query.h>
-#include <di/util/as_const.h>
+#include "di/execution/concepts/queryable.h"
+#include "di/execution/concepts/scheduler.h"
+#include "di/execution/query/forwarding_query.h"
+#include "di/util/as_const.h"
 
 namespace di::execution {
 template<concepts::OneOf<SetValue, SetError, SetStopped> CPO>
