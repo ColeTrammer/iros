@@ -1,5 +1,6 @@
 #pragma once
 
+#include "di/container/meta/iterator_reference.h"
 #include "di/function/tag_invoke.h"
 #include "di/meta/core.h"
 #include "di/meta/language.h"
@@ -23,16 +24,31 @@ namespace detail {
     concept DerefIterMove = requires(T&& value) { *util::forward<T>(value); };
 
     struct IteratorMoveFunction {
+    private:
+        template<typename T>
+        requires(CustomIterMove<T>)
+        constexpr auto impl(T&& value) const -> meta::TagInvokeResult<IteratorMoveFunction, T> {
+            return function::tag_invoke(*this, util::forward<T>(value));
+        }
+
+        template<typename T>
+        requires(!CustomIterMove<T> && RegularIterMove<T>)
+        constexpr auto impl(T&& value) const
+            -> meta::AddRValueReference<meta::RemoveReference<meta::IteratorReference<T>>> {
+            return di::move(*di::forward<T>(value));
+        }
+
+        template<typename T>
+        requires(!CustomIterMove<T> && !RegularIterMove<T>)
+        constexpr auto impl(T&& value) const -> meta::IteratorReference<T> {
+            return *di::forward<T>(value);
+        }
+
+    public:
         template<typename T>
         requires(CustomIterMove<T> || RegularIterMove<T> || DerefIterMove<T>)
-        constexpr auto operator()(T&& value) const -> decltype(auto) {
-            if constexpr (CustomIterMove<T>) {
-                return function::tag_invoke(*this, util::forward<T>(value));
-            } else if constexpr (RegularIterMove<T>) {
-                return util::move(*util::forward<T>(value));
-            } else {
-                return *util::forward<T>(value);
-            }
+        constexpr auto operator()(T&& value) const -> decltype(this->impl(util::forward<T>(value))) {
+            return this->impl(util::forward<T>(value));
         }
     };
 }
