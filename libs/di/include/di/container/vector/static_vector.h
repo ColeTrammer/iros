@@ -51,6 +51,8 @@ public:
     }
     constexpr void assume_size(size_t size) { m_size = static_cast<SizeType>(size); }
 
+    constexpr auto grow_capacity(usize min_capacity) const -> usize { return min_capacity; }
+
 private:
     T m_data[inline_capacity];
     SizeType m_size { 0 };

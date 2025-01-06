@@ -21,6 +21,7 @@ private:
         return invoke_as_fallible([&] {
                    return vector::append_container(result, util::forward<Con>(container));
                }) % [&] {
+            result.assume_tail(result.size());
             return util::move(result);
         } | try_infallible;
     }

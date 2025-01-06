@@ -26,8 +26,9 @@ public:
 
     constexpr auto capacity() const { return m_vector.capacity(); }
     constexpr auto max_size() const { return m_vector.max_size(); }
-    constexpr auto reserve_from_nothing(size_t n) { return m_vector.reserve_from_nothing(n); }
-    constexpr auto assume_size(size_t n) { return m_vector.assume_size(n); }
+    constexpr auto reserve_from_nothing(usize n) { return m_vector.reserve_from_nothing(n); }
+    constexpr auto assume_size(usize n) { return m_vector.assume_size(n); }
+    constexpr auto grow_capacity(usize min_capacity) const { return m_vector.grow_capacity(min_capacity); }
 
     constexpr auto take_underlying_vector() && { return di::move(m_vector); }
 

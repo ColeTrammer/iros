@@ -49,6 +49,7 @@ public:
         return {};
     }
     constexpr void assume_size(usize size) { m_size = static_cast<SizeType>(size); }
+    constexpr auto grow_capacity(usize min_capacity) const -> usize { return min_capacity; }
 
     constexpr auto head() const -> usize { return m_head; }
     constexpr auto tail() const -> usize { return m_tail; }

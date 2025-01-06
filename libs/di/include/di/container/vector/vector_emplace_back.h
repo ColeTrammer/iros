@@ -17,7 +17,7 @@ requires(concepts::ConstructibleFrom<meta::detail::VectorValue<Vec>, Args...>)
 constexpr auto emplace_back(Vec& vector, Args&&... args) -> decltype(auto) {
     auto size = vector::size(vector);
     return invoke_as_fallible([&] {
-               return vector::reserve(vector, size + 1);
+               return vector::reserve(vector, vector.grow_capacity(size + 1));
            }) % [&] {
         auto end = vector::data(vector) + size;
         auto result = util::construct_at(end, util::forward<Args>(args)...);

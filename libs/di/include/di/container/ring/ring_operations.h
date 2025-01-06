@@ -128,7 +128,7 @@ requires(concepts::ConstructibleFrom<meta::detail::RingValue<Ring>, Args...>)
 constexpr auto emplace_back(Ring& ring, Args&&... args) -> decltype(auto) {
     auto size = ring::size(ring);
     return invoke_as_fallible([&] {
-               return ring::reserve(ring, size + 1);
+               return ring::reserve(ring, ring.grow_capacity(size + 1));
            }) % [&] {
         auto end = ring::tail_pointer(ring);
         auto result = util::construct_at(end, util::forward<Args>(args)...);
@@ -163,7 +163,7 @@ requires(concepts::ConstructibleFrom<meta::detail::RingValue<Ring>, Args...>)
 constexpr auto emplace_front(Ring& ring, Args&&... args) -> decltype(auto) {
     auto size = ring::size(ring);
     return invoke_as_fallible([&] {
-               return ring::reserve(ring, size + 1);
+               return ring::reserve(ring, ring.grow_capacity(size + 1));
            }) % [&] {
         auto new_head = (ring.head() + ring.capacity() - 1) % ring.capacity();
         ring.assume_head(new_head);

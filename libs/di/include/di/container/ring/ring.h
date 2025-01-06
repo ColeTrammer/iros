@@ -64,6 +64,13 @@ public:
         } | try_infallible;
     }
     constexpr void assume_size(usize size) { m_size = size; }
+    constexpr auto grow_capacity(usize min_capacity) const -> usize {
+        constexpr auto smallest_allowed_capacity = 32zu;
+        if (m_capacity >= min_capacity) {
+            return min_capacity;
+        }
+        return di::max({ min_capacity, 2 * m_capacity, smallest_allowed_capacity });
+    }
 
     constexpr auto head() const -> usize { return m_head; }
     constexpr auto tail() const -> usize { return m_tail; }

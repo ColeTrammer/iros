@@ -30,7 +30,7 @@ constexpr auto emplace(Vec& vector, CIter cposition, Args&&... args) -> G {
     if (size >= vector.capacity()) {
         auto new_vector = Vec();
         return invoke_as_fallible([&] {
-                   return new_vector.reserve_from_nothing(size + 1);
+                   return new_vector.reserve_from_nothing(vector.grow_capacity(size + 1));
                }) % [&] {
             auto new_data = vector::data(new_vector);
             auto new_data_end = new_data + new_size;

@@ -1,3 +1,4 @@
+#include "di/container/allocator/infallible_allocator.h"
 #include "di/container/interface/erase.h"
 #include "di/container/vector/prelude.h"
 #include "dius/test/prelude.h"
@@ -213,6 +214,44 @@ constexpr static void erase() {
     ASSERT_EQ(v[2], 4);
 }
 
+class CountingAllocator {
+public:
+    CountingAllocator() = default;
+
+    constexpr CountingAllocator(CountingAllocator const& other) = default;
+
+    constexpr CountingAllocator& operator=(CountingAllocator const& other) {
+        m_count += other.m_count;
+        return *this;
+    }
+
+    constexpr auto allocate(usize size, usize alignment) -> di::AllocationResult<> {
+        m_count++;
+        return di::InfallibleAllocator::allocate(size, alignment);
+    }
+
+    constexpr void deallocate(void* data, usize size, usize alignment) noexcept {
+        return di::InfallibleAllocator::deallocate(data, size, alignment);
+    }
+
+    constexpr auto count() const -> u32 { return m_count; }
+
+private:
+    u32 m_count { 0 };
+};
+
+constexpr void allocate() {
+    auto v = di::Vector<i32, CountingAllocator> {};
+
+    constexpr auto n = 1'000'000;
+    for (auto i : di::range(n)) {
+        v.push_back(i);
+    }
+
+    ASSERT_EQ(v.size(), n);
+    ASSERT_EQ(v.allocator().count(), 16);
+}
+
 TESTC(container_vector, basic)
 TESTC(container_vector, reserve)
 TESTC(container_vector, move_only)
@@ -221,4 +260,5 @@ TESTC(container_vector, clone)
 TESTC(container_vector, compare)
 TESTC(container_vector, static_)
 TESTC(container_vector, erase)
+TEST(container_vector, allocate)
 }
