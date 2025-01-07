@@ -7,7 +7,7 @@ find_package(Diusgfx REQUIRED)
 
 file(GLOB headers CONFIGURE_DEPENDS "*.h")
 add_library(gfx_test_headers INTERFACE)
-add_library(PackageManager::gfx_test_headers ALIAS gfx_test_headers)
+add_library(GfxTest::gfx_test_headers ALIAS gfx_test_headers)
 
 target_sources(gfx_test_headers INTERFACE FILE_SET headers TYPE HEADERS FILES ${headers})
 target_link_libraries(gfx_test_headers INTERFACE Dius::dius Di::di)
