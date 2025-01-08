@@ -1,9 +1,11 @@
 #pragma once
 
+#include "di/container/path/path.h"
 #include "di/util/prelude.h"
 #include "dius/config.h"
 #include "dius/error.h"
 #include "dius/memory_region.h"
+#include "dius/tty.h"
 
 #include DIUS_PLATFORM_PATH(system_call.h)
 
@@ -90,6 +92,9 @@ public:
 
     auto interactive_device() const -> bool { return true; }
 
+    auto set_tty_window_size(tty::WindowSize size) -> di::Expected<void, di::GenericCode>;
+    auto get_psuedo_terminal_path() -> di::Expected<di::Path, di::GenericCode>;
+
 private:
     Owned m_owned { Owned::No };
     int m_fd { -1 };
@@ -98,6 +103,8 @@ private:
 enum class OpenMode { Readonly, WriteNew, WriteClobber, ReadWrite, AppendOnly, ReadWriteClobber, AppendReadWrite };
 
 auto open_sync(di::PathView path, OpenMode open_mode, u16 create_mode = 0666)
+    -> di::Expected<SyncFile, di::GenericCode>;
+auto open_psuedo_terminal_controller(OpenMode open_mode, tty::WindowSize size)
     -> di::Expected<SyncFile, di::GenericCode>;
 auto open_tempory_file() -> di::Expected<SyncFile, di::GenericCode>;
 auto read_to_string(di::PathView path) -> di::Result<di::String>;

@@ -45,6 +45,19 @@ static auto sys_mmap(void* addr, usize length, Protection prot, MapFlags flags, 
     -> di::Expected<byte*, di::GenericCode> {
     return system::system_call<byte*>(system::Number::mmap, addr, length, prot, flags, fd, offset);
 }
+static auto sys_ioctl(int fd, int code, void* arg) -> di::Expected<void, di::GenericCode> {
+    return system::system_call<int>(system::Number::ioctl, fd, code, arg) % di::into_void;
+}
+
+static auto sys_grantpt(int fd) -> di::Expected<void, di::GenericCode> {
+    u32 pty_number = 0;
+    return sys_ioctl(fd, TIOCGPTN, &pty_number);
+}
+
+static auto sys_unlockpt(int fd) -> di::Expected<void, di::GenericCode> {
+    int unlock = 0;
+    return sys_ioctl(fd, TIOCSPTLCK, &unlock);
+}
 
 auto SyncFile::close() -> di::Expected<void, di::GenericCode> {
     auto owned = di::exchange(m_owned, Owned::No);
@@ -82,30 +95,67 @@ auto SyncFile::map(u64 offset, usize size, Protection protection, MapFlags flags
     return MemoryRegion(di::Span { base, size });
 }
 
-auto open_sync(di::PathView path, OpenMode open_mode, u16 create_mode) -> di::Expected<SyncFile, di::GenericCode> {
-    auto open_mode_flags = [&] {
-        switch (open_mode) {
-            case OpenMode::Readonly:
-                return O_RDONLY;
-            case OpenMode::WriteNew:
-                return O_WRONLY | O_EXCL | O_CREAT;
-            case OpenMode::WriteClobber:
-                return O_WRONLY | O_TRUNC | O_CREAT;
-            case OpenMode::ReadWrite:
-                return O_RDWR;
-            case OpenMode::AppendOnly:
-                return O_WRONLY | O_APPEND | O_CREAT;
-            case OpenMode::ReadWriteClobber:
-                return O_RDWR | O_TRUNC | O_CREAT;
-            case OpenMode::AppendReadWrite:
-                return O_RDWR | O_APPEND | O_CREAT;
-            default:
-                di::unreachable();
-        }
-    }();
+auto SyncFile::set_tty_window_size(tty::WindowSize size) -> di::Expected<void, di::GenericCode> {
+    ::winsize ws {};
+    ws.ws_row = size.rows;
+    ws.ws_col = size.cols;
+    ws.ws_xpixel = 0;
+    ws.ws_ypixel = 0;
+    return sys_ioctl(file_descriptor(), TIOCSWINSZ, &ws);
+}
 
-    auto fd = TRY(sys_open(path, open_mode_flags, create_mode));
+auto SyncFile::get_psuedo_terminal_path() -> di::Expected<di::Path, di::GenericCode> {
+    u32 pty_number = 0;
+    TRY(sys_ioctl(file_descriptor(), TIOCGPTN, &pty_number));
+
+    auto result = "/dev/pts"_p;
+    auto pty = di::to_string(pty_number) | di::transform([](c32 code_point) {
+                   return char(code_point);
+               }) |
+               di::to<di::TransparentString>();
+    result /= pty;
+    return result;
+}
+
+static auto open_mode_flags(OpenMode open_mode) -> int {
+    switch (open_mode) {
+        case OpenMode::Readonly:
+            return O_RDONLY;
+        case OpenMode::WriteNew:
+            return O_WRONLY | O_EXCL | O_CREAT;
+        case OpenMode::WriteClobber:
+            return O_WRONLY | O_TRUNC | O_CREAT;
+        case OpenMode::ReadWrite:
+            return O_RDWR;
+        case OpenMode::AppendOnly:
+            return O_WRONLY | O_APPEND | O_CREAT;
+        case OpenMode::ReadWriteClobber:
+            return O_RDWR | O_TRUNC | O_CREAT;
+        case OpenMode::AppendReadWrite:
+            return O_RDWR | O_APPEND | O_CREAT;
+        default:
+            di::unreachable();
+    }
+}
+
+auto open_sync(di::PathView path, OpenMode open_mode, u16 create_mode) -> di::Expected<SyncFile, di::GenericCode> {
+    auto flags = open_mode_flags(open_mode);
+    auto fd = TRY(sys_open(path, flags, create_mode));
     return SyncFile { SyncFile::Owned::Yes, fd };
+}
+
+auto open_psuedo_terminal_controller(OpenMode open_mode, tty::WindowSize size)
+    -> di::Expected<SyncFile, di::GenericCode> {
+    auto flags = open_mode_flags(open_mode);
+    auto fd = TRY(sys_open("/dev/ptmx"_pv, flags, 0));
+    auto result = SyncFile { SyncFile::Owned::Yes, fd };
+
+    // Set window size, and call grantpt() + unlockpt().
+    TRY(sys_grantpt(result.file_descriptor()));
+    TRY(sys_unlockpt(result.file_descriptor()));
+    TRY(result.set_tty_window_size(size));
+
+    return result;
 }
 
 auto open_tempory_file() -> di::Expected<SyncFile, di::GenericCode> {
