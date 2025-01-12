@@ -7,3 +7,4 @@
 #include "di/reflect/hash_impl.h"
 #include "di/reflect/parse_impl.h"
 #include "di/reflect/reflect.h"
+#include "di/reflect/valid_enum_value.h"
