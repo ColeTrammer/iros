@@ -59,6 +59,16 @@ static auto sys_unlockpt(int fd) -> di::Expected<void, di::GenericCode> {
     return sys_ioctl(fd, TIOCSPTLCK, &unlock);
 }
 
+static auto sys_tcgetattr(int fd) -> di::Expected<termios, di::GenericCode> {
+    termios result;
+    TRY(sys_ioctl(fd, TCGETS, &result));
+    return result;
+}
+
+static auto sys_tcsetattr(int fd, termios const& termios) -> di::Expected<void, di::GenericCode> {
+    return sys_ioctl(fd, TCSETS, di::voidify(&termios));
+}
+
 auto SyncFile::close() -> di::Expected<void, di::GenericCode> {
     auto owned = di::exchange(m_owned, Owned::No);
     auto fd = di::exchange(m_fd, -1);
@@ -104,6 +114,12 @@ auto SyncFile::set_tty_window_size(tty::WindowSize size) -> di::Expected<void, d
     return sys_ioctl(file_descriptor(), TIOCSWINSZ, &ws);
 }
 
+auto SyncFile::get_tty_window_size() -> di::Expected<tty::WindowSize, di::GenericCode> {
+    ::winsize ws {};
+    TRY(sys_ioctl(file_descriptor(), TIOCGWINSZ, &ws));
+    return tty::WindowSize { ws.ws_row, ws.ws_col };
+}
+
 auto SyncFile::get_psuedo_terminal_path() -> di::Expected<di::Path, di::GenericCode> {
     u32 pty_number = 0;
     TRY(sys_ioctl(file_descriptor(), TIOCGPTN, &pty_number));
@@ -115,6 +131,22 @@ auto SyncFile::get_psuedo_terminal_path() -> di::Expected<di::Path, di::GenericC
                di::to<di::TransparentString>();
     result /= pty;
     return result;
+}
+
+auto SyncFile::enter_raw_mode() -> di::Expected<RawModeToken, di::GenericCode> {
+    auto original = TRY(sys_tcgetattr(file_descriptor()));
+    auto with_raw_mode = original;
+
+    with_raw_mode.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
+    with_raw_mode.c_oflag &= ~(OPOST);
+    with_raw_mode.c_cflag |= (CS8);
+    with_raw_mode.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
+
+    TRY(sys_tcsetattr(file_descriptor(), with_raw_mode));
+
+    return RawModeToken(di::make_function<void()>([fd = file_descriptor(), original] {
+        (void) sys_tcsetattr(fd, original);
+    }));
 }
 
 static auto open_mode_flags(OpenMode open_mode) -> int {

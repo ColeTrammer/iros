@@ -1,7 +1,9 @@
 #pragma once
 
 #include "di/container/path/path.h"
+#include "di/function/container/function.h"
 #include "di/util/prelude.h"
+#include "di/util/scope_exit.h"
 #include "dius/config.h"
 #include "dius/error.h"
 #include "dius/memory_region.h"
@@ -93,7 +95,11 @@ public:
     auto interactive_device() const -> bool { return true; }
 
     auto set_tty_window_size(tty::WindowSize size) -> di::Expected<void, di::GenericCode>;
+    auto get_tty_window_size() -> di::Expected<tty::WindowSize, di::GenericCode>;
     auto get_psuedo_terminal_path() -> di::Expected<di::Path, di::GenericCode>;
+
+    using RawModeToken = di::ScopeExit<di::Function<void()>>;
+    auto enter_raw_mode() -> di::Expected<RawModeToken, di::GenericCode>;
 
 private:
     Owned m_owned { Owned::No };

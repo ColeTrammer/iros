@@ -61,7 +61,15 @@ auto SyncFile::set_tty_window_size(tty::WindowSize size) -> di::Expected<void, d
     return di::Unexpected(PosixError::OperationNotSupported);
 }
 
+auto SyncFile::get_tty_window_size() -> di::Expected<tty::WindowSize, di::GenericCode> {
+    return di::Unexpected(PosixError::OperationNotSupported);
+}
+
 auto SyncFile::get_psuedo_terminal_path() -> di::Expected<di::Path, di::GenericCode> {
+    return di::Unexpected(PosixError::OperationNotSupported);
+}
+
+auto SyncFile::enter_raw_mode() -> di::Expected<RawModeToken, di::GenericCode> {
     return di::Unexpected(PosixError::OperationNotSupported);
 }
 
