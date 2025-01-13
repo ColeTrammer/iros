@@ -125,7 +125,7 @@ private:
         friend class Iterator;
 
         constexpr void satisfy() {
-            auto update_inner = [&](meta::ContainerIterator<Base<is_const>> x) -> auto&& {
+            auto update_inner = [&](meta::ContainerIterator<Base<is_const>> const& x) -> auto&& {
                 if constexpr (ref_is_glvalue) {
                     return *x;
                 } else {
