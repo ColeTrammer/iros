@@ -66,9 +66,15 @@ static auto main(Args& args) -> di::Result<void> {
     auto _ = TRY(dius::stdin.enter_raw_mode());
 
     // Setup - alternate screen buffer.
-    di::writer_print<di::String::Encoding>(dius::stdin, "\033[?1049h"_sv);
+    di::writer_print<di::String::Encoding>(dius::stdin, "\033[?1049h\033[H\033[2J"_sv);
     auto _ = di::ScopeExit([&] {
         di::writer_print<di::String::Encoding>(dius::stdin, "\033[?1049l"_sv);
+    });
+
+    // Setup - disable autowrap.
+    di::writer_print<di::String::Encoding>(dius::stdin, "\033[?7l"_sv);
+    auto _ = di::ScopeExit([&] {
+        di::writer_print<di::String::Encoding>(dius::stdin, "\033[?7h"_sv);
     });
 
     // Setup - kitty key mode.
@@ -125,6 +131,21 @@ static auto main(Args& args) -> di::Result<void> {
     auto parser = EscapeSequenceParser();
     auto terminal = Terminal(pty_controller);
     terminal.set_visible_size(terminal_size.rows, terminal_size.cols);
+    auto cursor_row = 0_u32;
+    auto cursor_col = 0_u32;
+    auto bold = false;
+    auto dim = false;
+    auto italic = false;
+    auto underline = false;
+    auto blink = false;
+    auto rapid_blink = false;
+    auto inverted = false;
+    auto invisible = false;
+    auto strike_through = false;
+    auto fg = di::Optional<Terminal::Color> {};
+    auto bg = di::Optional<Terminal::Color> {};
+
+    auto log = TRY(dius::open_sync("/tmp/ttx.log"_pv, dius::OpenMode::WriteClobber));
     while (!done.load(di::MemoryOrder::Acquire)) {
         auto buffer = di::Vector<byte> {};
         buffer.resize(4096);
@@ -144,18 +165,117 @@ static auto main(Args& args) -> di::Result<void> {
             break;
         }
 
+        auto safe_string = *utf8_string | di::transform([](c32 code_point) -> di::String {
+            if (code_point >= 32 && code_point != 127) {
+                return di::single(code_point) | di::to<di::String>();
+            }
+            return *di::present("<{:2x}>"_sv, (i32) code_point);
+        }) | di::join | di::to<di::String>();
+        (void) di::writer_println<di::container::string::Utf8Encoding>(log, "\"{}\""_sv, safe_string);
+
         auto parser_result = parser.parse(*utf8_string);
+        for (auto const& result : parser_result) {
+            (void) di::writer_println<di::container::string::Utf8Encoding>(log, "{}"_sv,
+                                                                           di::visit(di::to_string, result));
+        }
         terminal.on_parser_results(parser_result.span());
 
         // Draw
-        di::writer_print<di::String::Encoding>(dius::stdin, "\033[H\033[2J"_sv);
-        for (auto const& row : terminal.rows()) {
-            for (auto const& cell : row) {
-                di::writer_print<di::String::Encoding>(dius::stdin, "{}"_sv, cell.ch);
+        di::writer_print<di::String::Encoding>(dius::stdin, "\033[?25l"_sv);
+        for (auto const& [r, row] : di::enumerate(terminal.rows())) {
+            for (auto const& [c, cell] : di::enumerate(row)) {
+                if (cell.dirty) {
+                    if (cursor_row != r || cursor_col != c) {
+                        cursor_row = r;
+                        cursor_col = c;
+                        di::writer_print<di::String::Encoding>(dius::stdin, "\033[{};{}H"_sv, cursor_row + 1,
+                                                               cursor_col + 1);
+                    }
+
+                    if (cell.bold != bold || cell.dim != dim || cell.italic != italic || cell.underline != underline ||
+                        cell.blink != blink || cell.rapid_blink != blink || cell.inverted != inverted ||
+                        cell.invisible != invisible || cell.strike_through != strike_through || cell.fg != fg ||
+                        cell.bg != bg) {
+                        bold = cell.bold;
+                        dim = cell.dim;
+                        italic = cell.italic;
+                        underline = cell.underline;
+                        blink = cell.blink;
+                        rapid_blink = cell.rapid_blink;
+                        inverted = cell.inverted;
+                        invisible = cell.invisible;
+                        strike_through = cell.strike_through;
+                        fg = cell.fg;
+                        bg = cell.bg;
+
+                        auto sgr = ""_s;
+                        auto add = [&](di::String s) {
+                            if (!sgr.empty()) {
+                                sgr.push_back(U';');
+                            }
+                            sgr.append(di::move(s));
+                        };
+                        if (bold) {
+                            add("1"_s);
+                        }
+                        if (dim) {
+                            add("2"_s);
+                        }
+                        if (italic) {
+                            add("3"_s);
+                        }
+                        if (underline) {
+                            add("4"_s);
+                        }
+                        if (blink) {
+                            add("5"_s);
+                        }
+                        if (rapid_blink) {
+                            add("6"_s);
+                        }
+                        if (inverted) {
+                            add("7"_s);
+                        }
+                        if (invisible) {
+                            add("8"_s);
+                        }
+                        if (strike_through) {
+                            add("9"_s);
+                        }
+                        if (fg) {
+                            if (fg->c == Terminal::Color::Palette::Custom) {
+                                add(*di::present("38:2:{}:{}:{}"_sv, fg->r, fg->g, fg->b));
+                            } else if (fg->c <= Terminal::Color::Palette::LightGrey) {
+                                add(*di::present("{}"_sv, 30 + fg->c - Terminal::Color::Palette::Black));
+                            } else {
+                                add(*di::present("{}"_sv, 90 + fg->c - Terminal::Color::Palette::DarkGrey));
+                            }
+                        }
+                        if (bg) {
+                            if (bg->c == Terminal::Color::Palette::Custom) {
+                                add(*di::present("48:2:{}:{}:{}"_sv, bg->r, bg->g, bg->b));
+                            } else if (bg->c <= Terminal::Color::Palette::LightGrey) {
+                                add(*di::present("{}"_sv, 40 + bg->c - Terminal::Color::Palette::Black));
+                            } else {
+                                add(*di::present("{}"_sv, 100 + bg->c - Terminal::Color::Palette::DarkGrey));
+                            }
+                        }
+
+                        di::writer_print<di::String::Encoding>(dius::stdin, "\033[m"_sv, sgr);
+                        di::writer_print<di::String::Encoding>(dius::stdin, "\033[{}m"_sv, sgr);
+                    }
+
+                    di::writer_print<di::String::Encoding>(dius::stdin, "{}"_sv, cell.ch);
+                    cursor_col = di::min(cursor_col + 1, terminal_size.cols - 1);
+                }
             }
         }
-        di::writer_print<di::String::Encoding>(dius::stdin, "\033[{};{}H"_sv, terminal.cursor_row() + 1,
-                                               terminal.cursor_col() + 1);
+        if (!terminal.cursor_hidden()) {
+            cursor_row = terminal.cursor_row();
+            cursor_col = terminal.cursor_col();
+            di::writer_print<di::String::Encoding>(dius::stdin, "\033[{};{}H"_sv, cursor_row + 1, cursor_col + 1);
+            di::writer_print<di::String::Encoding>(dius::stdin, "\033[?25h"_sv);
+        }
     }
 
     return {};

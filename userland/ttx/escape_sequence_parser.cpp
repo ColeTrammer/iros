@@ -410,7 +410,7 @@ void EscapeSequenceParser::collect(c32 code_point) {
 }
 
 void EscapeSequenceParser::param(c32 code_point) {
-    if (code_point != ';') {
+    if (code_point != ';' && code_point != ':') {
         m_current_param.push_back(code_point);
         return;
     }

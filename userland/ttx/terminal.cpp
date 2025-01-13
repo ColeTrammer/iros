@@ -16,7 +16,7 @@ void Terminal::on_parser_results(di::Span<ParserResult const> results) {
 }
 
 void Terminal::on_parser_result(PrintableCharacter const& printable_character) {
-    if (printable_character.code_point < 0x7F) {
+    if (printable_character.code_point < 0x7F || printable_character.code_point > 0x9F) {
         put_char(printable_character.code_point);
     }
 }
@@ -413,7 +413,7 @@ void Terminal::csi_ech(di::Vector<int> const& params) {
 
 // Repeat Preceding Graphic Character - https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
 void Terminal::csi_rep(di::Vector<int> const& params) {
-    char preceding_character = ' ';
+    c32 preceding_character = ' ';
     if (m_cursor_col == 0) {
         if (m_cursor_row != 0) {
             preceding_character = m_rows[m_cursor_row - 1][m_col_count - 1].ch;
@@ -638,148 +638,195 @@ void Terminal::csi_decrst(di::Vector<int> const& params) {
 }
 
 // Select Graphics Rendition - https://vt100.net/docs/vt510-rm/SGR.html
-void Terminal::csi_sgr(di::Vector<int> const& /* params */) {
-    // for (int i = 0; i == 0 || i < params.size(); i++) {
-    //     switch (params.at(i).value_or(0)) {
-    //         case 0:
-    //             reset_attributes();
-    //             break;
-    //         case 1:
-    //             set_bold(true);
-    //             break;
-    //         case 7:
-    //             set_inverted(true);
-    //             break;
-    //         case 30:
-    //             set_fg({ VGA_COLOR_BLACK });
-    //             break;
-    //         case 31:
-    //             set_fg({ VGA_COLOR_RED });
-    //             break;
-    //         case 32:
-    //             set_fg({ VGA_COLOR_GREEN });
-    //             break;
-    //         case 33:
-    //             set_fg({ VGA_COLOR_BROWN });
-    //             break;
-    //         case 34:
-    //             set_fg({ VGA_COLOR_BLUE });
-    //             break;
-    //         case 35:
-    //             set_fg({ VGA_COLOR_MAGENTA });
-    //             break;
-    //         case 36:
-    //             set_fg({ VGA_COLOR_CYAN });
-    //             break;
-    //         case 37:
-    //             set_fg({ VGA_COLOR_LIGHT_GREY });
-    //             break;
-    //         case 38:
-    //             // Truecolor Foreground (xterm-256color)
-    //             if (params.get_or(i + 1, 0) != 2) {
-    //                 break;
-    //             }
-    //             if (params.size() - i < 5) {
-    //                 break;
-    //             }
-    //             set_fg(Color { (uint8_t) clamp(params[i + 2], 0, 255), (uint8_t) clamp(params[i + 3], 0, 255),
-    //                            (uint8_t) clamp(params[i + 4], 0, 255) });
-    //             i += 4;
-    //             break;
-    //         case 39:
-    //             reset_fg();
-    //             break;
-    //         case 40:
-    //             set_bg({ VGA_COLOR_BLACK });
-    //             break;
-    //         case 41:
-    //             set_bg({ VGA_COLOR_RED });
-    //             break;
-    //         case 42:
-    //             set_bg({ VGA_COLOR_GREEN });
-    //             break;
-    //         case 43:
-    //             set_bg({ VGA_COLOR_BROWN });
-    //             break;
-    //         case 44:
-    //             set_bg({ VGA_COLOR_BLUE });
-    //             break;
-    //         case 45:
-    //             set_bg({ VGA_COLOR_MAGENTA });
-    //             break;
-    //         case 46:
-    //             set_bg({ VGA_COLOR_CYAN });
-    //             break;
-    //         case 47:
-    //             set_bg({ VGA_COLOR_LIGHT_GREY });
-    //             break;
-    //         case 48:
-    //             // Truecolor Background (xterm-256color)
-    //             if (params.get_or(i + 1, 0) != 2) {
-    //                 break;
-    //             }
-    //             if (params.size() - i < 5) {
-    //                 break;
-    //             }
-    //             set_bg(Color { (uint8_t) clamp(params[i + 2], 0, 255), (uint8_t) clamp(params[i + 3], 0, 255),
-    //                            (uint8_t) clamp(params[i + 4], 0, 255) });
-    //             i += 4;
-    //             break;
-    //         case 49:
-    //             reset_bg();
-    //             break;
-    //         case 90:
-    //             set_fg({ VGA_COLOR_DARK_GREY });
-    //             break;
-    //         case 91:
-    //             set_fg({ VGA_COLOR_LIGHT_RED });
-    //             break;
-    //         case 92:
-    //             set_fg({ VGA_COLOR_LIGHT_GREEN });
-    //             break;
-    //         case 93:
-    //             set_fg({ VGA_COLOR_YELLOW });
-    //             break;
-    //         case 94:
-    //             set_fg({ VGA_COLOR_LIGHT_BLUE });
-    //             break;
-    //         case 95:
-    //             set_fg({ VGA_COLOR_LIGHT_MAGENTA });
-    //             break;
-    //         case 96:
-    //             set_fg({ VGA_COLOR_LIGHT_CYAN });
-    //             break;
-    //         case 97:
-    //             set_fg({ VGA_COLOR_WHITE });
-    //             break;
-    //         case 100:
-    //             set_bg({ VGA_COLOR_DARK_GREY });
-    //             break;
-    //         case 101:
-    //             set_bg({ VGA_COLOR_LIGHT_RED });
-    //             break;
-    //         case 102:
-    //             set_bg({ VGA_COLOR_LIGHT_GREEN });
-    //             break;
-    //         case 103:
-    //             set_bg({ VGA_COLOR_YELLOW });
-    //             break;
-    //         case 104:
-    //             set_bg({ VGA_COLOR_LIGHT_BLUE });
-    //             break;
-    //         case 105:
-    //             set_bg({ VGA_COLOR_LIGHT_MAGENTA });
-    //             break;
-    //         case 106:
-    //             set_bg({ VGA_COLOR_LIGHT_CYAN });
-    //             break;
-    //         case 107:
-    //             set_bg({ VGA_COLOR_WHITE });
-    //             break;
-    //         default:
-    //             break;
-    //     }
-    // }
+void Terminal::csi_sgr(di::Vector<int> const& params) {
+    for (auto i = 0_usize; i == 0 || i < params.size(); i++) {
+        switch (params.at(i).value_or(0)) {
+            case 0:
+                reset_attributes();
+                break;
+            case 1:
+                set_bold(true);
+                break;
+            case 2:
+                set_dim(true);
+                break;
+            case 3:
+                set_italic(true);
+                break;
+            case 4:
+                set_underline(true);
+                break;
+            case 5:
+                set_blink(true);
+                break;
+            case 6:
+                set_rapid_blink(true);
+                break;
+            case 7:
+                set_inverted(true);
+                break;
+            case 8:
+                set_invisible(true);
+                break;
+            case 9:
+                set_strike_through(true);
+                break;
+            case 21:
+                set_underline(true);
+                break;
+            case 22:
+                set_bold(false);
+                set_dim(false);
+                break;
+            case 23:
+                set_italic(false);
+                break;
+            case 24:
+                set_underline(false);
+                break;
+            case 25:
+                set_blink(false);
+                set_rapid_blink(false);
+                break;
+            case 27:
+                set_inverted(false);
+                break;
+            case 28:
+                set_invisible(false);
+                break;
+            case 29:
+                set_strike_through(false);
+                break;
+            case 30:
+                set_fg({ Color::Palette::Black });
+                break;
+            case 31:
+                set_fg({ Color::Palette::Red });
+                break;
+            case 32:
+                set_fg({ Color::Palette::Green });
+                break;
+            case 33:
+                set_fg({ Color::Palette::Brown });
+                break;
+            case 34:
+                set_fg({ Color::Palette::Blue });
+                break;
+            case 35:
+                set_fg({ Color::Palette::Magenta });
+                break;
+            case 36:
+                set_fg({ Color::Palette::Cyan });
+                break;
+            case 37:
+                set_fg({ Color::Palette::LightGrey });
+                break;
+            case 38:
+                // Truecolor Foreground (xterm-256color)
+                if (params.at(i + 1).value_or(0) != 2) {
+                    break;
+                }
+                if (params.size() - i < 5) {
+                    break;
+                }
+                set_fg(Color { (uint8_t) di::clamp(params[i + 2], 0, 255), (uint8_t) di::clamp(params[i + 3], 0, 255),
+                               (uint8_t) di::clamp(params[i + 4], 0, 255) });
+                i += 4;
+                break;
+            case 39:
+                reset_fg();
+                break;
+            case 40:
+                set_bg({ Color::Palette::Black });
+                break;
+            case 41:
+                set_bg({ Color::Palette::Red });
+                break;
+            case 42:
+                set_bg({ Color::Palette::Green });
+                break;
+            case 43:
+                set_bg({ Color::Palette::Brown });
+                break;
+            case 44:
+                set_bg({ Color::Palette::Blue });
+                break;
+            case 45:
+                set_bg({ Color::Palette::Magenta });
+                break;
+            case 46:
+                set_bg({ Color::Palette::Cyan });
+                break;
+            case 47:
+                set_bg({ Color::Palette::LightGrey });
+                break;
+            case 48:
+                // Truecolor Background (xterm-256color)
+                if (params.at(i + 1).value_or(0) != 2) {
+                    break;
+                }
+                if (params.size() - i < 5) {
+                    break;
+                }
+                set_bg(Color { (uint8_t) di::clamp(params[i + 2], 0, 255), (uint8_t) di::clamp(params[i + 3], 0, 255),
+                               (uint8_t) di::clamp(params[i + 4], 0, 255) });
+                i += 4;
+                break;
+            case 49:
+                reset_bg();
+                break;
+            case 90:
+                set_fg({ Color::Palette::DarkGrey });
+                break;
+            case 91:
+                set_fg({ Color::Palette::LightRed });
+                break;
+            case 92:
+                set_fg({ Color::Palette::LightGreen });
+                break;
+            case 93:
+                set_fg({ Color::Palette::Yellow });
+                break;
+            case 94:
+                set_fg({ Color::Palette::LightBlue });
+                break;
+            case 95:
+                set_fg({ Color::Palette::LightMagenta });
+                break;
+            case 96:
+                set_fg({ Color::Palette::LightCyan });
+                break;
+            case 97:
+                set_fg({ Color::Palette::White });
+                break;
+            case 100:
+                set_bg({ Color::Palette::DarkGrey });
+                break;
+            case 101:
+                set_bg({ Color::Palette::LightRed });
+                break;
+            case 102:
+                set_bg({ Color::Palette::LightGreen });
+                break;
+            case 103:
+                set_bg({ Color::Palette::Yellow });
+                break;
+            case 104:
+                set_bg({ Color::Palette::LightBlue });
+                break;
+            case 105:
+                set_bg({ Color::Palette::LightMagenta });
+                break;
+            case 106:
+                set_bg({ Color::Palette::LightCyan });
+                break;
+            case 107:
+                set_bg({ Color::Palette::White });
+                break;
+            default:
+                break;
+        }
+    }
 }
 
 // Device Status Report - https://vt100.net/docs/vt510-rm/DSR.html
@@ -906,17 +953,24 @@ void Terminal::clear_row_to_end(int r, int start_col, char ch) {
     }
 }
 
-void Terminal::put_char(int row, int col, char c) {
+void Terminal::put_char(int row, int col, c32 c) {
     auto& cell = m_rows[row][col];
     cell.ch = c;
     cell.bg = m_bg;
     cell.fg = m_fg;
     cell.bold = m_bold;
+    cell.dim = m_dim;
+    cell.italic = m_italic;
+    cell.underline = m_underline;
+    cell.blink = m_blink;
+    cell.rapid_blink = m_rapid_blink;
     cell.inverted = m_inverted;
+    cell.invisible = m_invisible;
+    cell.strike_through = m_strike_through;
     cell.dirty = true;
 }
 
-void Terminal::put_char(char c) {
+void Terminal::put_char(c32 c) {
     if ((c >= 0 && c <= 31) || c == 127) {
         put_char('^');
         put_char(c | 0x40);

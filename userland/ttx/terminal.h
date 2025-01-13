@@ -6,14 +6,51 @@
 namespace ttx {
 class Terminal {
 public:
-    enum class Color {};
+    struct Color {
+        enum Palette : u8 {
+            Custom = 0,
+            Black,
+            Red,
+            Green,
+            Brown,
+            Blue,
+            Magenta,
+            Cyan,
+            LightGrey,
+            DarkGrey,
+            LightRed,
+            LightGreen,
+            Yellow,
+            LightBlue,
+            LightMagenta,
+            LightCyan,
+            White,
+        };
+
+        Color(Palette c) : c(c) {}
+        Color(u8 r, u8 g, u8 b) : r(r), g(g), b(b) {}
+
+        Palette c = Palette::Custom;
+        u8 r = 0;
+        u8 g = 0;
+        u8 b = 0;
+
+        auto operator==(Color const& other) const -> bool = default;
+    };
 
     struct Cell {
         di::Optional<Color> fg;
         di::Optional<Color> bg;
-        char ch { ' ' };
+        c32 ch { ' ' };
         bool bold : 1 { false };
+        bool dim : 1 { false };
+        bool italic : 1 { false };
+        bool underline : 1 { false };
+        bool blink : 1 { false };
+        bool rapid_blink : 1 { false };
         bool inverted : 1 { false };
+        bool invisible : 1 { false };
+        bool strike_through : 1 { false };
         mutable bool dirty : 1 { true };
     };
 
@@ -92,8 +129,8 @@ private:
 
     void resize(int rows, int cols);
 
-    void put_char(int row, int col, char c);
-    void put_char(char c);
+    void put_char(int row, int col, c32 c);
+    void put_char(c32 c);
 
     void save_pos() {
         m_saved_cursor_row = m_cursor_row;
@@ -143,15 +180,29 @@ private:
     void set_bg(di::Optional<Color> c) { m_bg = c; }
     void set_fg(di::Optional<Color> c) { m_fg = c; }
 
-    void set_inverted(bool b) { m_inverted = b; }
-    void set_bold(bool b) { m_bold = b; }
+    void set_bold(bool bold) { m_bold = bold; }
+    void set_dim(bool dim) { m_dim = dim; }
+    void set_italic(bool italic) { m_italic = italic; }
+    void set_underline(bool underline) { m_underline = underline; }
+    void set_blink(bool blink) { m_blink = blink; }
+    void set_rapid_blink(bool rapid_blink) { m_rapid_blink = rapid_blink; }
+    void set_inverted(bool inverted) { m_inverted = inverted; }
+    void set_invisible(bool invisible) { m_invisible = invisible; }
+    void set_strike_through(bool strike_through) { m_strike_through = strike_through; }
     void set_use_alternate_screen_buffer(bool b);
 
     void reset_attributes() {
         reset_bg();
         reset_fg();
-        set_inverted(false);
         set_bold(false);
+        set_dim(false);
+        set_italic(false);
+        set_underline(false);
+        set_blink(false);
+        set_rapid_blink(false);
+        set_inverted(false);
+        set_invisible(false);
+        set_strike_through(false);
     }
 
     void esc_decaln();
@@ -219,8 +270,15 @@ private:
     bool m_x_overflow { false };
     bool m_origin_mode { false };
 
-    bool m_inverted { false };
     bool m_bold { false };
+    bool m_dim { false };
+    bool m_italic { false };
+    bool m_underline { false };
+    bool m_blink { false };
+    bool m_rapid_blink { false };
+    bool m_inverted { false };
+    bool m_invisible { false };
+    bool m_strike_through { false };
     di::Optional<Color> m_fg;
     di::Optional<Color> m_bg;
 
