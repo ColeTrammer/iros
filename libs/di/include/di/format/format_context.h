@@ -12,7 +12,7 @@ private:
 public:
     using Encoding = Enc;
 
-    constexpr void output(char c) { m_output.push_back(c); }
+    constexpr void output(c32 c) { m_output.push_back(c); }
 
     constexpr auto output() && -> Str { return util::move(m_output); }
 

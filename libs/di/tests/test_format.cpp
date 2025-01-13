@@ -50,6 +50,7 @@ constexpr static void basic() {
     ASSERT_EQ(di::present("{:?}"_sv, "abc"_sv), "\"abc\""_sv);
     ASSERT_EQ(di::present("{:?}"_sv, U'x'), "'x'"_sv);
     ASSERT_EQ(di::present("{}"_sv, 42_b), "42"_sv);
+    ASSERT_EQ(di::present("{}"_sv, U'界'), u8"界"_sv);
 
     ASSERT_EQ(di::present("{}"_sv, di::Styled(42, di::FormatColor::Red | di::FormatEffect::Bold)), "42"_sv);
 }

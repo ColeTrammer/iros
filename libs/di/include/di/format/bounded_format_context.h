@@ -13,7 +13,7 @@ private:
 public:
     using Encoding = Enc;
 
-    constexpr void output(char c) { (void) m_output.push_back(c); }
+    constexpr void output(c32 c) { (void) m_output.push_back(c); }
 
     constexpr auto output() && -> Str { return util::move(m_output); }
     constexpr auto output() const& -> Str const& { return m_output; }
