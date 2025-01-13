@@ -6,7 +6,7 @@
 
 // Key reference: https://sw.kovidgoyal.net/kitty/keyboard-protocol/
 namespace ttx {
-enum class Modifers {
+enum class Modifiers {
     None = 0,
     Shift = 1 << 0,
     Alt = 1 << 1,
@@ -18,10 +18,10 @@ enum class Modifers {
     NumLock = 1 << 7,
 };
 
-DI_DEFINE_ENUM_BITWISE_OPERATIONS(Modifers)
+DI_DEFINE_ENUM_BITWISE_OPERATIONS(Modifiers)
 
-constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<Modifers>) {
-    using enum Modifers;
+constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<Modifiers>) {
+    using enum Modifiers;
     return di::make_enumerators(
         di::enumerator<"None", None>, di::enumerator<"Shift", Shift>, di::enumerator<"Alt", Alt>,
         di::enumerator<"Control", Control>, di::enumerator<"Super", Super>, di::enumerator<"Hyper", Hyper>,

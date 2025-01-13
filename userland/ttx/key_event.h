@@ -22,15 +22,15 @@ constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<KeyEventType>) {
 
 class KeyEvent {
 public:
-    constexpr static auto key_down(Key key, di::String text = {}, Modifers modifiers = Modifers::None) -> KeyEvent {
+    constexpr static auto key_down(Key key, di::String text = {}, Modifiers modifiers = Modifiers::None) -> KeyEvent {
         return { KeyEventType::Press, key, di::move(text), modifiers };
     }
 
-    constexpr KeyEvent(KeyEventType type, Key key, di::String text, Modifers modifiers)
+    constexpr KeyEvent(KeyEventType type, Key key, di::String text, Modifiers modifiers)
         : m_type(type), m_modifiers(modifiers), m_key(key), m_text(di::move(text)) {}
 
     constexpr auto type() const -> KeyEventType { return m_type; }
-    constexpr auto modifiers() const -> Modifers { return m_modifiers; }
+    constexpr auto modifiers() const -> Modifiers { return m_modifiers; }
     constexpr auto key() const -> Key { return m_key; }
     constexpr auto text() -> di::StringView const { return m_text; }
 
@@ -41,7 +41,7 @@ private:
     }
 
     KeyEventType m_type { KeyEventType::Press };
-    Modifers m_modifiers { Modifers::None };
+    Modifiers m_modifiers { Modifiers::None };
     Key m_key { Key::None };
     di::String m_text;
 };

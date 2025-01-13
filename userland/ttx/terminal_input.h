@@ -21,12 +21,12 @@ public:
     auto parse(di::StringView input) -> di::Vector<Event>;
 
 private:
-    auto key_event_from_legacy_code_point(c32 code_point, Modifers base_modifiers = Modifers::None) -> KeyEvent;
-    auto key_event_from_ss3_code_point(c32 code_point, Modifers base_modifiers = Modifers::None)
+    auto key_event_from_legacy_code_point(c32 code_point, Modifiers base_modifiers = Modifiers::None) -> KeyEvent;
+    auto key_event_from_ss3_code_point(c32 code_point, Modifiers base_modifiers = Modifiers::None)
         -> di::Optional<KeyEvent>;
-    auto key_event_from_legacy_functional_key(c32 number, Modifers base_modifiers = Modifers::None)
+    auto key_event_from_legacy_functional_key(c32 number, Modifiers base_modifiers = Modifiers::None)
         -> di::Optional<KeyEvent>;
-    auto key_event_from_code_point(c32 number, Modifers base_modifiers = Modifers::None, di::String text = {},
+    auto key_event_from_code_point(c32 number, Modifiers base_modifiers = Modifiers::None, di::String text = {},
                                    KeyEventType type = KeyEventType::Press) -> di::Optional<KeyEvent>;
 
     void handle_code_point(c32 input);
