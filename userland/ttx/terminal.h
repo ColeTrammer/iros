@@ -75,6 +75,7 @@ public:
         result.m_saved_cursor_row = m_saved_cursor_row;
         result.m_saved_cursor_col = m_saved_cursor_col;
         result.m_cursor_hidden = m_cursor_hidden;
+        result.m_disable_drawing = m_disable_drawing;
         result.m_autowrap_mode = m_autowrap_mode;
         result.m_x_overflow = m_x_overflow;
         result.m_origin_mode = m_origin_mode;
@@ -98,6 +99,8 @@ public:
     bool cursor_hidden() const { return m_cursor_hidden; }
     bool should_display_cursor_at_position(int r, int c) const;
     int scroll_relative_offset(int display_row) const;
+
+    auto allowed_to_draw() const -> bool { return !m_disable_drawing; }
 
     void scroll_to_bottom();
     void scroll_up();
@@ -123,6 +126,7 @@ public:
 
 private:
     void on_parser_result(PrintableCharacter const& printable_character);
+    void on_parser_result(DCS const& dcs);
     void on_parser_result(CSI const& csi);
     void on_parser_result(Escape const& escape);
     void on_parser_result(ControlCharacter const& control);
@@ -221,6 +225,8 @@ private:
     void c1_hts();
     void c1_ri();
 
+    void dcs_decrqss(di::Vector<int> const& params, di::StringView data);
+
     void csi_ich(di::Vector<int> const& params);
     void csi_cuu(di::Vector<int> const& params);
     void csi_cud(di::Vector<int> const& params);
@@ -245,6 +251,7 @@ private:
     void csi_tbc(di::Vector<int> const& params);
     void csi_decset(di::Vector<int> const& params);
     void csi_decrst(di::Vector<int> const& params);
+    void csi_decrqm(di::Vector<int> const& params);
     void csi_sgr(di::Vector<int> const& params);
     void csi_dsr(di::Vector<int> const& params);
     void csi_decstbm(di::Vector<int> const& params);
@@ -266,6 +273,7 @@ private:
     int m_saved_cursor_row { 0 };
     int m_saved_cursor_col { 0 };
     bool m_cursor_hidden { false };
+    bool m_disable_drawing { false };
     bool m_autowrap_mode { true };
     bool m_x_overflow { false };
     bool m_origin_mode { false };

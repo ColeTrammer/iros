@@ -21,6 +21,12 @@ void Terminal::on_parser_result(PrintableCharacter const& printable_character) {
     }
 }
 
+void Terminal::on_parser_result(DCS const& dcs) {
+    if (dcs.intermediate == "$q"_sv) {
+        return dcs_decrqss(dcs.params, dcs.data);
+    }
+}
+
 void Terminal::on_parser_result(ControlCharacter const& control_character) {
     switch (control_character.code_point) {
         case 8:
@@ -41,6 +47,14 @@ void Terminal::on_parser_result(ControlCharacter const& control_character) {
 }
 
 void Terminal::on_parser_result(CSI const& csi) {
+    if (csi.intermediate == "?$"_sv) {
+        switch (csi.terminator) {
+            case 'p':
+                return csi_decrqm(csi.params);
+        }
+        return;
+    }
+
     if (csi.intermediate == "="_sv) {
         switch (csi.terminator) {
             case 'c':
@@ -237,6 +251,16 @@ void Terminal::c1_ri() {
     m_cursor_row--;
     m_x_overflow = false;
     scroll_up_if_needed();
+}
+
+// Request Status String - https://vt100.net/docs/vt510-rm/DECRQSS.html
+void Terminal::dcs_decrqss(di::Vector<int> const&, di::StringView data) {
+    // Set graphics rendition
+    if (data == "m"_sv) {
+        (void) m_psuedo_terminal.write_exactly(di::as_bytes("\033P1$r0;4:3m\033\\"_sv.span()));
+    } else {
+        (void) m_psuedo_terminal.write_exactly(di::as_bytes("\033P0$r\033\\"_sv.span()));
+    }
 }
 
 // DEC Screen Alignment Pattern - https://vt100.net/docs/vt510-rm/DECALN.html
@@ -554,6 +578,9 @@ void Terminal::csi_decset(di::Vector<int> const& params) {
         case 2004:
             // m_psuedo_terminal.set_bracketed_paste(true);
             break;
+        case 2026:
+            m_disable_drawing = true;
+            break;
         default:
             break;
     }
@@ -632,8 +659,25 @@ void Terminal::csi_decrst(di::Vector<int> const& params) {
         case 2004:
             // m_psuedo_terminal.set_bracketed_paste(false);
             break;
+        case 2026:
+            m_disable_drawing = false;
+            break;
         default:
             break;
+    }
+}
+
+// Request Mode - Host to Terminal - https://vt100.net/docs/vt510-rm/DECRQM.html
+void Terminal::csi_decrqm(di::Vector<int> const& params) {
+    auto param = params.at(0).value_or(0);
+    switch (param) {
+        // Synchronized output - https://gist.github.com/christianparpart/d8a62cc1ab659194337d73e399004036
+        case 2026:
+            (void) m_psuedo_terminal.write_exactly(
+                di::as_bytes(di::present("\033[?{};{}$y"_sv, param, m_disable_drawing ? 1 : 2)->span()));
+            break;
+        default:
+            (void) m_psuedo_terminal.write_exactly(di::as_bytes(di::present("\033[?{};0$y"_sv, param)->span()));
     }
 }
 

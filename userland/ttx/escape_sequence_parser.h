@@ -15,6 +15,17 @@ struct PrintableCharacter {
     }
 };
 
+struct DCS {
+    di::String intermediate;
+    di::Vector<i32> params;
+    di::String data;
+
+    constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<DCS>) {
+        return di::make_fields(di::field<"intermediate", &DCS::intermediate>, di::field<"params", &DCS::params>,
+                               di::field<"data", &DCS::data>);
+    }
+};
+
 struct CSI {
     di::String intermediate;
     di::Vector<i32> params;
@@ -44,7 +55,7 @@ struct ControlCharacter {
     }
 };
 
-using ParserResult = di::Variant<PrintableCharacter, CSI, Escape, ControlCharacter>;
+using ParserResult = di::Variant<PrintableCharacter, DCS, CSI, Escape, ControlCharacter>;
 
 class EscapeSequenceParser {
 public:
@@ -103,6 +114,7 @@ private:
 
     di::String m_intermediate;
     di::String m_current_param;
+    di::String m_data;
     di::Vector<i32> m_params;
     di::Vector<ParserResult> m_result;
 };

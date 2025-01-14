@@ -327,6 +327,7 @@ STATE(dcs_intermediate) {
     }
 
     if (is_dcs_terminator(code_point)) {
+        m_intermediate.push_back(code_point);
         return transition(State::DcsPassthrough);
     }
 
@@ -438,9 +439,13 @@ void EscapeSequenceParser::hook() {
     };
 }
 
-void EscapeSequenceParser::put(c32) {}
+void EscapeSequenceParser::put(c32 code_point) {
+    m_data.push_back(code_point);
+}
 
-void EscapeSequenceParser::unhook() {}
+void EscapeSequenceParser::unhook() {
+    m_result.push_back(DCS(di::move(m_intermediate), di::move(m_params), di::move(m_data)));
+}
 
 void EscapeSequenceParser::osc_start() {
     m_on_state_exit = [this] {
