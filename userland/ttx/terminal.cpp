@@ -3,6 +3,7 @@
 #include "di/container/algorithm/contains.h"
 #include "di/container/algorithm/rotate.h"
 #include "escape_sequence_parser.h"
+#include "graphics_rendition.h"
 
 namespace ttx {
 void Terminal::on_parser_results(di::Span<ParserResult const> results) {
@@ -257,7 +258,8 @@ void Terminal::c1_ri() {
 void Terminal::dcs_decrqss(di::Vector<int> const&, di::StringView data) {
     // Set graphics rendition
     if (data == "m"_sv) {
-        (void) m_psuedo_terminal.write_exactly(di::as_bytes("\033P1$r0;4:3m\033\\"_sv.span()));
+        (void) m_psuedo_terminal.write_exactly(
+            di::as_bytes(di::present("\033P1$r{}m\033\\"_sv, m_current_graphics_rendition.as_csi_params())->span()));
     } else {
         (void) m_psuedo_terminal.write_exactly(di::as_bytes("\033P0$r\033\\"_sv.span()));
     }
@@ -683,194 +685,8 @@ void Terminal::csi_decrqm(di::Vector<int> const& params) {
 
 // Select Graphics Rendition - https://vt100.net/docs/vt510-rm/SGR.html
 void Terminal::csi_sgr(di::Vector<int> const& params) {
-    for (auto i = 0_usize; i == 0 || i < params.size(); i++) {
-        switch (params.at(i).value_or(0)) {
-            case 0:
-                reset_attributes();
-                break;
-            case 1:
-                set_bold(true);
-                break;
-            case 2:
-                set_dim(true);
-                break;
-            case 3:
-                set_italic(true);
-                break;
-            case 4:
-                set_underline(true);
-                break;
-            case 5:
-                set_blink(true);
-                break;
-            case 6:
-                set_rapid_blink(true);
-                break;
-            case 7:
-                set_inverted(true);
-                break;
-            case 8:
-                set_invisible(true);
-                break;
-            case 9:
-                set_strike_through(true);
-                break;
-            case 21:
-                set_underline(true);
-                break;
-            case 22:
-                set_bold(false);
-                set_dim(false);
-                break;
-            case 23:
-                set_italic(false);
-                break;
-            case 24:
-                set_underline(false);
-                break;
-            case 25:
-                set_blink(false);
-                set_rapid_blink(false);
-                break;
-            case 27:
-                set_inverted(false);
-                break;
-            case 28:
-                set_invisible(false);
-                break;
-            case 29:
-                set_strike_through(false);
-                break;
-            case 30:
-                set_fg({ Color::Palette::Black });
-                break;
-            case 31:
-                set_fg({ Color::Palette::Red });
-                break;
-            case 32:
-                set_fg({ Color::Palette::Green });
-                break;
-            case 33:
-                set_fg({ Color::Palette::Brown });
-                break;
-            case 34:
-                set_fg({ Color::Palette::Blue });
-                break;
-            case 35:
-                set_fg({ Color::Palette::Magenta });
-                break;
-            case 36:
-                set_fg({ Color::Palette::Cyan });
-                break;
-            case 37:
-                set_fg({ Color::Palette::LightGrey });
-                break;
-            case 38:
-                // Truecolor Foreground (xterm-256color)
-                if (params.at(i + 1).value_or(0) != 2) {
-                    break;
-                }
-                if (params.size() - i < 5) {
-                    break;
-                }
-                set_fg(Color { (uint8_t) di::clamp(params[i + 2], 0, 255), (uint8_t) di::clamp(params[i + 3], 0, 255),
-                               (uint8_t) di::clamp(params[i + 4], 0, 255) });
-                i += 4;
-                break;
-            case 39:
-                reset_fg();
-                break;
-            case 40:
-                set_bg({ Color::Palette::Black });
-                break;
-            case 41:
-                set_bg({ Color::Palette::Red });
-                break;
-            case 42:
-                set_bg({ Color::Palette::Green });
-                break;
-            case 43:
-                set_bg({ Color::Palette::Brown });
-                break;
-            case 44:
-                set_bg({ Color::Palette::Blue });
-                break;
-            case 45:
-                set_bg({ Color::Palette::Magenta });
-                break;
-            case 46:
-                set_bg({ Color::Palette::Cyan });
-                break;
-            case 47:
-                set_bg({ Color::Palette::LightGrey });
-                break;
-            case 48:
-                // Truecolor Background (xterm-256color)
-                if (params.at(i + 1).value_or(0) != 2) {
-                    break;
-                }
-                if (params.size() - i < 5) {
-                    break;
-                }
-                set_bg(Color { (uint8_t) di::clamp(params[i + 2], 0, 255), (uint8_t) di::clamp(params[i + 3], 0, 255),
-                               (uint8_t) di::clamp(params[i + 4], 0, 255) });
-                i += 4;
-                break;
-            case 49:
-                reset_bg();
-                break;
-            case 90:
-                set_fg({ Color::Palette::DarkGrey });
-                break;
-            case 91:
-                set_fg({ Color::Palette::LightRed });
-                break;
-            case 92:
-                set_fg({ Color::Palette::LightGreen });
-                break;
-            case 93:
-                set_fg({ Color::Palette::Yellow });
-                break;
-            case 94:
-                set_fg({ Color::Palette::LightBlue });
-                break;
-            case 95:
-                set_fg({ Color::Palette::LightMagenta });
-                break;
-            case 96:
-                set_fg({ Color::Palette::LightCyan });
-                break;
-            case 97:
-                set_fg({ Color::Palette::White });
-                break;
-            case 100:
-                set_bg({ Color::Palette::DarkGrey });
-                break;
-            case 101:
-                set_bg({ Color::Palette::LightRed });
-                break;
-            case 102:
-                set_bg({ Color::Palette::LightGreen });
-                break;
-            case 103:
-                set_bg({ Color::Palette::Yellow });
-                break;
-            case 104:
-                set_bg({ Color::Palette::LightBlue });
-                break;
-            case 105:
-                set_bg({ Color::Palette::LightMagenta });
-                break;
-            case 106:
-                set_bg({ Color::Palette::LightCyan });
-                break;
-            case 107:
-                set_bg({ Color::Palette::White });
-                break;
-            default:
-                break;
-        }
-    }
+    // Delegate to graphics rendition class.
+    m_current_graphics_rendition.update_with_csi_params(params.span());
 }
 
 // Device Status Report - https://vt100.net/docs/vt510-rm/DSR.html
@@ -1000,17 +816,7 @@ void Terminal::clear_row_to_end(int r, int start_col, char ch) {
 void Terminal::put_char(int row, int col, c32 c) {
     auto& cell = m_rows[row][col];
     cell.ch = c;
-    cell.bg = m_bg;
-    cell.fg = m_fg;
-    cell.bold = m_bold;
-    cell.dim = m_dim;
-    cell.italic = m_italic;
-    cell.underline = m_underline;
-    cell.blink = m_blink;
-    cell.rapid_blink = m_rapid_blink;
-    cell.inverted = m_inverted;
-    cell.invisible = m_invisible;
-    cell.strike_through = m_strike_through;
+    cell.graphics_rendition = m_current_graphics_rendition;
     cell.dirty = true;
 }
 
@@ -1086,7 +892,7 @@ void Terminal::set_use_alternate_screen_buffer(bool b) {
 
     if (b) {
         m_save_state = di::make_box<Terminal>(di::clone(*this));
-        reset_attributes();
+        m_current_graphics_rendition = {};
         m_x_overflow = false;
         m_cursor_hidden = false;
         m_cursor_row = m_cursor_col = m_saved_cursor_row = m_saved_cursor_col = 0;
@@ -1100,10 +906,7 @@ void Terminal::set_use_alternate_screen_buffer(bool b) {
         m_cursor_col = m_save_state->m_cursor_col;
         m_saved_cursor_row = m_save_state->m_saved_cursor_row;
         m_saved_cursor_col = m_save_state->m_saved_cursor_col;
-        m_bold = m_save_state->m_bold;
-        m_inverted = m_save_state->m_inverted;
-        m_bg = m_save_state->m_bg;
-        m_fg = m_save_state->m_fg;
+        m_current_graphics_rendition = m_save_state->m_current_graphics_rendition;
         m_x_overflow = m_save_state->m_x_overflow;
         m_cursor_hidden = m_save_state->m_cursor_hidden;
         m_rows = di::move(m_save_state->m_rows);

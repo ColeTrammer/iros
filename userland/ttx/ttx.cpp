@@ -133,17 +133,7 @@ static auto main(Args& args) -> di::Result<void> {
     terminal.set_visible_size(terminal_size.rows, terminal_size.cols);
     auto cursor_row = 0_u32;
     auto cursor_col = 0_u32;
-    auto bold = false;
-    auto dim = false;
-    auto italic = false;
-    auto underline = false;
-    auto blink = false;
-    auto rapid_blink = false;
-    auto inverted = false;
-    auto invisible = false;
-    auto strike_through = false;
-    auto fg = di::Optional<Terminal::Color> {};
-    auto bg = di::Optional<Terminal::Color> {};
+    auto last_graphics_rendition = GraphicsRendition {};
 
     auto log = TRY(dius::open_sync("/tmp/ttx.log"_pv, dius::OpenMode::WriteClobber));
     while (!done.load(di::MemoryOrder::Acquire)) {
@@ -193,77 +183,11 @@ static auto main(Args& args) -> di::Result<void> {
                                                                    cursor_col + 1);
                         }
 
-                        if (cell.bold != bold || cell.dim != dim || cell.italic != italic ||
-                            cell.underline != underline || cell.blink != blink || cell.rapid_blink != blink ||
-                            cell.inverted != inverted || cell.invisible != invisible ||
-                            cell.strike_through != strike_through || cell.fg != fg || cell.bg != bg) {
-                            bold = cell.bold;
-                            dim = cell.dim;
-                            italic = cell.italic;
-                            underline = cell.underline;
-                            blink = cell.blink;
-                            rapid_blink = cell.rapid_blink;
-                            inverted = cell.inverted;
-                            invisible = cell.invisible;
-                            strike_through = cell.strike_through;
-                            fg = cell.fg;
-                            bg = cell.bg;
+                        if (cell.graphics_rendition != last_graphics_rendition) {
+                            last_graphics_rendition = cell.graphics_rendition;
 
-                            auto sgr = ""_s;
-                            auto add = [&](di::String s) {
-                                if (!sgr.empty()) {
-                                    sgr.push_back(U';');
-                                }
-                                sgr.append(di::move(s));
-                            };
-                            if (bold) {
-                                add("1"_s);
-                            }
-                            if (dim) {
-                                add("2"_s);
-                            }
-                            if (italic) {
-                                add("3"_s);
-                            }
-                            if (underline) {
-                                add("4"_s);
-                            }
-                            if (blink) {
-                                add("5"_s);
-                            }
-                            if (rapid_blink) {
-                                add("6"_s);
-                            }
-                            if (inverted) {
-                                add("7"_s);
-                            }
-                            if (invisible) {
-                                add("8"_s);
-                            }
-                            if (strike_through) {
-                                add("9"_s);
-                            }
-                            if (fg) {
-                                if (fg->c == Terminal::Color::Palette::Custom) {
-                                    add(*di::present("38:2:{}:{}:{}"_sv, fg->r, fg->g, fg->b));
-                                } else if (fg->c <= Terminal::Color::Palette::LightGrey) {
-                                    add(*di::present("{}"_sv, 30 + fg->c - Terminal::Color::Palette::Black));
-                                } else {
-                                    add(*di::present("{}"_sv, 90 + fg->c - Terminal::Color::Palette::DarkGrey));
-                                }
-                            }
-                            if (bg) {
-                                if (bg->c == Terminal::Color::Palette::Custom) {
-                                    add(*di::present("48:2:{}:{}:{}"_sv, bg->r, bg->g, bg->b));
-                                } else if (bg->c <= Terminal::Color::Palette::LightGrey) {
-                                    add(*di::present("{}"_sv, 40 + bg->c - Terminal::Color::Palette::Black));
-                                } else {
-                                    add(*di::present("{}"_sv, 100 + bg->c - Terminal::Color::Palette::DarkGrey));
-                                }
-                            }
-
-                            di::writer_print<di::String::Encoding>(dius::stdin, "\033[m"_sv, sgr);
-                            di::writer_print<di::String::Encoding>(dius::stdin, "\033[{}m"_sv, sgr);
+                            di::writer_print<di::String::Encoding>(dius::stdin, "\033[{}m"_sv,
+                                                                   last_graphics_rendition.as_csi_params());
                         }
 
                         di::writer_print<di::String::Encoding>(dius::stdin, "{}"_sv, cell.ch);

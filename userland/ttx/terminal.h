@@ -2,55 +2,14 @@
 
 #include "dius/sync_file.h"
 #include "escape_sequence_parser.h"
+#include "graphics_rendition.h"
 
 namespace ttx {
 class Terminal {
 public:
-    struct Color {
-        enum Palette : u8 {
-            Custom = 0,
-            Black,
-            Red,
-            Green,
-            Brown,
-            Blue,
-            Magenta,
-            Cyan,
-            LightGrey,
-            DarkGrey,
-            LightRed,
-            LightGreen,
-            Yellow,
-            LightBlue,
-            LightMagenta,
-            LightCyan,
-            White,
-        };
-
-        Color(Palette c) : c(c) {}
-        Color(u8 r, u8 g, u8 b) : r(r), g(g), b(b) {}
-
-        Palette c = Palette::Custom;
-        u8 r = 0;
-        u8 g = 0;
-        u8 b = 0;
-
-        auto operator==(Color const& other) const -> bool = default;
-    };
-
     struct Cell {
-        di::Optional<Color> fg;
-        di::Optional<Color> bg;
         c32 ch { ' ' };
-        bool bold : 1 { false };
-        bool dim : 1 { false };
-        bool italic : 1 { false };
-        bool underline : 1 { false };
-        bool blink : 1 { false };
-        bool rapid_blink : 1 { false };
-        bool inverted : 1 { false };
-        bool invisible : 1 { false };
-        bool strike_through : 1 { false };
+        GraphicsRendition graphics_rendition;
         mutable bool dirty : 1 { true };
     };
 
@@ -80,10 +39,7 @@ public:
         result.m_x_overflow = m_x_overflow;
         result.m_origin_mode = m_origin_mode;
 
-        result.m_inverted = m_inverted;
-        result.m_bold = m_bold;
-        result.m_fg = m_fg;
-        result.m_bg = m_bg;
+        result.m_current_graphics_rendition = m_current_graphics_rendition;
 
         result.m_rows_below = di::clone(m_rows_below);
         result.m_rows_above = di::clone(m_rows_above);
@@ -178,36 +134,7 @@ private:
     void clear_row_until(int row, int end_col, char ch = ' ');
     void clear_row_to_end(int row, int start_col, char ch = ' ');
 
-    void reset_bg() { m_bg.reset(); }
-    void reset_fg() { m_fg.reset(); }
-
-    void set_bg(di::Optional<Color> c) { m_bg = c; }
-    void set_fg(di::Optional<Color> c) { m_fg = c; }
-
-    void set_bold(bool bold) { m_bold = bold; }
-    void set_dim(bool dim) { m_dim = dim; }
-    void set_italic(bool italic) { m_italic = italic; }
-    void set_underline(bool underline) { m_underline = underline; }
-    void set_blink(bool blink) { m_blink = blink; }
-    void set_rapid_blink(bool rapid_blink) { m_rapid_blink = rapid_blink; }
-    void set_inverted(bool inverted) { m_inverted = inverted; }
-    void set_invisible(bool invisible) { m_invisible = invisible; }
-    void set_strike_through(bool strike_through) { m_strike_through = strike_through; }
     void set_use_alternate_screen_buffer(bool b);
-
-    void reset_attributes() {
-        reset_bg();
-        reset_fg();
-        set_bold(false);
-        set_dim(false);
-        set_italic(false);
-        set_underline(false);
-        set_blink(false);
-        set_rapid_blink(false);
-        set_inverted(false);
-        set_invisible(false);
-        set_strike_through(false);
-    }
 
     void esc_decaln();
     void esc_decsc();
@@ -278,17 +205,7 @@ private:
     bool m_x_overflow { false };
     bool m_origin_mode { false };
 
-    bool m_bold { false };
-    bool m_dim { false };
-    bool m_italic { false };
-    bool m_underline { false };
-    bool m_blink { false };
-    bool m_rapid_blink { false };
-    bool m_inverted { false };
-    bool m_invisible { false };
-    bool m_strike_through { false };
-    di::Optional<Color> m_fg;
-    di::Optional<Color> m_bg;
+    GraphicsRendition m_current_graphics_rendition;
 
     di::Vector<Row> m_rows_below;
     di::Vector<Row> m_rows_above;
