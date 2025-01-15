@@ -1,8 +1,10 @@
 #include "graphics_rendition.h"
 
+#include "di/container/vector/vector.h"
 #include "di/format/prelude.h"
 #include "di/parser/integral.h"
 #include "di/util/clamp.h"
+#include "params.h"
 
 namespace ttx {
 // Select Graphics Rendition - https://vt100.net/docs/vt510-rm/SGR.html
@@ -225,94 +227,90 @@ enum class ColorType {
     Underine,
 };
 
-static auto color_to_string(Color c, ColorType type) -> di::String {
+static auto color_to_subparams(Color c, ColorType type) -> di::Vector<u32> {
     if (c.c == Color::Palette::Custom) {
-        auto code = type == ColorType::Fg ? 38 : type == ColorType::Bg ? 48 : 58;
-        return *di::present("{}:2:{}:{}:{}"_sv, code, c.r, c.g, c.b);
+        auto code = type == ColorType::Fg ? 38u : type == ColorType::Bg ? 48u : 58u;
+        return { code, 2, c.r, c.g, c.b };
     } else if (type == ColorType::Underine) {
         // Use palette index.
-        return *di::present("58:8:{}"_sv, c.c - Color::Palette::Black);
+        return { 58, 8, u32(c.c - Color::Palette::Black) };
     } else if (c.c <= Color::Palette::LightGrey) {
-        auto base_code = type == ColorType::Fg ? 30 : 40;
-        return *di::present("{}"_sv, base_code + c.c - Color::Palette::Black);
+        auto base_value = type == ColorType::Fg ? 30u : 40u;
+        return { base_value + c.c - Color::Palette::Black };
     } else {
-        auto base_code = type == ColorType::Fg ? 90 : 100;
-        return *di::present("{}"_sv, base_code + c.c - Color::Palette::DarkGrey);
+        auto base_value = type == ColorType::Fg ? 90u : 100u;
+        return { base_value + c.c - Color::Palette::DarkGrey };
     }
 }
 
 auto GraphicsRendition::as_csi_params() const -> di::String {
     // Start by clearing all attributes.
-    auto sgr = "0"_s;
-
-    auto add = [&](di::String s) {
-        sgr.push_back(U';');
-        sgr.append(di::move(s));
-    };
+    auto sgr = Params();
+    sgr.add_param(0);
 
     switch (font_weight) {
         case FontWeight::Bold:
-            add("1"_s);
+            sgr.add_param(1);
             break;
         case FontWeight::Dim:
-            add("2"_s);
+            sgr.add_param(2);
             break;
         case FontWeight::None:
             break;
     }
     if (italic) {
-        add("3"_s);
+        sgr.add_param(3);
     }
     switch (underline_mode) {
         case UnderlineMode::Normal:
-            add("4"_s);
+            sgr.add_param(4);
             break;
         case UnderlineMode::Double:
-            add("21"_s);
+            sgr.add_param(21);
             break;
         case UnderlineMode::Curly:
-            add("4:3"_s);
+            sgr.add_subparams({ 4, 3 });
             break;
         case UnderlineMode::Dotted:
-            add("4:4"_s);
+            sgr.add_subparams({ 4, 4 });
             break;
         case UnderlineMode::Dashed:
-            add("4:5"_s);
+            sgr.add_subparams({ 4, 5 });
             break;
         case UnderlineMode::None:
             break;
     }
     switch (blink_mode) {
         case BlinkMode::Normal:
-            add("5"_s);
+            sgr.add_param(5);
             break;
         case BlinkMode::Rapid:
-            add("6"_s);
+            sgr.add_param(6);
             break;
         case BlinkMode::None:
             break;
     }
     if (inverted) {
-        add("7"_s);
+        sgr.add_param(7);
     }
     if (invisible) {
-        add("8"_s);
+        sgr.add_param(8);
     }
     if (strike_through) {
-        add("9"_s);
+        sgr.add_param(9);
     }
     if (overline) {
-        add("53"_s);
+        sgr.add_param(53);
     }
     if (fg.c != Color::None) {
-        add(color_to_string(fg, ColorType::Fg));
+        sgr.add_subparams(color_to_subparams(fg, ColorType::Fg));
     }
     if (bg.c != Color::None) {
-        add(color_to_string(fg, ColorType::Fg));
+        sgr.add_subparams(color_to_subparams(bg, ColorType::Bg));
     }
     if (underline_color.c != Color::None) {
-        add(color_to_string(fg, ColorType::Underine));
+        sgr.add_subparams(color_to_subparams(underline_color, ColorType::Underine));
     }
-    return sgr;
+    return sgr.to_string();
 }
 }

@@ -7,6 +7,7 @@
 #include "dius/system/process.h"
 #include "dius/thread.h"
 #include "escape_sequence_parser.h"
+#include "params.h"
 #include "terminal.h"
 #include "terminal_input.h"
 
@@ -186,6 +187,8 @@ static auto main(Args& args) -> di::Result<void> {
                         if (cell.graphics_rendition != last_graphics_rendition) {
                             last_graphics_rendition = cell.graphics_rendition;
 
+                            (void) di::writer_println<di::container::string::Utf8Encoding>(
+                                log, "\"{}\""_sv, last_graphics_rendition.as_csi_params());
                             di::writer_print<di::String::Encoding>(dius::stdin, "\033[{}m"_sv,
                                                                    last_graphics_rendition.as_csi_params());
                         }

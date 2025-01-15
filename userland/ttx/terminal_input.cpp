@@ -6,6 +6,7 @@
 #include "di/vocab/array/to_array.h"
 #include "key.h"
 #include "key_event.h"
+#include "params.h"
 
 namespace ttx {
 struct CodePointMapping {
@@ -417,25 +418,6 @@ void TerminalInputParser::handle_escape(c32 input) {
     }
 }
 
-// Take a list of `;` + `:` separated numbers, and try to parse them. Invalid sequences will result in a value of 1.
-//
-// For instance, 1:2;4;;5 will be parsed as:
-//   [
-//     [1,2]
-//     [4],
-//     [],
-//     [5],
-//   ]
-static auto parse_ansi_numbers(di::StringView view) -> di::Vector<di::Vector<i32>> {
-    return view | di::split(U';') | di::transform([](di::StringView nums) -> di::Vector<i32> {
-               return nums | di::split(U':') | di::transform([](di::StringView num) -> i32 {
-                          return di::parse<i32>(num).value_or(1);
-                      }) |
-                      di::to<di::Vector>();
-           }) |
-           di::to<di::Vector>();
-}
-
 void TerminalInputParser::handle_csi(c32 input) {
     // Check if input does not end a key press.
     auto is_digit = input >= U'0' && input <= U'9';
@@ -445,7 +427,7 @@ void TerminalInputParser::handle_csi(c32 input) {
     }
 
     // Parse the number list.
-    auto nums = parse_ansi_numbers(m_accumulator);
+    auto nums = Params::from_string(m_accumulator);
 
     // In general, the key event will look something like this:
     //   code_point;modifiers
@@ -453,21 +435,11 @@ void TerminalInputParser::handle_csi(c32 input) {
     // to 0.
     auto code_point = U'\01';
     if (!nums.empty()) {
-        code_point = nums[0]
-                         .front()
-                         .transform([](i32 value) {
-                             return static_cast<c32>(value);
-                         })
-                         .value_or(code_point);
+        code_point = nums.get(0, code_point);
     }
     auto modifiers = Modifiers::None;
     if (nums.size() >= 2) {
-        modifiers = nums[1]
-                        .front()
-                        .transform([](i32 value) {
-                            return static_cast<Modifiers>(value - 1);
-                        })
-                        .value_or(modifiers);
+        modifiers = Modifiers(nums.get(1, u32(modifiers) + 1) - 1);
     }
 
     if (input == U'u') {
@@ -476,20 +448,16 @@ void TerminalInputParser::handle_csi(c32 input) {
         // We also need to parse the event type and text when using extended modes.
         auto type = KeyEventType::Press;
         if (nums.size() >= 2) {
-            type = nums[1]
-                       .at(1)
-                       .transform([](i32 value) {
-                           return static_cast<KeyEventType>(value);
-                       })
-                       .value_or(type);
+            type = KeyEventType(nums.get_subparam(1, 1, u32(type)));
             if (!di::valid_enum_value(type)) {
                 type = KeyEventType::Press;
             }
         }
         auto text = di::String {};
-        if (nums.size() >= 3 && !di::container::equal(nums[2], di::single(0))) {
-            for (auto code_point : nums[2]) {
-                text.push_back(c32(code_point));
+        if (nums.size() >= 3 && nums.get_subparam(2, 0, 0) != 0) {
+            auto subparams = nums.subparams(2);
+            for (auto i : di::range(subparams.size())) {
+                text.push_back(c32(subparams.get(i)));
             }
         }
         key_event_from_code_point(code_point, modifiers, di::move(text), type)
