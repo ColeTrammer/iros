@@ -188,8 +188,7 @@ private:
                         break;
                     }
 
-                    auto&& inner = this->get_inner(m_outer);
-                    m_inner.template emplace<1>(container::begin(inner));
+                    m_inner.template emplace<1>(container::begin(this->update_inner(m_outer)));
                 } else {
                     auto&& inner = this->get_inner(m_outer);
                     if (util::get<1>(m_inner) != container::end(inner)) {
