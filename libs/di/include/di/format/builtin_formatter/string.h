@@ -23,6 +23,23 @@ constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<T>, Format
     };
 }
 
+namespace detail {
+    template<typename T>
+    concept ToStringFormattable = requires(T const& v) {
+        { v.to_string() } -> concepts::detail::ConstantString;
+    };
+}
+
+template<detail::ToStringFormattable T, concepts::Encoding Enc>
+constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<T>, FormatParseContext<Enc>& parse_context) {
+    return di::format::formatter<container::string::StringViewImpl<Enc>, Enc>(parse_context, false) %
+           [](concepts::CopyConstructible auto formatter) {
+               return [=](concepts::FormatContext auto& context, T const& a) {
+                   return formatter(context, a.to_string().view());
+               };
+           };
+}
+
 template<concepts::Encoding Enc, concepts::Encoding OtherEnc>
 constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<container::PathViewImpl<Enc>>,
                           FormatParseContext<OtherEnc>& parse_context) {
