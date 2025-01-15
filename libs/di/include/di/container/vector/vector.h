@@ -16,6 +16,7 @@
 #include "di/types/prelude.h"
 #include "di/util/deduce_create.h"
 #include "di/util/exchange.h"
+#include "di/util/initializer_list.h"
 #include "di/vocab/expected/prelude.h"
 #include "di/vocab/span/prelude.h"
 
@@ -33,6 +34,12 @@ public:
         , m_size(util::exchange(other.m_size, 0))
         , m_capacity(util::exchange(other.m_capacity, 0))
         , m_allocator(util::move(other.m_allocator)) {}
+
+    constexpr Vector(std::initializer_list<T> init)
+    requires(!concepts::FallibleAllocator<T>)
+    {
+        this->append_container(init);
+    }
 
     constexpr ~Vector() { deallocate(); }
 
