@@ -4,6 +4,7 @@
 #include "di/container/string/string.h"
 #include "di/container/string/string_view.h"
 #include "di/container/vector/vector.h"
+#include "di/util/initializer_list.h"
 
 namespace ttx {
 // Subparams are separated by `:` characters. The subparam
@@ -40,6 +41,14 @@ public:
     static auto from_string(di::StringView view) -> Params;
 
     Params() = default;
+
+    Params(std::initializer_list<std::initializer_list<u32>> params) {
+        for (auto const& subparams : params) {
+            m_parameters.emplace_back(subparams);
+        }
+    }
+
+    constexpr auto clone() const -> Params { return Params(m_parameters.clone()); }
 
     constexpr auto get(usize index = 0, u32 fallback = 0) const -> u32 {
         return m_parameters.at(index).and_then(di::at(0)).value_or(fallback);

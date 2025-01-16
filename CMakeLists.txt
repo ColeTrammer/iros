@@ -43,7 +43,7 @@ separate_arguments(IROS_SanitizerFlags)
 separate_arguments(IROS_ExtraFlags)
 separate_arguments(IROS_IrisFlags)
 
-set(as_subproject Di Dius Diusaudio Diusgfx Iris)
+set(as_subproject Di Dius Diusaudio Diusgfx Iris Libttx)
 
 macro(find_package)
     if(NOT "${ARGV0}" IN_LIST as_subproject)
@@ -102,6 +102,7 @@ endif()
 if(IROS_BuildUserspace OR IROS_BuildLibraries)
     add_subdirectory(libs/diusaudio)
     add_subdirectory(libs/diusgfx)
+    add_subdirectory(libs/ttx)
 endif()
 
 if(IROS_BuildUserspace)

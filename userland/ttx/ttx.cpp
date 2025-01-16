@@ -7,7 +7,6 @@
 #include "dius/system/process.h"
 #include "dius/thread.h"
 #include "escape_sequence_parser.h"
-#include "params.h"
 #include "terminal.h"
 #include "terminal_input.h"
 

@@ -1,12 +1,10 @@
 #include "terminal_input.h"
 
-#include "di/container/view/split.h"
-#include "di/container/view/transform.h"
 #include "di/reflect/valid_enum_value.h"
 #include "di/vocab/array/to_array.h"
 #include "key.h"
 #include "key_event.h"
-#include "params.h"
+#include "ttx/params.h"
 
 namespace ttx {
 struct CodePointMapping {

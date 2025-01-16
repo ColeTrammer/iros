@@ -4,7 +4,7 @@
 #include "di/format/prelude.h"
 #include "di/parser/integral.h"
 #include "di/util/clamp.h"
-#include "params.h"
+#include "ttx/params.h"
 
 namespace ttx {
 // Select Graphics Rendition - https://vt100.net/docs/vt510-rm/SGR.html
