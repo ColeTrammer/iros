@@ -1,7 +1,6 @@
 #include "graphics_rendition.h"
 
 #include "di/container/vector/vector.h"
-#include "di/format/prelude.h"
 #include "di/parser/integral.h"
 #include "di/util/clamp.h"
 #include "ttx/params.h"
@@ -10,9 +9,9 @@ namespace ttx {
 // Select Graphics Rendition - https://vt100.net/docs/vt510-rm/SGR.html
 //   Modern extensions like underline and true color can be found here:
 //     https://wezfurlong.org/wezterm/escape-sequences.html#graphic-rendition-sgr
-void GraphicsRendition::update_with_csi_params(di::Span<i32 const> params) {
+void GraphicsRendition::update_with_csi_params(Params const& params) {
     for (auto i = 0_usize; i == 0 || i < params.size(); i++) {
-        switch (params.at(i).value_or(0)) {
+        switch (params.get(i, 0)) {
             case 0:
                 *this = {};
                 break;
@@ -93,14 +92,15 @@ void GraphicsRendition::update_with_csi_params(di::Span<i32 const> params) {
                 break;
             case 38:
                 // Truecolor Foreground (xterm-256color)
-                if (params.at(i + 1).value_or(0) != 2) {
+                if (params.get(i + 1, 0) != 2) {
                     break;
                 }
                 if (params.size() - i < 5) {
                     break;
                 }
-                fg = Color { (uint8_t) di::clamp(params[i + 2], 0, 255), (uint8_t) di::clamp(params[i + 3], 0, 255),
-                             (uint8_t) di::clamp(params[i + 4], 0, 255) };
+                fg = Color { (uint8_t) di::clamp(params.get(i + 2), 0u, 255u),
+                             (uint8_t) di::clamp(params.get(i + 3), 0u, 255u),
+                             (uint8_t) di::clamp(params.get(i + 4), 0u, 255u) };
                 i += 4;
                 break;
             case 39:
@@ -132,14 +132,15 @@ void GraphicsRendition::update_with_csi_params(di::Span<i32 const> params) {
                 break;
             case 48:
                 // Truecolor Background (xterm-256color)
-                if (params.at(i + 1).value_or(0) != 2) {
+                if (params.get(i + 1, 0) != 2) {
                     break;
                 }
                 if (params.size() - i < 5) {
                     break;
                 }
-                bg = Color { (uint8_t) di::clamp(params[i + 2], 0, 255), (uint8_t) di::clamp(params[i + 3], 0, 255),
-                             (uint8_t) di::clamp(params[i + 4], 0, 255) };
+                bg = Color { (uint8_t) di::clamp(params.get(i + 2), 0u, 255u),
+                             (uint8_t) di::clamp(params.get(i + 3), 0u, 255u),
+                             (uint8_t) di::clamp(params.get(i + 4), 0u, 255u) };
                 i += 4;
                 break;
             case 49:
@@ -152,15 +153,15 @@ void GraphicsRendition::update_with_csi_params(di::Span<i32 const> params) {
                 break;
             case 58:
                 // Truecolor Underine Color (xterm-256color)
-                if (params.at(i + 1).value_or(0) != 2) {
+                if (params.get(i + 1, 0) != 2) {
                     break;
                 }
                 if (params.size() - i < 5) {
                     break;
                 }
-                underline_color =
-                    Color { (uint8_t) di::clamp(params[i + 2], 0, 255), (uint8_t) di::clamp(params[i + 3], 0, 255),
-                            (uint8_t) di::clamp(params[i + 4], 0, 255) };
+                underline_color = Color { (uint8_t) di::clamp(params.get(i + 2), 0u, 255u),
+                                          (uint8_t) di::clamp(params.get(i + 3), 0u, 255u),
+                                          (uint8_t) di::clamp(params.get(i + 4), 0u, 255u) };
                 i += 4;
                 break;
                 break;

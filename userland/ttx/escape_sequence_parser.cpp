@@ -191,7 +191,7 @@ STATE(csi_param) {
     ON_ENTRY(CsiParam) {
         m_on_state_exit = [this] {
             if (!m_current_param.empty()) {
-                m_params.push_back(di::parse<i32>(m_current_param).value_or(0));
+                add_param(di::parse<u32>(m_current_param).value_or(0));
             }
         };
     }
@@ -280,7 +280,7 @@ STATE(dcs_param) {
     ON_ENTRY(DcsParam) {
         m_on_state_exit = [this] {
             if (!m_current_param.empty()) {
-                m_params.push_back(di::parse<i32>(m_current_param).value_or(0));
+                add_param(di::parse<u32>(m_current_param).value_or(0));
             }
         };
     }
@@ -402,7 +402,7 @@ void EscapeSequenceParser::execute(c32 code_point) {
 
 void EscapeSequenceParser::clear() {
     m_current_param.clear();
-    m_params.clear();
+    m_params = {};
     m_intermediate.clear();
 }
 
@@ -417,11 +417,11 @@ void EscapeSequenceParser::param(c32 code_point) {
     }
 
     if (m_current_param.empty()) {
-        m_params.push_back(0);
+        add_param(0);
         return;
     }
 
-    m_params.push_back(di::parse<i32>(m_current_param.view()).value_or(0));
+    add_param(di::parse<u32>(m_current_param.view()).value_or(0));
     m_current_param.clear();
 }
 
@@ -456,6 +456,10 @@ void EscapeSequenceParser::osc_start() {
 void EscapeSequenceParser::osc_put(c32) {}
 
 void EscapeSequenceParser::osc_end() {}
+
+void EscapeSequenceParser::add_param(u32 param) {
+    m_params.add_param(param);
+}
 
 void EscapeSequenceParser::transition(State state) {
     if (m_on_state_exit) {

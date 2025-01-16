@@ -4,6 +4,7 @@
 #include "di/types/integers.h"
 #include "di/vocab/optional/prelude.h"
 #include "di/vocab/span/prelude.h"
+#include "ttx/params.h"
 
 namespace ttx {
 struct Color {
@@ -75,7 +76,7 @@ struct GraphicsRendition {
     bool invisible : 1 { false };
     bool strike_through : 1 { false };
 
-    void update_with_csi_params(di::Span<i32 const> params);
+    void update_with_csi_params(Params const& params);
     auto as_csi_params() const -> di::String;
 
     auto operator==(GraphicsRendition const& other) const -> bool = default;

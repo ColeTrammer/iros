@@ -5,6 +5,7 @@
 #include "di/function/container/function.h"
 #include "di/reflect/prelude.h"
 #include "di/vocab/variant/prelude.h"
+#include "ttx/params.h"
 
 namespace ttx {
 struct PrintableCharacter {
@@ -17,7 +18,7 @@ struct PrintableCharacter {
 
 struct DCS {
     di::String intermediate;
-    di::Vector<i32> params;
+    Params params;
     di::String data;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<DCS>) {
@@ -28,7 +29,7 @@ struct DCS {
 
 struct CSI {
     di::String intermediate;
-    di::Vector<i32> params;
+    Params params;
     c32 terminator = 0;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<CSI>) {
@@ -108,6 +109,8 @@ private:
 
     void on_input(c32 code_point);
 
+    void add_param(u32 param);
+
     State m_last_state { State::Ground };
     State m_next_state { State::Ground };
     di::Function<void()> m_on_state_exit;
@@ -115,7 +118,7 @@ private:
     di::String m_intermediate;
     di::String m_current_param;
     di::String m_data;
-    di::Vector<i32> m_params;
+    Params m_params;
     di::Vector<ParserResult> m_result;
 };
 }

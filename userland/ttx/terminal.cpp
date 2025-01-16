@@ -4,6 +4,7 @@
 #include "di/container/algorithm/rotate.h"
 #include "escape_sequence_parser.h"
 #include "graphics_rendition.h"
+#include "ttx/params.h"
 
 namespace ttx {
 void Terminal::on_parser_results(di::Span<ParserResult const> results) {
@@ -255,7 +256,7 @@ void Terminal::c1_ri() {
 }
 
 // Request Status String - https://vt100.net/docs/vt510-rm/DECRQSS.html
-void Terminal::dcs_decrqss(di::Vector<int> const&, di::StringView data) {
+void Terminal::dcs_decrqss(Params const&, di::StringView data) {
     // Set graphics rendition
     if (data == "m"_sv) {
         (void) m_psuedo_terminal.write_exactly(
@@ -283,58 +284,58 @@ void Terminal::esc_decrc() {
 }
 
 // Insert Character - https://vt100.net/docs/vt510-rm/ICH.html
-void Terminal::csi_ich(di::Vector<int> const& params) {
-    auto chars = di::max(1, params.at(0).value_or(1));
+void Terminal::csi_ich(Params const& params) {
+    auto chars = di::max(1u, params.get(0, 1));
 
     auto& row = m_rows[m_cursor_row];
     for (int i = max_col_inclusive() - chars; i >= m_cursor_col; i--) {
         row[i + chars] = row[i];
     }
 
-    for (int i = m_cursor_col; i <= max_col_inclusive() && i < m_cursor_col + chars; i++) {
+    for (int i = m_cursor_col; i <= max_col_inclusive() && i < m_cursor_col + int(chars); i++) {
         row[i] = {};
     }
 }
 
 // Cursor Up - https://www.vt100.net/docs/vt100-ug/chapter3.html#CUU
-void Terminal::csi_cuu(di::Vector<int> const& params) {
-    auto delta_row = di::max(1, params.at(0).value_or(1));
+void Terminal::csi_cuu(Params const& params) {
+    auto delta_row = di::max(1u, params.get(0, 1));
     set_cursor(m_cursor_row - delta_row, m_cursor_col);
 }
 
 // Cursor Down - https://www.vt100.net/docs/vt100-ug/chapter3.html#CUD
-void Terminal::csi_cud(di::Vector<int> const& params) {
-    auto delta_row = di::max(1, params.at(0).value_or(1));
+void Terminal::csi_cud(Params const& params) {
+    auto delta_row = di::max(1u, params.get(0, 1));
     set_cursor(m_cursor_row + delta_row, m_cursor_col);
 }
 
 // Cursor Forward - https://www.vt100.net/docs/vt100-ug/chapter3.html#CUF
-void Terminal::csi_cuf(di::Vector<int> const& params) {
-    auto delta_col = di::max(1, params.at(0).value_or(1));
+void Terminal::csi_cuf(Params const& params) {
+    auto delta_col = di::max(1u, params.get(0, 1));
     set_cursor(m_cursor_row, m_cursor_col + delta_col);
 }
 
 // Cursor Backward - https://www.vt100.net/docs/vt100-ug/chapter3.html#CUB
-void Terminal::csi_cub(di::Vector<int> const& params) {
-    auto delta_col = di::max(1, params.at(0).value_or(1));
+void Terminal::csi_cub(Params const& params) {
+    auto delta_col = di::max(1u, params.get(0, 1));
     set_cursor(m_cursor_row, m_cursor_col - delta_col);
 }
 
 // Cursor Position - https://www.vt100.net/docs/vt100-ug/chapter3.html#CUP
-void Terminal::csi_cup(di::Vector<int> const& params) {
-    auto row = translate_row(params.at(0).value_or(1));
-    auto col = translate_col(params.at(1).value_or(1));
+void Terminal::csi_cup(Params const& params) {
+    auto row = translate_row(params.get(0, 1));
+    auto col = translate_col(params.get(1, 1));
     set_cursor(row, col);
 }
 
 // Cursor Horizontal Absolute - https://vt100.net/docs/vt510-rm/CHA.html
-void Terminal::csi_cha(di::Vector<int> const& params) {
-    set_cursor(m_cursor_row, translate_col(params.at(0).value_or(1)));
+void Terminal::csi_cha(Params const& params) {
+    set_cursor(m_cursor_row, translate_col(params.get(0, 1)));
 }
 
 // Erase in Display - https://vt100.net/docs/vt510-rm/ED.html
-void Terminal::csi_ed(di::Vector<int> const& params) {
-    switch (params.at(0).value_or(0)) {
+void Terminal::csi_ed(Params const& params) {
+    switch (params.get(0, 0)) {
         case 0:
             return clear_below_cursor();
         case 1:
@@ -352,8 +353,8 @@ void Terminal::csi_ed(di::Vector<int> const& params) {
 }
 
 // Erase in Line - https://vt100.net/docs/vt510-rm/EL.html
-void Terminal::csi_el(di::Vector<int> const& params) {
-    switch (params.at(0).value_or(0)) {
+void Terminal::csi_el(Params const& params) {
+    switch (params.get(0, 0)) {
         case 0:
             return clear_row_to_end(m_cursor_row, m_cursor_col);
         case 1:
@@ -364,11 +365,11 @@ void Terminal::csi_el(di::Vector<int> const& params) {
 }
 
 // Insert Line - https://vt100.net/docs/vt510-rm/IL.html
-void Terminal::csi_il(di::Vector<int> const& params) {
+void Terminal::csi_il(Params const& params) {
     if (m_cursor_row < m_scroll_start || m_cursor_row > m_scroll_end) {
         return;
     }
-    int lines_to_insert = di::max(1, params.at(0).value_or(1));
+    int lines_to_insert = di::max(1u, params.get(0, 1));
     for (int i = 0; i < lines_to_insert; i++) {
         di::rotate(m_rows.begin() + m_cursor_row, m_rows.begin() + m_scroll_end, m_rows.begin() + m_scroll_end + 1);
         // m_rows.rotate_right(m_cursor_row, m_scroll_end + 1);
@@ -379,11 +380,11 @@ void Terminal::csi_il(di::Vector<int> const& params) {
 }
 
 // Delete Line - https://vt100.net/docs/vt510-rm/DL.html
-void Terminal::csi_dl(di::Vector<int> const& params) {
+void Terminal::csi_dl(Params const& params) {
     if (m_cursor_row < m_scroll_start || m_cursor_row > m_scroll_end) {
         return;
     }
-    int lines_to_delete = di::clamp(params.at(0).value_or(1), 1, m_scroll_end - m_cursor_row);
+    int lines_to_delete = di::clamp(params.get(0, 1), 1u, u32(m_scroll_end - m_cursor_row));
     for (int i = 0; i < lines_to_delete; i++) {
         di::rotate(m_rows.begin() + m_cursor_row, m_rows.begin() + m_cursor_row + 1, m_rows.begin() + m_scroll_end + 1);
         // m_rows.rotate_left(m_cursor_row, m_scroll_end + 1);
@@ -395,8 +396,8 @@ void Terminal::csi_dl(di::Vector<int> const& params) {
 }
 
 // Delete Character - https://vt100.net/docs/vt510-rm/DCH.html
-void Terminal::csi_dch(di::Vector<int> const& params) {
-    int chars_to_delete = di::clamp(params.at(0).value_or(1), 1, m_col_count - m_cursor_col);
+void Terminal::csi_dch(Params const& params) {
+    int chars_to_delete = di::clamp(params.get(0, 1), 1u, u32(m_col_count - m_cursor_col));
     for (int i = 0; i < chars_to_delete; i++) {
         m_rows[m_cursor_row].erase(m_rows[m_cursor_row].begin() + m_cursor_col);
     }
@@ -407,8 +408,8 @@ void Terminal::csi_dch(di::Vector<int> const& params) {
 }
 
 // Pan Down - https://vt100.net/docs/vt510-rm/SU.html
-void Terminal::csi_su(di::Vector<int> const& params) {
-    int to_scroll = params.at(0).value_or(1);
+void Terminal::csi_su(Params const& params) {
+    int to_scroll = params.get(0, 1);
     int row_save = m_cursor_row;
     for (int i = 0; i < to_scroll; i++) {
         m_cursor_row = m_row_count;
@@ -419,8 +420,8 @@ void Terminal::csi_su(di::Vector<int> const& params) {
 }
 
 // Pan Up - https://vt100.net/docs/vt510-rm/SD.html
-void Terminal::csi_sd(di::Vector<int> const& params) {
-    int to_scroll = params.at(0).value_or(1);
+void Terminal::csi_sd(Params const& params) {
+    int to_scroll = params.get(0, 1);
     int row_save = m_cursor_row;
     for (int i = 0; i < to_scroll; i++) {
         m_cursor_row = -1;
@@ -430,15 +431,15 @@ void Terminal::csi_sd(di::Vector<int> const& params) {
 }
 
 // Erase Character - https://vt100.net/docs/vt510-rm/ECH.html
-void Terminal::csi_ech(di::Vector<int> const& params) {
-    int chars_to_erase = di::max(1, params.at(0).value_or(1));
+void Terminal::csi_ech(Params const& params) {
+    int chars_to_erase = di::max(1u, params.get(0, 1));
     for (int i = m_cursor_col; i - m_cursor_col < chars_to_erase && i < m_col_count; i++) {
         m_rows[m_cursor_row][i] = {};
     }
 }
 
 // Repeat Preceding Graphic Character - https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
-void Terminal::csi_rep(di::Vector<int> const& params) {
+void Terminal::csi_rep(Params const& params) {
     c32 preceding_character = ' ';
     if (m_cursor_col == 0) {
         if (m_cursor_row != 0) {
@@ -447,48 +448,48 @@ void Terminal::csi_rep(di::Vector<int> const& params) {
     } else {
         preceding_character = m_rows[m_cursor_row][m_cursor_col - 1].ch;
     }
-    for (int i = 0; i < params.at(0).value_or(0); i++) {
+    for (auto i = 0_u32; i < params.get(0, 0); i++) {
         put_char(preceding_character);
     }
 }
 
 // Primary Device Attributes - https://vt100.net/docs/vt510-rm/DA1.html
-void Terminal::csi_da1(di::Vector<int> const& params) {
-    if (params.at(0).value_or(0) != 0) {
+void Terminal::csi_da1(Params const& params) {
+    if (params.get(0, 0) != 0) {
         return;
     }
     (void) m_psuedo_terminal.write_exactly(di::as_bytes("\033[?1;0c"_sv.span()));
 }
 
 // Secondary Device Attributes - https://vt100.net/docs/vt510-rm/DA2.html
-void Terminal::csi_da2(di::Vector<int> const& params) {
-    if (params.at(0).value_or(0) != 0) {
+void Terminal::csi_da2(Params const& params) {
+    if (params.get(0, 0) != 0) {
         return;
     }
     (void) m_psuedo_terminal.write_exactly(di::as_bytes("\033[>010;0c"_sv.span()));
 }
 
 // Tertiary Device Attributes - https://vt100.net/docs/vt510-rm/DA3.html
-void Terminal::csi_da3(di::Vector<int> const& params) {
-    if (params.at(0).value_or(0) != 0) {
+void Terminal::csi_da3(Params const& params) {
+    if (params.get(0, 0) != 0) {
         return;
     }
     (void) m_psuedo_terminal.write_exactly(di::as_bytes("\033P!|00000000\033\\"_sv.span()));
 }
 
 // Vertical Line Position Absolute - https://vt100.net/docs/vt510-rm/VPA.html
-void Terminal::csi_vpa(di::Vector<int> const& params) {
-    set_cursor(translate_row(params.at(0).value_or(1)), m_cursor_col);
+void Terminal::csi_vpa(Params const& params) {
+    set_cursor(translate_row(params.get(0, 1)), m_cursor_col);
 }
 
 // Horizontal and Vertical Position - https://vt100.net/docs/vt510-rm/HVP.html
-void Terminal::csi_hvp(di::Vector<int> const& params) {
+void Terminal::csi_hvp(Params const& params) {
     csi_cup(params);
 }
 
 // Tab Clear - https://vt100.net/docs/vt510-rm/TBC.html
-void Terminal::csi_tbc(di::Vector<int> const& params) {
-    switch (params.at(0).value_or(0)) {
+void Terminal::csi_tbc(Params const& params) {
+    switch (params.get(0, 0)) {
         case 0:
             di::erase_if(m_tab_stops, [this](auto x) {
                 return x == m_cursor_col;
@@ -501,8 +502,8 @@ void Terminal::csi_tbc(di::Vector<int> const& params) {
 }
 
 // DEC Private Mode Set - https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
-void Terminal::csi_decset(di::Vector<int> const& params) {
-    switch (params.at(0).value_or(0)) {
+void Terminal::csi_decset(Params const& params) {
+    switch (params.get(0, 0)) {
         case 1:
             // Cursor Keys Mode - https://vt100.net/docs/vt510-rm/DECCKM.html
             // m_psuedo_terminal.set_application_cursor_keys(true);
@@ -589,8 +590,8 @@ void Terminal::csi_decset(di::Vector<int> const& params) {
 }
 
 // DEC Private Mode Reset - https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
-void Terminal::csi_decrst(di::Vector<int> const& params) {
-    switch (params.at(0).value_or(0)) {
+void Terminal::csi_decrst(Params const& params) {
+    switch (params.get(0, 0)) {
         case 1:
             // Cursor Keys Mode - https://vt100.net/docs/vt510-rm/DECCKM.html
             // m_psuedo_terminal.set_application_cursor_keys(false);
@@ -670,8 +671,8 @@ void Terminal::csi_decrst(di::Vector<int> const& params) {
 }
 
 // Request Mode - Host to Terminal - https://vt100.net/docs/vt510-rm/DECRQM.html
-void Terminal::csi_decrqm(di::Vector<int> const& params) {
-    auto param = params.at(0).value_or(0);
+void Terminal::csi_decrqm(Params const& params) {
+    auto param = params.get(0, 0);
     switch (param) {
         // Synchronized output - https://gist.github.com/christianparpart/d8a62cc1ab659194337d73e399004036
         case 2026:
@@ -684,14 +685,14 @@ void Terminal::csi_decrqm(di::Vector<int> const& params) {
 }
 
 // Select Graphics Rendition - https://vt100.net/docs/vt510-rm/SGR.html
-void Terminal::csi_sgr(di::Vector<int> const& params) {
+void Terminal::csi_sgr(Params const& params) {
     // Delegate to graphics rendition class.
-    m_current_graphics_rendition.update_with_csi_params(params.span());
+    m_current_graphics_rendition.update_with_csi_params(params);
 }
 
 // Device Status Report - https://vt100.net/docs/vt510-rm/DSR.html
-void Terminal::csi_dsr(di::Vector<int> const& params) {
-    switch (params.at(0).value_or(0)) {
+void Terminal::csi_dsr(Params const& params) {
+    switch (params.get(0, 0)) {
         case 5:
             // Operating Status - https://vt100.net/docs/vt510-rm/DSR-OS.html
             (void) m_psuedo_terminal.write_exactly(di::as_bytes("\033[0n"_sv.span()));
@@ -707,9 +708,9 @@ void Terminal::csi_dsr(di::Vector<int> const& params) {
 }
 
 // DEC Set Top and Bottom Margins - https://www.vt100.net/docs/vt100-ug/chapter3.html#DECSTBM
-void Terminal::csi_decstbm(di::Vector<int> const& params) {
-    int new_scroll_start = params.at(0).value_or(1) - 1;
-    int new_scroll_end = params.at(1).value_or(m_row_count) - 1;
+void Terminal::csi_decstbm(Params const& params) {
+    int new_scroll_start = params.get(0, 1) - 1;
+    int new_scroll_end = params.get(1, m_row_count) - 1;
     if (new_scroll_end - new_scroll_start < 2) {
         return;
     }
@@ -721,12 +722,12 @@ void Terminal::csi_decstbm(di::Vector<int> const& params) {
 }
 
 // Save Current Cursor Position - https://vt100.net/docs/vt510-rm/SCOSC.html
-void Terminal::csi_scosc(di::Vector<int> const&) {
+void Terminal::csi_scosc(Params const&) {
     save_pos();
 }
 
 // Restore Saved Cursor Position - https://vt100.net/docs/vt510-rm/SCORC.html
-void Terminal::csi_scorc(di::Vector<int> const&) {
+void Terminal::csi_scorc(Params const&) {
     restore_pos();
 }
 

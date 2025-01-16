@@ -3,6 +3,7 @@
 #include "dius/sync_file.h"
 #include "escape_sequence_parser.h"
 #include "graphics_rendition.h"
+#include "ttx/params.h"
 
 namespace ttx {
 class Terminal {
@@ -152,38 +153,38 @@ private:
     void c1_hts();
     void c1_ri();
 
-    void dcs_decrqss(di::Vector<int> const& params, di::StringView data);
+    void dcs_decrqss(Params const& params, di::StringView data);
 
-    void csi_ich(di::Vector<int> const& params);
-    void csi_cuu(di::Vector<int> const& params);
-    void csi_cud(di::Vector<int> const& params);
-    void csi_cuf(di::Vector<int> const& params);
-    void csi_cub(di::Vector<int> const& params);
-    void csi_cup(di::Vector<int> const& params);
-    void csi_cha(di::Vector<int> const& params);
-    void csi_ed(di::Vector<int> const& params);
-    void csi_el(di::Vector<int> const& params);
-    void csi_il(di::Vector<int> const& params);
-    void csi_dl(di::Vector<int> const& params);
-    void csi_dch(di::Vector<int> const& params);
-    void csi_su(di::Vector<int> const& params);
-    void csi_sd(di::Vector<int> const& params);
-    void csi_ech(di::Vector<int> const& params);
-    void csi_rep(di::Vector<int> const& params);
-    void csi_da1(di::Vector<int> const& params);
-    void csi_da2(di::Vector<int> const& params);
-    void csi_da3(di::Vector<int> const& params);
-    void csi_vpa(di::Vector<int> const& params);
-    void csi_hvp(di::Vector<int> const& params);
-    void csi_tbc(di::Vector<int> const& params);
-    void csi_decset(di::Vector<int> const& params);
-    void csi_decrst(di::Vector<int> const& params);
-    void csi_decrqm(di::Vector<int> const& params);
-    void csi_sgr(di::Vector<int> const& params);
-    void csi_dsr(di::Vector<int> const& params);
-    void csi_decstbm(di::Vector<int> const& params);
-    void csi_scosc(di::Vector<int> const& params);
-    void csi_scorc(di::Vector<int> const& params);
+    void csi_ich(Params const& params);
+    void csi_cuu(Params const& params);
+    void csi_cud(Params const& params);
+    void csi_cuf(Params const& params);
+    void csi_cub(Params const& params);
+    void csi_cup(Params const& params);
+    void csi_cha(Params const& params);
+    void csi_ed(Params const& params);
+    void csi_el(Params const& params);
+    void csi_il(Params const& params);
+    void csi_dl(Params const& params);
+    void csi_dch(Params const& params);
+    void csi_su(Params const& params);
+    void csi_sd(Params const& params);
+    void csi_ech(Params const& params);
+    void csi_rep(Params const& params);
+    void csi_da1(Params const& params);
+    void csi_da2(Params const& params);
+    void csi_da3(Params const& params);
+    void csi_vpa(Params const& params);
+    void csi_hvp(Params const& params);
+    void csi_tbc(Params const& params);
+    void csi_decset(Params const& params);
+    void csi_decrst(Params const& params);
+    void csi_decrqm(Params const& params);
+    void csi_sgr(Params const& params);
+    void csi_dsr(Params const& params);
+    void csi_decstbm(Params const& params);
+    void csi_scosc(Params const& params);
+    void csi_scorc(Params const& params);
 
     di::Vector<Row> m_rows;
     int m_row_count { 0 };
