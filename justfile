@@ -123,6 +123,8 @@ run name *args: ensure_configured
         | grep -vF '/list_install_components' \
         | grep -vE '/all$' \
         | grep -vE '/test$' \
+        | grep -vE '[.]a$' \
+        | grep -vE '[.]so$' \
         | grep -E '/' \
     )
     build_directory=$( \
