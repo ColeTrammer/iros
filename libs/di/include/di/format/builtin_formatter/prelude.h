@@ -7,4 +7,5 @@
 #include "di/format/builtin_formatter/pointer.h"
 #include "di/format/builtin_formatter/string.h"
 #include "di/format/builtin_formatter/tuple.h"
+#include "di/format/builtin_formatter/variant.h"
 #include "di/format/builtin_formatter/void.h"
