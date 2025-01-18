@@ -20,10 +20,10 @@
 namespace di::assert::detail {
 template<typename T, typename U>
 void binary_assert_fail(char const* expression, T&& a, U&& b, util::SourceLocation loc) {
-    // Allocate a 256 byte buffer on the stack to stringify a and b. We'd don't want to allocate here because this
+    // Allocate a 512 byte buffer on the stack to stringify a and b. We'd don't want to allocate here because this
     // assertion could indicate heap corruption, or even be triggered before the heap is initialized.
     using Enc = container::string::Utf8Encoding;
-    using TargetContext = format::BoundedFormatContext<Enc, meta::Constexpr<256ZU>>;
+    using TargetContext = format::BoundedFormatContext<Enc, meta::Constexpr<512ZU>>;
 
     auto lhs_context = TargetContext {};
     auto const* lhs_data_pointer = static_cast<char const*>(nullptr);
