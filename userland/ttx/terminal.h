@@ -1,6 +1,7 @@
 #pragma once
 
 #include "dius/sync_file.h"
+#include "ttx/cursor_style.h"
 #include "ttx/escape_sequence_parser.h"
 #include "ttx/graphics_rendition.h"
 #include "ttx/params.h"
@@ -32,6 +33,7 @@ public:
         result.m_tab_stops = di::clone(m_tab_stops);
         result.m_cursor_row = m_cursor_row;
         result.m_cursor_col = m_cursor_col;
+        result.m_cursor_style = m_cursor_style;
         result.m_saved_cursor_row = m_saved_cursor_row;
         result.m_saved_cursor_col = m_saved_cursor_col;
         result.m_cursor_hidden = m_cursor_hidden;
@@ -55,6 +57,7 @@ public:
     int cursor_col() const { return m_cursor_col; }
     bool cursor_hidden() const { return m_cursor_hidden; }
     bool should_display_cursor_at_position(int r, int c) const;
+    auto cursor_style() const -> CursorStyle { return m_cursor_style; }
     int scroll_relative_offset(int display_row) const;
 
     auto allowed_to_draw() const -> bool { return !m_disable_drawing; }
@@ -180,6 +183,7 @@ private:
     void csi_decset(Params const& params);
     void csi_decrst(Params const& params);
     void csi_decrqm(Params const& params);
+    void csi_decscusr(Params const& params);
     void csi_sgr(Params const& params);
     void csi_dsr(Params const& params);
     void csi_decstbm(Params const& params);
@@ -200,6 +204,7 @@ private:
     int m_cursor_col { 0 };
     int m_saved_cursor_row { 0 };
     int m_saved_cursor_col { 0 };
+    CursorStyle m_cursor_style { CursorStyle::SteadyBlock };
     bool m_cursor_hidden { false };
     bool m_disable_drawing { false };
     bool m_autowrap_mode { true };

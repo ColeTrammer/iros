@@ -2,6 +2,7 @@
 
 #include "di/container/algorithm/contains.h"
 #include "di/container/algorithm/rotate.h"
+#include "ttx/cursor_style.h"
 #include "ttx/escape_sequence_parser.h"
 #include "ttx/graphics_rendition.h"
 #include "ttx/params.h"
@@ -79,6 +80,14 @@ void Terminal::on_parser_result(CSI const& csi) {
                 return csi_decset(csi.params);
             case 'l':
                 return csi_decrst(csi.params);
+        }
+        return;
+    }
+
+    if (csi.intermediate == " "_sv) {
+        switch (csi.terminator) {
+            case 'q':
+                return csi_decscusr(csi.params);
         }
         return;
     }
@@ -682,6 +691,19 @@ void Terminal::csi_decrqm(Params const& params) {
         default:
             (void) m_psuedo_terminal.write_exactly(di::as_bytes(di::present("\033[?{};0$y"_sv, param)->span()));
     }
+}
+
+// Set Cursor Style - https://vt100.net/docs/vt510-rm/DECSCUSR.html
+void Terminal::csi_decscusr(Params const& params) {
+    auto param = params.get(0, 0);
+    // 0 and 1 indicate the same style.
+    if (param == 0) {
+        param = 1;
+    }
+    if (param >= u32(CursorStyle::Max)) {
+        return;
+    }
+    m_cursor_style = CursorStyle(param);
 }
 
 // Select Graphics Rendition - https://vt100.net/docs/vt510-rm/SGR.html

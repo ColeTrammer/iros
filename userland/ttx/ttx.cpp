@@ -193,7 +193,6 @@ static auto main(Args& args) -> di::Result<void> {
 
                         di::writer_print<di::String::Encoding>(dius::stdin, "{}"_sv, cell.ch);
                         cursor_col = di::min(cursor_col + 1, terminal_size.cols - 1);
-                        bad;
                     }
                 }
             }
@@ -201,6 +200,7 @@ static auto main(Args& args) -> di::Result<void> {
                 cursor_row = terminal.cursor_row();
                 cursor_col = terminal.cursor_col();
                 di::writer_print<di::String::Encoding>(dius::stdin, "\033[{};{}H"_sv, cursor_row + 1, cursor_col + 1);
+                di::writer_print<di::String::Encoding>(dius::stdin, "\033[{} q"_sv, i32(terminal.cursor_style()));
                 di::writer_print<di::String::Encoding>(dius::stdin, "\033[?25h"_sv);
             }
             di::writer_print<di::String::Encoding>(dius::stdin, "\033[?2026l"_sv);
