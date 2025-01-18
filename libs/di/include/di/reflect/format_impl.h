@@ -11,6 +11,11 @@ namespace di::format {
 template<concepts::ReflectableToFields T, concepts::Encoding Enc>
 constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<T>, FormatParseContext<Enc>&) {
     auto do_output = [=](concepts::FormatContext auto& context, T const& value) -> Result<void> {
+        auto reflection_value = reflection::reflect(value);
+        for (auto ch : reflection_value.name) {
+            context.output(ch);
+        }
+        context.output(' ');
         context.output('{');
         context.output(' ');
         bool first = true;
@@ -28,9 +33,9 @@ constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<T>, Format
                 context.output(':');
                 context.output(' ');
                 (void) vpresent_encoded_context<meta::Encoding<decltype(context)>>(
-                    u8"{}"_sv, format::make_format_args<decltype(context)>(field.get(value)), context);
+                    u8"{}"_sv, format::make_format_args<decltype(context)>(field.get(value)), context, true);
             },
-            reflection::reflect(value));
+            reflection_value);
 
         context.output(' ');
         context.output('}');

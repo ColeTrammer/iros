@@ -79,7 +79,7 @@ constexpr static void format() {
     auto x = MyType { 1, 2, 3 };
     auto s = di::to_string(x);
 
-    ASSERT_EQ(s, "{ x: 1, y: 2, z: 3 }"_sv);
+    ASSERT_EQ(s, "MyType { x: 1, y: 2, z: 3 }"_sv);
 }
 
 enum class MyEnum { Foo, Bar, Baz };

@@ -33,8 +33,8 @@ namespace detail {
         using View = container::string::StringViewImpl<Enc>;
 
         template<concepts::FormatArg Arg>
-        constexpr auto operator()(View format, FormatArgs<Arg> args, concepts::FormatContext auto& context) const
-            -> Result<void> {
+        constexpr auto operator()(View format, FormatArgs<Arg> args, concepts::FormatContext auto& context,
+                                  bool debug = false) const -> Result<void> {
             auto parse_context = FormatParseContext<Enc> { format, args.size() };
 
             for (auto value : parse_context) {
@@ -50,7 +50,7 @@ namespace detail {
 
                 // Format argument.
                 auto arg_index = util::get<1>(*value).index;
-                DI_TRY(do_format(args[arg_index], parse_context, context));
+                DI_TRY(do_format(args[arg_index], parse_context, context, debug));
             }
             return {};
         }
