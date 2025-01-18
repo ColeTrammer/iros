@@ -1,15 +1,76 @@
-#include "graphics_rendition.h"
+#include "ttx/graphics_rendition.h"
 
 #include "di/container/vector/vector.h"
 #include "di/parser/integral.h"
 #include "di/util/clamp.h"
+#include "di/vocab/tuple/prelude.h"
 #include "ttx/params.h"
 
 namespace ttx {
+// Parse complex color. This routine handles the following colors in the following form:
+//   38;2;R;G;B   -- legacy form used for backwards compatability.
+//   38:2:R:G:B   -- normal form with subparameters but without color space.
+//   38:2:X:R:G:B -- subparameters with color space argument, which is ignored.
+//   38:5:I       -- index form, specifices an index into color palette. For now, only 16 colors are supported.
+// This returns both the number of parameters consumed as well as the parsed color.
+static di::Tuple<usize, Color> parse_complex_color(Params const& params, usize start_index) {
+    auto subparams = params.subparams(start_index);
+    if (subparams.size() == 1) {
+        // If there are no subparameters, use the legacy form.
+        if (params.size() - start_index < 5 || params.get(start_index + 1) != 2) {
+            return { 1, {} };
+        }
+        return { 5, Color(params.get(start_index + 2), params.get(start_index + 3), params.get(start_index + 4)) };
+    }
+
+    // Regular form with subparams
+    switch (subparams.get(1)) {
+        case 2:
+            if (subparams.size() != 5 && subparams.size() != 6) {
+                break;
+            }
+            return { 1, Color(subparams.get(subparams.size() - 3), subparams.get(subparams.size() - 2),
+                              subparams.get(subparams.size() - 1)) };
+        case 5:
+            return { 1, Color(Color::Palette(Color::Palette::Black + subparams.get(2))) };
+    }
+    return { 1, {} };
+}
+
+// Parse any color specifer. This handles all cases for fg, bg, and underline_color.
+static di::Tuple<usize, Color> parse_color(Params const& params, usize start_index) {
+    auto command = params.get(start_index);
+
+    // Complex colors
+    if (command == 38 || command == 48 || command == 58) {
+        return parse_complex_color(params, start_index);
+    }
+
+    // High colors
+    auto palette_index = command % 10;
+    if (command >= 90) {
+        return { 1, Color(Color::Palette(Color::Palette::DarkGrey + palette_index)) };
+    }
+
+    // Reset
+    if (palette_index == 9) {
+        return { 1, {} };
+    }
+
+    // Palette color
+    return { 1, Color(Color::Palette(Color::Palette::Black + palette_index)) };
+}
+
 // Select Graphics Rendition - https://vt100.net/docs/vt510-rm/SGR.html
 //   Modern extensions like underline and true color can be found here:
 //     https://wezfurlong.org/wezterm/escape-sequences.html#graphic-rendition-sgr
 void GraphicsRendition::update_with_csi_params(Params const& params) {
+    // No params = reset.
+    if (params.empty()) {
+        *this = {};
+        return;
+    }
+
     for (auto i = 0_usize; i == 0 || i < params.size(); i++) {
         switch (params.get(i, 0)) {
             case 0:
@@ -24,9 +85,30 @@ void GraphicsRendition::update_with_csi_params(Params const& params) {
             case 3:
                 italic = true;
                 break;
-            case 4:
-                underline_mode = UnderlineMode::Normal;
+            case 4: {
+                auto subparam = params.get_subparam(i, 1, 1);
+                switch (subparam) {
+                    case 0:
+                        underline_mode = UnderlineMode::None;
+                        break;
+                    case 1:
+                        underline_mode = UnderlineMode::Normal;
+                        break;
+                    case 2:
+                        underline_mode = UnderlineMode::Double;
+                        break;
+                    case 3:
+                        underline_mode = UnderlineMode::Curly;
+                        break;
+                    case 4:
+                        underline_mode = UnderlineMode::Dotted;
+                        break;
+                    case 5:
+                        underline_mode = UnderlineMode::Dashed;
+                        break;
+                }
                 break;
+            }
             case 5:
                 blink_mode = BlinkMode::Normal;
                 break;
@@ -67,155 +149,64 @@ void GraphicsRendition::update_with_csi_params(Params const& params) {
                 strike_through = false;
                 break;
             case 30:
-                fg = { Color::Palette::Black };
-                break;
             case 31:
-                fg = { Color::Palette::Red };
-                break;
             case 32:
-                fg = { Color::Palette::Green };
-                break;
             case 33:
-                fg = { Color::Palette::Brown };
-                break;
             case 34:
-                fg = { Color::Palette::Blue };
-                break;
             case 35:
-                fg = { Color::Palette::Magenta };
-                break;
             case 36:
-                fg = { Color::Palette::Cyan };
-                break;
             case 37:
-                fg = { Color::Palette::LightGrey };
-                break;
             case 38:
-                // Truecolor Foreground (xterm-256color)
-                if (params.get(i + 1, 0) != 2) {
-                    break;
-                }
-                if (params.size() - i < 5) {
-                    break;
-                }
-                fg = Color { (uint8_t) di::clamp(params.get(i + 2), 0u, 255u),
-                             (uint8_t) di::clamp(params.get(i + 3), 0u, 255u),
-                             (uint8_t) di::clamp(params.get(i + 4), 0u, 255u) };
-                i += 4;
-                break;
             case 39:
-                fg = {};
+            case 90:
+            case 91:
+            case 92:
+            case 93:
+            case 94:
+            case 95:
+            case 96:
+            case 97: {
+                auto [n, c] = parse_color(params, i);
+                i += n - 1;
+                fg = c;
                 break;
+            }
             case 40:
-                bg = { Color::Palette::Black };
-                break;
             case 41:
-                bg = { Color::Palette::Red };
-                break;
             case 42:
-                bg = { Color::Palette::Green };
-                break;
             case 43:
-                bg = { Color::Palette::Brown };
-                break;
             case 44:
-                bg = { Color::Palette::Blue };
-                break;
             case 45:
-                bg = { Color::Palette::Magenta };
-                break;
             case 46:
-                bg = { Color::Palette::Cyan };
-                break;
             case 47:
-                bg = { Color::Palette::LightGrey };
-                break;
             case 48:
-                // Truecolor Background (xterm-256color)
-                if (params.get(i + 1, 0) != 2) {
-                    break;
-                }
-                if (params.size() - i < 5) {
-                    break;
-                }
-                bg = Color { (uint8_t) di::clamp(params.get(i + 2), 0u, 255u),
-                             (uint8_t) di::clamp(params.get(i + 3), 0u, 255u),
-                             (uint8_t) di::clamp(params.get(i + 4), 0u, 255u) };
-                i += 4;
-                break;
             case 49:
-                bg = {};
+            case 100:
+            case 101:
+            case 102:
+            case 103:
+            case 104:
+            case 105:
+            case 106:
+            case 107: {
+                auto [n, c] = parse_color(params, i);
+                i += n - 1;
+                bg = c;
                 break;
+            }
             case 53:
                 overline = true;
+                break;
             case 55:
                 overline = false;
                 break;
             case 58:
-                // Truecolor Underine Color (xterm-256color)
-                if (params.get(i + 1, 0) != 2) {
-                    break;
-                }
-                if (params.size() - i < 5) {
-                    break;
-                }
-                underline_color = Color { (uint8_t) di::clamp(params.get(i + 2), 0u, 255u),
-                                          (uint8_t) di::clamp(params.get(i + 3), 0u, 255u),
-                                          (uint8_t) di::clamp(params.get(i + 4), 0u, 255u) };
-                i += 4;
+            case 59: {
+                auto [n, c] = parse_color(params, i);
+                i += n - 1;
+                underline_color = c;
                 break;
-                break;
-            case 59:
-                underline_color = {};
-                break;
-            case 90:
-                fg = { Color::Palette::DarkGrey };
-                break;
-            case 91:
-                fg = { Color::Palette::LightRed };
-                break;
-            case 92:
-                fg = { Color::Palette::LightGreen };
-                break;
-            case 93:
-                fg = { Color::Palette::Yellow };
-                break;
-            case 94:
-                fg = { Color::Palette::LightBlue };
-                break;
-            case 95:
-                fg = { Color::Palette::LightMagenta };
-                break;
-            case 96:
-                fg = { Color::Palette::LightCyan };
-                break;
-            case 97:
-                fg = { Color::Palette::White };
-                break;
-            case 100:
-                bg = { Color::Palette::DarkGrey };
-                break;
-            case 101:
-                bg = { Color::Palette::LightRed };
-                break;
-            case 102:
-                bg = { Color::Palette::LightGreen };
-                break;
-            case 103:
-                bg = { Color::Palette::Yellow };
-                break;
-            case 104:
-                bg = { Color::Palette::LightBlue };
-                break;
-            case 105:
-                bg = { Color::Palette::LightMagenta };
-                break;
-            case 106:
-                bg = { Color::Palette::LightCyan };
-                break;
-            case 107:
-                bg = { Color::Palette::White };
-                break;
+            }
             default:
                 break;
         }
@@ -234,7 +225,7 @@ static auto color_to_subparams(Color c, ColorType type) -> di::Vector<u32> {
         return { code, 2, c.r, c.g, c.b };
     } else if (type == ColorType::Underine) {
         // Use palette index.
-        return { 58, 8, u32(c.c - Color::Palette::Black) };
+        return { 58, 5, u32(c.c - Color::Palette::Black) };
     } else if (c.c <= Color::Palette::LightGrey) {
         auto base_value = type == ColorType::Fg ? 30u : 40u;
         return { base_value + c.c - Color::Palette::Black };
@@ -244,7 +235,7 @@ static auto color_to_subparams(Color c, ColorType type) -> di::Vector<u32> {
     }
 }
 
-auto GraphicsRendition::as_csi_params() const -> di::String {
+auto GraphicsRendition::as_csi_params() const -> Params {
     // Start by clearing all attributes.
     auto sgr = Params();
     sgr.add_param(0);
@@ -312,6 +303,6 @@ auto GraphicsRendition::as_csi_params() const -> di::String {
     if (underline_color.c != Color::None) {
         sgr.add_subparams(color_to_subparams(underline_color, ColorType::Underine));
     }
-    return sgr.to_string();
+    return sgr;
 }
 }

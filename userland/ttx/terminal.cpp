@@ -3,7 +3,7 @@
 #include "di/container/algorithm/contains.h"
 #include "di/container/algorithm/rotate.h"
 #include "escape_sequence_parser.h"
-#include "graphics_rendition.h"
+#include "ttx/graphics_rendition.h"
 #include "ttx/params.h"
 
 namespace ttx {
