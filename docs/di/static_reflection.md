@@ -30,27 +30,16 @@ struct MyType {
     int z;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyType>) {
-        return di::make_fields(
-            di::field<"x", &MyType::x>,
-            di::field<"y", &MyType::y>,
-            di::field<"z", &MyType::z>
-        );
+        return di::make_fields<"MyType">(di::field<"x", &MyType::x>, di::field<"y", &MyType::y>,
+                                         di::field<"z", &MyType::z>);
     }
 };
 
-enum class MyEnum {
-    A,
-    B,
-    C
-};
+enum class MyEnum { A, B, C };
 
 constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyEnum>) {
     using enum MyEnum;
-    return di::make_enumerators(
-        di::enumerator<"A", A>,
-        di::enumerator<"B", B>,
-        di::enumerator<"C", C>
-    );
+    return di::make_enumerators<"MyEnum">(di::enumerator<"A", A>, di::enumerator<"B", B>, di::enumerator<"C", C>);
 }
 ```
 
@@ -91,27 +80,17 @@ public:
     constexpr int z() const { return m_z; }
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyClass>) {
-        return di::make_fields(
-            di::field<"x", &MyClass::m_x>,
-            di::field<"y", &MyClass::m_y>,
-            di::field<"z", &MyClass::m_z>
-        );
+        return di::make_fields<"MyClass">(di::field<"x", &MyClass::m_x>, di::field<"y", &MyClass::m_y>,
+                                          di::field<"z", &MyClass::m_z>);
     }
 };
 
-enum class MyEnum {
-    A,
-    B,
-    C
-};
+enum class MyEnum { A, B, C };
 
 constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyEnum>) {
     using enum MyEnum;
-    return di::make_enumerators(
-        di::enumerator<"MYENUM_A", A>,
-        di::enumerator<"MYENUM_B", B>,
-        di::enumerator<"MYENUM_C", C>
-    );
+    return di::make_enumerators<"MyEnum">(di::enumerator<"MYENUM_A", A>, di::enumerator<"MYENUM_B", B>,
+                                          di::enumerator<"MYENUM_C", C>);
 }
 ```
 
@@ -170,9 +149,11 @@ of a type:
 
 ```cpp
 static void print_fields(di::ReflectableToFields auto const& object) {
-    di::tuple_for_each([&](auto field) {
-        dius::println("{}: {}", field.name, field.get(object));
-    }, di::reflect(object));
+    di::tuple_for_each(
+        [&](auto field) {
+            dius::println("{}: {}", field.name, field.get(object));
+        },
+        di::reflect(object));
 }
 ```
 
@@ -180,9 +161,11 @@ Another example is hashing a type:
 
 ```cpp
 static void hash_fields(di::Hasher auto& hasher, di::ReflectableToFields auto const& object) {
-    di::tuple_for_each([&](auto field) {
-        di::hash_write(hasher, field.get(object));
-    }, di::reflect(object));
+    di::tuple_for_each(
+        [&](auto field) {
+            di::hash_write(hasher, field.get(object));
+        },
+        di::reflect(object));
 }
 ```
 
@@ -192,13 +175,15 @@ For enums, we can get the name of an enumerator:
 // NOTE: this is already defined by the library as `di::enum_to_string()`.
 constexpr auto enum_to_string(di::ReflectableToEnumerators auto value) {
     auto result = "Invalid"_sv;
-    di::tuple_for_each([&](auto enumerator) {
-        if (enumerator.value == value) {
-            // NOTE: the strings in this library are compile-time values (with fixed length), so we need to convert them
-            // to a normal string view.
-            result = di::container::fixed_string_to_utf8_string_view<enumerator.name>();
-        }
-    }, di::reflect(value));
+    di::tuple_for_each(
+        [&](auto enumerator) {
+            if (enumerator.value == value) {
+                // NOTE: the strings in this library are compile-time values (with fixed length), so we need to convert
+                // them to a normal string view.
+                result = di::container::fixed_string_to_utf8_string_view<enumerator.name>();
+            }
+        },
+        di::reflect(value));
     return result;
 }
 ```

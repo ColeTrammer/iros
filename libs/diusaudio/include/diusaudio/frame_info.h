@@ -17,9 +17,9 @@ enum class SampleFormat {
 
 constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<SampleFormat>) {
     using enum SampleFormat;
-    return di::make_enumerators(di::enumerator<"SignedInt16LE", SignedInt16LE>,
-                                di::enumerator<"SignedInt24LE", SignedInt24LE>,
-                                di::enumerator<"SignedInt32LE", SignedInt32LE>, di::enumerator<"Float32LE", Float32LE>);
+    return di::make_enumerators<"SampleFormat">(
+        di::enumerator<"SignedInt16LE", SignedInt16LE>, di::enumerator<"SignedInt24LE", SignedInt24LE>,
+        di::enumerator<"SignedInt32LE", SignedInt32LE>, di::enumerator<"Float32LE", Float32LE>);
 }
 
 constexpr auto format_bytes_per_sample(SampleFormat format) -> usize {
@@ -45,9 +45,9 @@ struct FrameInfo {
     constexpr auto operator<=>(FrameInfo const&) const = default;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<FrameInfo>) {
-        return di::make_fields(di::field<"channel_count", &FrameInfo::channel_count>,
-                               di::field<"format", &FrameInfo::format>,
-                               di::field<"sample_rate_hz", &FrameInfo::sample_rate_hz>);
+        return di::make_fields<"FrameInfo">(di::field<"channel_count", &FrameInfo::channel_count>,
+                                            di::field<"format", &FrameInfo::format>,
+                                            di::field<"sample_rate_hz", &FrameInfo::sample_rate_hz>);
     }
 };
 }

@@ -22,7 +22,7 @@ DI_DEFINE_ENUM_BITWISE_OPERATIONS(Modifiers)
 
 constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<Modifiers>) {
     using enum Modifiers;
-    return di::make_enumerators(
+    return di::make_enumerators<"Modifiers">(
         di::enumerator<"None", None>, di::enumerator<"Shift", Shift>, di::enumerator<"Alt", Alt>,
         di::enumerator<"Control", Control>, di::enumerator<"Super", Super>, di::enumerator<"Hyper", Hyper>,
         di::enumerator<"Meta", Meta>, di::enumerator<"CapsLock", CapsLock>, di::enumerator<"NumsLock", NumLock>);
@@ -202,7 +202,7 @@ enum class Key {
 
 constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<Key>) {
     using enum Key;
-    return di::make_enumerators(
+    return di::make_enumerators<"Key">(
         di::enumerator<"None", None>, di::enumerator<"A", A>, di::enumerator<"B", B>, di::enumerator<"C", C>,
         di::enumerator<"D", D>, di::enumerator<"E", E>, di::enumerator<"F", F>, di::enumerator<"G", G>,
         di::enumerator<"H", H>, di::enumerator<"I", I>, di::enumerator<"J", J>, di::enumerator<"K", K>,

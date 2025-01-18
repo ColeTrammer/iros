@@ -12,7 +12,7 @@ struct ClientMessage1 {
     di::String s;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<ClientMessage1>) {
-        return di::make_fields(di::field<"s", &ClientMessage1::s>);
+        return di::make_fields<"ClientMessage1">(di::field<"s", &ClientMessage1::s>);
     }
 };
 
@@ -22,7 +22,7 @@ struct ClientMessage2 {
         int y;
 
         constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<Reply>) {
-            return di::make_fields(di::field<"x", &Reply::x>, di::field<"y", &Reply::y>);
+            return di::make_fields<"ClientMessage2::Reply">(di::field<"x", &Reply::x>, di::field<"y", &Reply::y>);
         }
     };
 
@@ -31,8 +31,8 @@ struct ClientMessage2 {
     int z;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<ClientMessage2>) {
-        return di::make_fields(di::field<"x", &ClientMessage2::x>, di::field<"y", &ClientMessage2::y>,
-                               di::field<"z", &ClientMessage2::z>);
+        return di::make_fields<"ClientMessage2">(di::field<"x", &ClientMessage2::x>, di::field<"y", &ClientMessage2::y>,
+                                                 di::field<"z", &ClientMessage2::z>);
     }
 };
 
@@ -40,7 +40,7 @@ struct ServerMessage {
     int z;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<ServerMessage>) {
-        return di::make_fields(di::field<"z", &ServerMessage::z>);
+        return di::make_fields<"ServerMessage">(di::field<"z", &ServerMessage::z>);
     }
 };
 

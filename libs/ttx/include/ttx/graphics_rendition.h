@@ -42,22 +42,22 @@ struct Color {
     auto operator==(Color const& other) const -> bool = default;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<Color>) {
-        return di::make_fields(di::field<"c", &Color::c>, di::field<"r", &Color::r>, di::field<"g", &Color::g>,
-                               di::field<"b", &Color::b>);
+        return di::make_fields<"Color">(di::field<"c", &Color::c>, di::field<"r", &Color::r>, di::field<"g", &Color::g>,
+                                        di::field<"b", &Color::b>);
     }
 };
 
 constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<Color::Palette>) {
     using enum Color::Palette;
-    return di::make_enumerators(di::enumerator<"None", None>, di::enumerator<"Custom", Custom>,
-                                di::enumerator<"Black", Black>, di::enumerator<"Red", Red>,
-                                di::enumerator<"Green", Green>, di::enumerator<"Brown", Brown>,
-                                di::enumerator<"Blue", Blue>, di::enumerator<"Magenta", Magenta>,
-                                di::enumerator<"Cyan", Cyan>, di::enumerator<"LightGrey", LightGrey>,
-                                di::enumerator<"DarkGrey", DarkGrey>, di::enumerator<"LightRed", LightRed>,
-                                di::enumerator<"LightGreen", LightGreen>, di::enumerator<"Yellow", Yellow>,
-                                di::enumerator<"LightBlue", LightBlue>, di::enumerator<"LightMagenta", LightMagenta>,
-                                di::enumerator<"LightCyan", LightCyan>, di::enumerator<"White", White>);
+    return di::make_enumerators<"Color::Palette">(
+        di::enumerator<"None", None>, di::enumerator<"Custom", Custom>, di::enumerator<"Black", Black>,
+        di::enumerator<"Red", Red>, di::enumerator<"Green", Green>, di::enumerator<"Brown", Brown>,
+        di::enumerator<"Blue", Blue>, di::enumerator<"Magenta", Magenta>, di::enumerator<"Cyan", Cyan>,
+        di::enumerator<"LightGrey", LightGrey>, di::enumerator<"DarkGrey", DarkGrey>,
+        di::enumerator<"LightRed", LightRed>, di::enumerator<"LightGreen", LightGreen>,
+        di::enumerator<"Yellow", Yellow>, di::enumerator<"LightBlue", LightBlue>,
+        di::enumerator<"LightMagenta", LightMagenta>, di::enumerator<"LightCyan", LightCyan>,
+        di::enumerator<"White", White>);
 }
 
 enum class BlinkMode : u8 {
@@ -68,8 +68,8 @@ enum class BlinkMode : u8 {
 
 constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<BlinkMode>) {
     using enum BlinkMode;
-    return di::make_enumerators(di::enumerator<"None", None>, di::enumerator<"Normal", Normal>,
-                                di::enumerator<"Rapid", Rapid>);
+    return di::make_enumerators<"BlinkMode">(di::enumerator<"None", None>, di::enumerator<"Normal", Normal>,
+                                             di::enumerator<"Rapid", Rapid>);
 }
 
 enum class FontWeight : u8 {
@@ -80,7 +80,8 @@ enum class FontWeight : u8 {
 
 constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<FontWeight>) {
     using enum FontWeight;
-    return di::make_enumerators(di::enumerator<"None", None>, di::enumerator<"Bold", Bold>, di::enumerator<"Dim", Dim>);
+    return di::make_enumerators<"FontWeight">(di::enumerator<"None", None>, di::enumerator<"Bold", Bold>,
+                                              di::enumerator<"Dim", Dim>);
 }
 
 enum class UnderlineMode : u8 {
@@ -94,9 +95,9 @@ enum class UnderlineMode : u8 {
 
 constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<UnderlineMode>) {
     using enum UnderlineMode;
-    return di::make_enumerators(di::enumerator<"None", None>, di::enumerator<"Normal", Normal>,
-                                di::enumerator<"Double", Double>, di::enumerator<"Curly", Curly>,
-                                di::enumerator<"Dotted", Dotted>, di::enumerator<"Dashed", Dashed>);
+    return di::make_enumerators<"UnderlineMode">(di::enumerator<"None", None>, di::enumerator<"Normal", Normal>,
+                                                 di::enumerator<"Double", Double>, di::enumerator<"Curly", Curly>,
+                                                 di::enumerator<"Dotted", Dotted>, di::enumerator<"Dashed", Dashed>);
 }
 
 struct GraphicsRendition {
@@ -124,7 +125,7 @@ struct GraphicsRendition {
     auto operator==(GraphicsRendition const& other) const -> bool = default;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<GraphicsRendition>) {
-        return di::make_fields(
+        return di::make_fields<"GraphicsRendition">(
             di::field<"fg", &GraphicsRendition::fg>, di::field<"bg", &GraphicsRendition::bg>,
             di::field<"underline_color", &GraphicsRendition::underline_color>,
             di::field<"font_weight", &GraphicsRendition::font_weight>,

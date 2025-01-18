@@ -28,8 +28,9 @@ struct CMakeVersion {
     int patch;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<CMakeVersion>) {
-        return di::make_fields(di::field<"major", &CMakeVersion::major>, di::field<"minor", &CMakeVersion::minor>,
-                               di::field<"patch", &CMakeVersion::patch>);
+        return di::make_fields<"CMakeVersion">(di::field<"major", &CMakeVersion::major>,
+                                               di::field<"minor", &CMakeVersion::minor>,
+                                               di::field<"patch", &CMakeVersion::patch>);
     }
 };
 
@@ -46,16 +47,17 @@ struct CMakeConfigurePreset {
     di::Optional<di::Vector<di::String>> inherits;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<CMakeConfigurePreset>) {
-        return di::make_fields(di::field<"name", &CMakeConfigurePreset::name>,
-                               di::field<"displayName", &CMakeConfigurePreset::display_name>,
-                               di::field<"description", &CMakeConfigurePreset::description>,
-                               di::field<"binaryDir", &CMakeConfigurePreset::binary_directory>,
-                               di::field<"installDir", &CMakeConfigurePreset::install_directory>,
-                               di::field<"hidden", &CMakeConfigurePreset::hidden>,
-                               di::field<"generator", &CMakeConfigurePreset::generator>,
-                               di::field<"toolchainFile", &CMakeConfigurePreset::toolchain_file>,
-                               di::field<"cacheVariables", &CMakeConfigurePreset::cache_variables>,
-                               di::field<"inherits", &CMakeConfigurePreset::inherits>);
+        return di::make_fields<"CMakeConfigurePreset">(
+            di::field<"name", &CMakeConfigurePreset::name>,
+            di::field<"displayName", &CMakeConfigurePreset::display_name>,
+            di::field<"description", &CMakeConfigurePreset::description>,
+            di::field<"binaryDir", &CMakeConfigurePreset::binary_directory>,
+            di::field<"installDir", &CMakeConfigurePreset::install_directory>,
+            di::field<"hidden", &CMakeConfigurePreset::hidden>,
+            di::field<"generator", &CMakeConfigurePreset::generator>,
+            di::field<"toolchainFile", &CMakeConfigurePreset::toolchain_file>,
+            di::field<"cacheVariables", &CMakeConfigurePreset::cache_variables>,
+            di::field<"inherits", &CMakeConfigurePreset::inherits>);
     }
 };
 
@@ -69,7 +71,7 @@ struct CMakeBuildPreset {
     di::Optional<di::Vector<di::String>> inherits;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<CMakeBuildPreset>) {
-        return di::make_fields(
+        return di::make_fields<"CMakeBuildPreset">(
             di::field<"name", &CMakeBuildPreset::name>, di::field<"displayName", &CMakeBuildPreset::display_name>,
             di::field<"description", &CMakeBuildPreset::description>, di::field<"hidden", &CMakeBuildPreset::hidden>,
             di::field<"configurePreset", &CMakeBuildPreset::configure_preset>,
@@ -81,7 +83,7 @@ struct CMakeTestOutput {
     di::Optional<bool> output_on_failure;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<CMakeTestOutput>) {
-        return di::make_fields(di::field<"outputOnFailure", &CMakeTestOutput::output_on_failure>);
+        return di::make_fields<"CMakeTestOutput">(di::field<"outputOnFailure", &CMakeTestOutput::output_on_failure>);
     }
 };
 
@@ -92,9 +94,10 @@ enum class CMakeTestExecutionNoTestsAction {
 };
 
 constexpr static auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<CMakeTestExecutionNoTestsAction>) {
-    return di::make_enumerators(di::enumerator<"default", CMakeTestExecutionNoTestsAction::Default>,
-                                di::enumerator<"error", CMakeTestExecutionNoTestsAction::Error>,
-                                di::enumerator<"ignore", CMakeTestExecutionNoTestsAction::Ignore>);
+    return di::make_enumerators<"CMakeTestExecutionNoTestsAction">(
+        di::enumerator<"default", CMakeTestExecutionNoTestsAction::Default>,
+        di::enumerator<"error", CMakeTestExecutionNoTestsAction::Error>,
+        di::enumerator<"ignore", CMakeTestExecutionNoTestsAction::Ignore>);
 }
 
 enum class CMakeTestExecutionRepeatMode {
@@ -104,9 +107,10 @@ enum class CMakeTestExecutionRepeatMode {
 };
 
 constexpr static auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<CMakeTestExecutionRepeatMode>) {
-    return di::make_enumerators(di::enumerator<"until-fail", CMakeTestExecutionRepeatMode::UntilFail>,
-                                di::enumerator<"until-pass", CMakeTestExecutionRepeatMode::UntilPass>,
-                                di::enumerator<"after-timeout", CMakeTestExecutionRepeatMode::AfterTimeout>);
+    return di::make_enumerators<"CMakeTestExecutionRepeatMode">(
+        di::enumerator<"until-fail", CMakeTestExecutionRepeatMode::UntilFail>,
+        di::enumerator<"until-pass", CMakeTestExecutionRepeatMode::UntilPass>,
+        di::enumerator<"after-timeout", CMakeTestExecutionRepeatMode::AfterTimeout>);
 }
 
 struct CMakeTestExecutionRepeat {
@@ -114,8 +118,8 @@ struct CMakeTestExecutionRepeat {
     CMakeTestExecutionRepeatMode mode;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<CMakeTestExecutionRepeat>) {
-        return di::make_fields(di::field<"count", &CMakeTestExecutionRepeat::count>,
-                               di::field<"mode", &CMakeTestExecutionRepeat::mode>);
+        return di::make_fields<"CMakeTestExecutionRepeat">(di::field<"count", &CMakeTestExecutionRepeat::count>,
+                                                           di::field<"mode", &CMakeTestExecutionRepeat::mode>);
     }
 };
 
@@ -127,11 +131,11 @@ struct CMakeTestExecution {
     di::Optional<int> jobs;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<CMakeTestExecution>) {
-        return di::make_fields(di::field<"timeout", &CMakeTestExecution::timeout>,
-                               di::field<"stopOnFailure", &CMakeTestExecution::stop_on_failure>,
-                               di::field<"repeat", &CMakeTestExecution::repeat>,
-                               di::field<"noTestsAction", &CMakeTestExecution::no_tests_action>,
-                               di::field<"jobs", &CMakeTestExecution::jobs>);
+        return di::make_fields<"CMakeTestExecution">(di::field<"timeout", &CMakeTestExecution::timeout>,
+                                                     di::field<"stopOnFailure", &CMakeTestExecution::stop_on_failure>,
+                                                     di::field<"repeat", &CMakeTestExecution::repeat>,
+                                                     di::field<"noTestsAction", &CMakeTestExecution::no_tests_action>,
+                                                     di::field<"jobs", &CMakeTestExecution::jobs>);
     }
 };
 
@@ -146,7 +150,7 @@ struct CMakeTestPreset {
     di::Optional<di::Vector<di::String>> inherits;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<CMakeTestPreset>) {
-        return di::make_fields(
+        return di::make_fields<"CMakeTestPreset">(
             di::field<"name", &CMakeTestPreset::name>, di::field<"displayName", &CMakeTestPreset::display_name>,
             di::field<"description", &CMakeTestPreset::description>, di::field<"hidden", &CMakeTestPreset::hidden>,
             di::field<"configurePreset", &CMakeTestPreset::configure_preset>,
@@ -163,11 +167,11 @@ struct CMakePresets {
     di::Vector<CMakeTestPreset> test_presets;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<CMakePresets>) {
-        return di::make_fields(di::field<"version", &CMakePresets::version>,
-                               di::field<"cmakeMinimumRequired", &CMakePresets::cmake_minimum_required>,
-                               di::field<"configurePresets", &CMakePresets::configure_presets>,
-                               di::field<"buildPresets", &CMakePresets::build_presets>,
-                               di::field<"testPresets", &CMakePresets::test_presets>);
+        return di::make_fields<"CMakePresets">(di::field<"version", &CMakePresets::version>,
+                                               di::field<"cmakeMinimumRequired", &CMakePresets::cmake_minimum_required>,
+                                               di::field<"configurePresets", &CMakePresets::configure_presets>,
+                                               di::field<"buildPresets", &CMakePresets::build_presets>,
+                                               di::field<"testPresets", &CMakePresets::test_presets>);
     }
 };
 

@@ -18,9 +18,9 @@ enum class StepKind {
 
 constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<StepKind>) {
     using enum StepKind;
-    return di::make_enumerators(di::enumerator<"download", Download>, di::enumerator<"patch", Patch>,
-                                di::enumerator<"configure", Configure>, di::enumerator<"build", Build>,
-                                di::enumerator<"install", Install>, di::enumerator<"clean", Clean>);
+    return di::make_enumerators<"StepKind">(di::enumerator<"download", Download>, di::enumerator<"patch", Patch>,
+                                            di::enumerator<"configure", Configure>, di::enumerator<"build", Build>,
+                                            di::enumerator<"install", Install>, di::enumerator<"clean", Clean>);
 }
 
 class Step {

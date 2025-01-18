@@ -91,8 +91,9 @@ struct MyType {
     auto operator==(MyType const& other) const -> bool = default;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyType>) {
-        return di::make_fields(di::field<"x", &MyType::x>, di::field<"y", &MyType::y>, di::field<"z", &MyType::z>,
-                               di::field<"w", &MyType::w>, di::field<"a", &MyType::a>);
+        return di::make_fields<"MyType">(di::field<"x", &MyType::x>, di::field<"y", &MyType::y>,
+                                         di::field<"z", &MyType::z>, di::field<"w", &MyType::w>,
+                                         di::field<"a", &MyType::a>);
     }
 };
 
@@ -100,7 +101,8 @@ enum class MyEnum { Foo, Bar, Baz };
 
 constexpr static auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyEnum>) {
     using enum MyEnum;
-    return di::make_enumerators(di::enumerator<"Foo", Foo>, di::enumerator<"Bar", Bar>, di::enumerator<"Baz", Baz>);
+    return di::make_enumerators<"MyEnum">(di::enumerator<"Foo", Foo>, di::enumerator<"Bar", Bar>,
+                                          di::enumerator<"Baz", Baz>);
 }
 
 struct MySuperType {
@@ -112,8 +114,9 @@ struct MySuperType {
     auto operator==(MySuperType const& other) const -> bool = default;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MySuperType>) {
-        return di::make_fields(di::field<"my_type", &MySuperType::my_type>, di::field<"array", &MySuperType::array>,
-                               di::field<"map", &MySuperType::map>, di::field<"my_enum", &MySuperType::my_enum>);
+        return di::make_fields<"MySuperType">(
+            di::field<"my_type", &MySuperType::my_type>, di::field<"array", &MySuperType::array>,
+            di::field<"map", &MySuperType::map>, di::field<"my_enum", &MySuperType::my_enum>);
     }
 };
 

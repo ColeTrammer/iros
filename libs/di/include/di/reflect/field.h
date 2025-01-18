@@ -50,8 +50,10 @@ concept Field = requires {
 }
 
 namespace di::reflection {
-template<concepts::Field... Fs>
+template<concepts::Constexpr ClassName, concepts::Field... Fs>
 struct Fields : vocab::Tuple<Fs...> {
+    constexpr static auto name = ClassName::value;
+
     constexpr static auto is_fields() -> bool { return true; }
     constexpr static auto is_field() -> bool { return false; }
     constexpr static auto is_enumerator() -> bool { return false; }
@@ -65,15 +67,17 @@ struct Fields : vocab::Tuple<Fs...> {
 };
 
 namespace detail {
+    template<container::FixedString class_name>
     struct MakeFieldsFunction {
         template<concepts::Field... Fs>
         constexpr auto operator()(Fs...) const {
-            return Fields<Fs...> {};
+            return Fields<meta::Constexpr<class_name>, Fs...> {};
         }
     };
 }
 
-constexpr inline auto make_fields = detail::MakeFieldsFunction {};
+template<container::FixedString class_name>
+constexpr inline auto make_fields = detail::MakeFieldsFunction<class_name> {};
 }
 
 namespace di {

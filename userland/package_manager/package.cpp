@@ -17,7 +17,7 @@ enum class PackageJsonDownloadType {
 
 constexpr static auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<PackageJsonDownloadType>) {
     using enum PackageJsonDownloadType;
-    return di::make_enumerators(di::enumerator<"git", Git>);
+    return di::make_enumerators<"PackageJsonDownloadType">(di::enumerator<"git", Git>);
 }
 
 struct PackageJsonDownload {
@@ -27,8 +27,9 @@ struct PackageJsonDownload {
 };
 
 constexpr static auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<PackageJsonDownload>) {
-    return di::make_fields(di::field<"type", &PackageJsonDownload::type>, di::field<"url", &PackageJsonDownload::url>,
-                           di::field<"tag", &PackageJsonDownload::tag>);
+    return di::make_fields<"PackageJsonDownload">(di::field<"type", &PackageJsonDownload::type>,
+                                                  di::field<"url", &PackageJsonDownload::url>,
+                                                  di::field<"tag", &PackageJsonDownload::tag>);
 }
 
 struct PackageJsonPatchFormat {
@@ -36,7 +37,7 @@ struct PackageJsonPatchFormat {
 };
 
 constexpr static auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<PackageJsonPatchFormat>) {
-    return di::make_fields(di::field<"files", &PackageJsonPatchFormat::files>);
+    return di::make_fields<"PackageJsonPatchFormat">(di::field<"files", &PackageJsonPatchFormat::files>);
 }
 
 struct PackageJsonFormat {
@@ -48,7 +49,7 @@ struct PackageJsonFormat {
 };
 
 constexpr static auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<PackageJsonFormat>) {
-    return di::make_fields(
+    return di::make_fields<"PackageJsonFormat">(
         di::field<"name", &PackageJsonFormat::name>, di::field<"version", &PackageJsonFormat::version>,
         di::field<"download", &PackageJsonFormat::download>, di::field<"patch", &PackageJsonFormat::patch>,
         di::field<"buildSystem", &PackageJsonFormat::build_system>);

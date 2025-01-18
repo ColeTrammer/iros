@@ -15,7 +15,7 @@ enum class CursorStyle {
 
 constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<CursorStyle>) {
     using enum CursorStyle;
-    return di::make_enumerators(
+    return di::make_enumerators<"CursorStyle">(
         di::enumerator<"BlinkingBlock", BlinkingBlock>, di::enumerator<"SteadyBlock", SteadyBlock>,
         di::enumerator<"BlinkingUnderline", BlinkingUnderline>, di::enumerator<"SteadyUnderline", SteadyUnderline>,
         di::enumerator<"BlinkingBar", BlinkingBar>, di::enumerator<"SteadyBar", SteadyBar>);

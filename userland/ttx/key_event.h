@@ -16,8 +16,8 @@ enum class KeyEventType {
 
 constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<KeyEventType>) {
     using enum KeyEventType;
-    return di::make_enumerators(di::enumerator<"Press", Press>, di::enumerator<"Repeat", Repeat>,
-                                di::enumerator<"Release", Release>);
+    return di::make_enumerators<"KeyEventType">(di::enumerator<"Press", Press>, di::enumerator<"Repeat", Repeat>,
+                                                di::enumerator<"Release", Release>);
 }
 
 class KeyEvent {
@@ -36,8 +36,9 @@ public:
 
 private:
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<KeyEvent>) {
-        return di::make_fields(di::field<"type", &KeyEvent::m_type>, di::field<"modifers", &KeyEvent::m_modifiers>,
-                               di::field<"key", &KeyEvent::m_key>, di::field<"text", &KeyEvent::m_text>);
+        return di::make_fields<"KeyEvent">(di::field<"type", &KeyEvent::m_type>,
+                                           di::field<"modifers", &KeyEvent::m_modifiers>,
+                                           di::field<"key", &KeyEvent::m_key>, di::field<"text", &KeyEvent::m_text>);
     }
 
     KeyEventType m_type { KeyEventType::Press };

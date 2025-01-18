@@ -9,7 +9,8 @@ struct MyType {
     int z;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyType>) {
-        return di::make_fields(di::field<"x", &MyType::x>, di::field<"y", &MyType::y>, di::field<"z", &MyType::z>);
+        return di::make_fields<"MyType">(di::field<"x", &MyType::x>, di::field<"y", &MyType::y>,
+                                         di::field<"z", &MyType::z>);
     }
 };
 
@@ -26,8 +27,8 @@ public:
     constexpr auto z() const -> int { return m_z; }
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyClass>) {
-        return di::make_fields(di::field<"x", &MyClass::m_x>, di::field<"y", &MyClass::m_y>,
-                               di::field<"z", &MyClass::m_z>);
+        return di::make_fields<"MyClass">(di::field<"x", &MyClass::m_x>, di::field<"y", &MyClass::m_y>,
+                                          di::field<"z", &MyClass::m_z>);
     }
 };
 
@@ -85,7 +86,8 @@ enum class MyEnum { Foo, Bar, Baz };
 
 constexpr static auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyEnum>) {
     using enum MyEnum;
-    return di::make_enumerators(di::enumerator<"Foo", Foo>, di::enumerator<"Bar", Bar>, di::enumerator<"Baz", Baz>);
+    return di::make_enumerators<"MyEnum">(di::enumerator<"Foo", Foo>, di::enumerator<"Bar", Bar>,
+                                          di::enumerator<"Baz", Baz>);
 }
 
 constexpr static void enum_() {

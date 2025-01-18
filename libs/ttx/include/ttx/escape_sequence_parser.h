@@ -14,7 +14,7 @@ struct PrintableCharacter {
     auto operator==(PrintableCharacter const&) const -> bool = default;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<PrintableCharacter>) {
-        return di::make_fields(di::field<"code_point", &PrintableCharacter::code_point>);
+        return di::make_fields<"PrintableCharacter">(di::field<"code_point", &PrintableCharacter::code_point>);
     }
 };
 
@@ -26,8 +26,8 @@ struct DCS {
     auto operator==(DCS const&) const -> bool = default;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<DCS>) {
-        return di::make_fields(di::field<"intermediate", &DCS::intermediate>, di::field<"params", &DCS::params>,
-                               di::field<"data", &DCS::data>);
+        return di::make_fields<"DCS">(di::field<"intermediate", &DCS::intermediate>, di::field<"params", &DCS::params>,
+                                      di::field<"data", &DCS::data>);
     }
 };
 
@@ -39,8 +39,8 @@ struct CSI {
     auto operator==(CSI const&) const -> bool = default;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<CSI>) {
-        return di::make_fields(di::field<"intermediate", &CSI::intermediate>, di::field<"params", &CSI::params>,
-                               di::field<"terminator", &CSI::terminator>);
+        return di::make_fields<"CSI">(di::field<"intermediate", &CSI::intermediate>, di::field<"params", &CSI::params>,
+                                      di::field<"terminator", &CSI::terminator>);
     }
 };
 
@@ -51,8 +51,8 @@ struct Escape {
     auto operator==(Escape const&) const -> bool = default;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<Escape>) {
-        return di::make_fields(di::field<"intermediate", &Escape::intermediate>,
-                               di::field<"terminator", &Escape::terminator>);
+        return di::make_fields<"Escape">(di::field<"intermediate", &Escape::intermediate>,
+                                         di::field<"terminator", &Escape::terminator>);
     }
 };
 
@@ -62,7 +62,7 @@ struct ControlCharacter {
     auto operator==(ControlCharacter const&) const -> bool = default;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<ControlCharacter>) {
-        return di::make_fields(di::field<"code_point", &ControlCharacter::code_point>);
+        return di::make_fields<"ControlCharacter">(di::field<"code_point", &ControlCharacter::code_point>);
     }
 };
 

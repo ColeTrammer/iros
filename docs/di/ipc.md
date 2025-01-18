@@ -58,10 +58,8 @@ struct ClientMessage1 {
     int y;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<ClientMessage1>) {
-        return di::make_fields(
-            di::field<"x", &ClientMessage1::x>,
-            di::field<"y", &ClientMessage1::y>
-        );
+        return di::make_fields<"ClientMessage1">(di::field<"x", &ClientMessage1::x>,
+                                                 di::field<"y", &ClientMessage1::y>);
     }
 };
 
@@ -72,10 +70,7 @@ struct ClientMessage2 {
         int y;
 
         constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<Reply>) {
-            return di::make_fields(
-                di::field<"x", &Reply::x>,
-                di::field<"y", &Reply::y>
-            );
+            return di::make_fields<"ClientMessage2">(di::field<"x", &Reply::x>, di::field<"y", &Reply::y>);
         }
     };
 
@@ -84,11 +79,8 @@ struct ClientMessage2 {
     int z;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<ClientMessage2>) {
-        return di::make_fields(
-            di::field<"x", &ClientMessage2::x>,
-            di::field<"y", &ClientMessage2::y>,
-            di::field<"z", &ClientMessage2::z>
-        );
+        return di::make_fields<"ClientMessage2">(di::field<"x", &ClientMessage2::x>, di::field<"y", &ClientMessage2::y>,
+                                                 di::field<"z", &ClientMessage2::z>);
     }
 };
 
@@ -97,9 +89,7 @@ struct ServerMessage {
     int z;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<ServerMessage>) {
-        return di::make_fields(
-            di::field<"z", &ServerMessage::z>
-        );
+        return di::make_fields<"ServerMessage">(di::field<"z", &ServerMessage::z>);
     }
 };
 
@@ -134,34 +124,29 @@ auto reader = /* ... */;
 auto writer = /* ... */;
 
 // Example 1: only need to send messages.
-auto ex1 = di::ipc_binary_connect_to_server<MyProtocol>(
-    di::Transmit([](auto token) {
-        return di::execution::send(token, /* ... */);
-    })
-);
+auto ex1 = di::ipc_binary_connect_to_server<MyProtocol>(di::Transmit([](auto token) {
+    return di::execution::send(token, /* ... */);
+}));
 
 // Example 2: only need to receive messages.
-auto ex2 = di::ipc_binary_connect_to_client<MyProtocol>(
-    di::Receive([](auto&& message, auto token) {
-        return di::execution::send(token, /* ... */);
-    })
-);
+auto ex2 = di::ipc_binary_connect_to_client<MyProtocol>(di::Receive([](auto&& message, auto token) {
+    return di::execution::send(token, /* ... */);
+}));
 
 // Example 3: need to send and receive messages, but don't need the connection to send replys.
-auto ex3 = di::ipc_binary_connect_to_server<MyProtocol>(
-    di::Transmit([](auto token) {
-        return di::execution::send(token, /* ... */);
-    }),
-    di::Receive([]<typename T>(T message) {
-        if constexpr (di::concepts::SameAs<T, ClientMessage1>) {
-            /* Send a reply */
-            return di::execution::just(ClientMessage1::Reply { /* ... */});
-        } else {
-            /* Do something with the message. */
-            return di::execution::just();
-        }
-    })
-);
+auto ex3 = di::ipc_binary_connect_to_server<MyProtocol>(di::Transmit([](auto token) {
+                                                            return di::execution::send(token, /* ... */);
+                                                        }),
+                                                        di::Receive([]<typename T>(T message) {
+                                                            if constexpr (di::concepts::SameAs<T, ClientMessage1>) {
+                                                                /* Send a reply */
+                                                                return di::execution::just(
+                                                                    ClientMessage1::Reply { /* ... */ });
+                                                            } else {
+                                                                /* Do something with the message. */
+                                                                return di::execution::just();
+                                                            }
+                                                        }));
 ```
 
 The reason this API is designed this way is to ensure the lifetime of the connection is managed correctly. The
