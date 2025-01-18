@@ -1,7 +1,7 @@
 #pragma once
 
 #include "dius/sync_file.h"
-#include "escape_sequence_parser.h"
+#include "ttx/escape_sequence_parser.h"
 #include "ttx/graphics_rendition.h"
 #include "ttx/params.h"
 

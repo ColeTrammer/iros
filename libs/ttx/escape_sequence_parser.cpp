@@ -1,6 +1,7 @@
-#include "escape_sequence_parser.h"
+#include "ttx/escape_sequence_parser.h"
 
 #include "di/parser/prelude.h"
+#include "di/util/scope_exit.h"
 
 #define STATE(state) void EscapeSequenceParser::state##_state([[maybe_unused]] c32 code_point)
 
@@ -28,7 +29,8 @@ static inline auto is_csi_terminator(c32 code_point) -> bool {
 }
 
 static inline auto is_param(c32 code_point) -> bool {
-    return (code_point >= 0x30 && code_point <= 0x39) || (code_point == 0x3B);
+    // NOTE: this is modified from the reference to include ':' in addition to ';'.
+    return (code_point >= 0x30 && code_point <= 0x39) || (code_point == 0x3B) || (code_point == 0x3A);
 }
 
 static inline auto is_intermediate(c32 code_point) -> bool {
@@ -153,10 +155,6 @@ STATE(csi_entry) {
         return transition(State::CsiParam);
     }
 
-    if (code_point == 0x3A) {
-        return transition(State::CsiIgnore);
-    }
-
     if (code_point == 0x7F) {
         return ignore(code_point);
     }
@@ -214,7 +212,7 @@ STATE(csi_param) {
         return param(code_point);
     }
 
-    if (code_point == 0x3A || (code_point >= 0x3C && code_point <= 0x3F)) {
+    if (code_point >= 0x3C && code_point <= 0x3F) {
         return transition(State::CsiIgnore);
     }
 
@@ -263,10 +261,6 @@ STATE(dcs_entry) {
         return transition(State::DcsParam);
     }
 
-    if (code_point == 0x3A) {
-        return transition(State::DcsIgnore);
-    }
-
     if (is_dcs_terminator(code_point)) {
         return transition(State::DcsPassthrough);
     }
@@ -293,7 +287,7 @@ STATE(dcs_param) {
         return param(code_point);
     }
 
-    if ((code_point == 0x3A) || (code_point >= 0x3C && code_point <= 0x3F)) {
+    if ((code_point >= 0x3C && code_point <= 0x3F)) {
         return transition(State::DcsIgnore);
     }
 
@@ -403,6 +397,7 @@ void EscapeSequenceParser::execute(c32 code_point) {
 void EscapeSequenceParser::clear() {
     m_current_param.clear();
     m_params = {};
+    m_last_separator_was_colon = false;
     m_intermediate.clear();
 }
 
@@ -416,6 +411,10 @@ void EscapeSequenceParser::param(c32 code_point) {
         return;
     }
 
+    auto _ = di::ScopeExit([&] {
+        m_last_separator_was_colon = code_point == ':';
+    });
+
     if (m_current_param.empty()) {
         add_param(0);
         return;
@@ -426,6 +425,12 @@ void EscapeSequenceParser::param(c32 code_point) {
 }
 
 void EscapeSequenceParser::esc_dispatch(c32 code_point) {
+    // Ignore string terminators (ESC \). These terminate OSC and DCS sequences,
+    // but the current state machine exits these states immediately upon hitting
+    // the ESC. Dispatching the string terminator should not happen.
+    if (code_point == '\\') {
+        return;
+    }
     m_result.push_back(Escape(di::move(m_intermediate), code_point));
 }
 
@@ -458,7 +463,12 @@ void EscapeSequenceParser::osc_put(c32) {}
 void EscapeSequenceParser::osc_end() {}
 
 void EscapeSequenceParser::add_param(u32 param) {
-    m_params.add_param(param);
+    if (m_last_separator_was_colon) {
+        m_params.add_subparam(param);
+    } else {
+        m_params.add_param(param);
+    }
+    m_last_separator_was_colon = false;
 }
 
 void EscapeSequenceParser::transition(State state) {

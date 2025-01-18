@@ -6,9 +6,9 @@
 #include "dius/sync_file.h"
 #include "dius/system/process.h"
 #include "dius/thread.h"
-#include "escape_sequence_parser.h"
 #include "terminal.h"
 #include "terminal_input.h"
+#include "ttx/escape_sequence_parser.h"
 
 namespace ttx {
 struct Args {
@@ -159,7 +159,7 @@ static auto main(Args& args) -> di::Result<void> {
             if (code_point >= 32 && code_point != 127) {
                 return di::single(code_point) | di::to<di::String>();
             }
-            return *di::present("<{:2x}>"_sv, (i32) code_point);
+            return *di::present("\\x{:2x}"_sv, (i32) code_point);
         }) | di::join | di::to<di::String>();
         (void) di::writer_println<di::container::string::Utf8Encoding>(log, "\"{}\""_sv, safe_string);
 
@@ -172,6 +172,7 @@ static auto main(Args& args) -> di::Result<void> {
 
         // Draw
         if (terminal.allowed_to_draw()) {
+            di::writer_print<di::String::Encoding>(dius::stdin, "\033[?2026h"_sv);
             di::writer_print<di::String::Encoding>(dius::stdin, "\033[?25l"_sv);
             for (auto const& [r, row] : di::enumerate(terminal.rows())) {
                 for (auto const& [c, cell] : di::enumerate(row)) {
@@ -186,14 +187,13 @@ static auto main(Args& args) -> di::Result<void> {
                         if (cell.graphics_rendition != last_graphics_rendition) {
                             last_graphics_rendition = cell.graphics_rendition;
 
-                            (void) di::writer_println<di::container::string::Utf8Encoding>(
-                                log, "\"{}\""_sv, last_graphics_rendition.as_csi_params());
                             di::writer_print<di::String::Encoding>(dius::stdin, "\033[{}m"_sv,
                                                                    last_graphics_rendition.as_csi_params());
                         }
 
                         di::writer_print<di::String::Encoding>(dius::stdin, "{}"_sv, cell.ch);
                         cursor_col = di::min(cursor_col + 1, terminal_size.cols - 1);
+                        bad;
                     }
                 }
             }
@@ -203,6 +203,7 @@ static auto main(Args& args) -> di::Result<void> {
                 di::writer_print<di::String::Encoding>(dius::stdin, "\033[{};{}H"_sv, cursor_row + 1, cursor_col + 1);
                 di::writer_print<di::String::Encoding>(dius::stdin, "\033[?25h"_sv);
             }
+            di::writer_print<di::String::Encoding>(dius::stdin, "\033[?2026l"_sv);
         }
     }
 

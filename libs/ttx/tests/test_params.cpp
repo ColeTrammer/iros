@@ -31,7 +31,8 @@ static void basic() {
     auto params2 = empty.clone();
     params2.add_subparams({ 1, 2 });
     params2.add_param(3);
-    params2.add_subparams({ 4, 5, 6 });
+    params2.add_subparams({ 4, 5 });
+    params2.add_subparam(6);
     ASSERT_EQ(params, params2);
 }
 

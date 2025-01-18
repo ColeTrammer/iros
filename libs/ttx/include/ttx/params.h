@@ -70,6 +70,13 @@ public:
     }
 
     constexpr void add_param(u32 value) { m_parameters.push_back({ value }); }
+    constexpr void add_subparam(u32 value) {
+        if (empty()) {
+            add_param(value);
+        } else {
+            m_parameters.back().value().push_back(value);
+        }
+    }
     constexpr void add_subparams(di::Vector<u32> subparams) { m_parameters.push_back(di::move(subparams)); }
 
     auto to_string() const -> di::String;
