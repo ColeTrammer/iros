@@ -9,6 +9,7 @@
 #include "terminal.h"
 #include "terminal_input.h"
 #include "ttx/escape_sequence_parser.h"
+#include "ttx/utf8_stream_decoder.h"
 
 namespace ttx {
 struct Args {
@@ -93,6 +94,7 @@ static auto main(Args& args) -> di::Result<void> {
 
         auto exit = false;
         auto parser = TerminalInputParser {};
+        auto utf8_decoder = Utf8StreamDecoder {};
         while (!exit) {
             auto nread = dius::stdin.read_some(buffer.span());
             if (!nread.has_value()) {
@@ -103,16 +105,8 @@ static auto main(Args& args) -> di::Result<void> {
                 break;
             }
 
-            // Instead of failing on UTF-8, instead we should insert potentially buffer data.
-            // And also emit replacement characters.
-            auto utf8_string = buffer | di::take(*nread) | di::transform([](byte b) {
-                                   return c8(b);
-                               }) |
-                               di::to<di::String>();
-            if (!utf8_string) {
-                break;
-            }
-            auto events = parser.parse(*utf8_string);
+            auto utf8_string = utf8_decoder.decode(buffer | di::take(*nread));
+            auto events = parser.parse(utf8_string);
             for (auto const& event : events) {
                 if (auto ev = di::get_if<KeyEvent>(event)) {
                     if (ev->key() == Key::Q && !!(ev->modifiers() & Modifiers::Control)) {
@@ -135,6 +129,7 @@ static auto main(Args& args) -> di::Result<void> {
     auto cursor_col = 0_u32;
     auto last_graphics_rendition = GraphicsRendition {};
 
+    auto utf8_decoder = Utf8StreamDecoder {};
     auto log = TRY(dius::open_sync("/tmp/ttx.log"_pv, dius::OpenMode::WriteClobber));
     while (!done.load(di::MemoryOrder::Acquire)) {
         auto buffer = di::Vector<byte> {};
@@ -145,25 +140,17 @@ static auto main(Args& args) -> di::Result<void> {
             break;
         }
 
-        // Instead of failing on UTF-8, instead we should insert potentially buffer data.
-        // And also emit replacement characters.
-        auto utf8_string = buffer | di::take(*nread) | di::transform([](byte b) {
-                               return c8(b);
+        auto utf8_string = utf8_decoder.decode(buffer | di::take(*nread));
+        auto safe_string = utf8_string | di::transform([](c32 code_point) -> di::String {
+                               if (code_point >= 32 && code_point != 127) {
+                                   return di::single(code_point) | di::to<di::String>();
+                               }
+                               return *di::present("\\x{:2x}"_sv, (i32) code_point);
                            }) |
-                           di::to<di::String>();
-        if (!utf8_string) {
-            break;
-        }
-
-        auto safe_string = *utf8_string | di::transform([](c32 code_point) -> di::String {
-            if (code_point >= 32 && code_point != 127) {
-                return di::single(code_point) | di::to<di::String>();
-            }
-            return *di::present("\\x{:2x}"_sv, (i32) code_point);
-        }) | di::join | di::to<di::String>();
+                           di::join | di::to<di::String>();
         (void) di::writer_println<di::container::string::Utf8Encoding>(log, "\"{}\""_sv, safe_string);
 
-        auto parser_result = parser.parse(*utf8_string);
+        auto parser_result = parser.parse(utf8_string);
         for (auto const& result : parser_result) {
             (void) di::writer_println<di::container::string::Utf8Encoding>(log, "{}"_sv,
                                                                            di::visit(di::to_string, result));
