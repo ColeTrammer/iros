@@ -194,13 +194,13 @@ public:
         return get_value(util::move(m_storage));
     }
 
-    template<concepts::ConvertibleTo<T> U>
+    template<concepts::ConvertibleTo<T> U = T>
     requires(concepts::Copyable<T>)
     constexpr auto value_or(U&& fallback) const& -> T {
         return has_value() ? value() : static_cast<T>(util::forward<U>(fallback));
     }
 
-    template<concepts::ConvertibleTo<T> U>
+    template<concepts::ConvertibleTo<T> U = T>
     constexpr auto value_or(U&& fallback) && -> T {
         return has_value() ? util::move(*this).value() : static_cast<T>(util::forward<U>(fallback));
     }
