@@ -3,7 +3,9 @@
 #include "di/container/iterator/prelude.h"
 
 namespace di::container {
-template<di::concepts::OneOf<char, unsigned char, wchar_t, char const, unsigned char const, wchar_t const> T>
+template<di::concepts::OneOf<char, unsigned char, wchar_t, char const, unsigned char const, wchar_t const, c8, c8 const,
+                             c16, c16 const, c32, c32 const>
+             T>
 class ZStringImpl : public di::meta::EnableBorrowedContainer<ZStringImpl<T>> {
 private:
     struct Iterator : di::container::IteratorExtension<Iterator, T*, T> {
@@ -39,9 +41,21 @@ using ZCWString = ZStringImpl<wchar_t const>;
 using ZString = ZStringImpl<char>;
 using ZUString = ZStringImpl<unsigned char>;
 using ZWString = ZStringImpl<wchar_t>;
+using ZC8CString = ZStringImpl<c8 const>;
+using ZC8String = ZStringImpl<c8>;
+using ZC16CString = ZStringImpl<c16 const>;
+using ZC16String = ZStringImpl<c16>;
+using ZC32CString = ZStringImpl<c32 const>;
+using ZC32String = ZStringImpl<c32>;
 }
 
 namespace di {
+using container::ZC16CString;
+using container::ZC16String;
+using container::ZC32CString;
+using container::ZC32String;
+using container::ZC8CString;
+using container::ZC8String;
 using container::ZCString;
 using container::ZCUString;
 using container::ZCWString;
