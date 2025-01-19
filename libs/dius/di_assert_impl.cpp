@@ -1,3 +1,4 @@
+#include "di/container/string/encoding.h"
 #include "di/math/prelude.h"
 #include "dius/print.h"
 #include "dius/system/process.h"
@@ -13,14 +14,15 @@
 #endif
 
 namespace di::assert::detail {
-static auto zstring_to_string_view(char const* s) -> di::TransparentStringView {
-    return { s, di::to_unsigned(di::distance(di::ZCString(s))) };
+static auto zstring_to_string_view(char const* s) -> di::StringView {
+    return { di::encoding::assume_valid, reinterpret_cast<c8 const*>(s),
+             di::to_unsigned(di::distance(di::ZCString(s))) };
 }
 
 void assert_fail(char const* source_text, char const* lhs_message, char const* rhs_message, util::SourceLocation loc) {
     auto source_text_view = zstring_to_string_view(source_text);
 
-    dius::println("{}: {}"_sv, di::Styled("ASSERT"_sv, di::FormatColor::Red | di::FormatEffect::Bold),
+    dius::println("{}: {:?}"_sv, di::Styled("ASSERT"_sv, di::FormatColor::Red | di::FormatEffect::Bold),
                   source_text_view);
 
     dius::println("{}: {}(): {}:{}:{}"_sv, di::Styled("AT"_sv, di::FormatEffect::Bold),
