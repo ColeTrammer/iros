@@ -5,7 +5,7 @@
 #include "di/reflect/enumerator.h"
 #include "di/reflect/field.h"
 #include "di/reflect/prelude.h"
-#include "key.h"
+#include "ttx/key.h"
 
 namespace ttx {
 enum class KeyEventType {

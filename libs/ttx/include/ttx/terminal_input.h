@@ -3,8 +3,8 @@
 #include "di/container/string/string_view.h"
 #include "di/container/vector/vector.h"
 #include "di/vocab/variant/variant.h"
-#include "key.h"
-#include "key_event.h"
+#include "ttx/key.h"
+#include "ttx/key_event.h"
 
 namespace ttx {
 using Event = di::Variant<KeyEvent>;

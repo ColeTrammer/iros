@@ -1,9 +1,9 @@
-#include "terminal_input.h"
+#include "ttx/terminal_input.h"
 
 #include "di/reflect/valid_enum_value.h"
 #include "di/vocab/array/to_array.h"
-#include "key.h"
-#include "key_event.h"
+#include "ttx/key.h"
+#include "ttx/key_event.h"
 #include "ttx/params.h"
 
 namespace ttx {
@@ -252,7 +252,7 @@ constexpr auto code_point_key_mappings = di::to_array<CodePointMapping>({
     { 57395, Key::F32, Modifiers::None },
     { 57396, Key::F33, Modifiers::None },
     { 57397, Key::F34, Modifiers::None },
-    { 57398, Key::F13, Modifiers::None },
+    { 57398, Key::F35, Modifiers::None },
     { 57399, Key::KeyPad0, Modifiers::None },
     { 57400, Key::KeyPad1, Modifiers::None },
     { 57401, Key::KeyPad2, Modifiers::None },

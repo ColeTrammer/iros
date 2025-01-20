@@ -6,9 +6,9 @@
 #include "dius/sync_file.h"
 #include "dius/system/process.h"
 #include "dius/thread.h"
-#include "terminal.h"
-#include "terminal_input.h"
 #include "ttx/escape_sequence_parser.h"
+#include "ttx/terminal.h"
+#include "ttx/terminal_input.h"
 #include "ttx/utf8_stream_decoder.h"
 
 namespace ttx {
@@ -133,7 +133,7 @@ static auto main(Args& args) -> di::Result<void> {
     auto log = TRY(dius::open_sync("/tmp/ttx.log"_pv, dius::OpenMode::WriteClobber));
     while (!done.load(di::MemoryOrder::Acquire)) {
         auto buffer = di::Vector<byte> {};
-        buffer.resize(4096);
+        buffer.resize(16384);
 
         auto nread = pty_controller.read_some(buffer.span());
         if (!nread.has_value()) {
@@ -141,20 +141,20 @@ static auto main(Args& args) -> di::Result<void> {
         }
 
         auto utf8_string = utf8_decoder.decode(buffer | di::take(*nread));
-        auto safe_string = utf8_string | di::transform([](c32 code_point) -> di::String {
-                               if (code_point >= 32 && code_point != 127) {
-                                   return di::single(code_point) | di::to<di::String>();
-                               }
-                               return *di::present("\\x{:2x}"_sv, (i32) code_point);
-                           }) |
-                           di::join | di::to<di::String>();
-        (void) di::writer_println<di::container::string::Utf8Encoding>(log, "\"{}\""_sv, safe_string);
+        // auto safe_string = utf8_string | di::transform([](c32 code_point) -> di::String {
+        //                        if (code_point >= 32 && code_point != 127) {
+        //                            return di::single(code_point) | di::to<di::String>();
+        //                        }
+        //                        return *di::present("\\x{:2x}"_sv, (i32) code_point);
+        //                    }) |
+        //                    di::join | di::to<di::String>();
+        // (void) di::writer_println<di::container::string::Utf8Encoding>(log, "\"{}\""_sv, safe_string);
 
         auto parser_result = parser.parse(utf8_string);
-        for (auto const& result : parser_result) {
-            (void) di::writer_println<di::container::string::Utf8Encoding>(log, "{}"_sv,
-                                                                           di::visit(di::to_string, result));
-        }
+        // for (auto const& result : parser_result) {
+        //     (void) di::writer_println<di::container::string::Utf8Encoding>(log, "{}"_sv,
+        //                                                                    di::visit(di::to_string, result));
+        // }
         terminal.on_parser_results(parser_result.span());
 
         // Draw
