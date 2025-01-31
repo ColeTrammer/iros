@@ -119,7 +119,7 @@ private:
 
     void on_input(c32 code_point);
 
-    void add_param(u32 param);
+    void add_param(di::Optional<u32> param);
 
     State m_last_state { State::Ground };
     State m_next_state { State::Ground };

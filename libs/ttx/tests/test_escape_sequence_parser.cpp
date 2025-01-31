@@ -33,5 +33,23 @@ static void nvim_startup() {
     ASSERT_EQ(expected.size(), actual.size());
 }
 
+static void empty_params() {
+    constexpr auto input = "\033[1;2;;3x\033[1;2;3::4;5x"_sv;
+
+    auto expected = di::Array {
+        ttx::ParserResult { ttx::CSI(""_s, { { 1 }, { 2 }, {}, { 3 } }, 'x') },
+        ttx::ParserResult { ttx::CSI(""_s, { { 1 }, { 2 }, { 3, {}, 4 }, { 5 } }, 'x') },
+    };
+
+    auto parser = ttx::EscapeSequenceParser {};
+    auto actual = parser.parse(input);
+
+    for (auto const& [ex, ac] : di::zip(expected, actual)) {
+        ASSERT_EQ(ex, ac);
+    }
+    ASSERT_EQ(expected.size(), actual.size());
+}
+
 TEST(escape_sequence_parser, nvim_startup)
+TEST(escape_sequence_parser, empty_params)
 }

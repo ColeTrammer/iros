@@ -219,7 +219,7 @@ enum class ColorType {
     Underine,
 };
 
-static auto color_to_subparams(Color c, ColorType type) -> di::Vector<u32> {
+static auto color_to_subparams(Color c, ColorType type) -> di::Vector<Param> {
     if (c.c == Color::Palette::Custom) {
         auto code = type == ColorType::Fg ? 38u : type == ColorType::Bg ? 48u : 58u;
         return { code, 2, c.r, c.g, c.b };

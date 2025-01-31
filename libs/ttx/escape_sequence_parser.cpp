@@ -189,7 +189,7 @@ STATE(csi_param) {
     ON_ENTRY(CsiParam) {
         m_on_state_exit = [this] {
             if (!m_current_param.empty()) {
-                add_param(di::parse<u32>(m_current_param).value_or(0));
+                add_param(di::parse<u32>(m_current_param).optional_value());
             }
         };
     }
@@ -274,7 +274,7 @@ STATE(dcs_param) {
     ON_ENTRY(DcsParam) {
         m_on_state_exit = [this] {
             if (!m_current_param.empty()) {
-                add_param(di::parse<u32>(m_current_param).value_or(0));
+                add_param(di::parse<u32>(m_current_param).optional_value());
             }
         };
     }
@@ -416,11 +416,11 @@ void EscapeSequenceParser::param(c32 code_point) {
     });
 
     if (m_current_param.empty()) {
-        add_param(0);
+        add_param({});
         return;
     }
 
-    add_param(di::parse<u32>(m_current_param.view()).value_or(0));
+    add_param(di::parse<u32>(m_current_param.view()).optional_value());
     m_current_param.clear();
 }
 
@@ -462,11 +462,19 @@ void EscapeSequenceParser::osc_put(c32) {}
 
 void EscapeSequenceParser::osc_end() {}
 
-void EscapeSequenceParser::add_param(u32 param) {
+void EscapeSequenceParser::add_param(di::Optional<u32> param) {
     if (m_last_separator_was_colon) {
-        m_params.add_subparam(param);
+        if (param) {
+            m_params.add_subparam(param.value());
+        } else {
+            m_params.add_empty_subparam();
+        }
     } else {
-        m_params.add_param(param);
+        if (param) {
+            m_params.add_param(param.value());
+        } else {
+            m_params.add_empty_param();
+        }
     }
     m_last_separator_was_colon = false;
 }

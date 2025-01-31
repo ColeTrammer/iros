@@ -6,11 +6,13 @@
 
 namespace ttx {
 auto Params::from_string(di::StringView view) -> Params {
-    auto params = view | di::split(U';') | di::transform([](di::StringView nums) -> di::Vector<u32> {
-                      return nums | di::split(U':') | di::transform([](di::StringView num) -> u32 {
-                                 // Invalid or empty parameters get defaulted to 1, which is suitable for
-                                 // parsing input codes.
-                                 return di::parse<i32>(num).value_or(1);
+    auto params = view | di::split(U';') | di::transform([](di::StringView nums) -> di::Vector<Param> {
+                      return nums | di::split(U':') | di::transform([](di::StringView num) -> Param {
+                                 return di::parse<u32>(num)
+                                     .transform([](u32 value) {
+                                         return Param(value);
+                                     })
+                                     .value_or(Param());
                              }) |
                              di::to<di::Vector>();
                   }) |
@@ -19,7 +21,13 @@ auto Params::from_string(di::StringView view) -> Params {
 }
 
 auto Subparams::to_string() const -> di::String {
-    return m_subparams | di::transform(di::to_string) | di::join_with(U':') | di::to<di::String>();
+    return m_subparams | di::transform([](Param param) -> di::String {
+               if (!param.has_value()) {
+                   return {};
+               }
+               return di::to_string(param.value());
+           }) |
+           di::join_with(U':') | di::to<di::String>();
 }
 
 auto Params::to_string() const -> di::String {
