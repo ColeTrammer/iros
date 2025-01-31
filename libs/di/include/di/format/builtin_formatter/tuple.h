@@ -26,7 +26,7 @@ constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<Tuple<Type
                 }
                 first = false;
                 return vpresent_encoded_context<meta::Encoding<decltype(context)>>(
-                    u8"{}"_sv, format::make_format_args<decltype(context)>(value), context);
+                    u8"{}"_sv, format::make_format_args<decltype(context)>(value), context, true);
             },
             util::forward<decltype(tuple)>(tuple));
         (void) results;

@@ -18,7 +18,7 @@ constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<Variant<Ty
         return di::visit(
             [&](auto&& value) -> Result<void> {
                 return vpresent_encoded_context<meta::Encoding<decltype(context)>>(
-                    u8"{}"_sv, format::make_format_args<decltype(context)>(value), context);
+                    u8"{}"_sv, format::make_format_args<decltype(context)>(value), context, true);
             },
             variant);
     };

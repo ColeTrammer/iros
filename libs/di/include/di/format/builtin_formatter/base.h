@@ -296,17 +296,44 @@ namespace detail {
         auto delimit = lift_bool(debug) % function::value(delimit_code_point);
         auto view = view::concat(delimit, view_in, delimit);
 
-        auto measure_code_point = [&](CodePoint) -> size_t {
-            (void) debug;
+        auto print_as_integer = [&](CodePoint p) -> bool {
+            // Control characters should not be printed directly in debug mode.
+            // This range accounts for C0 and C1 Unicode control characters.
+            return debug && (p <= 31 || p == 127 || (p >= 0x80 && p <= 0x9F));
+        };
+
+        auto measure_code_point = [&](CodePoint p) -> size_t {
+            if (print_as_integer(p)) {
+                // P will be printed as: \xAA
+                return 4;
+            }
+
+            // TODO: use east asian width field.
+            // TODO: measure grapheme clusters instead of measuring width code point by code point.
             return 1;
         };
 
+        auto do_output_char = [&](CodePoint code_point) -> Result<void> {
+            if (print_as_integer(code_point)) {
+                auto v1 = (code_point / 16) & 0xF;
+                auto v2 = (code_point % 16);
+
+                context.output(U'\\');
+                context.output(U'x');
+                context.output((v1 >= 10) ? ('a' + (v1 - 10)) : ('0' + v1));
+                context.output((v2 >= 10) ? ('a' + (v2 - 10)) : ('0' + v2));
+            } else {
+                context.output(code_point);
+            }
+            return {};
+        };
+
         size_t width_printed_so_far = 0;
+
         auto output_char = [&](CodePoint code_point) -> Result<void> {
             // Fast path when there is no precision.
             if (!precision) {
-                context.output(code_point);
-                return {};
+                return do_output_char(code_point);
             }
 
             // Don't print characters after the precision is exceeded.
@@ -315,9 +342,9 @@ namespace detail {
                 return {};
             }
 
-            context.output(code_point);
+            auto result = do_output_char(code_point);
             width_printed_so_far += code_point_width;
-            return {};
+            return result;
         };
 
         if (!width) {
