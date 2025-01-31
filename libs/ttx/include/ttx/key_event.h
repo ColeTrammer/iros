@@ -22,28 +22,42 @@ constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<KeyEventType>) {
 
 class KeyEvent {
 public:
-    constexpr static auto key_down(Key key, di::String text = {}, Modifiers modifiers = Modifiers::None) -> KeyEvent {
-        return { KeyEventType::Press, key, di::move(text), modifiers };
+    constexpr static auto key_down(Key key, di::String text = {}, Modifiers modifiers = Modifiers::None,
+                                   c32 shifted_key = 0, c32 base_layout_key = 0) -> KeyEvent {
+        return { KeyEventType::Press, key, di::move(text), modifiers, shifted_key, base_layout_key };
     }
 
-    constexpr KeyEvent(KeyEventType type, Key key, di::String text, Modifiers modifiers)
-        : m_type(type), m_modifiers(modifiers), m_key(key), m_text(di::move(text)) {}
+    constexpr KeyEvent(KeyEventType type, Key key, di::String text = {}, Modifiers modifiers = Modifiers::None,
+                       c32 shifted_key = 0, c32 base_layout_key = 0)
+        : m_type(type)
+        , m_modifiers(modifiers)
+        , m_key(key)
+        , m_shifted_key(shifted_key)
+        , m_base_layout_key(base_layout_key)
+        , m_text(di::move(text)) {}
 
     constexpr auto type() const -> KeyEventType { return m_type; }
     constexpr auto modifiers() const -> Modifiers { return m_modifiers; }
     constexpr auto key() const -> Key { return m_key; }
-    constexpr auto text() -> di::StringView const { return m_text; }
+    constexpr auto shifted_key() const -> c32 { return m_shifted_key; }
+    constexpr auto base_layout_key() const -> c32 { return m_base_layout_key; }
+    constexpr auto text() const -> di::StringView const { return m_text; }
+
+    auto operator==(KeyEvent const&) const -> bool = default;
 
 private:
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<KeyEvent>) {
-        return di::make_fields<"KeyEvent">(di::field<"type", &KeyEvent::m_type>,
-                                           di::field<"modifers", &KeyEvent::m_modifiers>,
-                                           di::field<"key", &KeyEvent::m_key>, di::field<"text", &KeyEvent::m_text>);
+        return di::make_fields<"KeyEvent">(
+            di::field<"type", &KeyEvent::m_type>, di::field<"modifers", &KeyEvent::m_modifiers>,
+            di::field<"key", &KeyEvent::m_key>, di::field<"shifted_key", &KeyEvent::m_shifted_key>,
+            di::field<"base_layout_key", &KeyEvent::m_base_layout_key>, di::field<"text", &KeyEvent::m_text>);
     }
 
     KeyEventType m_type { KeyEventType::Press };
     Modifiers m_modifiers { Modifiers::None };
     Key m_key { Key::None };
+    c32 m_shifted_key { 0 };
+    c32 m_base_layout_key { 0 };
     di::String m_text;
 };
 }
