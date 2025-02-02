@@ -51,6 +51,10 @@ enum class Number : int {
     bind = __NR_bind,
     listen = __NR_listen,
     ioctl = __NR_ioctl,
+    rt_sigprocmask = __NR_rt_sigprocmask,
+    rt_sigtimedwait = __NR_rt_sigtimedwait,
+    kill = __NR_kill,
+    getpid = __NR_getpid,
 };
 
 using SystemCallArg = unsigned long;

@@ -1,5 +1,6 @@
 #include "dius/system/process.h"
 
+#include <csignal>
 #include <errno.h>
 #include <pthread.h>
 #include <spawn.h>
@@ -82,6 +83,41 @@ auto Process::spawn_and_wait() && -> di::Result<ProcessResult> {
         return ProcessResult { WEXITSTATUS(status), false };
     }
     return ProcessResult { WTERMSIG(status), true };
+}
+
+auto get_process_id() -> ProcessId {
+    return getpid();
+}
+
+auto mask_signal(Signal signal) -> di::Result<void> {
+    auto set = sigset_t {};
+    sigemptyset(&set);
+    sigaddset(&set, int(signal));
+    int res = pthread_sigmask(SIG_BLOCK, &set, nullptr);
+    if (res < 0) {
+        return di::Unexpected(di::BasicError(-res));
+    }
+    return {};
+}
+
+auto send_signal(ProcessId id, Signal signal) -> di::Result<void> {
+    auto res = kill(id, int(signal));
+    if (res < 0) {
+        return di::Unexpected(di::BasicError(errno));
+    }
+    return {};
+}
+
+auto wait_for_signal(Signal signal) -> di::Result<Signal> {
+    auto set = sigset_t {};
+    sigemptyset(&set);
+    sigaddset(&set, int(signal));
+    int sig_out = 0;
+    auto res = sigwait(&set, &sig_out);
+    if (res < 0) {
+        return di::Unexpected(di::BasicError(errno));
+    }
+    return Signal(sig_out);
 }
 
 void exit_thread() {

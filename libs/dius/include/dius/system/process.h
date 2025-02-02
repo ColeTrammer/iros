@@ -82,6 +82,11 @@ private:
     bool m_new_session { false };
 };
 
+auto get_process_id() -> ProcessId;
+auto mask_signal(Signal signal) -> di::Result<void>;
+auto send_signal(ProcessId id, Signal signal) -> di::Result<void>;
+auto wait_for_signal(Signal signal) -> di::Result<Signal>;
+
 /// @brief Exit the currently executing thread.
 ///
 /// @warning It is undefined behavior to call this function when there exists RAII stack-allocated variables

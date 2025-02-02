@@ -4,6 +4,7 @@
 #include <linux/signal.h>
 #include <linux/wait.h>
 
+#include "dius/linux/system_call.h"
 #include "dius/print.h"
 #include "dius/system/system_call.h"
 
@@ -58,6 +59,44 @@ auto Process::spawn_and_wait() && -> di::Result<ProcessResult> {
     }
     // Signaled.
     return ProcessResult { (status & 0x7F), true };
+}
+
+using kernel_sigset_t = u128;
+
+static di::Result<void> sys_rt_sigprocmask(int how, kernel_sigset_t const* set, kernel_sigset_t* old) {
+    return system::system_call<int>(system::Number::rt_sigprocmask, how, set, old, sizeof(kernel_sigset_t)) %
+           di::into_void;
+}
+
+static di::Result<Signal> sys_rt_sigtimedwait(kernel_sigset_t const* set, void* info, void* timeout) {
+    return system::system_call<Signal>(system::Number::rt_sigtimedwait, set, info, timeout, sizeof(kernel_sigset_t));
+}
+
+static di::Result<void> sys_kill(ProcessId id, int signal) {
+    return system::system_call<int>(system::Number::kill, id, signal) % di::into_void;
+}
+
+static di::Result<ProcessId> sys_getpid() {
+    return system::system_call<ProcessId>(system::Number::getpid);
+}
+
+ProcessId get_process_id() {
+    // This really shouldn't fail...
+    return sys_getpid().value();
+}
+
+di::Result<void> mask_signal(Signal signal) {
+    auto mask = kernel_sigset_t(1) << (kernel_sigset_t(signal) - 1);
+    return sys_rt_sigprocmask(SIG_BLOCK, &mask, nullptr);
+}
+
+di::Result<void> send_signal(ProcessId id, Signal signal) {
+    return sys_kill(id, int(signal));
+}
+
+di::Result<Signal> wait_for_signal(Signal signal) {
+    auto mask = kernel_sigset_t(1) << (kernel_sigset_t(signal) - 1);
+    return sys_rt_sigtimedwait(&mask, nullptr, nullptr);
 }
 
 void exit_thread() {
