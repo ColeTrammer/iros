@@ -24,7 +24,7 @@ constexpr auto resize(Vec& vector, size_t count) -> R {
 
     if (count < size) {
         auto end = vector::end(vector);
-        container::destroy(end - count, end);
+        container::destroy(end - (size - count), end);
         vector.assume_size(count);
         return util::create<R>();
     }
@@ -41,7 +41,7 @@ constexpr auto resize(Vec& vector, size_t count, T const& value) -> R {
     auto size = vector::size(vector);
     if (count < size) {
         auto end = vector::end(vector);
-        container::destroy(end - count, end);
+        container::destroy(end - (size - count), end);
         vector.assume_size(count);
         return util::create<R>();
     }

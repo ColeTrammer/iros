@@ -78,8 +78,8 @@ public:
         return di::max({ min_capacity, 2 * m_capacity, smallest_allowed_capacity });
     }
 
-    constexpr Alloc& allocator() { return m_allocator; }
-    constexpr Alloc const& allocator() const { return m_allocator; }
+    constexpr auto allocator() -> Alloc& { return m_allocator; }
+    constexpr auto allocator() const -> Alloc const& { return m_allocator; }
 
 private:
     constexpr void deallocate() {
