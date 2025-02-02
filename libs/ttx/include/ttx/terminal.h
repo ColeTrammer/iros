@@ -1,9 +1,11 @@
 #pragma once
 
+#include "di/container/ring/ring.h"
 #include "dius/sync_file.h"
 #include "ttx/cursor_style.h"
 #include "ttx/escape_sequence_parser.h"
 #include "ttx/graphics_rendition.h"
+#include "ttx/key_event_io.h"
 #include "ttx/params.h"
 
 namespace ttx {
@@ -42,6 +44,11 @@ public:
         result.m_x_overflow = m_x_overflow;
         result.m_origin_mode = m_origin_mode;
 
+        result.m_application_cursor_keys_mode = m_application_cursor_keys_mode;
+        result.m_key_reporting_flags = m_key_reporting_flags;
+        result.m_key_reporting_flags_stack = di::clone(m_key_reporting_flags_stack);
+        result.m_bracketed_paste = m_bracketed_paste;
+
         result.m_current_graphics_rendition = m_current_graphics_rendition;
 
         result.m_rows_below = di::clone(m_rows_below);
@@ -78,6 +85,10 @@ public:
 
     void scroll_down_if_needed();
     void scroll_up_if_needed();
+
+    auto application_cursor_keys_mode() const -> ApplicationCursorKeysMode { return m_application_cursor_keys_mode; }
+    auto key_reporting_flags() const -> KeyReportingFlags { return m_key_reporting_flags; }
+    auto bracked_paste() const -> bool { return m_bracketed_paste; }
 
     di::Vector<Row> const& rows() const { return m_rows; }
     Row const& row_at_scroll_relative_offset(int offset) const;
@@ -190,6 +201,11 @@ private:
     void csi_scosc(Params const& params);
     void csi_scorc(Params const& params);
 
+    void csi_set_key_reporting_flags(Params const& params);
+    void csi_get_key_reporting_flags(Params const& params);
+    void csi_push_key_reporting_flags(Params const& params);
+    void csi_pop_key_reporting_flags(Params const& params);
+
     di::Vector<Row> m_rows;
     int m_row_count { 0 };
     int m_col_count { 0 };
@@ -210,6 +226,11 @@ private:
     bool m_autowrap_mode { true };
     bool m_x_overflow { false };
     bool m_origin_mode { false };
+
+    ApplicationCursorKeysMode m_application_cursor_keys_mode { ApplicationCursorKeysMode::Disabled };
+    KeyReportingFlags m_key_reporting_flags { KeyReportingFlags::None };
+    di::Ring<KeyReportingFlags> m_key_reporting_flags_stack;
+    bool m_bracketed_paste { false };
 
     GraphicsRendition m_current_graphics_rendition;
 

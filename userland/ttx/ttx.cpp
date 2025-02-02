@@ -1,6 +1,7 @@
 #include "di/cli/parser.h"
 #include "di/container/string/string_view.h"
 #include "di/io/writer_print.h"
+#include "di/sync/synchronized.h"
 #include "dius/main.h"
 #include "dius/print.h"
 #include "dius/sync_file.h"
@@ -79,10 +80,15 @@ static auto main(Args& args) -> di::Result<void> {
     });
 
     // Setup - kitty key mode.
-    // di::writer_print<di::String::Encoding>(dius::stdin, "\033[>31u"_sv);
-    // auto _ = di::ScopeExit([&] {
-    //     di::writer_print<di::String::Encoding>(dius::stdin, "\033[<u"_sv);
-    // });
+    di::writer_print<di::String::Encoding>(dius::stdin, "\033[>31u"_sv);
+    auto _ = di::ScopeExit([&] {
+        di::writer_print<di::String::Encoding>(dius::stdin, "\033[<u"_sv);
+    });
+
+    auto log = TRY(dius::open_sync("/tmp/ttx.log"_pv, dius::OpenMode::WriteClobber));
+
+    auto terminal = di::Synchronized<Terminal>(pty_controller);
+    terminal.get_assuming_no_concurrent_accesses().set_visible_size(terminal_size.rows, terminal_size.cols);
 
     auto input_thread = TRY(dius::Thread::create([&] -> void {
         auto _ = di::ScopeExit([&] {
@@ -101,10 +107,6 @@ static auto main(Args& args) -> di::Result<void> {
                 break;
             }
 
-            if (!pty_controller.write_exactly(buffer | di::take(*nread))) {
-                break;
-            }
-
             auto utf8_string = utf8_decoder.decode(buffer | di::take(*nread));
             auto events = parser.parse(utf8_string);
             for (auto const& event : events) {
@@ -112,6 +114,20 @@ static auto main(Args& args) -> di::Result<void> {
                     if (ev->key() == Key::Q && !!(ev->modifiers() & Modifiers::Control)) {
                         exit = true;
                         break;
+                    }
+
+                    auto [application_cursor_keys_mode,
+                          key_reporting_flags] = terminal.with_lock([&](Terminal& terminal) {
+                        return di::Tuple { terminal.application_cursor_keys_mode(), terminal.key_reporting_flags() };
+                    });
+
+                    auto serialized_event =
+                        ttx::serialize_key_event(*ev, application_cursor_keys_mode, key_reporting_flags);
+                    if (serialized_event) {
+                        if (!pty_controller.write_exactly(di::as_bytes(serialized_event.value().span()))) {
+                            exit = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -123,14 +139,11 @@ static auto main(Args& args) -> di::Result<void> {
     });
 
     auto parser = EscapeSequenceParser();
-    auto terminal = Terminal(pty_controller);
-    terminal.set_visible_size(terminal_size.rows, terminal_size.cols);
     auto cursor_row = 0_u32;
     auto cursor_col = 0_u32;
     auto last_graphics_rendition = GraphicsRendition {};
 
     auto utf8_decoder = Utf8StreamDecoder {};
-    auto log = TRY(dius::open_sync("/tmp/ttx.log"_pv, dius::OpenMode::WriteClobber));
     while (!done.load(di::MemoryOrder::Acquire)) {
         auto buffer = di::Vector<byte> {};
         buffer.resize(16384);
@@ -141,57 +154,48 @@ static auto main(Args& args) -> di::Result<void> {
         }
 
         auto utf8_string = utf8_decoder.decode(buffer | di::take(*nread));
-        // auto safe_string = utf8_string | di::transform([](c32 code_point) -> di::String {
-        //                        if (code_point >= 32 && code_point != 127) {
-        //                            return di::single(code_point) | di::to<di::String>();
-        //                        }
-        //                        return *di::present("\\x{:2x}"_sv, (i32) code_point);
-        //                    }) |
-        //                    di::join | di::to<di::String>();
-        // (void) di::writer_println<di::container::string::Utf8Encoding>(log, "\"{}\""_sv, safe_string);
 
         auto parser_result = parser.parse(utf8_string);
-        // for (auto const& result : parser_result) {
-        //     (void) di::writer_println<di::container::string::Utf8Encoding>(log, "{}"_sv,
-        //                                                                    di::visit(di::to_string, result));
-        // }
-        terminal.on_parser_results(parser_result.span());
+        terminal.with_lock([&](Terminal& terminal) {
+            terminal.on_parser_results(parser_result.span());
 
-        // Draw
-        if (terminal.allowed_to_draw()) {
-            di::writer_print<di::String::Encoding>(dius::stdin, "\033[?2026h"_sv);
-            di::writer_print<di::String::Encoding>(dius::stdin, "\033[?25l"_sv);
-            for (auto const& [r, row] : di::enumerate(terminal.rows())) {
-                for (auto const& [c, cell] : di::enumerate(row)) {
-                    if (cell.dirty) {
-                        if (cursor_row != r || cursor_col != c) {
-                            cursor_row = r;
-                            cursor_col = c;
-                            di::writer_print<di::String::Encoding>(dius::stdin, "\033[{};{}H"_sv, cursor_row + 1,
-                                                                   cursor_col + 1);
+            // Draw
+            if (terminal.allowed_to_draw()) {
+                di::writer_print<di::String::Encoding>(dius::stdin, "\033[?2026h"_sv);
+                di::writer_print<di::String::Encoding>(dius::stdin, "\033[?25l"_sv);
+                for (auto const& [r, row] : di::enumerate(terminal.rows())) {
+                    for (auto const& [c, cell] : di::enumerate(row)) {
+                        if (cell.dirty) {
+                            if (cursor_row != r || cursor_col != c) {
+                                cursor_row = r;
+                                cursor_col = c;
+                                di::writer_print<di::String::Encoding>(dius::stdin, "\033[{};{}H"_sv, cursor_row + 1,
+                                                                       cursor_col + 1);
+                            }
+
+                            if (cell.graphics_rendition != last_graphics_rendition) {
+                                last_graphics_rendition = cell.graphics_rendition;
+
+                                di::writer_print<di::String::Encoding>(dius::stdin, "\033[{}m"_sv,
+                                                                       last_graphics_rendition.as_csi_params());
+                            }
+
+                            di::writer_print<di::String::Encoding>(dius::stdin, "{}"_sv, cell.ch);
+                            cursor_col = di::min(cursor_col + 1, terminal_size.cols - 1);
                         }
-
-                        if (cell.graphics_rendition != last_graphics_rendition) {
-                            last_graphics_rendition = cell.graphics_rendition;
-
-                            di::writer_print<di::String::Encoding>(dius::stdin, "\033[{}m"_sv,
-                                                                   last_graphics_rendition.as_csi_params());
-                        }
-
-                        di::writer_print<di::String::Encoding>(dius::stdin, "{}"_sv, cell.ch);
-                        cursor_col = di::min(cursor_col + 1, terminal_size.cols - 1);
                     }
                 }
+                if (!terminal.cursor_hidden()) {
+                    cursor_row = terminal.cursor_row();
+                    cursor_col = terminal.cursor_col();
+                    di::writer_print<di::String::Encoding>(dius::stdin, "\033[{};{}H"_sv, cursor_row + 1,
+                                                           cursor_col + 1);
+                    di::writer_print<di::String::Encoding>(dius::stdin, "\033[{} q"_sv, i32(terminal.cursor_style()));
+                    di::writer_print<di::String::Encoding>(dius::stdin, "\033[?25h"_sv);
+                }
+                di::writer_print<di::String::Encoding>(dius::stdin, "\033[?2026l"_sv);
             }
-            if (!terminal.cursor_hidden()) {
-                cursor_row = terminal.cursor_row();
-                cursor_col = terminal.cursor_col();
-                di::writer_print<di::String::Encoding>(dius::stdin, "\033[{};{}H"_sv, cursor_row + 1, cursor_col + 1);
-                di::writer_print<di::String::Encoding>(dius::stdin, "\033[{} q"_sv, i32(terminal.cursor_style()));
-                di::writer_print<di::String::Encoding>(dius::stdin, "\033[?25h"_sv);
-            }
-            di::writer_print<di::String::Encoding>(dius::stdin, "\033[?2026l"_sv);
-        }
+        });
     }
 
     return {};

@@ -5,6 +5,7 @@
 #include "ttx/cursor_style.h"
 #include "ttx/escape_sequence_parser.h"
 #include "ttx/graphics_rendition.h"
+#include "ttx/key_event_io.h"
 #include "ttx/params.h"
 
 namespace ttx {
@@ -62,6 +63,8 @@ void Terminal::on_parser_result(CSI const& csi) {
         switch (csi.terminator) {
             case 'c':
                 return csi_da3(csi.params);
+            case 'u':
+                return csi_set_key_reporting_flags(csi.params);
         }
         return;
     }
@@ -70,6 +73,16 @@ void Terminal::on_parser_result(CSI const& csi) {
         switch (csi.terminator) {
             case 'c':
                 return csi_da2(csi.params);
+            case 'u':
+                return csi_push_key_reporting_flags(csi.params);
+        }
+        return;
+    }
+
+    if (csi.intermediate == "<"_sv) {
+        switch (csi.terminator) {
+            case 'u':
+                return csi_pop_key_reporting_flags(csi.params);
         }
         return;
     }
@@ -80,6 +93,8 @@ void Terminal::on_parser_result(CSI const& csi) {
                 return csi_decset(csi.params);
             case 'l':
                 return csi_decrst(csi.params);
+            case 'u':
+                return csi_get_key_reporting_flags(csi.params);
         }
         return;
     }
@@ -515,7 +530,7 @@ void Terminal::csi_decset(Params const& params) {
     switch (params.get(0, 0)) {
         case 1:
             // Cursor Keys Mode - https://vt100.net/docs/vt510-rm/DECCKM.html
-            // m_psuedo_terminal.set_application_cursor_keys(true);
+            m_application_cursor_keys_mode = ApplicationCursorKeysMode::Enabled;
             break;
         case 3:
             // Select 80 or 132 Columns per Page - https://vt100.net/docs/vt510-rm/DECCOLM.html
@@ -588,7 +603,7 @@ void Terminal::csi_decset(Params const& params) {
             set_use_alternate_screen_buffer(true);
             break;
         case 2004:
-            // m_psuedo_terminal.set_bracketed_paste(true);
+            m_bracketed_paste = true;
             break;
         case 2026:
             m_disable_drawing = true;
@@ -603,7 +618,7 @@ void Terminal::csi_decrst(Params const& params) {
     switch (params.get(0, 0)) {
         case 1:
             // Cursor Keys Mode - https://vt100.net/docs/vt510-rm/DECCKM.html
-            // m_psuedo_terminal.set_application_cursor_keys(false);
+            m_application_cursor_keys_mode = ApplicationCursorKeysMode::Disabled;
             break;
         case 3:
             // Select 80 or 132 Columns per Page - https://vt100.net/docs/vt510-rm/DECCOLM.html
@@ -669,7 +684,7 @@ void Terminal::csi_decrst(Params const& params) {
             set_use_alternate_screen_buffer(false);
             break;
         case 2004:
-            // m_psuedo_terminal.set_bracketed_paste(false);
+            m_bracketed_paste = false;
             break;
         case 2026:
             m_disable_drawing = false;
@@ -751,6 +766,60 @@ void Terminal::csi_scosc(Params const&) {
 // Restore Saved Cursor Position - https://vt100.net/docs/vt510-rm/SCORC.html
 void Terminal::csi_scorc(Params const&) {
     restore_pos();
+}
+
+// https://sw.kovidgoyal.net/kitty/keyboard-protocol/#progressive-enhancement
+void Terminal::csi_set_key_reporting_flags(Params const& params) {
+    auto flags_int = params.get(0);
+    auto mode = params.get(1, 1);
+
+    auto flags = KeyReportingFlags(flags_int) & KeyReportingFlags::All;
+    switch (mode) {
+        case 1:
+            m_key_reporting_flags = flags;
+            break;
+        case 2:
+            m_key_reporting_flags |= flags;
+            break;
+        case 3:
+            m_key_reporting_flags &= ~flags;
+            break;
+    }
+}
+
+// https://sw.kovidgoyal.net/kitty/keyboard-protocol/#progressive-enhancement
+void Terminal::csi_get_key_reporting_flags(Params const&) {
+    (void) m_psuedo_terminal.write_exactly(
+        di::as_bytes(di::present("\033[?{}u"_sv, u32(m_key_reporting_flags)).value().span()));
+}
+
+// https://sw.kovidgoyal.net/kitty/keyboard-protocol/#progressive-enhancement
+void Terminal::csi_push_key_reporting_flags(Params const& params) {
+    auto flags_int = params.get(0);
+    auto flags = KeyReportingFlags(flags_int) & KeyReportingFlags::All;
+
+    if (m_key_reporting_flags_stack.size() >= 100) {
+        m_key_reporting_flags_stack.pop_front();
+    }
+    m_key_reporting_flags_stack.push_back(m_key_reporting_flags);
+    m_key_reporting_flags = flags;
+}
+
+// https://sw.kovidgoyal.net/kitty/keyboard-protocol/#progressive-enhancement
+void Terminal::csi_pop_key_reporting_flags(Params const& params) {
+    auto n = params.get(0, 1);
+    if (n == 0) {
+        return;
+    }
+    if (n >= m_key_reporting_flags_stack.size()) {
+        m_key_reporting_flags_stack.clear();
+        m_key_reporting_flags = KeyReportingFlags::None;
+        return;
+    }
+
+    auto new_stack_size = m_key_reporting_flags_stack.size() - n;
+    m_key_reporting_flags = m_key_reporting_flags_stack[new_stack_size];
+    m_key_reporting_flags_stack.erase(m_key_reporting_flags_stack.begin() + new_stack_size);
 }
 
 void Terminal::set_cursor(int row, int col) {

@@ -30,6 +30,7 @@ enum class KeyReportingFlags {
     ReportAlternateKeys = 1 << 2,
     ReportAllKeysAsEscapeCodes = 1 << 3,
     ReportAssociatedText = 1 << 4,
+    All = Disambiguate | ReportEventTypes | ReportAlternateKeys | ReportAllKeysAsEscapeCodes | ReportAssociatedText,
 };
 
 DI_DEFINE_ENUM_BITWISE_OPERATIONS(KeyReportingFlags)
