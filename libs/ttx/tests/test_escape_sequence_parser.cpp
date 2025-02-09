@@ -25,7 +25,7 @@ static void nvim_startup() {
     };
 
     auto parser = ttx::EscapeSequenceParser {};
-    auto actual = parser.parse(input);
+    auto actual = parser.parse_application_escape_sequences(input);
 
     for (auto const& [ex, ac] : di::zip(expected, actual)) {
         ASSERT_EQ(ex, ac);
@@ -42,7 +42,35 @@ static void empty_params() {
     };
 
     auto parser = ttx::EscapeSequenceParser {};
-    auto actual = parser.parse(input);
+    auto actual = parser.parse_application_escape_sequences(input);
+
+    for (auto const& [ex, ac] : di::zip(expected, actual)) {
+        ASSERT_EQ(ex, ac);
+    }
+    ASSERT_EQ(expected.size(), actual.size());
+}
+
+static void input() {
+    using namespace ttx;
+
+    constexpr auto input = "\033A\033OA\033\x00\033\033\033[AA\033]\x18\x1a\033\x1a\033"_sv;
+
+    auto expected = di::Array {
+        InputParserResult { ControlCharacter(U'A', true) },
+        InputParserResult { SS3(U'A') },
+        InputParserResult { ControlCharacter(U'\0', true) },
+        InputParserResult { ControlCharacter(U'\033', true) },
+        InputParserResult { CSI(""_s, {}, U'A') },
+        InputParserResult { PrintableCharacter(U'A') },
+        InputParserResult { ControlCharacter(U']', true) },
+        InputParserResult { ControlCharacter(U'\x18', false) },
+        InputParserResult { ControlCharacter(U'\x1a', false) },
+        InputParserResult { ControlCharacter(U'\x1a', true) },
+        InputParserResult { ControlCharacter(U'\033', false) },
+    };
+
+    auto parser = EscapeSequenceParser {};
+    auto actual = parser.parse_input_escape_sequences(input);
 
     for (auto const& [ex, ac] : di::zip(expected, actual)) {
         ASSERT_EQ(ex, ac);
@@ -52,4 +80,5 @@ static void empty_params() {
 
 TEST(escape_sequence_parser, nvim_startup)
 TEST(escape_sequence_parser, empty_params)
+TEST(escape_sequence_parser, input)
 }

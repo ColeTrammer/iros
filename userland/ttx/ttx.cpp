@@ -152,7 +152,7 @@ static auto main(Args& args) -> di::Result<void> {
 
             auto utf8_string = utf8_decoder.decode(buffer | di::take(*nread));
 
-            auto parser_result = parser.parse(utf8_string);
+            auto parser_result = parser.parse_application_escape_sequences(utf8_string);
             terminal.with_lock([&](Terminal& terminal) {
                 terminal.on_parser_results(parser_result.span());
 

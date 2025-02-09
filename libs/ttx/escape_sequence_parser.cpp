@@ -73,6 +73,21 @@ STATE(escape) {
         return execute(code_point);
     }
 
+    if (code_point == 0x5B) {
+        return transition(State::CsiEntry);
+    }
+
+    if (m_mode == Mode::Input && code_point == 0x4F) {
+        return transition(State::Ss3);
+    }
+
+    // For the purposes of parsing input, any other code point should be treated
+    // as if we were in the ground state. This allows us to recognize alt+key when
+    // using the legacy mode.
+    if (m_mode == Mode::Input) {
+        return execute(code_point);
+    }
+
     if (is_escape_terminator(code_point)) {
         esc_dispatch(code_point);
         return transition(State::Ground);
@@ -85,10 +100,6 @@ STATE(escape) {
 
     if (code_point == 0x58 || code_point == 0x5E || code_point == 0x5F) {
         return transition(State::SosPmApcString);
-    }
-
-    if (code_point == 0x5B) {
-        return transition(State::CsiEntry);
     }
 
     if (code_point == 0x5D) {
@@ -384,6 +395,13 @@ STATE(sos_pm_apc_string) {
     return ignore(code_point);
 }
 
+STATE(ss3) {
+    ON_ENTRY_NOOP(Ss3);
+
+    output_ss3(code_point);
+    return transition(State::Ground);
+}
+
 void EscapeSequenceParser::ignore(c32) {}
 
 void EscapeSequenceParser::print(c32 code_point) {
@@ -391,7 +409,10 @@ void EscapeSequenceParser::print(c32 code_point) {
 }
 
 void EscapeSequenceParser::execute(c32 code_point) {
-    m_result.push_back(ControlCharacter(code_point));
+    m_result.push_back(ControlCharacter(code_point, m_next_state == State::Escape));
+    if (m_mode == Mode::Input) {
+        transition(State::Ground);
+    }
 }
 
 void EscapeSequenceParser::clear() {
@@ -462,6 +483,10 @@ void EscapeSequenceParser::osc_put(c32) {}
 
 void EscapeSequenceParser::osc_end() {}
 
+void EscapeSequenceParser::output_ss3(c32 code_point) {
+    m_result.push_back(SS3(code_point));
+}
+
 void EscapeSequenceParser::add_param(di::Optional<u32> param) {
     if (m_last_separator_was_colon) {
         if (param) {
@@ -494,6 +519,11 @@ void EscapeSequenceParser::on_input(c32 code_point) {
     }
 
     if (code_point == 0x1B) {
+        // When parsing input, recnogize ESC ESC as a key press.
+        if (m_mode == Mode::Input && m_next_state == State::Escape) {
+            execute(code_point);
+            return transition(State::Ground);
+        }
         return transition(State::Escape);
     }
 
@@ -506,10 +536,44 @@ void EscapeSequenceParser::on_input(c32 code_point) {
     }
 }
 
-auto EscapeSequenceParser::parse(di::StringView data) -> di::Vector<ParserResult> {
+auto EscapeSequenceParser::parse_application_escape_sequences(di::StringView data) -> di::Vector<ParserResult> {
+    m_mode = Mode::Application;
     for (auto code_point : data) {
         on_input(code_point);
     }
+
+    // Convert the result variant to not have the SS3 type.
+    auto result = di::Vector<ParserResult> {};
+    for (auto& ev : m_result) {
+        ASSERT(!di::holds_alternative<SS3>(ev));
+        di::visit(
+            [&]<typename T>(T& e) {
+                if constexpr (!di::SameAs<T, SS3>) {
+                    result.push_back(di::move(e));
+                }
+            },
+            ev);
+    }
+    m_result.clear();
+    return result;
+}
+
+auto EscapeSequenceParser::parse_input_escape_sequences(di::StringView data) -> di::Vector<InputParserResult> {
+    m_mode = Mode::Input;
+    for (auto code_point : data) {
+        on_input(code_point);
+    }
+
+    // Special case: if we get a lone "escape" byte followed by no text,
+    // we assume the user hit the escape key, and not that the terminal
+    // partially transmitted an escape sequence. This really should be
+    // using a timeout mechanism, and be completely disabled if the terminal
+    // supports the kitty key protocol.
+    if (m_next_state == State::Escape) {
+        transition(State::Ground);
+        m_result.push_back(ControlCharacter('\x1b'));
+    }
+
     return di::move(m_result);
 }
 }
