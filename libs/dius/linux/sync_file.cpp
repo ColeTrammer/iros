@@ -109,15 +109,15 @@ auto SyncFile::set_tty_window_size(tty::WindowSize size) -> di::Expected<void, d
     ::winsize ws {};
     ws.ws_row = size.rows;
     ws.ws_col = size.cols;
-    ws.ws_xpixel = 0;
-    ws.ws_ypixel = 0;
+    ws.ws_xpixel = size.pixel_width;
+    ws.ws_ypixel = size.pixel_height;
     return sys_ioctl(file_descriptor(), TIOCSWINSZ, &ws);
 }
 
 auto SyncFile::get_tty_window_size() -> di::Expected<tty::WindowSize, di::GenericCode> {
     ::winsize ws {};
     TRY(sys_ioctl(file_descriptor(), TIOCGWINSZ, &ws));
-    return tty::WindowSize { ws.ws_row, ws.ws_col };
+    return tty::WindowSize { ws.ws_row, ws.ws_col, ws.ws_xpixel, ws.ws_ypixel };
 }
 
 auto SyncFile::get_psuedo_terminal_path() -> di::Expected<di::Path, di::GenericCode> {
