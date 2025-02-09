@@ -334,7 +334,8 @@ public:
     constexpr auto end()
     requires(!concepts::SimpleView<Views> || ...)
     {
-        if constexpr (concepts::CommonContainer<meta::Back<meta::List<Views...>>>) {
+        if constexpr ((concepts::Semiregular<meta::ContainerIterator<Views>> && ...) &&
+                      concepts::CommonContainer<meta::Back<meta::List<Views...>>>) {
             constexpr auto N = sizeof...(Views);
             return Iterator<false>(this, c_<N - 1>, container::end(util::get<N - 1>(m_views)));
         } else {
@@ -343,9 +344,10 @@ public:
     }
 
     constexpr auto end() const
-    requires(concepts::Container<Views const> && ...)
+    requires((concepts::Container<Views const> && detail::Concatable<Views const>) && ...)
     {
-        if constexpr (concepts::CommonContainer<meta::Back<meta::List<Views const...>>>) {
+        if constexpr ((concepts::Semiregular<meta::ContainerIterator<Views const>> && ...) &&
+                      concepts::CommonContainer<meta::Back<meta::List<Views const...>>>) {
             constexpr auto N = sizeof...(Views);
             return Iterator<true>(this, c_<N - 1>, container::end(util::get<N - 1>(m_views)));
         } else {

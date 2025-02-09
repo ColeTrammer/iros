@@ -364,6 +364,21 @@ constexpr static void join() {
                  return di::Array { 1, 2 };
              });
     ASSERT(di::container::equal(b | di::join, di::Array { 1, 2, 1, 2 }));
+
+    auto f = [](c32 p) -> di::StaticVector<c32, di::Constexpr<2>> {
+        auto result = di::StaticVector<c32, di::Constexpr<2>> {};
+        (void) result.push_back(p);
+        (void) result.push_back(p);
+        return result;
+    };
+
+    auto s = "asdf"_sv;
+    auto v = di::join(di::transform(s, f));
+    ASSERT(di::container::equal(v, "aassddff"_sv));
+
+    auto q = di::Optional<c32>(U'"');
+    auto vv = di::concat(q, v, q);
+    ASSERT(di::container::equal(vv, "\"aassddff\""_sv));
 }
 
 constexpr static void join_with() {
