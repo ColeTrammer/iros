@@ -67,7 +67,6 @@ struct MouseScrollProtocol {
 auto serialize_mouse_event(MouseEvent const& event, MouseProtocol protocol, MouseEncoding encoding,
                            di::Optional<MousePosition> prev_event_position, MouseScrollProtocol const& scroll_protocol,
                            dius::tty::WindowSize const& window_size) -> di::Optional<di::TransparentString>;
-auto parse_sgr_mouse_event(Params const& params, c32 final_code_point,
-                           di::Optional<dius::tty::WindowSize> window_size_if_using_pixels = {})
+auto mouse_event_from_csi(CSI const& csi, di::Optional<dius::tty::WindowSize> window_size_if_using_pixels = {})
     -> di::Optional<MouseEvent>;
 }

@@ -5,18 +5,12 @@
 #include "di/vocab/variant/variant.h"
 #include "ttx/escape_sequence_parser.h"
 #include "ttx/key_event.h"
+#include "ttx/mouse_event.h"
 
 namespace ttx {
-using Event = di::Variant<KeyEvent>;
+using Event = di::Variant<KeyEvent, MouseEvent>;
 
 class TerminalInputParser {
-    enum class State {
-        Base,
-        Escape,
-        CSI,
-        SS3,
-    };
-
 public:
     auto parse(di::StringView input) -> di::Vector<Event>;
 

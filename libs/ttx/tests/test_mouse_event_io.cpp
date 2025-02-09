@@ -303,68 +303,69 @@ static void parse() {
     using namespace ttx;
 
     struct Case {
-        Params params {};
+        CSI csi {};
         di::Optional<MouseEvent> expected {};
-        c32 final_code_point { U'M' };
         di::Optional<dius::tty::WindowSize> window_size_if_using_pixels {};
     };
 
     auto cases = di::Array {
         Case {
-            { { 0 }, { 1 }, { 1 } },
+            CSI(""_s, { { 0 }, { 1 }, { 1 } }, U'M'),
+            {},
+        },
+        Case {
+            CSI("<"_s, { { 1000 }, { 1 }, { 1 } }, U'M'),
+            {},
+        },
+        Case {
+            CSI("<"_s, { { 0 }, { 1 }, { 1 } }, U'M'),
             MouseEvent::press(MouseButton::Left, MousePosition({ 0, 0 })),
         },
         Case {
-            { { 2 }, { 1 }, { 1 } },
+            CSI("<"_s, { { 2 }, { 1 }, { 1 } }, U'M'),
             MouseEvent::press(MouseButton::Right, MousePosition({ 0, 0 })),
         },
         Case {
-            { { 2 }, { 0 }, { 0 } },
+            CSI("<"_s, { { 2 }, { 0 }, { 0 } }, U'M'),
             MouseEvent::press(MouseButton::Right, MousePosition({ 0, 0 })),
         },
         Case {
-            { { 64 }, { 5 }, { 6 } },
+            CSI("<"_s, { { 64 }, { 5 }, { 6 } }, U'M'),
             MouseEvent::press(MouseButton::ScrollUp, MousePosition({ 4, 5 })),
         },
         Case {
-            { { 96 }, { 5 }, { 6 } },
+            CSI("<"_s, { { 96 }, { 5 }, { 6 } }, U'M'),
             MouseEvent(MouseEventType::Move, MouseButton::ScrollUp, MousePosition({ 4, 5 })),
         },
         Case {
-            { { 64 }, { 5 }, { 6 } },
+            CSI("<"_s, { { 64 }, { 5 }, { 6 } }, U'm'),
             MouseEvent(MouseEventType::Release, MouseButton::ScrollUp, MousePosition({ 4, 5 })),
-            U'm',
         },
         Case {
-            { { 68 }, { 5 }, { 6 } },
+            CSI("<"_s, { { 68 }, { 5 }, { 6 } }, U'm'),
             MouseEvent(MouseEventType::Release, MouseButton::ScrollUp, MousePosition({ 4, 5 }), Modifiers::Shift),
-            U'm',
         },
         Case {
-            { { 76 }, { 5 }, { 6 } },
+            CSI("<"_s, { { 76 }, { 5 }, { 6 } }, U'm'),
             MouseEvent(MouseEventType::Release, MouseButton::ScrollUp, MousePosition({ 4, 5 }),
                        Modifiers::Shift | Modifiers::Alt),
-            U'm',
         },
         Case {
-            { { 92 }, { 5 }, { 6 } },
+            CSI("<"_s, { { 92 }, { 5 }, { 6 } }, U'm'),
             MouseEvent(MouseEventType::Release, MouseButton::ScrollUp, MousePosition({ 4, 5 }),
                        Modifiers::Shift | Modifiers::Alt | Modifiers::Control),
-            U'm',
         },
         Case {
-            { { 92 }, { 121 }, { 156 } },
+            CSI("<"_s, { { 92 }, { 121 }, { 156 } }, U'm'),
             MouseEvent(MouseEventType::Release, MouseButton::ScrollUp,
                        MousePosition({ 12, 7 }, MouseCoordinate(121, 156)),
                        Modifiers::Shift | Modifiers::Alt | Modifiers::Control),
-            U'm',
             dius::tty::WindowSize { 80, 100, 1000, 1600 },
         },
     };
 
     for (auto const& test_case : cases) {
-        auto result =
-            parse_sgr_mouse_event(test_case.params, test_case.final_code_point, test_case.window_size_if_using_pixels);
+        auto result = mouse_event_from_csi(test_case.csi, test_case.window_size_if_using_pixels);
         ASSERT_EQ(test_case.expected, result);
     }
 }

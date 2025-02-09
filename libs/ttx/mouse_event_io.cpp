@@ -216,11 +216,18 @@ auto serialize_mouse_event(MouseEvent const& event, MouseProtocol protocol, Mous
     return {};
 }
 
-auto parse_sgr_mouse_event(Params const& params, c32 final_code_point,
-                           di::Optional<dius::tty::WindowSize> window_size_if_using_pixels)
+auto mouse_event_from_csi(CSI const& csi, di::Optional<dius::tty::WindowSize> window_size_if_using_pixels)
     -> di::Optional<MouseEvent> {
     constexpr auto flags = u32(4 | 8 | 16 | 32);
 
+    // For now, only the SGR format is supported. This looks like:
+    //   CSI < Pb;Px;Py [Mm]
+
+    if (csi.intermediate != "<"_sv) {
+        return {};
+    }
+
+    auto const& params = csi.params;
     auto button_code = params.get(0);
     auto x = params.get(1, 1);
     auto y = params.get(2, 1);
@@ -235,7 +242,7 @@ auto parse_sgr_mouse_event(Params const& params, c32 final_code_point,
     }
 
     auto modifiers = Modifiers::None;
-    auto type = final_code_point == u'M' ? MouseEventType::Press : MouseEventType::Release;
+    auto type = csi.terminator == u'M' ? MouseEventType::Press : MouseEventType::Release;
 
     if (button_code & 4) {
         modifiers |= Modifiers::Shift;

@@ -28,6 +28,9 @@ void TerminalInputParser::handle(CSI const& csi) {
     if (auto key_event = key_event_from_csi(csi)) {
         m_events.emplace_back(di::move(key_event).value());
     }
+    if (auto mouse_event = mouse_event_from_csi(csi)) {
+        m_events.emplace_back(di::move(mouse_event).value());
+    }
 }
 
 void TerminalInputParser::handle(Escape const&) {}
