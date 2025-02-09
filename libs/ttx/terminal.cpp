@@ -1005,8 +1005,7 @@ void Terminal::scroll_up() {
         return;
     }
 
-    di::rotate(m_rows.begin() + m_cursor_row, m_rows.begin() + m_scroll_end, m_rows.begin() + m_scroll_end + 1);
-    // m_rows.rotate_right(m_scroll_start, m_scroll_end + 1);
+    di::rotate(m_rows.begin() + m_scroll_start, m_rows.begin() + m_scroll_end, m_rows.begin() + m_scroll_end + 1);
     m_rows_below.push_back(di::move(m_rows[m_scroll_start]));
     m_rows[m_scroll_start] = m_rows_above.pop_back().value();
     invalidate_all();
@@ -1017,8 +1016,7 @@ void Terminal::scroll_down() {
         return;
     }
 
-    di::rotate(m_rows.begin() + m_cursor_row, m_rows.begin() + m_cursor_row + 1, m_rows.begin() + m_scroll_end + 1);
-    // m_rows.rotate_left(m_scroll_start, m_scroll_end + 1);
+    di::rotate(m_rows.begin() + m_scroll_start, m_rows.begin() + m_scroll_start + 1, m_rows.begin() + m_scroll_end + 1);
     m_rows_above.push_back(di::move(m_rows[m_scroll_end]));
     m_rows[m_scroll_end] = m_rows_below.pop_back().value();
     invalidate_all();
@@ -1033,8 +1031,7 @@ void Terminal::scroll_up_if_needed() {
             return;
         }
 
-        di::rotate(m_rows.begin() + m_cursor_row, m_rows.begin() + m_scroll_end, m_rows.begin() + m_scroll_end + 1);
-        // m_rows.rotate_right(m_scroll_start, m_scroll_end + 1);
+        di::rotate(m_rows.begin() + m_scroll_start, m_rows.begin() + m_scroll_end, m_rows.begin() + m_scroll_end + 1);
         m_rows_below.push_back(di::move(m_rows[m_scroll_start]));
         m_rows[m_scroll_start] = Row();
         m_rows[m_scroll_start].resize(m_col_count);
@@ -1055,8 +1052,8 @@ void Terminal::scroll_down_if_needed() {
             return;
         }
 
-        di::rotate(m_rows.begin() + m_cursor_row, m_rows.begin() + m_cursor_row + 1, m_rows.begin() + m_scroll_end + 1);
-        // m_rows.rotate_left(m_scroll_start, m_scroll_end + 1);
+        di::rotate(m_rows.begin() + m_scroll_start, m_rows.begin() + m_scroll_start + 1,
+                   m_rows.begin() + m_scroll_end + 1);
         m_rows_above.push_back(di::move(m_rows[m_scroll_end]));
         m_rows[m_scroll_end] = Row();
         m_rows[m_scroll_end].resize(m_col_count);
