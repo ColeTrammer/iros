@@ -1,6 +1,9 @@
 #pragma once
 
+#include "di/container/vector/static_vector.h"
 #include "di/container/view/concat.h"
+#include "di/container/view/join.h"
+#include "di/container/view/transform.h"
 #include "di/format/make_format_args.h"
 #include "di/format/vpresent_encoded_context.h"
 #include "di/function/value.h"
@@ -294,37 +297,72 @@ namespace detail {
         using CodePoint = meta::EncodingCodePoint<Enc>;
 
         auto delimit = lift_bool(debug) % function::value(delimit_code_point);
-        auto view = view::concat(delimit, view_in, delimit);
 
-        auto print_as_integer = [&](CodePoint p) -> bool {
+        auto map_to_debug_char = [&](CodePoint p) -> di::StaticVector<c32, di::Constexpr<4>> {
+            auto result = di::StaticVector<c32, di::Constexpr<4>> {};
+            if (!debug) {
+                (void) result.push_back(c32(p));
+            }
+            // Special escaped chars. These are represented as \P.
+            else if (c32(p) == '\0') {
+                (void) result.push_back(U'\\');
+                (void) result.push_back(U'0');
+            } else if (c32(p) == '\a') {
+                (void) result.push_back(U'\\');
+                (void) result.push_back(U'a');
+            } else if (c32(p) == '\b') {
+                (void) result.push_back(U'\\');
+                (void) result.push_back(U'b');
+            } else if (c32(p) == '\f') {
+                (void) result.push_back(U'\\');
+                (void) result.push_back(U'f');
+            } else if (c32(p) == '\n') {
+                (void) result.push_back(U'\\');
+                (void) result.push_back(U'n');
+            } else if (c32(p) == '\r') {
+                (void) result.push_back(U'\\');
+                (void) result.push_back(U'r');
+            } else if (c32(p) == '\t') {
+                (void) result.push_back(U'\\');
+                (void) result.push_back(U't');
+            } else if (c32(p) == '\v') {
+                (void) result.push_back(U'\\');
+                (void) result.push_back(U'v');
+            } else if (c32(p) == '\\') {
+                (void) result.push_back(U'\\');
+                (void) result.push_back(U'\\');
+            }
+            // The delimiter is also escaped. For instance: " will become \".
+            else if (c32(p) == delimit_code_point) {
+                (void) result.push_back(U'\\');
+                (void) result.push_back(delimit_code_point);
+            }
             // Control characters should not be printed directly in debug mode.
             // This range accounts for C0 and C1 Unicode control characters.
-            return debug && (p <= 31 || p == 127 || (p >= 0x80 && p <= 0x9F));
+            else if (p <= 31 || p == 127 || (p >= 0x80 && p <= 0x9F)) {
+                auto v1 = (u8(p) / 16) & 0xF;
+                auto v2 = (u8(p) % 16);
+
+                (void) result.push_back(U'\\');
+                (void) result.push_back(U'x');
+                (void) result.push_back((v1 >= 10) ? ('a' + (v1 - 10)) : ('0' + v1));
+                (void) result.push_back((v2 >= 10) ? ('a' + (v2 - 10)) : ('0' + v2));
+            } else {
+                (void) result.push_back(c32(p));
+            }
+            return result;
         };
 
-        auto measure_code_point = [&](CodePoint p) -> size_t {
-            if (print_as_integer(p)) {
-                // P will be printed as: \xAA
-                return 4;
-            }
+        auto view = view::concat(delimit, view::join(view::transform(view_in, map_to_debug_char)), delimit);
 
+        auto measure_code_point = [&](CodePoint) -> size_t {
             // TODO: use east asian width field.
             // TODO: measure grapheme clusters instead of measuring width code point by code point.
             return 1;
         };
 
         auto do_output_char = [&](CodePoint code_point) -> Result<void> {
-            if (print_as_integer(code_point)) {
-                auto v1 = (code_point / 16) & 0xF;
-                auto v2 = (code_point % 16);
-
-                context.output(U'\\');
-                context.output(U'x');
-                context.output((v1 >= 10) ? ('a' + (v1 - 10)) : ('0' + v1));
-                context.output((v2 >= 10) ? ('a' + (v2 - 10)) : ('0' + v2));
-            } else {
-                context.output(code_point);
-            }
+            (void) context.output(code_point);
             return {};
         };
 
