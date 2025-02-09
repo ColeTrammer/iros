@@ -56,17 +56,17 @@ static void input() {
     constexpr auto input = "\033A\033OA\033\x00\033\033\033[AA\033]\x18\x1a\033\x1a\033"_sv;
 
     auto expected = di::Array {
-        InputParserResult { ControlCharacter(U'A', true) },
-        InputParserResult { SS3(U'A') },
-        InputParserResult { ControlCharacter(U'\0', true) },
-        InputParserResult { ControlCharacter(U'\033', true) },
-        InputParserResult { CSI(""_s, {}, U'A') },
-        InputParserResult { PrintableCharacter(U'A') },
-        InputParserResult { ControlCharacter(U']', true) },
-        InputParserResult { ControlCharacter(U'\x18', false) },
-        InputParserResult { ControlCharacter(U'\x1a', false) },
-        InputParserResult { ControlCharacter(U'\x1a', true) },
-        InputParserResult { ControlCharacter(U'\033', false) },
+        ParserResult { ControlCharacter(U'A', true) },
+        ParserResult { CSI(""_s, {}, U'A') },
+        ParserResult { ControlCharacter(U'\0', true) },
+        ParserResult { ControlCharacter(U'\033', true) },
+        ParserResult { CSI(""_s, {}, U'A') },
+        ParserResult { PrintableCharacter(U'A') },
+        ParserResult { ControlCharacter(U']', true) },
+        ParserResult { ControlCharacter(U'\x18', false) },
+        ParserResult { ControlCharacter(U'\x1a', false) },
+        ParserResult { ControlCharacter(U'\x1a', true) },
+        ParserResult { ControlCharacter(U'\033', false) },
     };
 
     auto parser = EscapeSequenceParser {};

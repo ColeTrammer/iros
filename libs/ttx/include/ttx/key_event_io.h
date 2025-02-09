@@ -2,6 +2,7 @@
 
 #include "di/reflect/prelude.h"
 #include "di/util/bitwise_enum.h"
+#include "ttx/escape_sequence_parser.h"
 #include "ttx/key_event.h"
 #include "ttx/params.h"
 
@@ -49,5 +50,5 @@ auto serialize_key_event(KeyEvent const& event, ApplicationCursorKeysMode cursor
     -> di::Optional<di::String>;
 
 auto key_event_from_legacy_code_point(c32 code_point, Modifiers base_modifiers = Modifiers::None) -> KeyEvent;
-auto key_event_from_csi(Params const& params, c32 terminator) -> di::Optional<KeyEvent>;
+auto key_event_from_csi(CSI const& csi) -> di::Optional<KeyEvent>;
 }

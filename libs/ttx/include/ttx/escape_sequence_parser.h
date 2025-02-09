@@ -68,18 +68,7 @@ struct ControlCharacter {
     }
 };
 
-struct SS3 {
-    c32 code_point { 0 };
-
-    auto operator==(SS3 const&) const -> bool = default;
-
-    constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<SS3>) {
-        return di::make_fields<"SS3">(di::field<"code_point", &SS3::code_point>);
-    }
-};
-
 using ParserResult = di::Variant<PrintableCharacter, DCS, CSI, Escape, ControlCharacter>;
-using InputParserResult = di::Variant<PrintableCharacter, DCS, CSI, Escape, ControlCharacter, SS3>;
 
 class EscapeSequenceParser {
 public:
@@ -89,7 +78,7 @@ public:
     };
 
     auto parse_application_escape_sequences(di::StringView data) -> di::Vector<ParserResult>;
-    auto parse_input_escape_sequences(di::StringView data) -> di::Vector<InputParserResult>;
+    auto parse_input_escape_sequences(di::StringView data) -> di::Vector<ParserResult>;
 
 private:
 // VT500-Series parser states from https://vt100.net/emu/dec_ansi_parser
@@ -156,6 +145,6 @@ private:
     Params m_params;
     bool m_last_separator_was_colon { false };
     Mode m_mode { Mode::Application };
-    di::Vector<InputParserResult> m_result;
+    di::Vector<ParserResult> m_result;
 };
 }

@@ -1,5 +1,6 @@
 #include "di/vocab/array/array.h"
 #include "dius/test/prelude.h"
+#include "ttx/escape_sequence_parser.h"
 #include "ttx/key.h"
 #include "ttx/key_event.h"
 #include "ttx/key_event_io.h"
@@ -182,32 +183,32 @@ static void parse() {
     using namespace ttx;
 
     struct Case {
-        Params params {};
-        c32 terminator { U'0' };
+        CSI csi;
         di::Optional<KeyEvent> expected {};
     };
 
     auto cases = di::Array {
         // Tilde
-        Case { { { 7 } }, '~', KeyEvent::key_down(Key::Home) },
-        Case {
-            { { 7, 12, 2 }, { 2, 3 } }, '~', KeyEvent(KeyEventType::Release, Key::Home, {}, Modifiers::Shift, 12, 2) },
-        Case {
-            { { 7, {}, 2 }, { 2, 3 } }, '~', KeyEvent(KeyEventType::Release, Key::Home, {}, Modifiers::Shift, 0, 2) },
+        Case { CSI({}, { { 7 } }, '~'), KeyEvent::key_down(Key::Home) },
+        Case { CSI({}, { { 7, 12, 2 }, { 2, 3 } }, '~'),
+               KeyEvent(KeyEventType::Release, Key::Home, {}, Modifiers::Shift, 12, 2) },
+        Case { CSI({}, { { 7, {}, 2 }, { 2, 3 } }, '~'),
+               KeyEvent(KeyEventType::Release, Key::Home, {}, Modifiers::Shift, 0, 2) },
 
         // Special
-        Case { {}, 'Z', KeyEvent::key_down(Key::Tab, {}, Modifiers::Shift) },
+        Case { CSI({}, {}, 'Z'), KeyEvent::key_down(Key::Tab, {}, Modifiers::Shift) },
 
         // Kitty
-        Case { { { 97, 65, 99 }, { 2 }, { 65 } }, 'u', KeyEvent::key_down(Key::A, "A"_s, Modifiers::Shift, 65, 99) },
+        Case { CSI({}, { { 97, 65, 99 }, { 2 }, { 65 } }, 'u'),
+               KeyEvent::key_down(Key::A, "A"_s, Modifiers::Shift, 65, 99) },
 
         // Errors
         Case {},
-        Case { {}, 'Y' },
+        Case { CSI({}, {}, 'Y') },
     };
 
     for (auto const& test_case : cases) {
-        auto result = key_event_from_csi(test_case.params, test_case.terminator);
+        auto result = key_event_from_csi(test_case.csi);
         ASSERT_EQ(test_case.expected, result);
     }
 }

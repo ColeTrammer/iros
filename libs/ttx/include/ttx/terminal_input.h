@@ -3,6 +3,7 @@
 #include "di/container/string/string_view.h"
 #include "di/container/vector/vector.h"
 #include "di/vocab/variant/variant.h"
+#include "ttx/escape_sequence_parser.h"
 #include "ttx/key_event.h"
 
 namespace ttx {
@@ -20,16 +21,13 @@ public:
     auto parse(di::StringView input) -> di::Vector<Event>;
 
 private:
-    void handle_code_point(c32 input);
-    void handle_base(c32 input);
-    void handle_escape(c32 input);
-    void handle_csi(c32 input);
-    void handle_ss3(c32 input);
+    void handle(PrintableCharacter const& printable_character);
+    void handle(DCS const& dcs);
+    void handle(CSI const& csi);
+    void handle(Escape const& escape);
+    void handle(ControlCharacter const& control_character);
 
-    void emit(KeyEvent&& event) { m_pending_events.push_back(di::move(event)); }
-
-    State m_state { State::Base };
-    di::String m_accumulator;
-    di::Vector<Event> m_pending_events;
+    EscapeSequenceParser m_parser;
+    di::Vector<Event> m_events;
 };
 }

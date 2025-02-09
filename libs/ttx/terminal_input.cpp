@@ -1,87 +1,39 @@
 #include "ttx/terminal_input.h"
 
-#include "di/reflect/valid_enum_value.h"
-#include "ttx/key.h"
+#include "di/container/algorithm/for_each.h"
 #include "ttx/key_event.h"
 #include "ttx/key_event_io.h"
-#include "ttx/params.h"
+#include "ttx/modifiers.h"
 
 namespace ttx {
 auto TerminalInputParser::parse(di::StringView input) -> di::Vector<Event> {
-    for (auto code_point : input) {
-        handle_code_point(code_point);
-    }
-
-    // Special case: if we a lone "escape" byte followed by no text,
-    // we assume the user hit the escape key, and not that the terminal
-    // partially transmitted an escape sequence.
-    //
-    // When using kitty input protocol, this ambiguity is avoided.
-    if (m_state == State::Escape) {
-        emit(key_event_from_legacy_code_point('\x1b'));
-        m_state = State::Base;
-    }
-    return di::move(m_pending_events);
+    auto event = m_parser.parse_input_escape_sequences(input);
+    di::for_each(event, [&](auto const& ev) {
+        di::visit(
+            [&](auto const& e) {
+                this->handle(e);
+            },
+            ev);
+    });
+    return di::move(m_events);
 }
 
-void TerminalInputParser::handle_code_point(c32 input) {
-    switch (m_state) {
-        case State::Base:
-            return handle_base(input);
-        case State::Escape:
-            return handle_escape(input);
-        case State::CSI:
-            return handle_csi(input);
-        case State::SS3:
-            return handle_ss3(input);
+void TerminalInputParser::handle(PrintableCharacter const& printable_character) {
+    m_events.emplace_back(key_event_from_legacy_code_point(printable_character.code_point));
+}
+
+void TerminalInputParser::handle(DCS const&) {}
+
+void TerminalInputParser::handle(CSI const& csi) {
+    if (auto key_event = key_event_from_csi(csi)) {
+        m_events.emplace_back(di::move(key_event).value());
     }
 }
 
-void TerminalInputParser::handle_base(c32 input) {
-    // Reset accumulator
-    m_accumulator.clear();
+void TerminalInputParser::handle(Escape const&) {}
 
-    // Handle escape key.
-    if (input == U'\033') {
-        m_state = State::Escape;
-        return;
-    }
-
-    emit(key_event_from_legacy_code_point(input));
-}
-
-void TerminalInputParser::handle_escape(c32 input) {
-    switch (input) {
-        case '[':
-            m_state = State::CSI;
-            break;
-        case 'O':
-            m_state = State::SS3;
-            break;
-        default:
-            // Escape followed by any other character represents the key was pressed with alt held down.
-            emit(key_event_from_legacy_code_point(input, Modifiers::Alt));
-            m_state = State::Base;
-            break;
-    }
-}
-
-void TerminalInputParser::handle_csi(c32 input) {
-    // Check if input does not end a key press.
-    auto is_digit = input >= U'0' && input <= U'9';
-    if (input == U';' || input == U':' || is_digit) {
-        m_accumulator.push_back(input);
-        return;
-    }
-
-    // Parse the params.
-    auto params = Params::from_string(m_accumulator);
-    key_event_from_csi(params, input).transform(di::bind_front(&TerminalInputParser::emit, this));
-    m_state = State::Base;
-}
-
-void TerminalInputParser::handle_ss3(c32 input) {
-    key_event_from_csi({}, input).transform(di::bind_front(&TerminalInputParser::emit, this));
-    m_state = State::Base;
+void TerminalInputParser::handle(ControlCharacter const& control_character) {
+    auto modifiers = control_character.was_in_escape ? Modifiers::Alt : Modifiers::None;
+    m_events.emplace_back(key_event_from_legacy_code_point(control_character.code_point, modifiers));
 }
 }

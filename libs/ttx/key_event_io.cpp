@@ -617,12 +617,17 @@ auto key_event_from_code_point(c32 number, u32 shifted_key, u32 base_layout_key,
     return {};
 }
 
-auto key_event_from_csi(Params const& params, c32 terminator) -> di::Optional<KeyEvent> {
+auto key_event_from_csi(CSI const& csi) -> di::Optional<KeyEvent> {
     // In general, the key event will look something like this:
     //   num:shifted_key:base_layout_key;modifiers:event_type;text [ABCDEFHPQS~u]
 
+    if (!csi.intermediate.empty()) {
+        return {};
+    }
+
     // The code_point is defaulted to 1, while the modifiers are defaulted
     // to 0.
+    auto const& params = csi.params;
     auto code_point = c32(params.get(0, 1));
     auto shifted_key = c32(params.get_subparam(0, 1));
     auto base_layout_key = c32(params.get_subparam(0, 2));
@@ -639,15 +644,16 @@ auto key_event_from_csi(Params const& params, c32 terminator) -> di::Optional<Ke
             text.push_back(c32(subparams.get(i)));
         }
     }
-    if (terminator == U'u') {
+    if (csi.terminator == U'u') {
         return key_event_from_code_point(code_point, shifted_key, base_layout_key, modifiers, di::move(text), type);
-    } else if (terminator == U'~') {
+    } else if (csi.terminator == U'~') {
         // Use legacy mappings if we end with a '~'.
         return key_event_from_legacy_functional_key(code_point, shifted_key, base_layout_key, modifiers, di::move(text),
                                                     type);
     } else {
         // Use SS3 mappings if we didn't end in 'u' or '~'.
-        return key_event_from_ss3_code_point(terminator, shifted_key, base_layout_key, modifiers, di::move(text), type);
+        return key_event_from_ss3_code_point(csi.terminator, shifted_key, base_layout_key, modifiers, di::move(text),
+                                             type);
     }
 }
 }

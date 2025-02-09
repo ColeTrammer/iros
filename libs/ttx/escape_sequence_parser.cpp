@@ -484,7 +484,9 @@ void EscapeSequenceParser::osc_put(c32) {}
 void EscapeSequenceParser::osc_end() {}
 
 void EscapeSequenceParser::output_ss3(c32 code_point) {
-    m_result.push_back(SS3(code_point));
+    // SS3 A gets mapped to CSI A, with no intermediate or parameters. This
+    // makes parsing key presses easier as we only worry about CSI.
+    m_result.push_back(CSI({}, {}, code_point));
 }
 
 void EscapeSequenceParser::add_param(di::Optional<u32> param) {
@@ -542,23 +544,10 @@ auto EscapeSequenceParser::parse_application_escape_sequences(di::StringView dat
         on_input(code_point);
     }
 
-    // Convert the result variant to not have the SS3 type.
-    auto result = di::Vector<ParserResult> {};
-    for (auto& ev : m_result) {
-        ASSERT(!di::holds_alternative<SS3>(ev));
-        di::visit(
-            [&]<typename T>(T& e) {
-                if constexpr (!di::SameAs<T, SS3>) {
-                    result.push_back(di::move(e));
-                }
-            },
-            ev);
-    }
-    m_result.clear();
-    return result;
+    return di::move(m_result);
 }
 
-auto EscapeSequenceParser::parse_input_escape_sequences(di::StringView data) -> di::Vector<InputParserResult> {
+auto EscapeSequenceParser::parse_input_escape_sequences(di::StringView data) -> di::Vector<ParserResult> {
     m_mode = Mode::Input;
     for (auto code_point : data) {
         on_input(code_point);
