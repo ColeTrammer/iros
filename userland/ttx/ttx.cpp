@@ -78,10 +78,16 @@ static auto main(Args& args) -> di::Result<void> {
         di::writer_print<di::String::Encoding>(dius::stdin, "\033[<u"_sv);
     });
 
+    // Setup - capture all mouse events and use SGR mosue reporting.
+    di::writer_print<di::String::Encoding>(dius::stdin, "\033[?1003h\033[?1006h"_sv);
+    auto _ = di::ScopeExit([&] {
+        di::writer_print<di::String::Encoding>(dius::stdin, "\033[?1006l\033[?1003l"_sv);
+    });
+
     auto log = TRY(dius::open_sync("/tmp/ttx.log"_pv, dius::OpenMode::WriteClobber));
 
     auto terminal = di::Synchronized<Terminal>(pty_controller);
-    terminal.get_assuming_no_concurrent_accesses().set_visible_size(terminal_size.rows, terminal_size.cols);
+    terminal.get_assuming_no_concurrent_accesses().set_visible_size(terminal_size);
 
     TRY(dius::system::mask_signal(dius::Signal::WindowChange));
 
@@ -98,6 +104,7 @@ static auto main(Args& args) -> di::Result<void> {
         auto exit = false;
         auto parser = TerminalInputParser {};
         auto utf8_decoder = Utf8StreamDecoder {};
+        auto last_mouse_position = di::Optional<MousePosition> {};
         while (!exit) {
             auto nread = dius::stdin.read_some(buffer.span());
             if (!nread.has_value()) {
@@ -126,6 +133,30 @@ static auto main(Args& args) -> di::Result<void> {
                             break;
                         }
                     }
+                } else if (auto ev = di::get_if<MouseEvent>(event)) {
+                    auto [application_cursor_keys_mode, alternate_scroll_mode, mouse_protocol, mouse_encoding,
+                          in_alternate_screen_buffer, window_size] = terminal.with_lock([&](Terminal& terminal) {
+                        return di::Tuple {
+                            terminal.application_cursor_keys_mode(),
+                            terminal.alternate_scroll_mode(),
+                            terminal.mouse_protocol(),
+                            terminal.mouse_encoding(),
+                            terminal.in_alternate_screen_buffer(),
+                            terminal.size(),
+                        };
+                    });
+
+                    auto serialized_event = serialize_mouse_event(
+                        *ev, mouse_protocol, mouse_encoding, last_mouse_position,
+                        { alternate_scroll_mode, application_cursor_keys_mode, in_alternate_screen_buffer },
+                        window_size);
+                    if (serialized_event.has_value()) {
+                        if (!pty_controller.write_exactly(di::as_bytes(serialized_event.value().span()))) {
+                            exit = true;
+                            break;
+                        }
+                    }
+                    last_mouse_position = ev.value().position();
                 }
             }
         }
@@ -215,7 +246,7 @@ static auto main(Args& args) -> di::Result<void> {
 
         terminal.with_lock([&](Terminal& terminal) {
             (void) pty_controller.set_tty_window_size(terminal_size.value());
-            terminal.set_visible_size(terminal_size.value().rows, terminal_size.value().cols);
+            terminal.set_visible_size(terminal_size.value());
         });
     }
 

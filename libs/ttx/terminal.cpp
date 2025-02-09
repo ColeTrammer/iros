@@ -2,10 +2,12 @@
 
 #include "di/container/algorithm/contains.h"
 #include "di/container/algorithm/rotate.h"
+#include "dius/tty.h"
 #include "ttx/cursor_style.h"
 #include "ttx/escape_sequence_parser.h"
 #include "ttx/graphics_rendition.h"
 #include "ttx/key_event_io.h"
+#include "ttx/mouse_event_io.h"
 #include "ttx/params.h"
 
 namespace ttx {
@@ -19,9 +21,9 @@ void Terminal::on_parser_results(di::Span<ParserResult const> results) {
     }
 }
 
-void Terminal::on_parser_result(PrintableCharacter const& printable_character) {
-    if (printable_character.code_point < 0x7F || printable_character.code_point > 0x9F) {
-        put_char(printable_character.code_point);
+void Terminal::on_parser_result(PrintableCharacter const& Printable_character) {
+    if (Printable_character.code_point < 0x7F || Printable_character.code_point > 0x9F) {
+        put_char(Printable_character.code_point);
     }
 }
 
@@ -312,11 +314,11 @@ void Terminal::csi_ich(Params const& params) {
     auto chars = di::max(1u, params.get(0, 1));
 
     auto& row = m_rows[m_cursor_row];
-    for (int i = max_col_inclusive() - chars; i >= m_cursor_col; i--) {
+    for (u32 i = max_col_inclusive() - chars; i >= m_cursor_col; i--) {
         row[i + chars] = row[i];
     }
 
-    for (int i = m_cursor_col; i <= max_col_inclusive() && i < m_cursor_col + int(chars); i++) {
+    for (u32 i = m_cursor_col; i <= max_col_inclusive() && i < m_cursor_col + u32(chars); i++) {
         row[i] = {};
     }
 }
@@ -393,8 +395,8 @@ void Terminal::csi_il(Params const& params) {
     if (m_cursor_row < m_scroll_start || m_cursor_row > m_scroll_end) {
         return;
     }
-    int lines_to_insert = di::max(1u, params.get(0, 1));
-    for (int i = 0; i < lines_to_insert; i++) {
+    u32 lines_to_insert = di::max(1u, params.get(0, 1));
+    for (u32 i = 0; i < lines_to_insert; i++) {
         di::rotate(m_rows.begin() + m_cursor_row, m_rows.begin() + m_scroll_end, m_rows.begin() + m_scroll_end + 1);
         // m_rows.rotate_right(m_cursor_row, m_scroll_end + 1);
         m_rows[m_cursor_row] = Row();
@@ -408,8 +410,8 @@ void Terminal::csi_dl(Params const& params) {
     if (m_cursor_row < m_scroll_start || m_cursor_row > m_scroll_end) {
         return;
     }
-    int lines_to_delete = di::clamp(params.get(0, 1), 1u, u32(m_scroll_end - m_cursor_row));
-    for (int i = 0; i < lines_to_delete; i++) {
+    u32 lines_to_delete = di::clamp(params.get(0, 1), 1u, u32(m_scroll_end - m_cursor_row));
+    for (u32 i = 0; i < lines_to_delete; i++) {
         di::rotate(m_rows.begin() + m_cursor_row, m_rows.begin() + m_cursor_row + 1, m_rows.begin() + m_scroll_end + 1);
         // m_rows.rotate_left(m_cursor_row, m_scroll_end + 1);
         m_rows[m_scroll_end] = Row();
@@ -421,21 +423,21 @@ void Terminal::csi_dl(Params const& params) {
 
 // Delete Character - https://vt100.net/docs/vt510-rm/DCH.html
 void Terminal::csi_dch(Params const& params) {
-    int chars_to_delete = di::clamp(params.get(0, 1), 1u, u32(m_col_count - m_cursor_col));
-    for (int i = 0; i < chars_to_delete; i++) {
+    u32 chars_to_delete = di::clamp(params.get(0, 1), 1u, u32(m_col_count - m_cursor_col));
+    for (u32 i = 0; i < chars_to_delete; i++) {
         m_rows[m_cursor_row].erase(m_rows[m_cursor_row].begin() + m_cursor_col);
     }
     m_rows[m_cursor_row].resize(m_col_count);
-    for (int i = m_cursor_col; i < m_col_count; i++) {
+    for (u32 i = m_cursor_col; i < m_col_count; i++) {
         m_rows[m_cursor_row][i].dirty = true;
     }
 }
 
 // Pan Down - https://vt100.net/docs/vt510-rm/SU.html
 void Terminal::csi_su(Params const& params) {
-    int to_scroll = params.get(0, 1);
-    int row_save = m_cursor_row;
-    for (int i = 0; i < to_scroll; i++) {
+    u32 to_scroll = params.get(0, 1);
+    u32 row_save = m_cursor_row;
+    for (u32 i = 0; i < to_scroll; i++) {
         m_cursor_row = m_row_count;
         scroll_down_if_needed();
     }
@@ -445,9 +447,9 @@ void Terminal::csi_su(Params const& params) {
 
 // Pan Up - https://vt100.net/docs/vt510-rm/SD.html
 void Terminal::csi_sd(Params const& params) {
-    int to_scroll = params.get(0, 1);
-    int row_save = m_cursor_row;
-    for (int i = 0; i < to_scroll; i++) {
+    u32 to_scroll = params.get(0, 1);
+    u32 row_save = m_cursor_row;
+    for (u32 i = 0; i < to_scroll; i++) {
         m_cursor_row = -1;
         scroll_up_if_needed();
     }
@@ -456,8 +458,8 @@ void Terminal::csi_sd(Params const& params) {
 
 // Erase Character - https://vt100.net/docs/vt510-rm/ECH.html
 void Terminal::csi_ech(Params const& params) {
-    int chars_to_erase = di::max(1u, params.get(0, 1));
-    for (int i = m_cursor_col; i - m_cursor_col < chars_to_erase && i < m_col_count; i++) {
+    u32 chars_to_erase = di::max(1u, params.get(0, 1));
+    for (u32 i = m_cursor_col; i - m_cursor_col < chars_to_erase && i < m_col_count; i++) {
         m_rows[m_cursor_row][i] = {};
     }
 }
@@ -537,7 +539,8 @@ void Terminal::csi_decset(Params const& params) {
             if (m_allow_80_132_col_mode) {
                 m_80_col_mode = false;
                 m_132_col_mode = true;
-                resize(m_row_count, 132);
+                resize({ m_row_count, 132, m_available_xpixels_in_display * 132 / m_available_cols_in_display,
+                         m_ypixels });
                 clear();
                 csi_decstbm({});
             }
@@ -552,8 +555,7 @@ void Terminal::csi_decset(Params const& params) {
             m_autowrap_mode = true;
             break;
         case 9:
-            // m_psuedo_terminal.set_mouse_tracking_mode(MouseTrackingMode::X10);
-            // m_psuedo_terminal.set_mouse_reporting_mode(MouseReportingMode::X10);
+            m_mouse_protocol = MouseProtocol::X10;
             break;
         case 25:
             // Text Cursor Enable Mode - https://vt100.net/docs/vt510-rm/DECTCEM.html
@@ -563,41 +565,25 @@ void Terminal::csi_decset(Params const& params) {
             m_allow_80_132_col_mode = true;
             break;
         case 1000:
-            // m_psuedo_terminal.set_mouse_tracking_mode(MouseTrackingMode::X10);
-            // m_psuedo_terminal.set_mouse_reporting_mode(MouseReportingMode::X10);
-            break;
-        case 1001:
-            // m_psuedo_terminal.set_mouse_tracking_mode(MouseTrackingMode::X11);
-            // m_psuedo_terminal.set_mouse_reporting_mode(MouseReportingMode::X11);
+            m_mouse_protocol = MouseProtocol::VT200;
             break;
         case 1002:
-            // m_psuedo_terminal.set_mouse_tracking_mode(MouseTrackingMode::Cell);
-            // m_psuedo_terminal.set_mouse_reporting_mode(MouseReportingMode::X11);
+            m_mouse_protocol = MouseProtocol::BtnEvent;
             break;
         case 1003:
-            // m_psuedo_terminal.set_mouse_tracking_mode(MouseTrackingMode::All);
-            // m_psuedo_terminal.set_mouse_reporting_mode(MouseReportingMode::X11);
+            m_mouse_protocol = MouseProtocol::AnyEvent;
             break;
         case 1005:
-            // if (m_psuedo_terminal.mouse_tracking_mode() == MouseTrackingMode::X11 ||
-            //     m_psuedo_terminal.mouse_tracking_mode() == MouseTrackingMode::Cell ||
-            //     m_psuedo_terminal.mouse_tracking_mode() == MouseTrackingMode::All) {
-            //     m_psuedo_terminal.set_mouse_reporting_mode(MouseReportingMode::UTF8);
-            // }
+            m_mouse_encoding = MouseEncoding::UTF8;
             break;
         case 1006:
-            // if (m_psuedo_terminal.mouse_tracking_mode() == MouseTrackingMode::X11 ||
-            //     m_psuedo_terminal.mouse_tracking_mode() == MouseTrackingMode::Cell ||
-            //     m_psuedo_terminal.mouse_tracking_mode() == MouseTrackingMode::All) {
-            //     m_psuedo_terminal.set_mouse_reporting_mode(MouseReportingMode::SGR);
-            // }
+            m_mouse_encoding = MouseEncoding::SGR;
             break;
         case 1015:
-            // if (m_psuedo_terminal.mouse_tracking_mode() == MouseTrackingMode::X11 ||
-            //     m_psuedo_terminal.mouse_tracking_mode() == MouseTrackingMode::Cell ||
-            //     m_psuedo_terminal.mouse_tracking_mode() == MouseTrackingMode::All) {
-            //     m_psuedo_terminal.set_mouse_reporting_mode(MouseReportingMode::URXVT);
-            // }
+            m_mouse_encoding = MouseEncoding::URXVT;
+            break;
+        case 1016:
+            m_mouse_encoding = MouseEncoding::SGRPixels;
             break;
         case 1049:
             set_use_alternate_screen_buffer(true);
@@ -625,7 +611,8 @@ void Terminal::csi_decrst(Params const& params) {
             if (m_allow_80_132_col_mode) {
                 m_80_col_mode = true;
                 m_132_col_mode = false;
-                resize(m_row_count, 80);
+                resize(
+                    { m_row_count, 80, m_available_xpixels_in_display * 80 / m_available_cols_in_display, m_ypixels });
                 clear();
                 csi_decstbm({});
             }
@@ -639,7 +626,7 @@ void Terminal::csi_decrst(Params const& params) {
             m_autowrap_mode = false;
             break;
         case 9:
-            // m_psuedo_terminal.reset_mouse_tracking_mode(MouseTrackingMode::X10);
+            m_mouse_protocol = MouseProtocol::None;
             break;
         case 25:
             // Text Cursor Enable Mode - https://vt100.net/docs/vt510-rm/DECTCEM.html
@@ -650,35 +637,29 @@ void Terminal::csi_decrst(Params const& params) {
             if (m_80_col_mode || m_132_col_mode) {
                 m_80_col_mode = false;
                 m_132_col_mode = false;
-                resize(m_available_rows_in_display, m_available_cols_in_display);
+                resize(visible_size());
             }
             break;
         case 1000:
-            // m_psuedo_terminal.reset_mouse_tracking_mode(MouseTrackingMode::X11);
-            break;
-        case 1001:
-            // m_psuedo_terminal.reset_mouse_tracking_mode(MouseTrackingMode::Hilite);
+            m_mouse_protocol = MouseProtocol::None;
             break;
         case 1002:
-            // m_psuedo_terminal.reset_mouse_tracking_mode(MouseTrackingMode::Cell);
+            m_mouse_protocol = MouseProtocol::None;
             break;
         case 1003:
-            // m_psuedo_terminal.reset_mouse_tracking_mode(MouseTrackingMode::All);
+            m_mouse_protocol = MouseProtocol::None;
             break;
         case 1005:
-            // if (m_psuedo_terminal.mouse_reporting_mode() == MouseReportingMode::UTF8) {
-            //     m_psuedo_terminal.set_mouse_reporting_mode(MouseReportingMode::X11);
-            // }
+            m_mouse_encoding = MouseEncoding::X10;
             break;
         case 1006:
-            // if (m_psuedo_terminal.mouse_reporting_mode() == MouseReportingMode::SGR) {
-            //     m_psuedo_terminal.set_mouse_reporting_mode(MouseReportingMode::X11);
-            // }
+            m_mouse_encoding = MouseEncoding::X10;
             break;
         case 1015:
-            // if (m_psuedo_terminal.mouse_reporting_mode() == MouseReportingMode::URXVT) {
-            //     m_psuedo_terminal.set_mouse_reporting_mode(MouseReportingMode::X11);
-            // }
+            m_mouse_encoding = MouseEncoding::X10;
+            break;
+        case 1016:
+            m_mouse_encoding = MouseEncoding::X10;
             break;
         case 1049:
             set_use_alternate_screen_buffer(false);
@@ -746,8 +727,8 @@ void Terminal::csi_dsr(Params const& params) {
 
 // DEC Set Top and Bottom Margins - https://www.vt100.net/docs/vt100-ug/chapter3.html#DECSTBM
 void Terminal::csi_decstbm(Params const& params) {
-    int new_scroll_start = params.get(0, 1) - 1;
-    int new_scroll_end = params.get(1, m_row_count) - 1;
+    u32 new_scroll_start = params.get(0, 1) - 1;
+    u32 new_scroll_end = params.get(1, m_row_count) - 1;
     if (new_scroll_end - new_scroll_start < 2) {
         return;
     }
@@ -770,10 +751,10 @@ void Terminal::csi_scorc(Params const&) {
 
 // https://sw.kovidgoyal.net/kitty/keyboard-protocol/#progressive-enhancement
 void Terminal::csi_set_key_reporting_flags(Params const& params) {
-    auto flags_int = params.get(0);
+    auto flags_u32 = params.get(0);
     auto mode = params.get(1, 1);
 
-    auto flags = KeyReportingFlags(flags_int) & KeyReportingFlags::All;
+    auto flags = KeyReportingFlags(flags_u32) & KeyReportingFlags::All;
     switch (mode) {
         case 1:
             m_key_reporting_flags = flags;
@@ -795,8 +776,8 @@ void Terminal::csi_get_key_reporting_flags(Params const&) {
 
 // https://sw.kovidgoyal.net/kitty/keyboard-protocol/#progressive-enhancement
 void Terminal::csi_push_key_reporting_flags(Params const& params) {
-    auto flags_int = params.get(0);
-    auto flags = KeyReportingFlags(flags_int) & KeyReportingFlags::All;
+    auto flags_u32 = params.get(0);
+    auto flags = KeyReportingFlags(flags_u32) & KeyReportingFlags::All;
 
     if (m_key_reporting_flags_stack.size() >= 100) {
         m_key_reporting_flags_stack.pop_front();
@@ -822,38 +803,42 @@ void Terminal::csi_pop_key_reporting_flags(Params const& params) {
     m_key_reporting_flags_stack.erase(m_key_reporting_flags_stack.begin() + new_stack_size);
 }
 
-void Terminal::set_cursor(int row, int col) {
+void Terminal::set_cursor(u32 row, u32 col) {
     m_cursor_row = di::clamp(row, min_row_inclusive(), max_row_inclusive());
     m_cursor_col = di::clamp(col, min_col_inclusive(), max_col_inclusive());
     m_x_overflow = false;
 }
 
-void Terminal::set_visible_size(int rows, int cols) {
-    m_available_rows_in_display = rows;
-    m_available_cols_in_display = cols;
+void Terminal::set_visible_size(dius::tty::WindowSize const& window_size) {
+    m_available_rows_in_display = window_size.rows;
+    m_available_cols_in_display = window_size.cols;
+    m_available_xpixels_in_display = window_size.pixel_width;
+    m_available_ypixels_in_display = window_size.pixel_height;
     if (!m_80_col_mode && !m_132_col_mode) {
-        resize(rows, cols);
+        resize(window_size);
     }
 }
 
-void Terminal::resize(int rows, int cols) {
-    m_row_count = rows;
-    m_col_count = cols;
+void Terminal::resize(dius::tty::WindowSize const& window_size) {
+    m_row_count = window_size.rows;
+    m_col_count = window_size.cols;
+    m_xpixels = window_size.pixel_width;
+    m_ypixels = window_size.pixel_height;
 
     m_scroll_start = 0;
-    m_scroll_end = rows - 1;
+    m_scroll_end = m_row_count - 1;
 
-    m_rows.resize(rows);
+    m_rows.resize(window_size.rows);
     for (auto& row : m_rows) {
-        row.resize(cols);
+        row.resize(window_size.cols);
     }
 
     for (auto& row : m_rows_above) {
-        row.resize(cols);
+        row.resize(window_size.cols);
     }
 
     for (auto& row : m_rows_below) {
-        row.resize(cols);
+        row.resize(window_size.cols);
     }
 
     set_cursor(m_cursor_row, m_cursor_col);
@@ -877,35 +862,35 @@ void Terminal::clear_below_cursor(char ch) {
 }
 
 void Terminal::clear_above_cursor(char ch) {
-    for (auto r = 0; r < m_cursor_row; r++) {
+    for (auto r = 0u; r < m_cursor_row; r++) {
         clear_row(r, ch);
     }
     clear_row_until(m_cursor_row, m_cursor_col, ch);
 }
 
 void Terminal::clear(char ch) {
-    for (auto r = 0; r < m_row_count; r++) {
+    for (auto r = 0u; r < m_row_count; r++) {
         clear_row(r, ch);
     }
 }
 
-void Terminal::clear_row(int r, char ch) {
+void Terminal::clear_row(u32 r, char ch) {
     clear_row_to_end(r, 0, ch);
 }
 
-void Terminal::clear_row_until(int r, int end_col, char ch) {
-    for (auto c = 0; c <= end_col; c++) {
+void Terminal::clear_row_until(u32 r, u32 end_col, char ch) {
+    for (auto c = 0u; c <= end_col; c++) {
         put_char(r, c, ch);
     }
 }
 
-void Terminal::clear_row_to_end(int r, int start_col, char ch) {
+void Terminal::clear_row_to_end(u32 r, u32 start_col, char ch) {
     for (auto c = start_col; c < m_col_count; c++) {
         put_char(r, c, ch);
     }
 }
 
-void Terminal::put_char(int row, int col, c32 c) {
+void Terminal::put_char(u32 row, u32 col, c32 c) {
     auto& cell = m_rows[row][col];
     cell.ch = c;
     cell.graphics_rendition = m_current_graphics_rendition;
@@ -935,7 +920,7 @@ void Terminal::put_char(c32 c) {
     }
 }
 
-bool Terminal::should_display_cursor_at_position(int r, int c) const {
+bool Terminal::should_display_cursor_at_position(u32 r, u32 c) const {
     if (m_cursor_hidden) {
         return false;
     }
@@ -951,7 +936,7 @@ bool Terminal::should_display_cursor_at_position(int r, int c) const {
     return row_offset() + r == cursor_row() + total_rows() - row_count();
 }
 
-int Terminal::scroll_relative_offset(int display_row) const {
+u32 Terminal::scroll_relative_offset(u32 display_row) const {
     if (display_row < m_scroll_start) {
         return display_row;
     } else if (display_row > m_scroll_end) {
@@ -960,18 +945,17 @@ int Terminal::scroll_relative_offset(int display_row) const {
     return display_row + row_offset();
 }
 
-Terminal::Row const& Terminal::row_at_scroll_relative_offset(int offset) const {
+Terminal::Row const& Terminal::row_at_scroll_relative_offset(u32 offset) const {
     if (offset < m_scroll_start) {
         return m_rows[offset];
     }
-    if (offset < m_scroll_start + (int) m_rows_above.size()) {
+    if (offset < m_scroll_start + m_rows_above.size()) {
         return m_rows_above[offset - m_scroll_start];
     }
-    if (offset < m_scroll_start + (int) m_rows_above.size() + (m_scroll_end - m_scroll_start)) {
+    if (offset < m_scroll_start + m_rows_above.size() + (m_scroll_end - m_scroll_start)) {
         return m_rows[offset - m_rows_above.size()];
     }
-    if (offset <
-        m_scroll_start + (int) m_rows_above.size() + (m_scroll_end - m_scroll_start) + (int) m_rows_below.size()) {
+    if (offset < m_scroll_start + m_rows_above.size() + (m_scroll_end - m_scroll_start) + m_rows_below.size()) {
         return m_rows_below[offset - m_scroll_start - m_rows_above.size() - (m_scroll_end - m_scroll_start)];
     }
     return m_rows[offset - m_rows_above.size() - m_rows_below.size()];
@@ -1005,8 +989,9 @@ void Terminal::set_use_alternate_screen_buffer(bool b) {
         m_rows_above = di::move(m_save_state->m_rows_above);
         m_rows_below = di::move(m_save_state->m_rows_below);
 
-        if (m_row_count != m_save_state->m_row_count || m_col_count != m_save_state->m_col_count) {
-            resize(m_row_count, m_col_count);
+        if (m_row_count != m_save_state->m_row_count || m_col_count != m_save_state->m_col_count ||
+            m_xpixels != m_save_state->m_xpixels || m_ypixels != m_save_state->m_ypixels) {
+            resize({ m_row_count, m_col_count, m_xpixels, m_ypixels });
         } else {
             invalidate_all();
         }
@@ -1055,7 +1040,7 @@ void Terminal::scroll_up_if_needed() {
         m_rows[m_scroll_start].resize(m_col_count);
         invalidate_all();
 
-        if (total_rows() - (int) m_rows.size() > m_row_count + 100) {
+        if (total_rows() - m_rows.size() > m_row_count + 100) {
             m_rows_below.erase(m_rows_below.begin());
         }
     }
@@ -1077,7 +1062,7 @@ void Terminal::scroll_down_if_needed() {
         m_rows[m_scroll_end].resize(m_col_count);
         invalidate_all();
 
-        if (total_rows() - (int) m_rows.size() > m_row_count + 100) {
+        if (total_rows() - m_rows.size() > m_row_count + 100) {
             m_rows_above.erase(m_rows_above.begin());
         }
     }

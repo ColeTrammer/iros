@@ -30,8 +30,8 @@ DI_DEFINE_ENUM_BITWISE_OPERATIONS(MouseButton)
 constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MouseButton>) {
     using enum MouseButton;
     return di::make_enumerators<"MouseButton">(
-        di::enumerator<"Left", Left>, di::enumerator<"Middle", Middle>, di::enumerator<"Right", Right>,
-        di::enumerator<"ScrollUp", ScrollUp>, di::enumerator<"ScrollDown", ScrollDown>,
+        di::enumerator<"None", None>, di::enumerator<"Left", Left>, di::enumerator<"Middle", Middle>,
+        di::enumerator<"Right", Right>, di::enumerator<"ScrollUp", ScrollUp>, di::enumerator<"ScrollDown", ScrollDown>,
         di::enumerator<"ScrollLeft", ScrollLeft>, di::enumerator<"ScrollRight", ScrollRight>, di::enumerator<"8", _8>,
         di::enumerator<"9", _9>, di::enumerator<"10", _10>, di::enumerator<"11", _11>);
 }
