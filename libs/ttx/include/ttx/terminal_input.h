@@ -4,11 +4,12 @@
 #include "di/container/vector/vector.h"
 #include "di/vocab/variant/variant.h"
 #include "ttx/escape_sequence_parser.h"
+#include "ttx/focus_event.h"
 #include "ttx/key_event.h"
 #include "ttx/mouse_event.h"
 
 namespace ttx {
-using Event = di::Variant<KeyEvent, MouseEvent>;
+using Event = di::Variant<KeyEvent, MouseEvent, FocusEvent>;
 
 class TerminalInputParser {
 public:

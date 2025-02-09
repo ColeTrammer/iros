@@ -5,6 +5,7 @@
 #include "dius/tty.h"
 #include "ttx/cursor_style.h"
 #include "ttx/escape_sequence_parser.h"
+#include "ttx/focus_event_io.h"
 #include "ttx/graphics_rendition.h"
 #include "ttx/key_event_io.h"
 #include "ttx/mouse_event_io.h"
@@ -58,6 +59,7 @@ public:
         result.m_alternate_scroll_mode = m_alternate_scroll_mode;
         result.m_mouse_protocol = m_mouse_protocol;
         result.m_mouse_encoding = m_mouse_encoding;
+        result.m_focus_event_mode = m_focus_event_mode;
 
         result.m_bracketed_paste = m_bracketed_paste;
 
@@ -107,6 +109,7 @@ public:
     auto mouse_protocol() const -> MouseProtocol { return m_mouse_protocol; }
     auto mouse_encoding() const -> MouseEncoding { return m_mouse_encoding; }
     auto in_alternate_screen_buffer() const -> bool { return !!m_save_state; }
+    auto focus_event_mode() const -> FocusEventMode { return m_focus_event_mode; }
 
     auto bracked_paste() const -> bool { return m_bracketed_paste; }
 
@@ -258,6 +261,7 @@ private:
     AlternateScrollMode m_alternate_scroll_mode { AlternateScrollMode::Disabled };
     MouseProtocol m_mouse_protocol { MouseProtocol::None };
     MouseEncoding m_mouse_encoding { MouseEncoding::X10 };
+    FocusEventMode m_focus_event_mode { FocusEventMode::Disabled };
 
     bool m_bracketed_paste { false };
 

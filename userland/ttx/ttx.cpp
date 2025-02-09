@@ -84,6 +84,12 @@ static auto main(Args& args) -> di::Result<void> {
         di::writer_print<di::String::Encoding>(dius::stdin, "\033[?1006l\033[?1003l"_sv);
     });
 
+    // Setup - enable focus events.
+    di::writer_print<di::String::Encoding>(dius::stdin, "\033[?1004h"_sv);
+    auto _ = di::ScopeExit([&] {
+        di::writer_print<di::String::Encoding>(dius::stdin, "\033[?1004l"_sv);
+    });
+
     auto log = TRY(dius::open_sync("/tmp/ttx.log"_pv, dius::OpenMode::WriteClobber));
 
     auto terminal = di::Synchronized<Terminal>(pty_controller);
@@ -209,6 +215,18 @@ static auto main(Args& args) -> di::Result<void> {
                             terminal.scroll_down();
                             draw(terminal);
                         });
+                    }
+                } else if (auto ev = di::get_if<FocusEvent>(event)) {
+                    auto [focus_event_mode] = terminal.with_lock([&](Terminal& terminal) {
+                        return di::Tuple { terminal.focus_event_mode() };
+                    });
+
+                    auto serialized_event = serialize_focus_event(*ev, focus_event_mode);
+                    if (serialized_event) {
+                        if (!pty_controller.write_exactly(di::as_bytes(serialized_event.value().span()))) {
+                            exit = true;
+                            break;
+                        }
                     }
                 }
             }

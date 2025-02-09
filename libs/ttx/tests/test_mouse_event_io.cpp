@@ -370,6 +370,6 @@ static void parse() {
     }
 }
 
-TEST(key_event_io, serialize)
-TEST(key_event_io, parse)
+TEST(mouse_event_io, serialize)
+TEST(mouse_event_io, parse)
 }

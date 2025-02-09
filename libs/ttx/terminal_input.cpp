@@ -1,9 +1,11 @@
 #include "ttx/terminal_input.h"
 
 #include "di/container/algorithm/for_each.h"
+#include "ttx/focus_event_io.h"
 #include "ttx/key_event.h"
 #include "ttx/key_event_io.h"
 #include "ttx/modifiers.h"
+#include "ttx/mouse_event_io.h"
 
 namespace ttx {
 auto TerminalInputParser::parse(di::StringView input) -> di::Vector<Event> {
@@ -30,6 +32,9 @@ void TerminalInputParser::handle(CSI const& csi) {
     }
     if (auto mouse_event = mouse_event_from_csi(csi)) {
         m_events.emplace_back(di::move(mouse_event).value());
+    }
+    if (auto focus_event = focus_event_from_csi(csi)) {
+        m_events.emplace_back(di::move(focus_event).value());
     }
 }
 

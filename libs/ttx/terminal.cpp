@@ -5,6 +5,7 @@
 #include "dius/tty.h"
 #include "ttx/cursor_style.h"
 #include "ttx/escape_sequence_parser.h"
+#include "ttx/focus_event_io.h"
 #include "ttx/graphics_rendition.h"
 #include "ttx/key_event_io.h"
 #include "ttx/mouse_event_io.h"
@@ -573,6 +574,9 @@ void Terminal::csi_decset(Params const& params) {
         case 1003:
             m_mouse_protocol = MouseProtocol::AnyEvent;
             break;
+        case 1004:
+            m_focus_event_mode = FocusEventMode::Enabled;
+            break;
         case 1005:
             m_mouse_encoding = MouseEncoding::UTF8;
             break;
@@ -648,6 +652,9 @@ void Terminal::csi_decrst(Params const& params) {
             break;
         case 1003:
             m_mouse_protocol = MouseProtocol::None;
+            break;
+        case 1004:
+            m_focus_event_mode = FocusEventMode::Disabled;
             break;
         case 1005:
             m_mouse_encoding = MouseEncoding::X10;

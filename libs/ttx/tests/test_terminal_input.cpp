@@ -1,4 +1,5 @@
 #include "dius/test/prelude.h"
+#include "ttx/focus_event.h"
 #include "ttx/key_event.h"
 #include "ttx/modifiers.h"
 #include "ttx/mouse.h"
@@ -51,6 +52,26 @@ static void mouse() {
     ASSERT_EQ(expected.size(), actual.size());
 }
 
+static void focus() {
+    using namespace ttx;
+
+    constexpr auto input = "\033[I\033[O"_sv;
+
+    auto expected = di::Array {
+        Event(FocusEvent::focus_in()),
+        Event(FocusEvent::focus_out()),
+    };
+
+    auto parser = TerminalInputParser {};
+    auto actual = parser.parse(input);
+
+    for (auto const& [ex, ac] : di::zip(expected, actual)) {
+        ASSERT_EQ(ex, ac);
+    }
+    ASSERT_EQ(expected.size(), actual.size());
+}
+
 TEST(terminal_input, keyboard)
 TEST(terminal_input, mouse)
+TEST(terminal_input, focus)
 }
