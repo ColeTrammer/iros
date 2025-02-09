@@ -18,7 +18,7 @@ auto TerminalInputParser::parse(di::StringView input) -> di::Vector<Event> {
     //
     // When using kitty input protocol, this ambiguity is avoided.
     if (m_state == State::Escape) {
-        emit(KeyEvent::key_down(Key::Escape));
+        emit(key_event_from_legacy_code_point('\x1b'));
         m_state = State::Base;
     }
     return di::move(m_pending_events);

@@ -66,8 +66,8 @@ constexpr auto legacy_code_point_mappings = di::to_array<CodePointMapping>({
     { 0x19, Key::Y, Modifiers::Control },
     { 0x1a, Key::Z, Modifiers::Control },
 
-    { 0x1b, Key::LeftBracket, Modifiers::None },
-    { 0x1b, Key::_3, Modifiers::None },
+    { 0x1b, Key::LeftBracket, Modifiers::Control },
+    { 0x1b, Key::_3, Modifiers::Control },
     { 0x1b, Key::Escape, Modifiers::None },
     { 0x1b, Key::Escape, Modifiers::Control },
     { 0x1b, Key::Escape, Modifiers::Shift },
@@ -572,7 +572,7 @@ auto key_event_from_legacy_code_point(c32 code_point, Modifiers base_modifiers) 
     for (auto const& mapping : legacy_code_point_mappings) {
         if (mapping.code_point == code_point) {
             auto text = ""_s;
-            if (mapping.code_point >= 32 && mapping.code_point < 127) {
+            if (mapping.code_point >= 32 && mapping.code_point < 127 && base_modifiers == Modifiers::None) {
                 text = di::single(code_point) | di::to<di::String>();
             }
             return KeyEvent::key_down(mapping.key, di::move(text), mapping.modifiers | base_modifiers);
