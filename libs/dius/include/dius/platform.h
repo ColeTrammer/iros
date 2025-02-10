@@ -7,6 +7,7 @@
 #include "dius/error.h"
 
 #ifndef DIUS_USE_RUNTIME
+#include <mutex>
 #include <pthread.h>
 #endif
 
@@ -18,6 +19,8 @@ namespace di::platform {
 #ifndef DIUS_USE_RUNTIME
 using ThreadId = pthread_t;
 
+using DefaultLock = std::mutex;
+
 inline auto get_current_thread_id() -> ThreadId {
     return pthread_self();
 }
@@ -25,9 +28,9 @@ inline auto get_current_thread_id() -> ThreadId {
 using ThreadId = i32;
 
 auto get_current_thread_id() -> ThreadId;
-#endif
 
 using DefaultLock = sync::DumbSpinlock;
+#endif
 
 using DefaultAllocator = container::InfallibleAllocator;
 using DefaultFallibleAllocator = container::FallibleAllocator;
