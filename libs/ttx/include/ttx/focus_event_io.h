@@ -14,8 +14,8 @@ enum class FocusEventMode {
 
 constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<FocusEventMode>) {
     using enum FocusEventMode;
-    return di::make_enumerators<"FocusEventModes">(di::enumerator<"Disabled", Disabled>,
-                                                   di::enumerator<"Enabled", Enabled>);
+    return di::make_enumerators<"FocusEventMode">(di::enumerator<"Disabled", Disabled>,
+                                                  di::enumerator<"Enabled", Enabled>);
 }
 
 auto serialize_focus_event(FocusEvent const& focus_event, FocusEventMode mode) -> di::Optional<di::String>;

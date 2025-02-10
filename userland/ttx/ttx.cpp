@@ -90,6 +90,12 @@ static auto main(Args& args) -> di::Result<void> {
         di::writer_print<di::String::Encoding>(dius::stdin, "\033[?1004l"_sv);
     });
 
+    // Setup - bracketed paste.
+    di::writer_print<di::String::Encoding>(dius::stdin, "\033[?2004h"_sv);
+    auto _ = di::ScopeExit([&] {
+        di::writer_print<di::String::Encoding>(dius::stdin, "\033[?2004l"_sv);
+    });
+
     auto log = TRY(dius::open_sync("/tmp/ttx.log"_pv, dius::OpenMode::WriteClobber));
 
     auto terminal = di::Synchronized<Terminal>(pty_controller);
@@ -227,6 +233,16 @@ static auto main(Args& args) -> di::Result<void> {
                             exit = true;
                             break;
                         }
+                    }
+                } else if (auto ev = di::get_if<PasteEvent>(event)) {
+                    auto [bracketed_paste_mode] = terminal.with_lock([&](Terminal& terminal) {
+                        return di::Tuple { terminal.bracked_paste_mode() };
+                    });
+
+                    auto serialized_event = serialize_paste_event(*ev, bracketed_paste_mode);
+                    if (!pty_controller.write_exactly(di::as_bytes(serialized_event.span()))) {
+                        exit = true;
+                        break;
                     }
                 }
             }

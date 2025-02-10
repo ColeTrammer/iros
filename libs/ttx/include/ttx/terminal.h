@@ -10,6 +10,7 @@
 #include "ttx/key_event_io.h"
 #include "ttx/mouse_event_io.h"
 #include "ttx/params.h"
+#include "ttx/paste_event_io.h"
 
 namespace ttx {
 class Terminal {
@@ -61,7 +62,7 @@ public:
         result.m_mouse_encoding = m_mouse_encoding;
         result.m_focus_event_mode = m_focus_event_mode;
 
-        result.m_bracketed_paste = m_bracketed_paste;
+        result.m_bracketed_paste_mode = m_bracketed_paste_mode;
 
         result.m_current_graphics_rendition = m_current_graphics_rendition;
 
@@ -111,7 +112,7 @@ public:
     auto in_alternate_screen_buffer() const -> bool { return !!m_save_state; }
     auto focus_event_mode() const -> FocusEventMode { return m_focus_event_mode; }
 
-    auto bracked_paste() const -> bool { return m_bracketed_paste; }
+    auto bracked_paste_mode() const -> BracketedPasteMode { return m_bracketed_paste_mode; }
 
     di::Vector<Row> const& rows() const { return m_rows; }
     Row const& row_at_scroll_relative_offset(u32 offset) const;
@@ -263,7 +264,7 @@ private:
     MouseEncoding m_mouse_encoding { MouseEncoding::X10 };
     FocusEventMode m_focus_event_mode { FocusEventMode::Disabled };
 
-    bool m_bracketed_paste { false };
+    BracketedPasteMode m_bracketed_paste_mode { false };
 
     GraphicsRendition m_current_graphics_rendition;
 

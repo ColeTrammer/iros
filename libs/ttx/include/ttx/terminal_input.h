@@ -7,9 +7,10 @@
 #include "ttx/focus_event.h"
 #include "ttx/key_event.h"
 #include "ttx/mouse_event.h"
+#include "ttx/paste_event.h"
 
 namespace ttx {
-using Event = di::Variant<KeyEvent, MouseEvent, FocusEvent>;
+using Event = di::Variant<KeyEvent, MouseEvent, FocusEvent, PasteEvent>;
 
 class TerminalInputParser {
 public:
@@ -24,5 +25,7 @@ private:
 
     EscapeSequenceParser m_parser;
     di::Vector<Event> m_events;
+    bool m_in_bracketed_paste { false };
+    di::String m_paste_buffer;
 };
 }

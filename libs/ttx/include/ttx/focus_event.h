@@ -6,10 +6,10 @@
 namespace ttx {
 class FocusEvent {
 public:
-    constexpr static auto focus_in() -> FocusEvent { return { true }; }
-    constexpr static auto focus_out() -> FocusEvent { return { false }; }
+    constexpr static auto focus_in() -> FocusEvent { return FocusEvent { true }; }
+    constexpr static auto focus_out() -> FocusEvent { return FocusEvent { false }; }
 
-    constexpr FocusEvent(bool gained_focus) : m_gained_focus(gained_focus) {}
+    constexpr explicit FocusEvent(bool gained_focus) : m_gained_focus(gained_focus) {}
 
     constexpr auto is_focus_in() const { return m_gained_focus; }
     constexpr auto is_focus_out() const { return !m_gained_focus; }

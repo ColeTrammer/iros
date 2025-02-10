@@ -547,7 +547,7 @@ auto EscapeSequenceParser::parse_application_escape_sequences(di::StringView dat
     return di::move(m_result);
 }
 
-auto EscapeSequenceParser::parse_input_escape_sequences(di::StringView data) -> di::Vector<ParserResult> {
+auto EscapeSequenceParser::parse_input_escape_sequences(di::StringView data, bool flush) -> di::Vector<ParserResult> {
     m_mode = Mode::Input;
     for (auto code_point : data) {
         on_input(code_point);
@@ -558,7 +558,7 @@ auto EscapeSequenceParser::parse_input_escape_sequences(di::StringView data) -> 
     // partially transmitted an escape sequence. This really should be
     // using a timeout mechanism, and be completely disabled if the terminal
     // supports the kitty key protocol.
-    if (m_next_state == State::Escape) {
+    if (flush && m_next_state == State::Escape) {
         transition(State::Ground);
         m_result.push_back(ControlCharacter('\x1b'));
     }

@@ -10,6 +10,7 @@
 #include "ttx/key_event_io.h"
 #include "ttx/mouse_event_io.h"
 #include "ttx/params.h"
+#include "ttx/paste_event_io.h"
 
 namespace ttx {
 void Terminal::on_parser_results(di::Span<ParserResult const> results) {
@@ -593,7 +594,7 @@ void Terminal::csi_decset(Params const& params) {
             set_use_alternate_screen_buffer(true);
             break;
         case 2004:
-            m_bracketed_paste = true;
+            m_bracketed_paste_mode = BracketedPasteMode::Enabled;
             break;
         case 2026:
             m_disable_drawing = true;
@@ -672,7 +673,7 @@ void Terminal::csi_decrst(Params const& params) {
             set_use_alternate_screen_buffer(false);
             break;
         case 2004:
-            m_bracketed_paste = false;
+            m_bracketed_paste_mode = BracketedPasteMode::Disabled;
             break;
         case 2026:
             m_disable_drawing = false;

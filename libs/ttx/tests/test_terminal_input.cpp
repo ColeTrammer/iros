@@ -4,6 +4,7 @@
 #include "ttx/modifiers.h"
 #include "ttx/mouse.h"
 #include "ttx/mouse_event.h"
+#include "ttx/paste_event.h"
 #include "ttx/terminal_input.h"
 
 namespace terminal_input {
@@ -71,7 +72,30 @@ static void focus() {
     ASSERT_EQ(expected.size(), actual.size());
 }
 
+static void paste() {
+    using namespace ttx;
+
+    constexpr auto input = "\033[I\033[200~\033ABC\033[O\033[201~\033[OA\00"_sv;
+
+    auto expected = di::Array {
+        Event(FocusEvent::focus_in()),
+        Event(PasteEvent("\033ABC\033[O"_s)),
+        Event(FocusEvent::focus_out()),
+        Event(KeyEvent::key_down(Key::A, "A"_s, Modifiers::Shift)),
+        Event(KeyEvent::key_down(Key::_2, ""_s, Modifiers::Shift | Modifiers::Control)),
+    };
+
+    auto parser = TerminalInputParser {};
+    auto actual = parser.parse(input);
+
+    for (auto const& [ex, ac] : di::zip(expected, actual)) {
+        ASSERT_EQ(ex, ac);
+    }
+    ASSERT_EQ(expected.size(), actual.size());
+}
+
 TEST(terminal_input, keyboard)
 TEST(terminal_input, mouse)
 TEST(terminal_input, focus)
+TEST(terminal_input, paste)
 }
