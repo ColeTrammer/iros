@@ -1,5 +1,6 @@
 #include "di/cli/parser.h"
 #include "di/container/string/string_view.h"
+#include "di/io/vector_writer.h"
 #include "di/io/writer_print.h"
 #include "di/sync/synchronized.h"
 #include "dius/main.h"
@@ -105,16 +106,17 @@ static auto main(Args& args) -> di::Result<void> {
     auto cursor_col = 0_u32;
     auto last_graphics_rendition = GraphicsRendition {};
     auto draw = [&](Terminal& terminal) {
+        auto writer = di::VectorWriter<> {};
         if (terminal.allowed_to_draw()) {
-            di::writer_print<di::String::Encoding>(dius::stdin, "\033[?2026h"_sv);
-            di::writer_print<di::String::Encoding>(dius::stdin, "\033[?25l"_sv);
+            di::writer_print<di::String::Encoding>(writer, "\033[?2026h"_sv);
+            di::writer_print<di::String::Encoding>(writer, "\033[?25l"_sv);
             for (auto const& [r, row] : di::enumerate(terminal.rows())) {
                 for (auto const& [c, cell] : di::enumerate(row)) {
                     if (cell.dirty) {
                         if (cursor_row != r || cursor_col != c) {
                             cursor_row = r;
                             cursor_col = c;
-                            di::writer_print<di::String::Encoding>(dius::stdin, "\033[{};{}H"_sv, cursor_row + 1,
+                            di::writer_print<di::String::Encoding>(writer, "\033[{};{}H"_sv, cursor_row + 1,
                                                                    cursor_col + 1);
                         }
 
@@ -122,11 +124,11 @@ static auto main(Args& args) -> di::Result<void> {
                             last_graphics_rendition = cell.graphics_rendition;
 
                             for (auto& params : last_graphics_rendition.as_csi_params()) {
-                                di::writer_print<di::String::Encoding>(dius::stdin, "\033[{}m"_sv, params);
+                                di::writer_print<di::String::Encoding>(writer, "\033[{}m"_sv, params);
                             }
                         }
 
-                        di::writer_print<di::String::Encoding>(dius::stdin, "{}"_sv, cell.ch);
+                        di::writer_print<di::String::Encoding>(writer, "{}"_sv, cell.ch);
                         cursor_col = di::min(cursor_col + 1, terminal_size.cols - 1);
                     }
                 }
@@ -134,11 +136,16 @@ static auto main(Args& args) -> di::Result<void> {
             if (!terminal.cursor_hidden()) {
                 cursor_row = terminal.cursor_row();
                 cursor_col = terminal.cursor_col();
-                di::writer_print<di::String::Encoding>(dius::stdin, "\033[{};{}H"_sv, cursor_row + 1, cursor_col + 1);
-                di::writer_print<di::String::Encoding>(dius::stdin, "\033[{} q"_sv, i32(terminal.cursor_style()));
-                di::writer_print<di::String::Encoding>(dius::stdin, "\033[?25h"_sv);
+                di::writer_print<di::String::Encoding>(writer, "\033[{};{}H"_sv, cursor_row + 1, cursor_col + 1);
+                di::writer_print<di::String::Encoding>(writer, "\033[{} q"_sv, i32(terminal.cursor_style()));
+                di::writer_print<di::String::Encoding>(writer, "\033[?25h"_sv);
             }
-            di::writer_print<di::String::Encoding>(dius::stdin, "\033[?2026l"_sv);
+            di::writer_print<di::String::Encoding>(writer, "\033[?2026l"_sv);
+        }
+
+        auto output = di::move(writer).vector();
+        if (!output.empty()) {
+            (void) dius::stdin.write_exactly(di::as_bytes(output.span()));
         }
     };
 
