@@ -120,7 +120,7 @@ struct GraphicsRendition {
         return result;
     }
     void update_with_csi_params(Params const& params);
-    auto as_csi_params() const -> Params;
+    auto as_csi_params() const -> di::Vector<Params>;
 
     auto operator==(GraphicsRendition const& other) const -> bool = default;
 

@@ -121,8 +121,9 @@ static auto main(Args& args) -> di::Result<void> {
                         if (cell.graphics_rendition != last_graphics_rendition) {
                             last_graphics_rendition = cell.graphics_rendition;
 
-                            di::writer_print<di::String::Encoding>(dius::stdin, "\033[{}m"_sv,
-                                                                   last_graphics_rendition.as_csi_params());
+                            for (auto& params : last_graphics_rendition.as_csi_params()) {
+                                di::writer_print<di::String::Encoding>(dius::stdin, "\033[{}m"_sv, params);
+                            }
                         }
 
                         di::writer_print<di::String::Encoding>(dius::stdin, "{}"_sv, cell.ch);

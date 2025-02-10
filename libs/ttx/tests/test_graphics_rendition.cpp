@@ -1,4 +1,6 @@
 #include "di/container/view/cartesian_product.h"
+#include "di/container/view/join_with.h"
+#include "dius/print.h"
 #include "dius/test/prelude.h"
 #include "ttx/graphics_rendition.h"
 #include "ttx/params.h"
@@ -64,16 +66,42 @@ static void parse() {
     ASSERT_EQ(auto(rendition.underline_color.c), ttx::Color::Palette::None);
 }
 
+static auto combine_csi_params(di::Vector<ttx::Params> params_list) -> ttx::Params {
+    // NOTE: The reference for parsing escape sequences limits the number of parameters at 16.
+    // Therefore we split SGR parameters into multiple escape sequences if necessary. This
+    // validates that each item in the list doesn't container too many parameters.
+
+    auto strings = di::Vector<di::String> {};
+    for (auto const& params : params_list) {
+        auto count = 0_usize;
+        for (auto i : di::range(params.size())) {
+            auto subparams = params.subparams(i);
+            count += subparams.size();
+        }
+        ASSERT_LT_EQ(count, 16_usize);
+
+        strings.push_back(params.to_string());
+    }
+
+    auto string = strings | di::join_with(U';') | di::to<di::String>();
+    return ttx::Params::from_string(string);
+}
+
 static void as_csi_params() {
     auto rendition = ttx::GraphicsRendition {};
     rendition.blink_mode = ttx::BlinkMode::Rapid;
     rendition.italic = true;
     rendition.font_weight = ttx::FontWeight::Bold;
     rendition.fg = ttx::Color(2, 45, 67);
+    rendition.bg = ttx::Color(3, 88, 99);
     rendition.underline_color = ttx::Color(22, 35, 87);
 
-    auto actual = rendition.as_csi_params();
-    auto expected = ttx::Params { { 0 }, { 1 }, { 3 }, { 6 }, { 38, 2, 2, 45, 67 }, { 58, 2, 22, 35, 87 } };
+    auto actual = combine_csi_params(rendition.as_csi_params());
+    auto expected = ttx::Params {
+        { 0 }, { 1 }, { 3 },  { 6 },  { 38 },
+        { 2 }, { 2 }, { 45 }, { 67 }, { 48 },
+        { 2 }, { 3 }, { 88 }, { 99 }, { 58, 2, {}, 22, 35, 87 },
+    };
     ASSERT_EQ(actual, expected);
 }
 
@@ -107,7 +135,7 @@ static void roundtrip() {
         expected.invisible = invisible;
         expected.strike_through = strike_through;
 
-        auto actual = ttx::GraphicsRendition::from_csi_params(expected.as_csi_params());
+        auto actual = ttx::GraphicsRendition::from_csi_params(combine_csi_params(expected.as_csi_params()));
         ASSERT_EQ(expected, actual);
     }
 }

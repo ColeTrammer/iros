@@ -219,90 +219,115 @@ enum class ColorType {
     Underine,
 };
 
-static auto color_to_subparams(Color c, ColorType type) -> di::Vector<Param> {
+static auto color_to_params(Color c, ColorType type) -> Params {
     if (c.c == Color::Palette::Custom) {
         auto code = type == ColorType::Fg ? 38u : type == ColorType::Bg ? 48u : 58u;
-        return { code, 2, c.r, c.g, c.b };
+        if (type == ColorType::Underine) {
+            // Underline color isn't constrained by backwards compatability, so use the new form:
+            //   code:2::r:g:b
+            return { { code, 2, {}, c.r, c.g, c.b } };
+        } else {
+            // For compatability, use the old escape sequence form for fg and bg.
+            //   code; 2; r; g; b
+            return { { code }, { 2 }, { c.r }, { c.g }, { c.b } };
+        }
     } else if (type == ColorType::Underine) {
         // Use palette index.
-        return { 58, 5, u32(c.c - Color::Palette::Black) };
+        return { { 58, 5, u32(c.c - Color::Palette::Black) } };
     } else if (c.c <= Color::Palette::LightGrey) {
         auto base_value = type == ColorType::Fg ? 30u : 40u;
-        return { base_value + c.c - Color::Palette::Black };
+        return { { base_value + c.c - Color::Palette::Black } };
     } else {
         auto base_value = type == ColorType::Fg ? 90u : 100u;
-        return { base_value + c.c - Color::Palette::DarkGrey };
+        return { { base_value + c.c - Color::Palette::DarkGrey } };
     }
 }
 
-auto GraphicsRendition::as_csi_params() const -> Params {
+auto GraphicsRendition::as_csi_params() const -> di::Vector<Params> {
     // Start by clearing all attributes.
-    auto sgr = Params();
-    sgr.add_param(0);
+    auto result = di::Vector<Params>();
+    auto& basic = result.emplace_back();
+    basic.add_param(0);
 
     switch (font_weight) {
         case FontWeight::Bold:
-            sgr.add_param(1);
+            basic.add_param(1);
             break;
         case FontWeight::Dim:
-            sgr.add_param(2);
+            basic.add_param(2);
             break;
         case FontWeight::None:
             break;
     }
     if (italic) {
-        sgr.add_param(3);
-    }
-    switch (underline_mode) {
-        case UnderlineMode::Normal:
-            sgr.add_param(4);
-            break;
-        case UnderlineMode::Double:
-            sgr.add_param(21);
-            break;
-        case UnderlineMode::Curly:
-            sgr.add_subparams({ 4, 3 });
-            break;
-        case UnderlineMode::Dotted:
-            sgr.add_subparams({ 4, 4 });
-            break;
-        case UnderlineMode::Dashed:
-            sgr.add_subparams({ 4, 5 });
-            break;
-        case UnderlineMode::None:
-            break;
+        basic.add_param(3);
     }
     switch (blink_mode) {
         case BlinkMode::Normal:
-            sgr.add_param(5);
+            basic.add_param(5);
             break;
         case BlinkMode::Rapid:
-            sgr.add_param(6);
+            basic.add_param(6);
             break;
         case BlinkMode::None:
             break;
     }
     if (inverted) {
-        sgr.add_param(7);
+        basic.add_param(7);
     }
     if (invisible) {
-        sgr.add_param(8);
+        basic.add_param(8);
     }
     if (strike_through) {
-        sgr.add_param(9);
+        basic.add_param(9);
     }
     if (overline) {
-        sgr.add_param(53);
+        basic.add_param(53);
     }
+
+    switch (underline_mode) {
+        case UnderlineMode::Normal:
+            basic.add_param(4);
+            break;
+        case UnderlineMode::Double:
+            basic.add_param(21);
+            break;
+        case UnderlineMode::Curly: {
+            // For compatability, include the subparameters for specifying the underline type
+            // in its own SGR escape. This way we won't mix an escape sequence with both
+            // parameters and subparameters.
+            auto params = Params {};
+            params.add_subparams({ 4, 3 });
+            result.push_back(di::move(params));
+            break;
+        }
+        case UnderlineMode::Dotted: {
+            auto params = Params {};
+            params.add_subparams({ 4, 4 });
+            result.push_back(di::move(params));
+            break;
+        }
+        case UnderlineMode::Dashed: {
+            auto params = Params {};
+            params.add_subparams({ 4, 5 });
+            result.push_back(di::move(params));
+            break;
+        }
+        case UnderlineMode::None:
+            break;
+    }
+
+    // To ensure we don't exceed to maximum number of parameters allowed (16), split each color
+    // spec into its own set of parameters.
     if (fg.c != Color::None) {
-        sgr.add_subparams(color_to_subparams(fg, ColorType::Fg));
+        result.push_back(color_to_params(fg, ColorType::Fg));
     }
     if (bg.c != Color::None) {
-        sgr.add_subparams(color_to_subparams(bg, ColorType::Bg));
+        result.push_back(color_to_params(bg, ColorType::Bg));
     }
     if (underline_color.c != Color::None) {
-        sgr.add_subparams(color_to_subparams(underline_color, ColorType::Underine));
+        result.push_back(color_to_params(underline_color, ColorType::Underine));
     }
-    return sgr;
+    return result;
 }
 }

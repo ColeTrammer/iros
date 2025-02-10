@@ -287,8 +287,9 @@ void Terminal::c1_ri() {
 void Terminal::dcs_decrqss(Params const&, di::StringView data) {
     // Set graphics rendition
     if (data == "m"_sv) {
-        (void) m_psuedo_terminal.write_exactly(
-            di::as_bytes(di::present("\033P1$r{}m\033\\"_sv, m_current_graphics_rendition.as_csi_params())->span()));
+        auto sgr_string = m_current_graphics_rendition.as_csi_params() | di::transform(di::to_string) |
+                          di::join_with(U';') | di::to<di::String>();
+        (void) m_psuedo_terminal.write_exactly(di::as_bytes(di::present("\033P1$r{}m\033\\"_sv, sgr_string)->span()));
     } else {
         (void) m_psuedo_terminal.write_exactly(di::as_bytes("\033P0$r\033\\"_sv.span()));
     }
