@@ -853,6 +853,10 @@ void Terminal::resize(dius::tty::WindowSize const& window_size) {
     set_cursor(m_cursor_row, m_cursor_col);
 
     invalidate_all();
+
+    // Send size update to client.
+    // TODO: support in-band resize notifications: https://gist.github.com/rockorager/e695fb2924d36b2bcf1fff4a3704bd83
+    (void) m_psuedo_terminal.set_tty_window_size(window_size);
 }
 
 void Terminal::invalidate_all() {

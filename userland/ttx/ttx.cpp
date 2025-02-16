@@ -1,16 +1,14 @@
+#include <unistd.h>
+
 #include "di/cli/parser.h"
 #include "di/container/string/string_view.h"
-#include "di/io/vector_writer.h"
 #include "di/io/writer_print.h"
 #include "di/sync/synchronized.h"
 #include "dius/main.h"
-#include "dius/print.h"
 #include "dius/sync_file.h"
 #include "dius/system/process.h"
 #include "dius/thread.h"
-#include "renderer.h"
-#include "ttx/escape_sequence_parser.h"
-#include "ttx/terminal.h"
+#include "pane.h"
 #include "ttx/terminal_input.h"
 #include "ttx/utf8_stream_decoder.h"
 
@@ -26,41 +24,9 @@ struct Args {
     }
 };
 
-static auto spawn_child(Args const& args, dius::SyncFile& pty) -> di::Result<void> {
-    auto tty_path = TRY(pty.get_psuedo_terminal_path());
-
-    auto child_result = TRY(dius::system::Process(args.command | di::transform(di::to_owned) | di::to<di::Vector>())
-                                .with_new_session()
-                                .with_file_open(0, di::move(tty_path), dius::OpenMode::ReadWrite)
-                                .with_file_dup(0, 1)
-                                .with_file_dup(0, 2)
-                                .with_file_close(pty.file_descriptor())
-                                .spawn_and_wait());
-    if (child_result.exit_code() != 0) {
-        dius::eprintln("Exited with code: {}"_sv, child_result.exit_code());
-    }
-    return {};
-}
-
 static auto main(Args& args) -> di::Result<void> {
-    auto terminal_size = TRY(dius::stdin.get_tty_window_size());
-    terminal_size.pixel_height -= terminal_size.pixel_height / terminal_size.rows;
-    terminal_size.rows -= 1;
-
-    auto pty_controller = TRY(dius::open_psuedo_terminal_controller(dius::OpenMode::ReadWrite, terminal_size));
-    auto done = di::Atomic<bool> { false };
-    auto process_waiter = TRY(dius::Thread::create([&] {
-        auto guard = di::ScopeExit([&] {
-            done.store(true, di::MemoryOrder::Release);
-        });
-        auto result = spawn_child(args, pty_controller);
-        if (!result.has_value()) {
-            return dius::eprintln("Failed to spawn process: {}"_sv, result.error().message());
-        }
-    }));
-    auto process_waiter_guard = di::ScopeExit([&] {
-        (void) process_waiter.join();
-    });
+    auto terminal_size = di::Synchronized(TRY(dius::stdin.get_tty_window_size()));
+    auto pane = TRY(Pane::create(di::move(args).command, terminal_size.get_const_assuming_no_concurrent_mutations()));
 
     // Setup - raw mode
     auto _ = TRY(dius::stdin.enter_raw_mode());
@@ -103,44 +69,9 @@ static auto main(Args& args) -> di::Result<void> {
 
     [[maybe_unused]] auto& log = dius::stderr = TRY(dius::open_sync("/tmp/ttx.log"_pv, dius::OpenMode::WriteClobber));
 
-    auto terminal = di::Synchronized<Terminal>(pty_controller);
-    terminal.get_assuming_no_concurrent_accesses().set_visible_size(terminal_size);
-
-    auto renderer = Renderer();
-    auto draw = [&](Terminal& terminal) {
-        auto size = terminal.size();
-        size.pixel_height += size.pixel_height / size.rows;
-        size.rows++;
-
-        renderer.start(size);
-
-        static int i = 0;
-        renderer.put_text(di::present("COUNTER: {}"_sv, ++i)->view(), 0, 0,
-                          GraphicsRendition {
-                              .inverted = true,
-                          });
-
-        if (terminal.allowed_to_draw()) {
-            for (auto const& [rr, row] : di::enumerate(terminal.rows())) {
-                auto r = rr + 1;
-                for (auto const& [c, cell] : di::enumerate(row)) {
-                    if (cell.dirty) {
-                        renderer.put_text(cell.ch, r, c, cell.graphics_rendition);
-                    }
-                }
-            }
-        }
-
-        (void) renderer.finish(dius::stdin, {
-                                                .cursor_row = terminal.cursor_row() + 1,
-                                                .cursor_col = terminal.cursor_col(),
-                                                .style = terminal.cursor_style(),
-                                                .hidden = terminal.cursor_hidden() || !terminal.allowed_to_draw(),
-                                            });
-    };
-
     TRY(dius::system::mask_signal(dius::Signal::WindowChange));
 
+    auto done = di::Atomic<bool>(false);
     auto input_thread = TRY(dius::Thread::create([&] -> void {
         auto _ = di::ScopeExit([&] {
             done.store(true, di::MemoryOrder::Release);
@@ -154,7 +85,6 @@ static auto main(Args& args) -> di::Result<void> {
         auto exit = false;
         auto parser = TerminalInputParser {};
         auto utf8_decoder = Utf8StreamDecoder {};
-        auto last_mouse_position = di::Optional<MousePosition> {};
         while (!exit) {
             auto nread = dius::stdin.read_some(buffer.span());
             if (!nread.has_value()) {
@@ -169,79 +99,13 @@ static auto main(Args& args) -> di::Result<void> {
                         exit = true;
                         break;
                     }
-
-                    auto [application_cursor_keys_mode,
-                          key_reporting_flags] = terminal.with_lock([&](Terminal& terminal) {
-                        return di::Tuple { terminal.application_cursor_keys_mode(), terminal.key_reporting_flags() };
-                    });
-
-                    auto serialized_event =
-                        ttx::serialize_key_event(*ev, application_cursor_keys_mode, key_reporting_flags);
-                    if (serialized_event) {
-                        if (!pty_controller.write_exactly(di::as_bytes(serialized_event.value().span()))) {
-                            exit = true;
-                            break;
-                        }
-                    }
+                    pane->event(*ev);
                 } else if (auto ev = di::get_if<MouseEvent>(event)) {
-                    auto [application_cursor_keys_mode, alternate_scroll_mode, mouse_protocol, mouse_encoding,
-                          in_alternate_screen_buffer, window_size] = terminal.with_lock([&](Terminal& terminal) {
-                        return di::Tuple {
-                            terminal.application_cursor_keys_mode(),
-                            terminal.alternate_scroll_mode(),
-                            terminal.mouse_protocol(),
-                            terminal.mouse_encoding(),
-                            terminal.in_alternate_screen_buffer(),
-                            terminal.size(),
-                        };
-                    });
-
-                    auto serialized_event = serialize_mouse_event(
-                        *ev, mouse_protocol, mouse_encoding, last_mouse_position,
-                        { alternate_scroll_mode, application_cursor_keys_mode, in_alternate_screen_buffer },
-                        window_size);
-                    if (serialized_event.has_value()) {
-                        if (!pty_controller.write_exactly(di::as_bytes(serialized_event.value().span()))) {
-                            exit = true;
-                            break;
-                        }
-                    }
-                    last_mouse_position = ev.value().position();
-
-                    // Support mouse scrolling.
-                    if (ev->button() == MouseButton::ScrollUp && ev->type() == MouseEventType::Press) {
-                        terminal.with_lock([&](Terminal& terminal) {
-                            terminal.scroll_up();
-                            draw(terminal);
-                        });
-                    } else if (ev->button() == MouseButton::ScrollDown && ev->type() == MouseEventType::Press) {
-                        terminal.with_lock([&](Terminal& terminal) {
-                            terminal.scroll_down();
-                            draw(terminal);
-                        });
-                    }
+                    pane->event(*ev);
                 } else if (auto ev = di::get_if<FocusEvent>(event)) {
-                    auto [focus_event_mode] = terminal.with_lock([&](Terminal& terminal) {
-                        return di::Tuple { terminal.focus_event_mode() };
-                    });
-
-                    auto serialized_event = serialize_focus_event(*ev, focus_event_mode);
-                    if (serialized_event) {
-                        if (!pty_controller.write_exactly(di::as_bytes(serialized_event.value().span()))) {
-                            exit = true;
-                            break;
-                        }
-                    }
+                    pane->event(*ev);
                 } else if (auto ev = di::get_if<PasteEvent>(event)) {
-                    auto [bracketed_paste_mode] = terminal.with_lock([&](Terminal& terminal) {
-                        return di::Tuple { terminal.bracked_paste_mode() };
-                    });
-
-                    auto serialized_event = serialize_paste_event(*ev, bracketed_paste_mode);
-                    if (!pty_controller.write_exactly(di::as_bytes(serialized_event.span()))) {
-                        exit = true;
-                        break;
-                    }
+                    pane->event(*ev);
                 }
             }
         }
@@ -250,30 +114,24 @@ static auto main(Args& args) -> di::Result<void> {
         (void) input_thread.join();
     });
 
-    auto output_thread = TRY(dius::Thread::create([&] -> void {
-        auto parser = EscapeSequenceParser();
+    auto render_thread = TRY(dius::Thread::create([&] -> void {
+        auto renderer = Renderer();
 
-        auto utf8_decoder = Utf8StreamDecoder {};
         while (!done.load(di::MemoryOrder::Acquire)) {
-            auto buffer = di::Vector<byte> {};
-            buffer.resize(16384);
-
-            auto nread = pty_controller.read_some(buffer.span());
-            if (!nread.has_value()) {
-                break;
-            }
-
-            auto utf8_string = utf8_decoder.decode(buffer | di::take(*nread));
-
-            auto parser_result = parser.parse_application_escape_sequences(utf8_string);
-            terminal.with_lock([&](Terminal& terminal) {
-                terminal.on_parser_results(parser_result.span());
-                draw(terminal);
+            auto size = terminal_size.with_lock([&](dius::tty::WindowSize& terminal_size) {
+                return terminal_size;
             });
+
+            renderer.start(size);
+            auto cursor = pane->draw(renderer);
+            (void) renderer.finish(dius::stdin, cursor);
+
+            // TODO: use a sleep method in dius. And sleep until a deadline to prevent drift.
+            usleep(16000);
         }
     }));
     auto _ = di::ScopeExit([&] {
-        (void) output_thread.join();
+        (void) render_thread.join();
     });
 
     while (!done.load(di::MemoryOrder::Acquire)) {
@@ -284,17 +142,13 @@ static auto main(Args& args) -> di::Result<void> {
             break;
         }
 
-        auto terminal_size = dius::stdin.get_tty_window_size();
-        if (!terminal_size) {
-            break;
-        }
-
-        terminal_size.value().pixel_height -= terminal_size.value().pixel_height / terminal_size.value().rows;
-        terminal_size.value().rows -= 1;
-        terminal.with_lock([&](Terminal& terminal) {
-            (void) pty_controller.set_tty_window_size(terminal_size.value());
-            terminal.set_visible_size(terminal_size.value());
-            draw(terminal);
+        terminal_size.with_lock([&](dius::tty::WindowSize& terminal_size) {
+            auto size = dius::stdin.get_tty_window_size();
+            if (!size) {
+                return;
+            }
+            terminal_size = size.value();
+            pane->resize(terminal_size);
         });
     }
 
