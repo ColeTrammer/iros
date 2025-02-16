@@ -41,6 +41,10 @@ auto Pane::create(di::Vector<di::TransparentStringView> command, dius::tty::Wind
         TRY(dius::Thread::create(di::make_function<void()>([&pane = *pane, command = di::move(command)] mutable {
             auto guard = di::ScopeExit([&] {
                 pane.m_done.store(true, di::MemoryOrder::Release);
+
+                if (pane.did_exit) {
+                    pane.did_exit();
+                }
             });
             auto result = spawn_child(di::move(command), pane.m_pty_controller);
             if (!result.has_value()) {

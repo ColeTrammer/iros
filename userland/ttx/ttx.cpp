@@ -25,8 +25,22 @@ struct Args {
 };
 
 static auto main(Args& args) -> di::Result<void> {
+    auto done = di::Atomic<bool>(false);
+
+    auto set_done = [&] {
+        // TODO: send kill signals (SIGHUP) to all remaining panes.
+        // TODO: timeout/skip waiting for processes to die after sending SIGHUP.
+        done.store(true, di::MemoryOrder::Release);
+        // Ensure the SIGWINCH thread exits.
+        (void) dius::system::send_signal(dius::system::get_process_id(), dius::Signal::WindowChange);
+        // Ensure the input thread exits. (By writing something to stdin).
+        auto byte = 0_b;
+        (void) dius::stdin.write_exactly({ &byte, 1 });
+    };
+
     auto terminal_size = di::Synchronized(TRY(dius::stdin.get_tty_window_size()));
     auto pane = TRY(Pane::create(di::move(args).command, terminal_size.get_const_assuming_no_concurrent_mutations()));
+    pane->did_exit = set_done;
 
     // Setup - raw mode
     auto _ = TRY(dius::stdin.enter_raw_mode());
@@ -71,23 +85,19 @@ static auto main(Args& args) -> di::Result<void> {
 
     TRY(dius::system::mask_signal(dius::Signal::WindowChange));
 
-    auto done = di::Atomic<bool>(false);
     auto input_thread = TRY(dius::Thread::create([&] -> void {
         auto _ = di::ScopeExit([&] {
-            done.store(true, di::MemoryOrder::Release);
-            // Ensure the SIGWINCH thread exits.
-            (void) dius::system::send_signal(dius::system::get_process_id(), dius::Signal::WindowChange);
+            set_done();
         });
 
         auto buffer = di::Vector<byte> {};
         buffer.resize(4096);
 
-        auto exit = false;
         auto parser = TerminalInputParser {};
         auto utf8_decoder = Utf8StreamDecoder {};
-        while (!exit) {
+        while (!done.load(di::MemoryOrder::Acquire)) {
             auto nread = dius::stdin.read_some(buffer.span());
-            if (!nread.has_value()) {
+            if (!nread.has_value() || done.load(di::MemoryOrder::Acquire)) {
                 break;
             }
 
@@ -96,7 +106,7 @@ static auto main(Args& args) -> di::Result<void> {
             for (auto const& event : events) {
                 if (auto ev = di::get_if<KeyEvent>(event)) {
                     if (ev->key() == Key::Q && !!(ev->modifiers() & Modifiers::Control)) {
-                        exit = true;
+                        set_done();
                         break;
                     }
                     pane->event(*ev);

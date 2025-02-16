@@ -2,6 +2,7 @@
 
 #include "di/container/string/string_view.h"
 #include "di/container/vector/vector.h"
+#include "di/function/container/function.h"
 #include "di/sync/atomic.h"
 #include "di/sync/synchronized.h"
 #include "di/vocab/error/result.h"
@@ -33,6 +34,9 @@ public:
     auto event(PasteEvent const& event) -> bool;
 
     void resize(dius::tty::WindowSize const& size);
+
+    // Application controlled callback when the internal process exits.
+    di::Function<void()> did_exit;
 
 private:
     di::Atomic<bool> m_done { false };
