@@ -42,12 +42,22 @@ public:
     constexpr auto get_assuming_no_concurrent_accesses() -> Value& { return m_value; }
     constexpr auto get_const_assuming_no_concurrent_mutations() const -> Value const& { return m_value; }
 
+    constexpr auto read() const -> Value
+    requires(concepts::CopyConstructible<Value>)
+    {
+        auto guard = ScopedLock(m_lock);
+        return m_value;
+    }
+
     auto get_lock() -> Lock& { return m_lock; }
 
 private:
     Value m_value {};
-    Lock m_lock {};
+    Lock mutable m_lock {};
 };
+
+template<typename T>
+Synchronized(T&&) -> Synchronized<T>;
 }
 
 namespace di {
