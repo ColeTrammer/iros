@@ -8,5 +8,7 @@ struct WindowSize {
     u32 cols { 0 };
     u32 pixel_width { 0 };
     u32 pixel_height { 0 };
+
+    auto operator==(WindowSize const&) const -> bool = default;
 };
 }

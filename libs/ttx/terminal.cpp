@@ -819,6 +819,12 @@ void Terminal::set_cursor(u32 row, u32 col) {
 }
 
 void Terminal::set_visible_size(dius::tty::WindowSize const& window_size) {
+    if (m_available_rows_in_display == window_size.rows && m_available_cols_in_display == window_size.cols &&
+        m_available_xpixels_in_display == window_size.pixel_width &&
+        m_available_ypixels_in_display == window_size.pixel_height) {
+        return;
+    }
+
     m_available_rows_in_display = window_size.rows;
     m_available_cols_in_display = window_size.cols;
     m_available_xpixels_in_display = window_size.pixel_width;

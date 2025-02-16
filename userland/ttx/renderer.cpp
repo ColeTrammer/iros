@@ -80,4 +80,11 @@ void Renderer::put_text(c32 text, u32 row, u32 col, GraphicsRendition const& ren
     (void) string.push_back(text);
     return put_text(string.view(), row, col, rendition);
 }
+
+void Renderer::set_bound(u32 row, u32 col, u32 width, u32 height) {
+    m_row_offset = row;
+    m_col_offset = col;
+    m_bound_width = width;
+    m_bound_height = height;
+}
 }
