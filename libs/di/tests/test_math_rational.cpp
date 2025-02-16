@@ -32,6 +32,24 @@ constexpr static void basic() {
     auto x = di::Rational(3, 5);
     x++;
     ASSERT_EQ(x, di::Rational(8, 5));
+
+    auto d = di::Rational { 1111, 4 };
+    ASSERT_EQ((d * 1).round(), 278);
+    ASSERT_EQ((d * 2).round(), 556);
+    ASSERT_EQ((d * 3).round(), 833);
+    ASSERT_EQ((-d * 1).round(), -278);
+    ASSERT_EQ((-d * 2).round(), -556);
+    ASSERT_EQ((-d * 3).round(), -833);
+
+    auto e = di::Rational { 666, 5 };
+    ASSERT_EQ((e * 1).round(), 133);
+    ASSERT_EQ((e * 2).round(), 266);
+    ASSERT_EQ((e * 3).round(), 400);
+    ASSERT_EQ((e * 4).round(), 533);
+    ASSERT_EQ((-e * 1).round(), -133);
+    ASSERT_EQ((-e * 2).round(), -266);
+    ASSERT_EQ((-e * 3).round(), -400);
+    ASSERT_EQ((-e * 4).round(), -533);
 }
 
 constexpr static void ratio() {

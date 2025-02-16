@@ -10,7 +10,7 @@ class Rational {
 public:
     constexpr Rational() : m_numerator(1), m_denominator(1) {}
 
-    constexpr explicit Rational(T numerator, T denominator = 1) : m_numerator(numerator), m_denominator(denominator) {
+    constexpr Rational(T numerator, T denominator = 1) : m_numerator(numerator), m_denominator(denominator) {
         DI_ASSERT(m_denominator != T(0));
 
         normalize();
@@ -45,6 +45,16 @@ public:
 
     constexpr auto negated() const -> Rational { return Rational { -numerator(), denominator() }; }
     constexpr auto inverted() const -> Rational { return Rational { denominator(), numerator() }; }
+
+    constexpr auto round() const -> T {
+        if (negative()) {
+            return -negated().round();
+        }
+
+        auto result = m_numerator / m_denominator;
+        auto midpoint = m_denominator / 2 + (m_denominator % 2 == 1);
+        return result + (m_numerator % m_denominator >= midpoint);
+    }
 
     constexpr auto operator++() -> Rational& { return *this = add({}); }
     constexpr auto operator++(int) -> Rational {
