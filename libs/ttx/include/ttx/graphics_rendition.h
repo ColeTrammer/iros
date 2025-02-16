@@ -101,9 +101,9 @@ constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<UnderlineMode>) 
 }
 
 struct GraphicsRendition {
-    Color fg;
-    Color bg;
-    Color underline_color;
+    Color fg {};
+    Color bg {};
+    Color underline_color {};
 
     FontWeight font_weight { FontWeight::None };
     BlinkMode blink_mode { BlinkMode::None };

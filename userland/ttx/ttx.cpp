@@ -8,6 +8,7 @@
 #include "dius/sync_file.h"
 #include "dius/system/process.h"
 #include "dius/thread.h"
+#include "renderer.h"
 #include "ttx/escape_sequence_parser.h"
 #include "ttx/terminal.h"
 #include "ttx/terminal_input.h"
@@ -43,6 +44,9 @@ static auto spawn_child(Args const& args, dius::SyncFile& pty) -> di::Result<voi
 
 static auto main(Args& args) -> di::Result<void> {
     auto terminal_size = TRY(dius::stdin.get_tty_window_size());
+    terminal_size.pixel_height -= terminal_size.pixel_height / terminal_size.rows;
+    terminal_size.rows -= 1;
+
     auto pty_controller = TRY(dius::open_psuedo_terminal_controller(dius::OpenMode::ReadWrite, terminal_size));
     auto done = di::Atomic<bool> { false };
     auto process_waiter = TRY(dius::Thread::create([&] {
@@ -97,56 +101,42 @@ static auto main(Args& args) -> di::Result<void> {
         di::writer_print<di::String::Encoding>(dius::stdin, "\033[?2004l"_sv);
     });
 
-    auto log = TRY(dius::open_sync("/tmp/ttx.log"_pv, dius::OpenMode::WriteClobber));
+    [[maybe_unused]] auto& log = dius::stderr = TRY(dius::open_sync("/tmp/ttx.log"_pv, dius::OpenMode::WriteClobber));
 
     auto terminal = di::Synchronized<Terminal>(pty_controller);
     terminal.get_assuming_no_concurrent_accesses().set_visible_size(terminal_size);
 
-    auto cursor_row = 0_u32;
-    auto cursor_col = 0_u32;
-    auto last_graphics_rendition = GraphicsRendition {};
+    auto renderer = Renderer();
     auto draw = [&](Terminal& terminal) {
-        auto writer = di::VectorWriter<> {};
+        auto size = terminal.size();
+        size.pixel_height += size.pixel_height / size.rows;
+        size.rows++;
+
+        renderer.start(size);
+
+        static int i = 0;
+        renderer.put_text(di::present("COUNTER: {}"_sv, ++i)->view(), 0, 0,
+                          GraphicsRendition {
+                              .inverted = true,
+                          });
+
         if (terminal.allowed_to_draw()) {
-            di::writer_print<di::String::Encoding>(writer, "\033[?2026h"_sv);
-            di::writer_print<di::String::Encoding>(writer, "\033[?25l"_sv);
-            for (auto const& [r, row] : di::enumerate(terminal.rows())) {
+            for (auto const& [rr, row] : di::enumerate(terminal.rows())) {
+                auto r = rr + 1;
                 for (auto const& [c, cell] : di::enumerate(row)) {
                     if (cell.dirty) {
-                        if (cursor_row != r || cursor_col != c) {
-                            cursor_row = r;
-                            cursor_col = c;
-                            di::writer_print<di::String::Encoding>(writer, "\033[{};{}H"_sv, cursor_row + 1,
-                                                                   cursor_col + 1);
-                        }
-
-                        if (cell.graphics_rendition != last_graphics_rendition) {
-                            last_graphics_rendition = cell.graphics_rendition;
-
-                            for (auto& params : last_graphics_rendition.as_csi_params()) {
-                                di::writer_print<di::String::Encoding>(writer, "\033[{}m"_sv, params);
-                            }
-                        }
-
-                        di::writer_print<di::String::Encoding>(writer, "{}"_sv, cell.ch);
-                        cursor_col = di::min(cursor_col + 1, terminal_size.cols - 1);
+                        renderer.put_text(cell.ch, r, c, cell.graphics_rendition);
                     }
                 }
             }
-            if (!terminal.cursor_hidden()) {
-                cursor_row = terminal.cursor_row();
-                cursor_col = terminal.cursor_col();
-                di::writer_print<di::String::Encoding>(writer, "\033[{};{}H"_sv, cursor_row + 1, cursor_col + 1);
-                di::writer_print<di::String::Encoding>(writer, "\033[{} q"_sv, i32(terminal.cursor_style()));
-                di::writer_print<di::String::Encoding>(writer, "\033[?25h"_sv);
-            }
-            di::writer_print<di::String::Encoding>(writer, "\033[?2026l"_sv);
         }
 
-        auto output = di::move(writer).vector();
-        if (!output.empty()) {
-            (void) dius::stdin.write_exactly(di::as_bytes(output.span()));
-        }
+        (void) renderer.finish(dius::stdin, {
+                                                .cursor_row = terminal.cursor_row() + 1,
+                                                .cursor_col = terminal.cursor_col(),
+                                                .style = terminal.cursor_style(),
+                                                .hidden = terminal.cursor_hidden() || !terminal.allowed_to_draw(),
+                                            });
     };
 
     TRY(dius::system::mask_signal(dius::Signal::WindowChange));
@@ -299,6 +289,8 @@ static auto main(Args& args) -> di::Result<void> {
             break;
         }
 
+        terminal_size.value().pixel_height -= terminal_size.value().pixel_height / terminal_size.value().rows;
+        terminal_size.value().rows -= 1;
         terminal.with_lock([&](Terminal& terminal) {
             (void) pty_controller.set_tty_window_size(terminal_size.value());
             terminal.set_visible_size(terminal_size.value());
