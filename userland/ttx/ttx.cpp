@@ -3,6 +3,7 @@
 #include "di/cli/parser.h"
 #include "di/container/interface/erase.h"
 #include "di/container/string/string_view.h"
+#include "di/function/not_equal.h"
 #include "di/io/writer_print.h"
 #include "di/math/rational/rational.h"
 #include "di/sync/synchronized.h"
@@ -72,7 +73,7 @@ static auto main(Args& args) -> di::Result<void> {
         state.layout = {};
         state.size = size;
 
-        if (size.rows <= 1 || state.panes.empty()) {
+        if (size.rows <= 1 || state.panes.empty() || size.cols <= state.panes.size() - 1) {
             return;
         }
 
@@ -80,6 +81,10 @@ static auto main(Args& args) -> di::Result<void> {
         auto available_size = size;
         available_size.pixel_height -= size.pixel_height / size.rows;
         available_size.rows--;
+
+        // Allocate 1 column for padding in between panes.
+        available_size.pixel_width -= (state.panes.size() - 1) * size.pixel_width / size.cols;
+        available_size.cols -= state.panes.size() - 1;
 
         auto target_cols = di::Rational(i32(size.cols), i32(state.panes.size()));
         auto target_xpixels = di::Rational(i32(size.pixel_width), i32(state.panes.size()));
@@ -110,6 +115,9 @@ static auto main(Args& args) -> di::Result<void> {
             leftover_cols -= cols;
             leftover_xpixels -= xpixels;
             x += cols;
+
+            // Account for horizontal padding.
+            x++;
         }
     };
 
@@ -133,11 +141,8 @@ static auto main(Args& args) -> di::Result<void> {
             // Clear active pane.
             if (state.active == pane) {
                 // TODO: use a better algorithm. Last used?
-                set_active(state, state.panes.front()
-                                      .transform([](di::Box<Pane> const& p) {
-                                          return p.get();
-                                      })
-                                      .value_or(nullptr));
+                auto candidates = state.panes | di::transform(&di::Box<Pane>::get) | di::filter(di::not_equal(pane));
+                set_active(state, candidates.front().value_or(nullptr));
             }
 
             di::erase_if(state.panes, [&](di::Box<Pane> const& pointer) {
@@ -348,7 +353,13 @@ static auto main(Args& args) -> di::Result<void> {
                                   });
 
                 auto cursor = di::Optional<RenderedCursor> {};
-                for (auto& entry : state.layout) {
+                for (auto [i, entry] : di::enumerate(state.layout)) {
+                    // Draw horizontal line between panes.
+                    renderer.set_bound(0, 0, state.size.cols, state.size.rows);
+                    for (auto row : di::range(entry.row, entry.row + entry.size.rows)) {
+                        renderer.put_text(U'│', row, entry.col - 1);
+                    }
+
                     renderer.set_bound(entry.row, entry.col, entry.size.cols, entry.size.rows);
                     auto pane_cursor = entry.pane->draw(renderer);
                     if (entry.pane == state.active) {
