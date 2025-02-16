@@ -3,6 +3,7 @@
 #include "di/reflect/enumerator.h"
 #include "di/reflect/field.h"
 #include "di/reflect/prelude.h"
+#include "dius/tty.h"
 #include "ttx/modifiers.h"
 #include "ttx/mouse.h"
 
@@ -36,6 +37,10 @@ public:
     constexpr auto modifiers() const -> Modifiers { return m_modifiers; }
 
     constexpr auto is_vertical_scroll() const -> bool { return !!(button() & MouseButton::VerticalScrollButtons); }
+
+    constexpr auto translate(MouseCoordinate offset_in_cells, dius::tty::WindowSize const& size) const -> MouseEvent {
+        return MouseEvent(type(), button(), position().translate(offset_in_cells, size), modifiers());
+    }
 
     auto operator==(MouseEvent const&) const -> bool = default;
 

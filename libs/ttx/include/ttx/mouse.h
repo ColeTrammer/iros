@@ -91,6 +91,22 @@ public:
         return { x, y };
     }
 
+    constexpr auto translate(MouseCoordinate offset_in_cells, dius::tty::WindowSize const& size) const
+        -> MousePosition {
+        auto new_cells = MouseCoordinate {
+            in_cells().x() + offset_in_cells.x(),
+            in_cells().y() + offset_in_cells.y(),
+        };
+        auto new_pixels = in_pixels().transform([&](MouseCoordinate pixels) {
+            return MouseCoordinate {
+                pixels.x() + size.pixel_width / size.cols,
+                pixels.y() + size.pixel_height / size.rows,
+            };
+        });
+
+        return MousePosition(new_cells, new_pixels);
+    }
+
     auto operator==(MousePosition const&) const -> bool = default;
 
 private:

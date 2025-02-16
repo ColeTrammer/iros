@@ -13,6 +13,7 @@
 #include "dius/thread.h"
 #include "dius/tty.h"
 #include "pane.h"
+#include "ttx/focus_event.h"
 #include "ttx/terminal_input.h"
 #include "ttx/utf8_stream_decoder.h"
 
@@ -112,22 +113,37 @@ static auto main(Args& args) -> di::Result<void> {
         }
     };
 
+    auto set_active = [&](LayoutState& state, Pane* pane) {
+        if (state.active == pane) {
+            return;
+        }
+
+        // Unfocus the old pane, and focus the new pane.
+        if (state.active) {
+            state.active->event(FocusEvent::focus_out());
+        }
+        state.active = pane;
+        if (state.active) {
+            state.active->event(FocusEvent::focus_in());
+        }
+    };
+
     auto remove_pane = [&](Pane* pane) {
         return layout_state.with_lock([&](LayoutState& state) {
+            // Clear active pane.
+            if (state.active == pane) {
+                // TODO: use a better algorithm. Last used?
+                set_active(state, state.panes.front()
+                                      .transform([](di::Box<Pane> const& p) {
+                                          return p.get();
+                                      })
+                                      .value_or(nullptr));
+            }
+
             di::erase_if(state.panes, [&](di::Box<Pane> const& pointer) {
                 return pointer.get() == pane;
             });
             do_layout(state, state.size);
-
-            // Clear active pane.
-            if (state.active == pane) {
-                // TODO: use a better algorithm. Last used?
-                state.active = state.panes.front()
-                                   .transform([](di::Box<Pane> const& p) {
-                                       return p.get();
-                                   })
-                                   .value_or(nullptr);
-            }
 
             // Exit when there are no panes left.
             if (state.panes.empty()) {
@@ -163,7 +179,8 @@ static auto main(Args& args) -> di::Result<void> {
             pane->did_exit = [&remove_pane, pane = pane.get()] {
                 remove_pane(pane);
             };
-            state.active = pane.get();
+
+            set_active(state, pane.get());
             return {};
         });
     };
@@ -248,7 +265,7 @@ static auto main(Args& args) -> di::Result<void> {
                             auto it = di::find(cycled, state.active, &di::Box<Pane>::get);
                             if (it != cycled.end()) {
                                 --it;
-                                state.active = (*it).get();
+                                set_active(state, (*it).get());
                             }
                         });
                         continue;
@@ -261,7 +278,7 @@ static auto main(Args& args) -> di::Result<void> {
                             auto it = di::find(cycled, state.active, &di::Box<Pane>::get);
                             if (it != cycled.end()) {
                                 ++it;
-                                state.active = (*it).get();
+                                set_active(state, (*it).get());
                             }
                         });
                         continue;
@@ -278,8 +295,21 @@ static auto main(Args& args) -> di::Result<void> {
                     // TODO: change focus, simluate focus events, and validate mouse coordinates are in bounds.
                     // TODO: translate coordinates.
                     layout_state.with_lock([&](LayoutState& state) {
-                        if (auto* pane = state.active) {
-                            pane->event(*ev);
+                        // Check if the event interests with any pane.
+                        for (auto const& entry : state.layout) {
+                            if (ev->position().in_cells().x() < entry.col ||
+                                ev->position().in_cells().y() < entry.row ||
+                                ev->position().in_cells().x() >= entry.col + entry.size.cols ||
+                                ev->position().in_cells().y() >= entry.row + entry.size.rows) {
+                                continue;
+                            }
+
+                            if (ev->type() != MouseEventType::Move) {
+                                set_active(state, entry.pane);
+                            }
+                            if (entry.pane == state.active) {
+                                entry.pane->event(ev->translate({ -entry.col, -entry.row }, state.size));
+                            }
                         }
                     });
                 } else if (auto ev = di::get_if<FocusEvent>(event)) {
