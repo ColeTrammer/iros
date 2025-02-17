@@ -13,8 +13,8 @@ public:
     using Representation = typename Duration::Representation;
     using Period = typename Duration::Period;
 
-    constexpr static TimePoint min = TimePoint(Duration::min());
-    constexpr static TimePoint max = TimePoint(Duration::max());
+    constexpr static auto min() { return TimePoint(Duration::min()); }
+    constexpr static auto max() { return TimePoint(Duration::max()); }
 
     TimePoint() = default;
 

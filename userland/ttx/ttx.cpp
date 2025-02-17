@@ -1,5 +1,3 @@
-#include <unistd.h>
-
 #include "di/cli/parser.h"
 #include "di/container/interface/erase.h"
 #include "di/container/string/string_view.h"
@@ -341,6 +339,7 @@ static auto main(Args& args) -> di::Result<void> {
     auto render_thread = TRY(dius::Thread::create([&] -> void {
         auto renderer = Renderer();
 
+        auto deadline = dius::SteadyClock::now();
         while (!done.load(di::MemoryOrder::Acquire)) {
             auto cursor = layout_state.with_lock([&](LayoutState& state) {
                 renderer.start(state.size);
@@ -374,8 +373,10 @@ static auto main(Args& args) -> di::Result<void> {
 
             (void) renderer.finish(dius::stdin, cursor.value_or({ .hidden = true }));
 
-            // TODO: use a sleep method in dius. And sleep until a deadline to prevent drift.
-            usleep(16000);
+            while (deadline < dius::SteadyClock::now()) {
+                deadline += di::Milliseconds(25); // 50 FPS
+            }
+            dius::this_thread::sleep_until(deadline);
         }
     }));
     auto _ = di::ScopeExit([&] {

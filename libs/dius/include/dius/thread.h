@@ -1,15 +1,22 @@
 #pragma once
 
 #include "di/assert/prelude.h"
+#include "di/chrono/duration/duration_literals.h"
 #include "di/function/prelude.h"
 #include "di/meta/util.h"
 #include "di/util/prelude.h"
 #include "dius/config.h"
 #include "dius/error.h"
+#include "steady_clock.h"
 
 #include DIUS_PLATFORM_PATH(thread.h)
 
 namespace dius {
+namespace this_thread {
+    void sleep_for(di::Nanoseconds duration);
+    void sleep_until(SteadyClock::TimePoint time_point);
+}
+
 /// @brief Class representing a single thread of execution.
 ///
 /// This class is modeled after the C++ standard library [std::thread](https://en.cppreference.com/w/cpp/thread/thread).
