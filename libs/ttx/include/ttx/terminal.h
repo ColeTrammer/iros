@@ -25,7 +25,7 @@ public:
 
     explicit Terminal(dius::SyncFile& psuedo_terminal) : m_psuedo_terminal(psuedo_terminal) {}
 
-    Terminal clone() const {
+    auto clone() const -> Terminal {
         auto result = Terminal(m_psuedo_terminal);
         result.m_rows = di::clone(m_rows);
         result.m_row_count = m_row_count;
@@ -77,10 +77,10 @@ public:
 
     auto cursor_row() const -> u32 { return m_cursor_row; }
     auto cursor_col() const -> u32 { return m_cursor_col; }
-    bool cursor_hidden() const { return m_cursor_hidden; }
-    bool should_display_cursor_at_position(u32 r, u32 c) const;
+    auto cursor_hidden() const -> bool { return m_cursor_hidden; }
+    auto should_display_cursor_at_position(u32 r, u32 c) const -> bool;
     auto cursor_style() const -> CursorStyle { return m_cursor_style; }
-    u32 scroll_relative_offset(u32 display_row) const;
+    auto scroll_relative_offset(u32 display_row) const -> u32;
 
     auto allowed_to_draw() const -> bool { return !m_disable_drawing; }
 
@@ -88,10 +88,10 @@ public:
     void scroll_up();
     void scroll_down();
 
-    u32 total_rows() const { return m_rows_above.size() + m_rows.size() + m_rows_below.size(); }
-    u32 row_offset() const { return m_rows_above.size(); }
-    u32 row_count() const { return m_row_count; }
-    u32 col_count() const { return m_col_count; }
+    auto total_rows() const -> u32 { return m_rows_above.size() + m_rows.size() + m_rows_below.size(); }
+    auto row_offset() const -> u32 { return m_rows_above.size(); }
+    auto row_count() const -> u32 { return m_row_count; }
+    auto col_count() const -> u32 { return m_col_count; }
     auto size() const -> dius::tty::WindowSize { return { m_row_count, m_col_count, m_xpixels, m_ypixels }; }
 
     void set_visible_size(dius::tty::WindowSize const& window_size);
@@ -114,8 +114,8 @@ public:
 
     auto bracked_paste_mode() const -> BracketedPasteMode { return m_bracketed_paste_mode; }
 
-    di::Vector<Row> const& rows() const { return m_rows; }
-    Row const& row_at_scroll_relative_offset(u32 offset) const;
+    auto rows() const -> di::Vector<Row> const& { return m_rows; }
+    auto row_at_scroll_relative_offset(u32 offset) const -> Row const&;
 
     void invalidate_all();
 
@@ -142,29 +142,29 @@ private:
 
     void set_cursor(u32 row, u32 col);
 
-    u32 min_row_inclusive() const {
+    auto min_row_inclusive() const -> u32 {
         if (m_origin_mode) {
             return m_scroll_start;
         }
         return 0;
     }
-    u32 min_col_inclusive() const { return 0; }
+    auto min_col_inclusive() const -> u32 { return 0; }
 
-    u32 max_row_inclusive() const {
+    auto max_row_inclusive() const -> u32 {
         if (m_origin_mode) {
             return m_scroll_end;
         }
         return m_row_count - 1;
     }
-    u32 max_col_inclusive() const { return m_col_count - 1; }
+    auto max_col_inclusive() const -> u32 { return m_col_count - 1; }
 
-    u32 translate_row(u32 row) const {
+    auto translate_row(u32 row) const -> u32 {
         if (m_origin_mode) {
             return row + m_scroll_start - 1;
         }
         return row - 1;
     }
-    u32 translate_col(u32 col) const { return col - 1; }
+    auto translate_col(u32 col) const -> u32 { return col - 1; }
 
     void clear_below_cursor(char ch = ' ');
     void clear_above_cursor(char ch = ' ');

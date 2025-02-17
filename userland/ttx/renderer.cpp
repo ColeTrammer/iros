@@ -78,7 +78,7 @@ void Renderer::put_text(di::StringView text, u32 row, u32 col, GraphicsRendition
 void Renderer::put_text(c32 text, u32 row, u32 col, GraphicsRendition const& rendition) {
     auto string = di::container::string::StringImpl<di::String::Encoding, di::StaticVector<c8, di::Constexpr<4zu>>> {};
     (void) string.push_back(text);
-    return put_text(string.view(), row, col, rendition);
+    put_text(string.view(), row, col, rendition);
 }
 
 void Renderer::set_bound(u32 row, u32 col, u32 width, u32 height) {

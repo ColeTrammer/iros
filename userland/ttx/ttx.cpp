@@ -137,7 +137,7 @@ static auto main(Args& args) -> di::Result<void> {
     };
 
     auto remove_pane = [&](Pane* pane) {
-        return layout_state.with_lock([&](LayoutState& state) {
+        layout_state.with_lock([&](LayoutState& state) {
             // Clear active pane.
             if (state.active == pane) {
                 // TODO: use a better algorithm. Last used?
@@ -155,6 +155,7 @@ static auto main(Args& args) -> di::Result<void> {
                 set_done();
             }
         });
+        return;
     };
 
     auto add_pane = [&](di::Vector<di::TransparentStringView> command) -> di::Result<> {

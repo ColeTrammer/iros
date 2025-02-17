@@ -13,7 +13,7 @@ namespace ttx {
 //   38:2:X:R:G:B -- subparameters with color space argument, which is ignored.
 //   38:5:I       -- index form, specifices an index into color palette. For now, only 16 colors are supported.
 // This returns both the number of parameters consumed as well as the parsed color.
-static di::Tuple<usize, Color> parse_complex_color(Params const& params, usize start_index) {
+static auto parse_complex_color(Params const& params, usize start_index) -> di::Tuple<usize, Color> {
     auto subparams = params.subparams(start_index);
     if (subparams.size() == 1) {
         // If there are no subparameters, use the legacy form.
@@ -33,12 +33,14 @@ static di::Tuple<usize, Color> parse_complex_color(Params const& params, usize s
                               subparams.get(subparams.size() - 1)) };
         case 5:
             return { 1, Color(Color::Palette(Color::Palette::Black + subparams.get(2))) };
+        default:
+            break;
     }
     return { 1, {} };
 }
 
 // Parse any color specifer. This handles all cases for fg, bg, and underline_color.
-static di::Tuple<usize, Color> parse_color(Params const& params, usize start_index) {
+static auto parse_color(Params const& params, usize start_index) -> di::Tuple<usize, Color> {
     auto command = params.get(start_index);
 
     // Complex colors
@@ -105,6 +107,8 @@ void GraphicsRendition::update_with_csi_params(Params const& params) {
                         break;
                     case 5:
                         underline_mode = UnderlineMode::Dashed;
+                        break;
+                    default:
                         break;
                 }
                 break;
@@ -226,21 +230,20 @@ static auto color_to_params(Color c, ColorType type) -> Params {
             // Underline color isn't constrained by backwards compatability, so use the new form:
             //   code:2::r:g:b
             return { { code, 2, {}, c.r, c.g, c.b } };
-        } else {
-            // For compatability, use the old escape sequence form for fg and bg.
-            //   code; 2; r; g; b
-            return { { code }, { 2 }, { c.r }, { c.g }, { c.b } };
-        }
-    } else if (type == ColorType::Underine) {
+        } // For compatability, use the old escape sequence form for fg and bg.
+        //   code; 2; r; g; b
+        return { { code }, { 2 }, { c.r }, { c.g }, { c.b } };
+    }
+    if (type == ColorType::Underine) {
         // Use palette index.
         return { { 58, 5, u32(c.c - Color::Palette::Black) } };
-    } else if (c.c <= Color::Palette::LightGrey) {
+    }
+    if (c.c <= Color::Palette::LightGrey) {
         auto base_value = type == ColorType::Fg ? 30u : 40u;
         return { { base_value + c.c - Color::Palette::Black } };
-    } else {
-        auto base_value = type == ColorType::Fg ? 90u : 100u;
-        return { { base_value + c.c - Color::Palette::DarkGrey } };
     }
+    auto base_value = type == ColorType::Fg ? 90u : 100u;
+    return { { base_value + c.c - Color::Palette::DarkGrey } };
 }
 
 auto GraphicsRendition::as_csi_params() const -> di::Vector<Params> {

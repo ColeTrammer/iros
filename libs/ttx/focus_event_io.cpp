@@ -10,9 +10,8 @@ auto serialize_focus_event(FocusEvent const& focus_event, FocusEventMode mode) -
     }
     if (focus_event.is_focus_in()) {
         return "\033[I"_s;
-    } else {
-        return "\033[O"_s;
     }
+    return "\033[O"_s;
 }
 
 auto focus_event_from_csi(CSI const& csi) -> di::Optional<FocusEvent> {

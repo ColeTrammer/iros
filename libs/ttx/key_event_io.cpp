@@ -378,7 +378,7 @@ constexpr auto numpad_key_mappings = di::to_array<di::Tuple<Key, Key>>({
 
 // Convert a key to a non-numpad version. For very uncommon keys,
 // this may leave the key untouched (such as KeyPadBegin).
-auto normalize_keypad_key(Key key) {
+static auto normalize_keypad_key(Key key) {
     for (auto [v, r] : numpad_key_mappings) {
         if (key == v) {
             return r;
@@ -388,20 +388,19 @@ auto normalize_keypad_key(Key key) {
 }
 
 // These keys as reporting as code points even in the disambiguate mode, for compatibility reasons.
-auto is_special_key_for_reporting(Key key) {
+static auto is_special_key_for_reporting(Key key) {
     return key == Key::Enter || key == Key::Tab || key == Key::Backspace;
 }
 
-auto make_key_event_string(u32 num, u32 modifiers, c32 ending_code_point, u32 event_type, u32 shifted_key,
-                           u32 base_layout_key, di::StringView text, ApplicationCursorKeysMode cursor_key_mode) {
+static auto make_key_event_string(u32 num, u32 modifiers, c32 ending_code_point, u32 event_type, u32 shifted_key,
+                                  u32 base_layout_key, di::StringView text, ApplicationCursorKeysMode cursor_key_mode) {
     // Special case: num=1 and modifiers=1 and event_type=1 and shifted_key=0 and base_layout_key=0 and text="".
     if (num == 1 && modifiers == 1 && event_type == 1 && shifted_key == 0 && base_layout_key == 0 && text.empty()) {
         // If in application cursor key mode, send SS3 code_point instead of CSI code_point.
         if (cursor_key_mode == ApplicationCursorKeysMode::Enabled) {
             return *di::present("\033O{}"_sv, ending_code_point);
-        } else {
-            return *di::present("\033[{}"_sv, ending_code_point);
         }
+        return *di::present("\033[{}"_sv, ending_code_point);
     }
 
     // Special case: modifiers=1 and event_type=1 and shifted=0 and base=0 and text="".
@@ -449,6 +448,7 @@ auto make_key_event_string(u32 num, u32 modifiers, c32 ending_code_point, u32 ev
     return *di::present("\033[{}{}"_sv, params, ending_code_point);
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 auto serialize_key_event(KeyEvent const& event, ApplicationCursorKeysMode cursor_key_mode, KeyReportingFlags flags)
     -> di::Optional<di::String> {
     // If there is text, and text does not send key events, then just send the text.
@@ -584,8 +584,9 @@ auto key_event_from_legacy_code_point(c32 code_point, Modifiers base_modifiers) 
     return KeyEvent::key_down(Key::None, di::move(text), base_modifiers);
 }
 
-auto key_event_from_ss3_code_point(c32 code_point, u32 shifted_key, u32 base_layout_key, Modifiers base_modifiers,
-                                   di::String text, KeyEventType type) -> di::Optional<KeyEvent> {
+static auto key_event_from_ss3_code_point(c32 code_point, u32 shifted_key, u32 base_layout_key,
+                                          Modifiers base_modifiers, di::String text, KeyEventType type)
+    -> di::Optional<KeyEvent> {
     for (auto const& mapping : ss3_mappings) {
         if (code_point == mapping.code_point) {
             return KeyEvent(type, mapping.key, di::move(text), base_modifiers | mapping.modifiers, shifted_key,
@@ -595,10 +596,11 @@ auto key_event_from_ss3_code_point(c32 code_point, u32 shifted_key, u32 base_lay
     return {};
 }
 
-auto key_event_from_legacy_functional_key(c32 number, u32 shifted_key, u32 base_layout_key, Modifiers base_modifiers,
-                                          di::String text, KeyEventType type) -> di::Optional<KeyEvent> {
+static auto key_event_from_legacy_functional_key(c32 number, u32 shifted_key, u32 base_layout_key,
+                                                 Modifiers base_modifiers, di::String text, KeyEventType type)
+    -> di::Optional<KeyEvent> {
     for (auto const& mapping : legacy_functional_key_mappings) {
-        if (c32(number) == mapping.code_point) {
+        if (number == mapping.code_point) {
             return KeyEvent(type, mapping.key, di::move(text), base_modifiers | mapping.modifiers, shifted_key,
                             base_layout_key);
         }
@@ -606,10 +608,10 @@ auto key_event_from_legacy_functional_key(c32 number, u32 shifted_key, u32 base_
     return {};
 }
 
-auto key_event_from_code_point(c32 number, u32 shifted_key, u32 base_layout_key, Modifiers base_modifiers,
-                               di::String text, KeyEventType type) -> di::Optional<KeyEvent> {
+static auto key_event_from_code_point(c32 number, u32 shifted_key, u32 base_layout_key, Modifiers base_modifiers,
+                                      di::String text, KeyEventType type) -> di::Optional<KeyEvent> {
     for (auto const& mapping : code_point_key_mappings) {
-        if (c32(number) == mapping.code_point) {
+        if (number == mapping.code_point) {
             return KeyEvent(type, mapping.key, di::move(text), base_modifiers | mapping.modifiers, shifted_key,
                             base_layout_key);
         }
@@ -646,14 +648,12 @@ auto key_event_from_csi(CSI const& csi) -> di::Optional<KeyEvent> {
     }
     if (csi.terminator == U'u') {
         return key_event_from_code_point(code_point, shifted_key, base_layout_key, modifiers, di::move(text), type);
-    } else if (csi.terminator == U'~') {
+    }
+    if (csi.terminator == U'~') {
         // Use legacy mappings if we end with a '~'.
         return key_event_from_legacy_functional_key(code_point, shifted_key, base_layout_key, modifiers, di::move(text),
                                                     type);
-    } else {
-        // Use SS3 mappings if we didn't end in 'u' or '~'.
-        return key_event_from_ss3_code_point(csi.terminator, shifted_key, base_layout_key, modifiers, di::move(text),
-                                             type);
-    }
+    } // Use SS3 mappings if we didn't end in 'u' or '~'.
+    return key_event_from_ss3_code_point(csi.terminator, shifted_key, base_layout_key, modifiers, di::move(text), type);
 }
 }

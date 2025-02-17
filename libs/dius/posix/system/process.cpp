@@ -64,7 +64,7 @@ auto Process::spawn_and_wait() && -> di::Result<ProcessResult> {
     auto attrs_guard = di::ScopeExit([&] {
         posix_spawnattr_destroy(&attrs);
     });
-    auto attr_flags = m_new_session ? POSIX_SPAWN_SETSID : 0;
+    auto attr_flags = short(m_new_session ? POSIX_SPAWN_SETSID : 0);
     posix_spawnattr_setflags(&attrs, attr_flags);
 
     auto pid = pid_t(-1);

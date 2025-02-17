@@ -79,9 +79,9 @@ static auto serialize_as_x10(MouseEventType type, MouseButton button, MouseCoord
     // Return CSI M CbCxCy
     auto result = ""_ts;
     result.append("\033[M"_tsv);
-    result.push_back(number + 32);
-    result.push_back(position.x() + 33);
-    result.push_back(position.y() + 33);
+    result.push_back(char(number + 32));
+    result.push_back(char(position.x() + 33));
+    result.push_back(char(position.y() + 33));
     return result;
 }
 
@@ -98,7 +98,7 @@ static auto serialize_as_utf8(MouseEventType type, MouseButton button, MouseCoor
     // Return CSI M CbCxCy
     auto result = ""_ts;
     result.append("\033[M"_tsv);
-    result.push_back(number + 32);
+    result.push_back(char(number + 32));
 
     for (auto byte :
          di::container::string::encoding::convert_to_code_units(di::String::Encoding {}, position.x() + 33)) {

@@ -24,13 +24,15 @@ auto Utf8StreamDecoder::flush() -> di::String {
 
 void Utf8StreamDecoder::decode_byte(di::String& output, byte input) {
     if (m_pending_code_units == 0) {
-        return decode_first_byte(output, input);
+        decode_first_byte(output, input);
+        return;
     }
 
     auto input_u8 = di::to_integer<u8>(input);
     if (!di::between_inclusive(input_u8, m_lower_bound, m_upper_bound)) {
         output_code_point(output, replacement_character);
-        return decode_first_byte(output, input);
+        decode_first_byte(output, input);
+        return;
     }
 
     m_lower_bound = default_lower_bound;

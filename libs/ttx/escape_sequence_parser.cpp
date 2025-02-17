@@ -56,11 +56,13 @@ STATE(ground) {
     ON_ENTRY_NOOP(Ground);
 
     if (is_executable(code_point)) {
-        return execute(code_point);
+        execute(code_point);
+        return;
     }
 
     if (is_printable(code_point)) {
-        return print(code_point);
+        print(code_point);
+        return;
     }
 }
 
@@ -70,48 +72,58 @@ STATE(escape) {
     }
 
     if (is_executable(code_point)) {
-        return execute(code_point);
+        execute(code_point);
+        return;
     }
 
     if (code_point == 0x5B) {
-        return transition(State::CsiEntry);
+        transition(State::CsiEntry);
+        return;
     }
 
     if (m_mode == Mode::Input && code_point == 0x4F) {
-        return transition(State::Ss3);
+        transition(State::Ss3);
+        return;
     }
 
     // For the purposes of parsing input, any other code point should be treated
     // as if we were in the ground state. This allows us to recognize alt+key when
     // using the legacy mode.
     if (m_mode == Mode::Input) {
-        return execute(code_point);
+        execute(code_point);
+        return;
     }
 
     if (is_escape_terminator(code_point)) {
         esc_dispatch(code_point);
-        return transition(State::Ground);
+        transition(State::Ground);
+        return;
     }
 
     if (is_intermediate(code_point)) {
         collect(code_point);
-        return transition(State::EscapeIntermediate);
+        transition(State::EscapeIntermediate);
+        return;
     }
 
     if (code_point == 0x58 || code_point == 0x5E || code_point == 0x5F) {
-        return transition(State::SosPmApcString);
+        transition(State::SosPmApcString);
+        return;
     }
 
     if (code_point == 0x5D) {
-        return transition(State::OscString);
+        transition(State::OscString);
+        return;
     }
 
     if (code_point == 0x50) {
-        return transition(State::DcsEntry);
+        transition(State::DcsEntry);
+        return;
     }
 
     if (code_point == 0x7F) {
-        return ignore(code_point);
+        ignore(code_point);
+        return;
     }
 }
 
@@ -119,20 +131,24 @@ STATE(escape_intermediate) {
     ON_ENTRY_NOOP(EscapeIntermediate);
 
     if (is_executable(code_point)) {
-        return execute(code_point);
+        execute(code_point);
+        return;
     }
 
     if (is_intermediate(code_point)) {
-        return collect(code_point);
+        collect(code_point);
+        return;
     }
 
     if (code_point >= 0x30 && code_point <= 0x7E) {
         esc_dispatch(code_point);
-        return transition(State::Ground);
+        transition(State::Ground);
+        return;
     }
 
     if (code_point == 0x7F) {
-        return ignore(code_point);
+        ignore(code_point);
+        return;
     }
 }
 
@@ -148,26 +164,31 @@ STATE(csi_entry) {
 
     if (is_csi_terminator(code_point)) {
         csi_dispatch(code_point);
-        return transition(State::Ground);
+        transition(State::Ground);
+        return;
     }
 
     if (is_intermediate(code_point)) {
         collect(code_point);
-        return transition(State::CsiIntermediate);
+        transition(State::CsiIntermediate);
+        return;
     }
 
     if (is_param(code_point)) {
         param(code_point);
-        return transition(State::CsiParam);
+        transition(State::CsiParam);
+        return;
     }
 
     if (code_point >= 0x3C && code_point <= 0x3F) {
         collect(code_point);
-        return transition(State::CsiParam);
+        transition(State::CsiParam);
+        return;
     }
 
     if (code_point == 0x7F) {
-        return ignore(code_point);
+        ignore(code_point);
+        return;
     }
 }
 
@@ -175,24 +196,29 @@ STATE(csi_intermediate) {
     ON_ENTRY_NOOP(CsiIntermediate);
 
     if (is_executable(code_point)) {
-        return execute(code_point);
+        execute(code_point);
+        return;
     }
 
     if (is_intermediate(code_point)) {
-        return collect(code_point);
+        collect(code_point);
+        return;
     }
 
     if (is_csi_terminator(code_point)) {
         csi_dispatch(code_point);
-        return transition(State::Ground);
+        transition(State::Ground);
+        return;
     }
 
     if (code_point >= 0x30 && code_point <= 0x3F) {
-        return transition(State::CsiIgnore);
+        transition(State::CsiIgnore);
+        return;
     }
 
     if (code_point == 0x7F) {
-        return ignore(code_point);
+        ignore(code_point);
+        return;
     }
 }
 
@@ -206,29 +232,35 @@ STATE(csi_param) {
     }
 
     if (is_executable(code_point)) {
-        return execute(code_point);
+        execute(code_point);
+        return;
     }
 
     if (is_intermediate(code_point)) {
         collect(code_point);
-        return transition(State::CsiIntermediate);
+        transition(State::CsiIntermediate);
+        return;
     }
 
     if (is_csi_terminator(code_point)) {
         transition(State::Ground);
-        return csi_dispatch(code_point);
+        csi_dispatch(code_point);
+        return;
     }
 
     if (is_param(code_point)) {
-        return param(code_point);
+        param(code_point);
+        return;
     }
 
     if (code_point >= 0x3C && code_point <= 0x3F) {
-        return transition(State::CsiIgnore);
+        transition(State::CsiIgnore);
+        return;
     }
 
     if (code_point == 0x7F) {
-        return ignore(code_point);
+        ignore(code_point);
+        return;
     }
 }
 
@@ -236,15 +268,18 @@ STATE(csi_ignore) {
     ON_ENTRY_NOOP(CsiIgnore);
 
     if (is_executable(code_point)) {
-        return execute(code_point);
+        execute(code_point);
+        return;
     }
 
     if (is_csi_terminator(code_point)) {
-        return transition(State::Ground);
+        transition(State::Ground);
+        return;
     }
 
     if ((code_point >= 0x20 && code_point <= 0x3F) || (code_point == 0x7F)) {
-        return ignore(code_point);
+        ignore(code_point);
+        return;
     }
 }
 
@@ -254,30 +289,36 @@ STATE(dcs_entry) {
     }
 
     if (is_executable(code_point)) {
-        return ignore(code_point);
+        ignore(code_point);
+        return;
     }
 
     if (is_intermediate(code_point)) {
         collect(code_point);
-        return transition(State::DcsIntermediate);
+        transition(State::DcsIntermediate);
+        return;
     }
 
     if (is_param(code_point)) {
         param(code_point);
-        return transition(State::DcsParam);
+        transition(State::DcsParam);
+        return;
     }
 
     if (code_point >= 0x3C && code_point <= 0x3F) {
         collect(code_point);
-        return transition(State::DcsParam);
+        transition(State::DcsParam);
+        return;
     }
 
     if (is_dcs_terminator(code_point)) {
-        return transition(State::DcsPassthrough);
+        transition(State::DcsPassthrough);
+        return;
     }
 
     if (code_point == 0x7F) {
-        return ignore(code_point);
+        ignore(code_point);
+        return;
     }
 }
 
@@ -291,28 +332,34 @@ STATE(dcs_param) {
     }
 
     if (is_executable(code_point)) {
-        return ignore(code_point);
+        ignore(code_point);
+        return;
     }
 
     if (is_param(code_point)) {
-        return param(code_point);
+        param(code_point);
+        return;
     }
 
     if ((code_point >= 0x3C && code_point <= 0x3F)) {
-        return transition(State::DcsIgnore);
+        transition(State::DcsIgnore);
+        return;
     }
 
     if (is_intermediate(code_point)) {
         collect(code_point);
-        return transition(State::DcsIntermediate);
+        transition(State::DcsIntermediate);
+        return;
     }
 
     if (is_dcs_terminator(code_point)) {
-        return transition(State::DcsPassthrough);
+        transition(State::DcsPassthrough);
+        return;
     }
 
     if (code_point == 0x7F) {
-        return ignore(code_point);
+        ignore(code_point);
+        return;
     }
 }
 
@@ -320,24 +367,29 @@ STATE(dcs_intermediate) {
     ON_ENTRY_NOOP(DcsIntermediate);
 
     if (is_executable(code_point)) {
-        return ignore(code_point);
+        ignore(code_point);
+        return;
     }
 
     if (code_point >= 0x30 && code_point <= 0x3F) {
-        return transition(State::DcsIgnore);
+        transition(State::DcsIgnore);
+        return;
     }
 
     if (is_intermediate(code_point)) {
-        return collect(code_point);
+        collect(code_point);
+        return;
     }
 
     if (is_dcs_terminator(code_point)) {
         m_intermediate.push_back(code_point);
-        return transition(State::DcsPassthrough);
+        transition(State::DcsPassthrough);
+        return;
     }
 
     if (code_point == 0x7F) {
-        return ignore(code_point);
+        ignore(code_point);
+        return;
     }
 }
 
@@ -347,24 +399,27 @@ STATE(dcs_passthrough) {
     }
 
     if (is_string_terminator(code_point)) {
-        return transition(State::Ground);
+        transition(State::Ground);
+        return;
     }
 
     if (code_point == 0x7F) {
-        return ignore(code_point);
+        ignore(code_point);
+        return;
     }
 
-    return put(code_point);
+    put(code_point);
 }
 
 STATE(dcs_ignore) {
     ON_ENTRY_NOOP(DcsIgnore);
 
     if (is_string_terminator(code_point)) {
-        return transition(State::Ground);
+        transition(State::Ground);
+        return;
     }
 
-    return ignore(code_point);
+    ignore(code_point);
 }
 
 STATE(osc_string) {
@@ -373,15 +428,18 @@ STATE(osc_string) {
     }
 
     if (is_string_terminator(code_point)) {
-        return transition(State::Ground);
+        transition(State::Ground);
+        return;
     }
 
     if (is_executable(code_point)) {
-        return ignore(code_point);
+        ignore(code_point);
+        return;
     }
 
     if (is_printable(code_point)) {
-        return osc_put(code_point);
+        osc_put(code_point);
+        return;
     }
 }
 
@@ -389,17 +447,18 @@ STATE(sos_pm_apc_string) {
     ON_ENTRY_NOOP(SosPmApcString);
 
     if (is_string_terminator(code_point)) {
-        return transition(State::Ground);
+        transition(State::Ground);
+        return;
     }
 
-    return ignore(code_point);
+    ignore(code_point);
 }
 
 STATE(ss3) {
     ON_ENTRY_NOOP(Ss3);
 
     output_ss3(code_point);
-    return transition(State::Ground);
+    transition(State::Ground);
 }
 
 void EscapeSequenceParser::ignore(c32) {}
@@ -517,16 +576,19 @@ void EscapeSequenceParser::transition(State state) {
 void EscapeSequenceParser::on_input(c32 code_point) {
     if (code_point == 0x18 || code_point == 0x1A) {
         execute(code_point);
-        return transition(State::Ground);
+        transition(State::Ground);
+        return;
     }
 
     if (code_point == 0x1B) {
         // When parsing input, recnogize ESC ESC as a key press.
         if (m_mode == Mode::Input && m_next_state == State::Escape) {
             execute(code_point);
-            return transition(State::Ground);
+            transition(State::Ground);
+            return;
         }
-        return transition(State::Escape);
+        transition(State::Escape);
+        return;
     }
 
     switch (m_next_state) {

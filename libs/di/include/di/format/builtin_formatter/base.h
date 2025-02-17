@@ -302,53 +302,54 @@ namespace detail {
             auto result = di::StaticVector<c32, di::Constexpr<4>> {};
             if (!debug) {
                 (void) result.push_back(c32(p));
-            }
-            // Special escaped chars. These are represented as \P.
-            else if (c32(p) == '\0') {
-                (void) result.push_back(U'\\');
-                (void) result.push_back(U'0');
-            } else if (c32(p) == '\a') {
-                (void) result.push_back(U'\\');
-                (void) result.push_back(U'a');
-            } else if (c32(p) == '\b') {
-                (void) result.push_back(U'\\');
-                (void) result.push_back(U'b');
-            } else if (c32(p) == '\f') {
-                (void) result.push_back(U'\\');
-                (void) result.push_back(U'f');
-            } else if (c32(p) == '\n') {
-                (void) result.push_back(U'\\');
-                (void) result.push_back(U'n');
-            } else if (c32(p) == '\r') {
-                (void) result.push_back(U'\\');
-                (void) result.push_back(U'r');
-            } else if (c32(p) == '\t') {
-                (void) result.push_back(U'\\');
-                (void) result.push_back(U't');
-            } else if (c32(p) == '\v') {
-                (void) result.push_back(U'\\');
-                (void) result.push_back(U'v');
-            } else if (c32(p) == '\\') {
-                (void) result.push_back(U'\\');
-                (void) result.push_back(U'\\');
-            }
-            // The delimiter is also escaped. For instance: " will become \".
-            else if (c32(p) == delimit_code_point) {
-                (void) result.push_back(U'\\');
-                (void) result.push_back(delimit_code_point);
-            }
-            // Control characters should not be printed directly in debug mode.
-            // This range accounts for C0 and C1 Unicode control characters.
-            else if (p <= 31 || p == 127 || (p >= 0x80 && p <= 0x9F)) {
-                auto v1 = (u8(p) / 16) & 0xF;
-                auto v2 = (u8(p) % 16);
-
-                (void) result.push_back(U'\\');
-                (void) result.push_back(U'x');
-                (void) result.push_back((v1 >= 10) ? ('a' + (v1 - 10)) : ('0' + v1));
-                (void) result.push_back((v2 >= 10) ? ('a' + (v2 - 10)) : ('0' + v2));
             } else {
-                (void) result.push_back(c32(p));
+                // Special escaped chars. These are represented as \P.
+                if (c32(p) == '\0') {
+                    (void) result.push_back(U'\\');
+                    (void) result.push_back(U'0');
+                } else if (c32(p) == '\a') {
+                    (void) result.push_back(U'\\');
+                    (void) result.push_back(U'a');
+                } else if (c32(p) == '\b') {
+                    (void) result.push_back(U'\\');
+                    (void) result.push_back(U'b');
+                } else if (c32(p) == '\f') {
+                    (void) result.push_back(U'\\');
+                    (void) result.push_back(U'f');
+                } else if (c32(p) == '\n') {
+                    (void) result.push_back(U'\\');
+                    (void) result.push_back(U'n');
+                } else if (c32(p) == '\r') {
+                    (void) result.push_back(U'\\');
+                    (void) result.push_back(U'r');
+                } else if (c32(p) == '\t') {
+                    (void) result.push_back(U'\\');
+                    (void) result.push_back(U't');
+                } else if (c32(p) == '\v') {
+                    (void) result.push_back(U'\\');
+                    (void) result.push_back(U'v');
+                } else if (c32(p) == '\\') {
+                    (void) result.push_back(U'\\');
+                    (void) result.push_back(U'\\');
+                }
+                // The delimiter is also escaped. For instance: " will become \".
+                else if (c32(p) == delimit_code_point) {
+                    (void) result.push_back(U'\\');
+                    (void) result.push_back(delimit_code_point);
+                }
+                // Control characters should not be printed directly in debug mode.
+                // This range accounts for C0 and C1 Unicode control characters.
+                else if (p <= 31 || p == 127 || (p >= 0x80 && p <= 0x9F)) {
+                    auto v1 = (u8(p) / 16) & 0xF;
+                    auto v2 = (u8(p) % 16);
+
+                    (void) result.push_back(U'\\');
+                    (void) result.push_back(U'x');
+                    (void) result.push_back((v1 >= 10) ? ('a' + (v1 - 10)) : ('0' + v1));
+                    (void) result.push_back((v2 >= 10) ? ('a' + (v2 - 10)) : ('0' + v2));
+                } else {
+                    (void) result.push_back(c32(p));
+                }
             }
             return result;
         };

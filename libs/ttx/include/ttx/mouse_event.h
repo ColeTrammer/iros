@@ -39,7 +39,7 @@ public:
     constexpr auto is_vertical_scroll() const -> bool { return !!(button() & MouseButton::VerticalScrollButtons); }
 
     constexpr auto translate(MouseCoordinate offset_in_cells, dius::tty::WindowSize const& size) const -> MouseEvent {
-        return MouseEvent(type(), button(), position().translate(offset_in_cells, size), modifiers());
+        return { type(), button(), position().translate(offset_in_cells, size), modifiers() };
     }
 
     auto operator==(MouseEvent const&) const -> bool = default;

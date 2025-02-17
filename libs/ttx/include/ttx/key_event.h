@@ -42,7 +42,7 @@ public:
     constexpr auto key() const -> Key { return m_key; }
     constexpr auto shifted_key() const -> c32 { return m_shifted_key; }
     constexpr auto base_layout_key() const -> c32 { return m_base_layout_key; }
-    constexpr auto text() const -> di::StringView const { return m_text; }
+    constexpr auto text() const -> di::StringView { return m_text; }
 
     auto operator==(KeyEvent const&) const -> bool = default;
 

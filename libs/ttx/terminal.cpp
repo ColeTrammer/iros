@@ -31,84 +31,125 @@ void Terminal::on_parser_result(PrintableCharacter const& Printable_character) {
 
 void Terminal::on_parser_result(DCS const& dcs) {
     if (dcs.intermediate == "$q"_sv) {
-        return dcs_decrqss(dcs.params, dcs.data);
+        dcs_decrqss(dcs.params, dcs.data);
+        return;
     }
 }
 
 void Terminal::on_parser_result(ControlCharacter const& control_character) {
     switch (control_character.code_point) {
-        case 8:
-            return c0_bs();
+        case 8: {
+            c0_bs();
+            return;
+        }
         case '\a':
             return;
-        case '\t':
-            return c0_ht();
-        case '\n':
-            return c0_lf();
-        case '\v':
-            return c0_vt();
-        case '\f':
-            return c0_ff();
-        case '\r':
-            return c0_cr();
+        case '\t': {
+            c0_ht();
+            return;
+        }
+        case '\n': {
+            c0_lf();
+            return;
+        }
+        case '\v': {
+            c0_vt();
+            return;
+        }
+        case '\f': {
+            c0_ff();
+            return;
+        }
+        case '\r': {
+            c0_cr();
+            return;
+        }
+        default:
+            return;
     }
 }
 
 void Terminal::on_parser_result(CSI const& csi) {
     if (csi.intermediate == "?$"_sv) {
         switch (csi.terminator) {
-            case 'p':
-                return csi_decrqm(csi.params);
+            case 'p': {
+                csi_decrqm(csi.params);
+                return;
+            }
+            default:
+                return;
         }
-        return;
     }
 
     if (csi.intermediate == "="_sv) {
         switch (csi.terminator) {
-            case 'c':
-                return csi_da3(csi.params);
-            case 'u':
-                return csi_set_key_reporting_flags(csi.params);
+            case 'c': {
+                csi_da3(csi.params);
+                return;
+            }
+            case 'u': {
+                csi_set_key_reporting_flags(csi.params);
+                return;
+            }
+            default:
+                return;
         }
-        return;
     }
 
     if (csi.intermediate == ">"_sv) {
         switch (csi.terminator) {
-            case 'c':
-                return csi_da2(csi.params);
-            case 'u':
-                return csi_push_key_reporting_flags(csi.params);
+            case 'c': {
+                csi_da2(csi.params);
+                return;
+            }
+            case 'u': {
+                csi_push_key_reporting_flags(csi.params);
+                return;
+            }
+            default:
+                return;
         }
-        return;
     }
 
     if (csi.intermediate == "<"_sv) {
         switch (csi.terminator) {
-            case 'u':
-                return csi_pop_key_reporting_flags(csi.params);
+            case 'u': {
+                csi_pop_key_reporting_flags(csi.params);
+                return;
+            }
+            default:
+                return;
         }
-        return;
     }
 
     if (csi.intermediate == "?"_sv) {
         switch (csi.terminator) {
-            case 'h':
-                return csi_decset(csi.params);
-            case 'l':
-                return csi_decrst(csi.params);
-            case 'u':
-                return csi_get_key_reporting_flags(csi.params);
+            case 'h': {
+                csi_decset(csi.params);
+                return;
+            }
+            case 'l': {
+                csi_decrst(csi.params);
+                return;
+            }
+            case 'u': {
+                csi_get_key_reporting_flags(csi.params);
+                return;
+            }
+            default:
+                return;
         }
-        return;
     }
 
     if (csi.intermediate == " "_sv) {
         switch (csi.terminator) {
-            case 'q':
-                return csi_decscusr(csi.params);
+            case 'q': {
+                csi_decscusr(csi.params);
+                return;
+            }
+            default:
+                return;
         }
-        return;
     }
 
     if (!csi.intermediate.empty()) {
@@ -116,67 +157,121 @@ void Terminal::on_parser_result(CSI const& csi) {
     }
 
     switch (csi.terminator) {
-        case '@':
-            return csi_ich(csi.params);
-        case 'A':
-            return csi_cuu(csi.params);
-        case 'B':
-            return csi_cud(csi.params);
-        case 'C':
-            return csi_cuf(csi.params);
-        case 'D':
-            return csi_cub(csi.params);
-        case 'G':
-            return csi_cha(csi.params);
-        case 'H':
-            return csi_cup(csi.params);
-        case 'J':
-            return csi_ed(csi.params);
-        case 'K':
-            return csi_el(csi.params);
-        case 'L':
-            return csi_il(csi.params);
-        case 'M':
-            return csi_dl(csi.params);
-        case 'P':
-            return csi_dch(csi.params);
-        case 'S':
-            return csi_su(csi.params);
-        case 'T':
-            return csi_sd(csi.params);
-        case 'X':
-            return csi_ech(csi.params);
-        case 'b':
-            return csi_rep(csi.params);
-        case 'c':
-            return csi_da1(csi.params);
-        case 'd':
-            return csi_vpa(csi.params);
-        case 'f':
-            return csi_hvp(csi.params);
-        case 'g':
-            return csi_tbc(csi.params);
-        case 'm':
-            return csi_sgr(csi.params);
-        case 'n':
-            return csi_dsr(csi.params);
-        case 'r':
-            return csi_decstbm(csi.params);
-        case 's':
-            return csi_scosc(csi.params);
-        case 'u':
-            return csi_scorc(csi.params);
+        case '@': {
+            csi_ich(csi.params);
+            return;
+        }
+        case 'A': {
+            csi_cuu(csi.params);
+            return;
+        }
+        case 'B': {
+            csi_cud(csi.params);
+            return;
+        }
+        case 'C': {
+            csi_cuf(csi.params);
+            return;
+        }
+        case 'D': {
+            csi_cub(csi.params);
+            return;
+        }
+        case 'G': {
+            csi_cha(csi.params);
+            return;
+        }
+        case 'H': {
+            csi_cup(csi.params);
+            return;
+        }
+        case 'J': {
+            csi_ed(csi.params);
+            return;
+        }
+        case 'K': {
+            csi_el(csi.params);
+            return;
+        }
+        case 'L': {
+            csi_il(csi.params);
+            return;
+        }
+        case 'M': {
+            csi_dl(csi.params);
+            return;
+        }
+        case 'P': {
+            csi_dch(csi.params);
+            return;
+        }
+        case 'S': {
+            csi_su(csi.params);
+            return;
+        }
+        case 'T': {
+            csi_sd(csi.params);
+            return;
+        }
+        case 'X': {
+            csi_ech(csi.params);
+            return;
+        }
+        case 'b': {
+            csi_rep(csi.params);
+            return;
+        }
+        case 'c': {
+            csi_da1(csi.params);
+            return;
+        }
+        case 'd': {
+            csi_vpa(csi.params);
+            return;
+        }
+        case 'f': {
+            csi_hvp(csi.params);
+            return;
+        }
+        case 'g': {
+            csi_tbc(csi.params);
+            return;
+        }
+        case 'm': {
+            csi_sgr(csi.params);
+            return;
+        }
+        case 'n': {
+            csi_dsr(csi.params);
+            return;
+        }
+        case 'r': {
+            csi_decstbm(csi.params);
+            return;
+        }
+        case 's': {
+            csi_scosc(csi.params);
+            return;
+        }
+        case 'u': {
+            csi_scorc(csi.params);
+            return;
+        }
+        default:
+            return;
     }
-    return;
 }
 
 void Terminal::on_parser_result(Escape const& escape) {
     if (escape.intermediate == "#"_sv) {
         switch (escape.terminator) {
-            case '8':
-                return esc_decaln();
+            case '8': {
+                esc_decaln();
+                return;
+            }
+            default:
+                return;
         }
-        return;
     }
 
     if (!escape.intermediate.empty()) {
@@ -184,22 +279,33 @@ void Terminal::on_parser_result(Escape const& escape) {
     }
 
     switch (escape.terminator) {
-        case '7':
-            return esc_decsc();
-        case '8':
-            return esc_decrc();
-    }
-
-    // 8 bit control characters
-    switch (escape.terminator) {
-        case 'D':
-            return c1_ind();
-        case 'E':
-            return c1_nel();
-        case 'H':
-            return c1_hts();
-        case 'M':
-            return c1_ri();
+        case '7': {
+            esc_decsc();
+            return;
+        }
+        case '8': {
+            esc_decrc();
+            return;
+        }
+        // 8 bit control characters
+        case 'D': {
+            c1_ind();
+            return;
+        }
+        case 'E': {
+            c1_nel();
+            return;
+        }
+        case 'H': {
+            c1_hts();
+            return;
+        }
+        case 'M': {
+            c1_ri();
+            return;
+        }
+        default:
+            return;
     }
 }
 
@@ -215,7 +321,8 @@ void Terminal::c0_bs() {
 void Terminal::c0_ht() {
     for (auto tab_stop : m_tab_stops) {
         if (tab_stop > m_cursor_col) {
-            return set_cursor(m_cursor_row, tab_stop);
+            set_cursor(m_cursor_row, tab_stop);
+            return;
         }
     }
 
@@ -365,12 +472,18 @@ void Terminal::csi_cha(Params const& params) {
 // Erase in Display - https://vt100.net/docs/vt510-rm/ED.html
 void Terminal::csi_ed(Params const& params) {
     switch (params.get(0, 0)) {
-        case 0:
-            return clear_below_cursor();
-        case 1:
-            return clear_above_cursor();
-        case 2:
-            return clear();
+        case 0: {
+            clear_below_cursor();
+            return;
+        }
+        case 1: {
+            clear_above_cursor();
+            return;
+        }
+        case 2: {
+            clear();
+            return;
+        }
         case 3:
             // XTerm extension to clear scoll buffer
             m_rows_above.clear();
@@ -378,18 +491,28 @@ void Terminal::csi_ed(Params const& params) {
             m_rows.resize(m_row_count);
             clear();
             return;
+        default:
+            return;
     }
 }
 
 // Erase in Line - https://vt100.net/docs/vt510-rm/EL.html
 void Terminal::csi_el(Params const& params) {
     switch (params.get(0, 0)) {
-        case 0:
-            return clear_row_to_end(m_cursor_row, m_cursor_col);
-        case 1:
-            return clear_row_until(m_cursor_row, m_cursor_col);
-        case 2:
-            return clear_row(m_cursor_row);
+        case 0: {
+            clear_row_to_end(m_cursor_row, m_cursor_col);
+            return;
+        }
+        case 1: {
+            clear_row_until(m_cursor_row, m_cursor_col);
+            return;
+        }
+        case 2: {
+            clear_row(m_cursor_row);
+            return;
+        }
+        default:
+            return;
     }
 }
 
@@ -413,7 +536,7 @@ void Terminal::csi_dl(Params const& params) {
     if (m_cursor_row < m_scroll_start || m_cursor_row > m_scroll_end) {
         return;
     }
-    u32 lines_to_delete = di::clamp(params.get(0, 1), 1u, u32(m_scroll_end - m_cursor_row));
+    u32 lines_to_delete = di::clamp(params.get(0, 1), 1u, (m_scroll_end - m_cursor_row));
     for (u32 i = 0; i < lines_to_delete; i++) {
         di::rotate(m_rows.begin() + m_cursor_row, m_rows.begin() + m_cursor_row + 1, m_rows.begin() + m_scroll_end + 1);
         // m_rows.rotate_left(m_cursor_row, m_scroll_end + 1);
@@ -426,7 +549,7 @@ void Terminal::csi_dl(Params const& params) {
 
 // Delete Character - https://vt100.net/docs/vt510-rm/DCH.html
 void Terminal::csi_dch(Params const& params) {
-    u32 chars_to_delete = di::clamp(params.get(0, 1), 1u, u32(m_col_count - m_cursor_col));
+    u32 chars_to_delete = di::clamp(params.get(0, 1), 1u, (m_col_count - m_cursor_col));
     for (u32 i = 0; i < chars_to_delete; i++) {
         m_rows[m_cursor_row].erase(m_rows[m_cursor_row].begin() + m_cursor_col);
     }
@@ -445,7 +568,6 @@ void Terminal::csi_su(Params const& params) {
         scroll_down_if_needed();
     }
     m_cursor_row = row_save;
-    return;
 }
 
 // Pan Up - https://vt100.net/docs/vt510-rm/SD.html
@@ -526,6 +648,8 @@ void Terminal::csi_tbc(Params const& params) {
             return;
         case 3:
             m_tab_stops.clear();
+            return;
+        default:
             return;
     }
 }
@@ -647,11 +771,7 @@ void Terminal::csi_decrst(Params const& params) {
             }
             break;
         case 1000:
-            m_mouse_protocol = MouseProtocol::None;
-            break;
         case 1002:
-            m_mouse_protocol = MouseProtocol::None;
-            break;
         case 1003:
             m_mouse_protocol = MouseProtocol::None;
             break;
@@ -659,14 +779,8 @@ void Terminal::csi_decrst(Params const& params) {
             m_focus_event_mode = FocusEventMode::Disabled;
             break;
         case 1005:
-            m_mouse_encoding = MouseEncoding::X10;
-            break;
         case 1006:
-            m_mouse_encoding = MouseEncoding::X10;
-            break;
         case 1015:
-            m_mouse_encoding = MouseEncoding::X10;
-            break;
         case 1016:
             m_mouse_encoding = MouseEncoding::X10;
             break;
@@ -774,6 +888,8 @@ void Terminal::csi_set_key_reporting_flags(Params const& params) {
         case 3:
             m_key_reporting_flags &= ~flags;
             break;
+        default:
+            break;
     }
 }
 
@@ -809,7 +925,7 @@ void Terminal::csi_pop_key_reporting_flags(Params const& params) {
 
     auto new_stack_size = m_key_reporting_flags_stack.size() - n;
     m_key_reporting_flags = m_key_reporting_flags_stack[new_stack_size];
-    m_key_reporting_flags_stack.erase(m_key_reporting_flags_stack.begin() + new_stack_size);
+    m_key_reporting_flags_stack.erase(m_key_reporting_flags_stack.begin() + isize(new_stack_size));
 }
 
 void Terminal::set_cursor(u32 row, u32 col) {
@@ -939,7 +1055,7 @@ void Terminal::put_char(c32 c) {
     }
 }
 
-bool Terminal::should_display_cursor_at_position(u32 r, u32 c) const {
+auto Terminal::should_display_cursor_at_position(u32 r, u32 c) const -> bool {
     if (m_cursor_hidden) {
         return false;
     }
@@ -955,16 +1071,17 @@ bool Terminal::should_display_cursor_at_position(u32 r, u32 c) const {
     return row_offset() + r == cursor_row() + total_rows() - row_count();
 }
 
-u32 Terminal::scroll_relative_offset(u32 display_row) const {
+auto Terminal::scroll_relative_offset(u32 display_row) const -> u32 {
     if (display_row < m_scroll_start) {
         return display_row;
-    } else if (display_row > m_scroll_end) {
+    }
+    if (display_row > m_scroll_end) {
         return display_row + total_rows() - row_count();
     }
     return display_row + row_offset();
 }
 
-Terminal::Row const& Terminal::row_at_scroll_relative_offset(u32 offset) const {
+auto Terminal::row_at_scroll_relative_offset(u32 offset) const -> Terminal::Row const& {
     if (offset < m_scroll_start) {
         return m_rows[offset];
     }

@@ -143,7 +143,8 @@ auto Pane::event(MouseEvent const& event) -> bool {
             terminal.scroll_up();
         });
         return true;
-    } else if (event.button() == MouseButton::ScrollDown && event.type() == MouseEventType::Press) {
+    }
+    if (event.button() == MouseButton::ScrollDown && event.type() == MouseEventType::Press) {
         m_terminal.with_lock([&](Terminal& terminal) {
             terminal.scroll_down();
         });

@@ -232,7 +232,7 @@ public:
 
     constexpr CountingAllocator(CountingAllocator const& other) = default;
 
-    constexpr CountingAllocator& operator=(CountingAllocator const& other) {
+    constexpr auto operator=(CountingAllocator const& other) -> CountingAllocator& {
         m_count += other.m_count;
         return *this;
     }
@@ -243,7 +243,7 @@ public:
     }
 
     constexpr void deallocate(void* data, usize size, usize alignment) noexcept {
-        return di::InfallibleAllocator::deallocate(data, size, alignment);
+        di::InfallibleAllocator::deallocate(data, size, alignment);
     }
 
     constexpr auto count() const -> u32 { return m_count; }
@@ -252,7 +252,7 @@ private:
     u32 m_count { 0 };
 };
 
-constexpr void allocate() {
+constexpr static void allocate() {
     auto v = di::Vector<i32, CountingAllocator> {};
 
     constexpr auto n = 1'000'000;

@@ -35,6 +35,7 @@ Checks: >
   readability-*,
   -readability-avoid-nested-conditional-operator,
   -readability-convert-member-functions-to-static,
+  -readability-enum-initial-value,
   -readability-function-size,
   -readability-identifier-length,
   -readability-implicit-bool-conversion,
@@ -42,6 +43,7 @@ Checks: >
   -readability-make-member-function-const,
   -readability-math-missing-parentheses,
   -readability-named-parameter,
+  -readability-redundant-member-init,
   -readability-static-accessed-through-instance,
 CheckOptions:
   - key: bugprone-dangling-handle.HandleClasses
