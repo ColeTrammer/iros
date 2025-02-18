@@ -55,12 +55,13 @@ static auto main(Args& args) -> di::Result<void> {
     auto set_done = [&] {
         // TODO: send kill signals (SIGHUP) to all remaining panes.
         // TODO: timeout/skip waiting for processes to die after sending SIGHUP.
-        done.store(true, di::MemoryOrder::Release);
-        // Ensure the SIGWINCH thread exits.
-        (void) dius::system::send_signal(dius::system::get_process_id(), dius::Signal::WindowChange);
-        // Ensure the input thread exits. (By writing something to stdin).
-        auto byte = 0_b;
-        (void) dius::stdin.write_exactly({ &byte, 1 });
+        if (!done.exchange(true, di::MemoryOrder::Release)) {
+            // Ensure the SIGWINCH thread exits.
+            (void) dius::system::send_signal(dius::system::get_process_id(), dius::Signal::WindowChange);
+            // Ensure the input thread exits. (By writing something to stdin).
+            auto byte = 0_b;
+            (void) dius::stdin.write_exactly({ &byte, 1 });
+        }
     };
 
     auto layout_state = di::Synchronized(LayoutState {

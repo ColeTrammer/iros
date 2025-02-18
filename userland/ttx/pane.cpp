@@ -42,6 +42,7 @@ auto Pane::create(di::Vector<di::TransparentStringView> command, dius::tty::Wind
             auto guard = di::ScopeExit([&] {
                 pane.m_done.store(true, di::MemoryOrder::Release);
 
+                // TODO: this needs to not call the destructor of Pane(), or else we join with ourselves...
                 if (pane.did_exit) {
                     pane.did_exit();
                 }

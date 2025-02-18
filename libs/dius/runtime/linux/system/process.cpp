@@ -15,13 +15,34 @@ static auto s_envp = static_cast<char**>(nullptr);
     s_envp = envp;
 }
 
+static auto file_open_mode_flags(OpenMode open_mode) -> int {
+    switch (open_mode) {
+        case OpenMode::Readonly:
+            return O_RDONLY;
+        case OpenMode::WriteNew:
+            return O_WRONLY | O_EXCL | O_CREAT;
+        case OpenMode::WriteClobber:
+            return O_WRONLY | O_TRUNC | O_CREAT;
+        case OpenMode::ReadWrite:
+            return O_RDWR;
+        case OpenMode::AppendOnly:
+            return O_WRONLY | O_APPEND | O_CREAT;
+        case OpenMode::ReadWriteClobber:
+            return O_RDWR | O_TRUNC | O_CREAT;
+        case OpenMode::AppendReadWrite:
+            return O_RDWR | O_APPEND | O_CREAT;
+        default:
+            di::unreachable();
+    }
+}
+
 auto Process::spawn_and_wait() && -> di::Result<ProcessResult> {
     // NOTE: TransparentString objects are guaranteed to be null-terminated on Linux.
     auto null_terminated_args =
         di::concat(m_arguments | di::transform(di::cdata), di::single(nullptr)) | di::to<di::Vector>();
 
     auto args = ::clone_args {
-        .flags = 0,
+        .flags = CLONE_CLEAR_SIGHAND,
         .pidfd = 0,
         .child_tid = 0,
         .parent_tid = 0,
@@ -38,17 +59,47 @@ auto Process::spawn_and_wait() && -> di::Result<ProcessResult> {
 
     // Child
     if (pid == 0) {
-        // Now, any failures should result in a immediate call to exit.
-        (void) system_call<int>(Number::execve, null_terminated_args[0], null_terminated_args.data(), s_envp);
+        // Any failures will cause the child process to exit with status 127.
+        (void) ([&] -> di::Result<> {
+            if (m_new_session) {
+                TRY(system_call<int>(Number::setsid));
+            }
 
-        eprintln("Failed to exec: {}"_sv, m_arguments);
+            for (auto const& action : m_file_actions) {
+                switch (action.type) {
+                    case FileAction::Type::Open: {
+                        // Always try to close the destination file descriptor.
+                        (void) TRY(system_call<int>(Number::close, action.arg0));
 
-        exit_process(255);
+                        auto flags = file_open_mode_flags(static_cast<OpenMode>(action.arg1));
+                        auto fd =
+                            TRY(system_call<int>(Number::openat, AT_FDCWD, action.path.c_str(), flags, action.arg2));
+                        if (fd != action.arg0) {
+                            TRY(system_call<int>(Number::dup2, fd, action.arg0));
+                            TRY(system_call<int>(Number::close, fd));
+                        }
+                        break;
+                    }
+                    case FileAction::Type::Close: {
+                        TRY(system_call<int>(Number::close, action.arg0));
+                        break;
+                    }
+                    case FileAction::Type::Dup: {
+                        TRY(system_call<int>(Number::dup2, action.arg0, action.arg1));
+                        break;
+                    }
+                }
+            }
+
+            TRY(system_call<int>(Number::execve, null_terminated_args[0], null_terminated_args.data(), s_envp));
+            return {};
+        }());
+        exit_process(127);
     }
 
     // Parent
     int status;
-    TRY(system_call<ProcessId>(Number::wait4, -1, &status, 0, nullptr));
+    TRY(system_call<ProcessId>(Number::wait4, pid, &status, 0, nullptr));
 
     // NOTE: Linux's wait.h header does not define WIFEXITED, WEXITSTATUS, WIFSIGNALED, and WTERMSIG, so it is done
     //       manually here. In the future, it would be nice to take these definitions from libccpp's headers.
@@ -61,7 +112,8 @@ auto Process::spawn_and_wait() && -> di::Result<ProcessResult> {
     return ProcessResult { (status & 0x7F), true };
 }
 
-using kernel_sigset_t = u128;
+// I'm not sure why this isn't a u128.
+using kernel_sigset_t = u64;
 
 static di::Result<void> sys_rt_sigprocmask(int how, kernel_sigset_t const* set, kernel_sigset_t* old) {
     return system::system_call<int>(system::Number::rt_sigprocmask, how, set, old, sizeof(kernel_sigset_t)) %

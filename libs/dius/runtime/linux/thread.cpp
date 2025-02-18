@@ -1,6 +1,7 @@
 #include "dius/thread.h"
 
 #include <linux/futex.h>
+#include <linux/time.h>
 
 #include "di/container/algorithm/prelude.h"
 #include "di/math/prelude.h"
@@ -9,6 +10,24 @@
 #include "dius/system/system_call.h"
 
 namespace dius {
+namespace this_thread {
+    void sleep_for(di::Nanoseconds duration) {
+        timespec timespec;
+        timespec.tv_sec = di::duration_cast<di::Seconds>(duration).count();
+        timespec.tv_nsec = duration.count() % long(di::Nanoseconds::Period::den);
+        (void) system::system_call<i32>(system::Number::clock_nanosleep, CLOCK_MONOTONIC, 0, &timespec, nullptr);
+    }
+
+    void sleep_until(SteadyClock::TimePoint time_point) {
+        timespec timespec;
+        timespec.tv_sec = di::duration_cast<di::Seconds>(time_point.time_since_epoch()).count();
+        timespec.tv_nsec = di::duration_cast<di::Nanoseconds>(time_point.time_since_epoch()).count() %
+                           long(di::Nanoseconds::Period::den);
+        (void) system::system_call<i32>(system::Number::clock_nanosleep, CLOCK_MONOTONIC, TIMER_ABSTIME, &timespec,
+                                        nullptr);
+    }
+}
+
 auto PlatformThread::create(runtime::TlsInfo info) -> di::Result<di::Box<PlatformThread, PlatformThreadDeleter>> {
     auto [tls_data, tls_size, tls_alignment] = info;
 
@@ -62,6 +81,11 @@ static auto futex_wait(int* futex, int expect) -> di::Result<void> {
 }
 
 auto PlatformThread::join() -> di::Result<void> {
+    // Deadlock case: the current thread and this thread are the same.
+    if (this == &PlatformThread::current()) {
+        return di::Unexpected(di::BasicError::ResourceDeadlockWouldOccur);
+    }
+
     while (auto value = di::AtomicRef(thread_id).load(di::MemoryOrder::Acquire)) {
         (void) futex_wait(&thread_id, value);
     }

@@ -55,6 +55,10 @@ enum class Number : int {
     rt_sigtimedwait = __NR_rt_sigtimedwait,
     kill = __NR_kill,
     getpid = __NR_getpid,
+    clock_nanosleep = __NR_clock_nanosleep,
+    clock_gettime = __NR_clock_gettime,
+    setsid = __NR_setsid,
+    dup2 = __NR_dup2,
 };
 
 using SystemCallArg = unsigned long;
