@@ -6,6 +6,12 @@
 #include "dius/system/system_call.h"
 
 namespace dius {
+namespace this_thread {
+    void sleep_for(di::Nanoseconds) {}
+
+    void sleep_until(SteadyClock::TimePoint) {}
+}
+
 auto PlatformThread::create(runtime::TlsInfo) -> di::Result<di::Box<PlatformThread, PlatformThreadDeleter>> {
     auto [tls_data, tls_size, tls_alignment] = runtime::get_tls_info();
 

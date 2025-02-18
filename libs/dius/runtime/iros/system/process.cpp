@@ -18,6 +18,22 @@ auto Process::spawn_and_wait() && -> di::Result<ProcessResult> {
     return ProcessResult { exit_code, false };
 }
 
+auto get_process_id() -> ProcessId {
+    return ProcessId(0);
+}
+
+auto mask_signal(Signal) -> di::Result<void> {
+    return di::Unexpected(di::BasicError::NotSupported);
+}
+
+auto send_signal(ProcessId, Signal) -> di::Result<void> {
+    return di::Unexpected(di::BasicError::NotSupported);
+}
+
+auto wait_for_signal(Signal) -> di::Result<Signal> {
+    return di::Unexpected(di::BasicError::NotSupported);
+}
+
 void exit_thread() {
     (void) system_call<i32>(Number::exit_task);
     di::unreachable();

@@ -57,7 +57,7 @@ auto SyncFile::resize_file(u64 size) const -> di::Expected<void, di::GenericCode
     return sys_truncate(m_fd, size);
 }
 
-auto SyncFile::set_tty_window_size(tty::WindowSize size) -> di::Expected<void, di::GenericCode> {
+auto SyncFile::set_tty_window_size(tty::WindowSize) -> di::Expected<void, di::GenericCode> {
     return di::Unexpected(PosixError::OperationNotSupported);
 }
 
@@ -92,8 +92,7 @@ auto open_sync(di::PathView path, OpenMode mode, u16) -> di::Expected<SyncFile, 
     return SyncFile { SyncFile::Owned::Yes, fd };
 }
 
-auto open_psuedo_terminal_controller(OpenMode open_mode, tty::WindowSize size)
-    -> di::Expected<SyncFile, di::GenericCode> {
+auto open_psuedo_terminal_controller(OpenMode, tty::WindowSize) -> di::Expected<SyncFile, di::GenericCode> {
     return di::Unexpected(PosixError::OperationNotSupported);
 }
 
