@@ -11,8 +11,8 @@ public:
     using Parent = Optional<T>;
     using Parent::Parent;
 
-    constexpr NonPropagatingCache(NonPropagatingCache const&) {}
-    constexpr NonPropagatingCache(NonPropagatingCache&& other) { other.reset(); }
+    constexpr NonPropagatingCache(NonPropagatingCache const&) : Optional<T>() {}
+    constexpr NonPropagatingCache(NonPropagatingCache&& other) : Optional<T>() { other.reset(); }
 
     template<concepts::ConvertibleTo<T> U>
     constexpr auto operator=(U&& value) -> NonPropagatingCache& {
