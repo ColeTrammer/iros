@@ -115,38 +115,38 @@ auto Process::spawn_and_wait() && -> di::Result<ProcessResult> {
 // I'm not sure why this isn't a u128.
 using kernel_sigset_t = u64;
 
-static di::Result<void> sys_rt_sigprocmask(int how, kernel_sigset_t const* set, kernel_sigset_t* old) {
+static auto sys_rt_sigprocmask(int how, kernel_sigset_t const* set, kernel_sigset_t* old) -> di::Result<void> {
     return system::system_call<int>(system::Number::rt_sigprocmask, how, set, old, sizeof(kernel_sigset_t)) %
            di::into_void;
 }
 
-static di::Result<Signal> sys_rt_sigtimedwait(kernel_sigset_t const* set, void* info, void* timeout) {
+static auto sys_rt_sigtimedwait(kernel_sigset_t const* set, void* info, void* timeout) -> di::Result<Signal> {
     return system::system_call<Signal>(system::Number::rt_sigtimedwait, set, info, timeout, sizeof(kernel_sigset_t));
 }
 
-static di::Result<void> sys_kill(ProcessId id, int signal) {
+static auto sys_kill(ProcessId id, int signal) -> di::Result<void> {
     return system::system_call<int>(system::Number::kill, id, signal) % di::into_void;
 }
 
-static di::Result<ProcessId> sys_getpid() {
+static auto sys_getpid() -> di::Result<ProcessId> {
     return system::system_call<ProcessId>(system::Number::getpid);
 }
 
-ProcessId get_process_id() {
+auto get_process_id() -> ProcessId {
     // This really shouldn't fail...
     return sys_getpid().value();
 }
 
-di::Result<void> mask_signal(Signal signal) {
+auto mask_signal(Signal signal) -> di::Result<void> {
     auto mask = kernel_sigset_t(1) << (kernel_sigset_t(signal) - 1);
     return sys_rt_sigprocmask(SIG_BLOCK, &mask, nullptr);
 }
 
-di::Result<void> send_signal(ProcessId id, Signal signal) {
+auto send_signal(ProcessId id, Signal signal) -> di::Result<void> {
     return sys_kill(id, int(signal));
 }
 
-di::Result<Signal> wait_for_signal(Signal signal) {
+auto wait_for_signal(Signal signal) -> di::Result<Signal> {
     auto mask = kernel_sigset_t(1) << (kernel_sigset_t(signal) - 1);
     return sys_rt_sigtimedwait(&mask, nullptr, nullptr);
 }
