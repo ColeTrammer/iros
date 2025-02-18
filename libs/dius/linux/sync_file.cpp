@@ -45,7 +45,7 @@ static auto sys_mmap(void* addr, usize length, Protection prot, MapFlags flags, 
     -> di::Expected<byte*, di::GenericCode> {
     return system::system_call<byte*>(system::Number::mmap, addr, length, prot, flags, fd, offset);
 }
-static auto sys_ioctl(int fd, int code, void* arg) -> di::Expected<void, di::GenericCode> {
+static auto sys_ioctl(int fd, unsigned long code, void* arg) -> di::Expected<void, di::GenericCode> {
     return system::system_call<int>(system::Number::ioctl, fd, code, arg) % di::into_void;
 }
 

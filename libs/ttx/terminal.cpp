@@ -1033,7 +1033,7 @@ void Terminal::put_char(u32 row, u32 col, c32 c) {
 }
 
 void Terminal::put_char(c32 c) {
-    if ((c >= 0 && c <= 31) || c == 127) {
+    if (c <= 31 || c == 127) {
         put_char('^');
         put_char(c | 0x40);
         return;
