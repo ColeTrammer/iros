@@ -4,6 +4,7 @@
 #include <linux/signal.h>
 #include <linux/wait.h>
 
+#include "di/container/string/zstring.h"
 #include "dius/linux/system_call.h"
 #include "dius/print.h"
 #include "dius/system/system_call.h"
@@ -91,7 +92,31 @@ auto Process::spawn_and_wait() && -> di::Result<ProcessResult> {
                 }
             }
 
-            TRY(system_call<int>(Number::execve, null_terminated_args[0], null_terminated_args.data(), s_envp));
+            if (m_arguments[0].contains(U'/')) {
+                TRY(system_call<int>(Number::execve, null_terminated_args[0], null_terminated_args.data(), s_envp));
+            } else {
+                // Read PATH env variable, and use it.
+                auto path = "/bin:/usr/bin"_ts;
+                for (auto const* const* env = s_envp; *env != nullptr; env++) {
+                    auto zstring = di::ZCString(*env);
+                    if (di::starts_with(zstring, "PATH="_tsv)) {
+                        path = di::View(di::next(zstring.begin(), 5), zstring.end()) | di::transform([](char const& c) {
+                                   return c;
+                               }) |
+                               di::to<di::TransparentString>();
+                        break;
+                    }
+                }
+                for (auto prefix : path | di::split(':')) {
+                    auto absolute_program = prefix.to_owned();
+                    if (!absolute_program.ends_with('/')) {
+                        absolute_program.push_back('/');
+                    }
+                    absolute_program += m_arguments[0];
+                    (void) system_call<int>(Number::execve, absolute_program.c_str(), null_terminated_args.data(),
+                                            s_envp);
+                }
+            }
             return {};
         }());
         exit_process(127);
