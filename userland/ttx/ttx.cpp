@@ -1,5 +1,6 @@
 #include "di/cli/parser.h"
 #include "di/container/interface/erase.h"
+#include "di/container/queue/queue.h"
 #include "di/container/string/string_view.h"
 #include "di/function/not_equal.h"
 #include "di/io/writer_print.h"
@@ -30,6 +31,12 @@ struct Args {
     }
 };
 
+struct PaneExited {
+    Pane* pane = nullptr;
+};
+
+using RenderEvent = di::Variant<dius::tty::WindowSize, PaneExited>;
+
 struct LayoutEntry {
     u32 row { 0 };
     u32 col { 0 };
@@ -40,6 +47,7 @@ struct LayoutEntry {
 struct LayoutState {
     di::Vector<di::Box<Pane>> panes {};
     di::Vector<LayoutEntry> layout {};
+    di::Queue<RenderEvent> events {};
     Pane* active { nullptr };
     dius::tty::WindowSize size;
 };
@@ -135,26 +143,23 @@ static auto main(Args& args) -> di::Result<void> {
         }
     };
 
-    auto remove_pane = [&](Pane* pane) {
-        layout_state.with_lock([&](LayoutState& state) {
-            // Clear active pane.
-            if (state.active == pane) {
-                // TODO: use a better algorithm. Last used?
-                auto candidates = state.panes | di::transform(&di::Box<Pane>::get) | di::filter(di::not_equal(pane));
-                set_active(state, candidates.front().value_or(nullptr));
-            }
+    auto remove_pane = [&](LayoutState& state, Pane* pane) {
+        // Clear active pane.
+        if (state.active == pane) {
+            // TODO: use a better algorithm. Last used?
+            auto candidates = state.panes | di::transform(&di::Box<Pane>::get) | di::filter(di::not_equal(pane));
+            set_active(state, candidates.front().value_or(nullptr));
+        }
 
-            di::erase_if(state.panes, [&](di::Box<Pane> const& pointer) {
-                return pointer.get() == pane;
-            });
-            do_layout(state, state.size);
-
-            // Exit when there are no panes left.
-            if (state.panes.empty()) {
-                set_done();
-            }
+        di::erase_if(state.panes, [&](di::Box<Pane> const& pointer) {
+            return pointer.get() == pane;
         });
-        return;
+        do_layout(state, state.size);
+
+        // Exit when there are no panes left.
+        if (state.panes.empty()) {
+            set_done();
+        }
     };
 
     auto add_pane = [&](di::Vector<di::TransparentStringView> command) -> di::Result<> {
@@ -181,8 +186,10 @@ static auto main(Args& args) -> di::Result<void> {
 
             auto& pane = state.panes.back().value() = di::move(maybe_pane).value();
             state.layout.back().value().pane = pane.get();
-            pane->did_exit = [&remove_pane, pane = pane.get()] {
-                remove_pane(pane);
+            pane->did_exit = [&layout_state, pane = pane.get()] {
+                layout_state.with_lock([&](LayoutState& state) {
+                    state.events.push(PaneExited(pane));
+                });
             };
 
             set_active(state, pane.get());
@@ -343,6 +350,19 @@ static auto main(Args& args) -> di::Result<void> {
         auto deadline = dius::SteadyClock::now();
         while (!done.load(di::MemoryOrder::Acquire)) {
             auto cursor = layout_state.with_lock([&](LayoutState& state) {
+                // Process any pending events.
+                for (auto event : state.events) {
+                    di::visit(di::overload(
+                                  [&](dius::tty::WindowSize const& size) {
+                                      do_layout(state, size);
+                                  },
+                                  [&](PaneExited const& pane) {
+                                      remove_pane(state, pane.pane);
+                                  }),
+                              event);
+                }
+
+                // Do the render.
                 renderer.start(state.size);
 
                 // Status bar.
@@ -398,7 +418,7 @@ static auto main(Args& args) -> di::Result<void> {
         }
 
         layout_state.with_lock([&](LayoutState& state) {
-            do_layout(state, size.value());
+            state.events.push(size.value());
         });
     }
 
