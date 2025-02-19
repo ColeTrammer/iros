@@ -66,9 +66,8 @@ static auto main(Args& args) -> di::Result<void> {
         if (!done.exchange(true, di::MemoryOrder::Release)) {
             // Ensure the SIGWINCH thread exits.
             (void) dius::system::send_signal(dius::system::get_process_id(), dius::Signal::WindowChange);
-            // Ensure the input thread exits. (By writing something to stdin).
-            auto byte = 0_b;
-            (void) dius::stdin.write_exactly({ &byte, 1 });
+            // Ensure the input thread exits. (By requesting device attributes, thus waking up the input thread).
+            (void) dius::stdin.write_exactly(di::as_bytes("\033[c"_sv.span()));
         }
     };
 
