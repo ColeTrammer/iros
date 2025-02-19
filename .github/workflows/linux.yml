@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        preset: [gcc_debug_ubasan, gcc_release_default, gcc_debug_coverage, clang_release_dius_runtime]
+        preset: [clang_debug_ubasan, gcc_release_default, gcc_debug_coverage, clang_release_dius_runtime]
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
