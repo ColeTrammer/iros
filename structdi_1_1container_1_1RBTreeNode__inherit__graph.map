@@ -1,0 +1,9 @@
+<map id="di::container::RBTreeNode&lt; Tag &gt;" name="di::container::RBTreeNode&lt; Tag &gt;">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,75,195,119"/>
+<area shape="rect" id="Node000002" href="$structdi_1_1container_1_1OwningRBTreeNode.html" title=" " alt="" coords="272,5,476,50"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="206,68,283,48,284,53,207,73"/>
+<area shape="rect" id="Node000003" href="$structiris_1_1mm_1_1BackedPhysicalPage.html" title="A physical page of memory tracked by a backing object." alt="" coords="243,75,506,119"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="210,94,242,94,242,100,210,100"/>
+<area shape="rect" id="Node000004" href="$classiris_1_1mm_1_1Region.html" title=" " alt="" coords="277,144,472,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="207,121,284,141,283,146,206,126"/>
+</map>

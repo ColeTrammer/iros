@@ -1,0 +1,21 @@
+<map id="di::Optional&lt; T &gt;" name="di::Optional&lt; T &gt;">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,332,140,360"/>
+<area shape="rect" id="Node000002" href="$classdi_1_1util_1_1NonPropagatingCache.html" title=" " alt="" coords="215,5,390,50"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="75,317,85,262,105,193,137,122,159,89,186,60,213,43,216,47,189,64,164,93,142,125,110,195,90,263,80,317"/>
+<area shape="rect" id="Node000003" href="$classdi_1_1util_1_1NonPropagatingCache.html" title=" " alt="" coords="215,75,390,119"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="79,317,93,275,115,225,145,174,186,130,214,113,216,118,189,134,150,177,119,227,98,277,84,318"/>
+<area shape="rect" id="Node000004" href="$classdi_1_1util_1_1NonPropagatingCache.html" title=" " alt="" coords="215,144,390,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="86,318,125,257,154,225,186,197,214,183,216,188,189,202,157,229,130,260,90,321"/>
+<area shape="rect" id="Node000005" href="$classdi_1_1util_1_1NonPropagatingCache.html" title=" " alt="" coords="190,212,414,291"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="121,324,204,289,206,294,123,329"/>
+<area shape="rect" id="Node000006" href="$classdi_1_1util_1_1NonPropagatingCache.html" title=" " alt="" coords="188,316,417,377"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="155,344,187,344,187,349,155,349"/>
+<area shape="rect" id="Node000007" href="$classdi_1_1util_1_1NonPropagatingCache.html" title=" " alt="" coords="196,402,408,480"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="123,364,206,399,204,404,121,369"/>
+<area shape="rect" id="Node000008" href="$classdi_1_1util_1_1NonPropagatingCache.html" title=" " alt="" coords="196,505,408,566"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="91,373,131,431,159,462,189,490,209,502,206,507,186,494,155,466,127,434,87,376"/>
+<area shape="rect" id="Node000009" href="$classdi_1_1util_1_1NonPropagatingCache.html" title=" " alt="" coords="202,591,403,635"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="83,375,96,419,117,474,148,529,167,554,189,576,207,588,204,592,186,580,163,558,143,532,112,476,90,421,78,376"/>
+<area shape="rect" id="Node000010" href="$classdi_1_1util_1_1NonPropagatingCache.html" title=" " alt="" coords="215,660,390,705"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="79,375,88,432,107,505,122,543,140,581,162,615,189,646,216,663,213,668,186,650,158,619,135,583,117,546,102,507,83,434,74,376"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="di::container::DropWhileView&lt; View, Pred &gt;" name="di::container::DropWhileView&lt; View, Pred &gt;">
+<area shape="rect" id="Node000001" title=" " alt="" coords="539,56,717,101"/>
+<area shape="rect" id="Node000002" href="$classdi_1_1container_1_1ViewInterface.html" title=" " alt="" coords="241,14,491,58"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="507,56,539,62,538,67,506,62"/>
+<area shape="rect" id="Node000003" href="$classdi_1_1meta_1_1EnableView.html" title=" " alt="" coords="5,5,193,67"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="208,34,240,34,240,39,208,39"/>
+<area shape="rect" id="Node000004" href="$classdi_1_1meta_1_1EnableBorrowedContainer.html" title=" " alt="" coords="250,82,482,161"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="496,98,538,91,539,96,497,103"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$structdi_1_1container_1_1IntrusiveTagBase.html" title=" " alt="" coords="5,28,228,89"/>
+<area shape="rect" id="Node000001" href="$structdi_1_1container_1_1IntrusiveForwardListTag.html" title=" " alt="" coords="276,36,449,81"/>
+<area shape="poly" id="edge436_Node000000_Node000001" title=" " alt="" coords="243,56,275,56,275,61,243,61"/>
+<area shape="rect" id="Node000002" href="$structdi_1_1container_1_1IntrusiveHashSetTag.html" title=" " alt="" coords="518,5,685,50"/>
+<area shape="poly" id="edge437_Node000001_Node000002" title=" " alt="" coords="464,43,517,36,517,41,465,48"/>
+<area shape="rect" id="Node000003" href="$structiris_1_1detail_1_1InternalObjectTag.html" title=" " alt="" coords="497,74,705,102"/>
+<area shape="poly" id="edge438_Node000001_Node000003" title=" " alt="" coords="465,68,497,72,496,78,464,74"/>
+</map>

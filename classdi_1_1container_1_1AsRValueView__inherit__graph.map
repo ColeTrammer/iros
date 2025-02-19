@@ -1,0 +1,9 @@
+<map id="di::container::AsRValueView&lt; View &gt;" name="di::container::AsRValueView&lt; View &gt;">
+<area shape="rect" id="Node000001" title=" " alt="" coords="590,48,793,93"/>
+<area shape="rect" id="Node000002" href="$classdi_1_1container_1_1ViewInterface.html" title=" " alt="" coords="298,5,504,50"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="520,42,590,53,589,58,519,48"/>
+<area shape="rect" id="Node000003" href="$classdi_1_1meta_1_1EnableView.html" title=" " alt="" coords="5,5,212,50"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="227,25,297,25,297,30,227,30"/>
+<area shape="rect" id="Node000004" href="$classdi_1_1meta_1_1EnableBorrowedContainer.html" title=" " alt="" coords="260,74,542,152"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="557,87,589,83,590,88,558,93"/>
+</map>

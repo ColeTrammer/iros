@@ -1,0 +1,9 @@
+<map id="di::IntrusiveForwardListTag&lt; Self &gt;" name="di::IntrusiveForwardListTag&lt; Self &gt;">
+<area shape="rect" id="Node000001" title=" " alt="" coords="276,40,449,85"/>
+<area shape="rect" id="Node000003" href="$structdi_1_1container_1_1IntrusiveHashSetTag.html" title=" " alt="" coords="507,5,674,50"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="464,44,506,38,507,43,465,49"/>
+<area shape="rect" id="Node000004" href="$structiris_1_1detail_1_1InternalObjectTag.html" title=" " alt="" coords="497,75,684,119"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="465,75,497,80,496,85,464,80"/>
+<area shape="rect" id="Node000002" href="$structdi_1_1container_1_1IntrusiveTagBase.html" title=" " alt="" coords="5,32,228,93"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="243,60,275,60,275,65,243,65"/>
+</map>

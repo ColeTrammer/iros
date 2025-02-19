@@ -1,0 +1,9 @@
+<map id="di::container::TakeView&lt; View &gt;" name="di::container::TakeView&lt; View &gt;">
+<area shape="rect" id="Node000001" title=" " alt="" coords="511,48,682,93"/>
+<area shape="rect" id="Node000002" href="$classdi_1_1container_1_1ViewInterface.html" title=" " alt="" coords="245,5,446,50"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="461,45,511,53,510,58,460,50"/>
+<area shape="rect" id="Node000003" href="$classdi_1_1meta_1_1EnableView.html" title=" " alt="" coords="5,5,180,50"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="196,25,245,25,245,30,196,30"/>
+<area shape="rect" id="Node000004" href="$classdi_1_1meta_1_1EnableBorrowedContainer.html" title=" " alt="" coords="228,74,463,152"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="478,88,510,82,511,88,479,93"/>
+</map>

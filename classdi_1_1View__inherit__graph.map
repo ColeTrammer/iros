@@ -1,0 +1,11 @@
+<map id="di::View&lt; Iter, Sent, is_sized &gt;" name="di::View&lt; Iter, Sent, is_sized &gt;">
+<area shape="rect" id="Node000001" title=" " alt="" coords="480,83,631,127"/>
+<area shape="rect" id="Node000002" href="$classdi_1_1container_1_1ViewInterface.html" title=" " alt="" coords="232,5,432,50"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="414,53,490,80,488,85,412,58"/>
+<area shape="rect" id="Node000003" href="$classdi_1_1meta_1_1EnableView.html" title=" " alt="" coords="5,5,184,50"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="199,25,231,25,231,30,199,30"/>
+<area shape="rect" id="Node000004" href="$classdi_1_1meta_1_1EnableBorrowedContainer.html" title=" " alt="" coords="237,74,426,136"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="442,102,479,102,479,108,442,108"/>
+<area shape="rect" id="Node000005" href="$structdi_1_1util_1_1AddMemberGet.html" title=" " alt="" coords="246,160,418,205"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="412,152,488,125,490,130,414,157"/>
+</map>

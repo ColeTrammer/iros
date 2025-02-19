@@ -1,0 +1,11 @@
+<map id="di::BidirectionalIteratorTag" name="di::BidirectionalIteratorTag">
+<area shape="rect" id="Node000001" title=" " alt="" coords="36,157,229,184"/>
+<area shape="rect" id="Node000004" href="$structdi_1_1types_1_1RandomAccessIteratorTag.html" title=" " alt="" coords="5,232,260,260"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="135,200,135,232,130,232,130,200"/>
+<area shape="rect" id="Node000002" href="$structdi_1_1types_1_1ForwardIteratorTag.html" title=" " alt="" coords="29,81,236,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="135,124,135,156,130,156,130,124"/>
+<area shape="rect" id="Node000003" href="$structdi_1_1types_1_1InputIteratorTag.html" title=" " alt="" coords="38,5,227,33"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="135,49,135,81,130,81,130,49"/>
+<area shape="rect" id="Node000005" href="$structdi_1_1types_1_1ContiguousIteratorTag.html" title=" " alt="" coords="18,308,247,336"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="135,276,135,308,130,308,130,276"/>
+</map>

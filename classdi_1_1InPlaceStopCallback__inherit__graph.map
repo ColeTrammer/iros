@@ -1,0 +1,9 @@
+<map id="di::InPlaceStopCallback&lt; Callback &gt;" name="di::InPlaceStopCallback&lt; Callback &gt;">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,266,179,311"/>
+<area shape="rect" id="Node000002" href="$classdi_1_1sync_1_1detail_1_1InPlaceStopCallbackBase.html" title=" " alt="" coords="6,174,178,218"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="95,234,95,266,89,266,89,234"/>
+<area shape="rect" id="Node000003" href="$classdi_1_1container_1_1IntrusiveListNode.html" title=" " alt="" coords="8,81,176,126"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="95,141,95,173,89,173,89,141"/>
+<area shape="rect" id="Node000004" href="$structdi_1_1util_1_1Immovable.html" title=" " alt="" coords="20,5,164,33"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="95,49,95,80,89,80,89,49"/>
+</map>

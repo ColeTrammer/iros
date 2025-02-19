@@ -1,0 +1,13 @@
+<map id="di::BitEnum&lt; T, index, bit_count &gt;" name="di::BitEnum&lt; T, index, bit_count &gt;">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,168,173,213"/>
+<area shape="rect" id="Node000002" href="$structiris_1_1x86_1_1amd64_1_1ApicInterruptCommandDeliveryMode.html" title=" " alt="" coords="221,5,578,50"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="114,154,159,105,188,80,219,60,246,48,248,53,222,65,191,84,163,108,118,158"/>
+<area shape="rect" id="Node000003" href="$structiris_1_1x86_1_1amd64_1_1ApicInterruptCommandDestinationShorthand.html" title=" " alt="" coords="269,74,530,136"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="170,160,220,145,268,132,270,137,221,150,172,165"/>
+<area shape="rect" id="Node000004" href="$structiris_1_1x86_1_1amd64_1_1ApicLvtEntryMessageType.html" title=" " alt="" coords="260,160,538,221"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="188,188,260,188,260,193,188,193"/>
+<area shape="rect" id="Node000005" href="$structiris_1_1x86_1_1amd64_1_1IoApicRedirectionTableEntryDeliveryMode.html" title=" " alt="" coords="282,245,517,306"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="172,215,221,230,282,246,281,252,220,236,170,220"/>
+<area shape="rect" id="Node000006" href="$structiris_1_1x86_1_1amd64_1_1IoApicRedirectionTableEntryDestinationMode.html" title=" " alt="" coords="280,331,518,410"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="119,223,164,271,192,295,222,316,281,342,279,347,219,321,189,300,161,275,115,227"/>
+</map>

@@ -1,0 +1,21 @@
+<map id="di::IntrusiveRefCount&lt; T &gt;" name="di::IntrusiveRefCount&lt; T &gt;">
+<area shape="rect" id="Node000001" title=" " alt="" coords="198,204,394,232"/>
+<area shape="rect" id="Node000003" href="$classiris_1_1Inode.html" title=" " alt="" coords="476,5,627,33"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="310,189,332,155,362,116,398,77,441,44,474,29,477,33,443,48,402,81,366,119,336,158,315,192"/>
+<area shape="rect" id="Node000004" href="$classiris_1_1TNode.html" title=" " alt="" coords="470,57,633,85"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="319,191,372,142,405,117,441,95,472,83,474,88,443,100,408,121,375,146,322,195"/>
+<area shape="rect" id="Node000005" href="$classiris_1_1Task.html" title=" " alt="" coords="483,109,620,137"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="335,194,385,169,441,146,482,134,483,139,443,151,387,174,337,199"/>
+<area shape="rect" id="Node000006" href="$classiris_1_1TaskArguments.html" title=" " alt="" coords="476,161,627,206"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="409,200,475,191,476,196,409,205"/>
+<area shape="rect" id="Node000007" href="$classiris_1_1TaskNamespace.html" title=" " alt="" coords="473,230,630,275"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="409,231,473,239,472,245,409,236"/>
+<area shape="rect" id="Node000008" href="$classiris_1_1TaskStatus.html" title=" " alt="" coords="442,299,661,326"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="337,237,387,262,443,285,479,295,478,301,441,290,385,266,335,242"/>
+<area shape="rect" id="Node000009" href="$classiris_1_1mm_1_1AddressSpace.html" title=" " alt="" coords="464,350,639,395"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="323,241,376,289,409,314,443,335,468,347,466,352,441,340,406,318,372,293,320,245"/>
+<area shape="rect" id="Node000010" href="$classiris_1_1mm_1_1BackingObject.html" title=" " alt="" coords="463,420,640,464"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="313,244,335,281,364,324,401,368,444,405,464,417,461,421,440,409,397,371,360,327,330,283,309,247"/>
+<area shape="rect" id="Node000002" href="$structdi_1_1util_1_1Immovable.html" title=" " alt="" coords="5,204,150,232"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="165,215,197,215,197,220,165,220"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="di::meta::EnableView&lt; Self, should_enable &gt;" name="di::meta::EnableView&lt; Self, should_enable &gt;">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,52,184,97"/>
+<area shape="rect" id="Node000002" href="$classdi_1_1container_1_1ViewInterface.html" title=" " alt="" coords="232,5,481,67"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="199,57,231,52,232,57,200,62"/>
+<area shape="rect" id="Node000003" href="$classdi_1_1container_1_1ViewInterface.html" title=" " alt="" coords="256,91,456,136"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="199,88,256,96,255,101,199,93"/>
+<area shape="rect" id="Node000004" href="$classdi_1_1container_1_1View.html" title=" " alt="" coords="529,91,699,136"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="472,111,529,111,529,116,472,116"/>
+</map>

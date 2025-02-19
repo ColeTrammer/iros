@@ -1,0 +1,9 @@
+<map id="di::container::StrideView&lt; View &gt;" name="di::container::StrideView&lt; View &gt;">
+<area shape="rect" id="Node000001" title=" " alt="" coords="567,48,747,93"/>
+<area shape="rect" id="Node000002" href="$classdi_1_1container_1_1ViewInterface.html" title=" " alt="" coords="278,5,478,50"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="494,43,567,54,566,59,493,48"/>
+<area shape="rect" id="Node000003" href="$classdi_1_1meta_1_1EnableView.html" title=" " alt="" coords="5,5,189,50"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="204,25,277,25,277,30,204,30"/>
+<area shape="rect" id="Node000004" href="$classdi_1_1meta_1_1EnableBorrowedContainer.html" title=" " alt="" coords="237,74,519,152"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="534,86,566,81,567,87,535,92"/>
+</map>

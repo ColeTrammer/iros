@@ -1,0 +1,7 @@
+<map id="di::container::detail::TreeSetTag&lt; Value &gt;" name="di::container::detail::TreeSetTag&lt; Value &gt;">
+<area shape="rect" id="Node000001" title=" " alt="" coords="552,14,717,58"/>
+<area shape="rect" id="Node000002" href="$structdi_1_1container_1_1OwningRBTreeTag.html" title=" " alt="" coords="300,5,504,67"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="520,34,551,34,551,39,520,39"/>
+<area shape="rect" id="Node000003" href="$structdi_1_1container_1_1IntrusiveTagBase.html" title=" " alt="" coords="5,5,252,67"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="267,34,299,34,299,39,267,39"/>
+</map>

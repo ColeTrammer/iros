@@ -1,0 +1,28 @@
+var classdi_1_1vocab_1_1Expected =
+[
+    [ "Error", "classdi_1_1vocab_1_1Expected.html#ada9695f8609ca96c6a4f19fea1389dea", null ],
+    [ "Value", "classdi_1_1vocab_1_1Expected.html#ac877809597f885d3429cdfbe49406187", null ],
+    [ "Expected", "classdi_1_1vocab_1_1Expected.html#af34a7585c1898e4a1d445d39efdda229", null ],
+    [ "Expected", "classdi_1_1vocab_1_1Expected.html#aae66f8238ef8a9d5978034651542cce7", null ],
+    [ "Expected", "classdi_1_1vocab_1_1Expected.html#a922e3e5ff82b289ede92acee1f059bce", null ],
+    [ "Expected", "classdi_1_1vocab_1_1Expected.html#a6635beb8c660179562c61c6bd4bf490a", null ],
+    [ "~Expected", "classdi_1_1vocab_1_1Expected.html#a40ad51601b57209169d1484c12b14455", null ],
+    [ "__try_did_fail", "classdi_1_1vocab_1_1Expected.html#a0e7bf03cfe0d841db6cecf47bdf66957", null ],
+    [ "__try_did_succeed", "classdi_1_1vocab_1_1Expected.html#ace7eba633b7b842a3f1f53e33a09c942", null ],
+    [ "__try_move_out", "classdi_1_1vocab_1_1Expected.html#a1008cc609f392729cd3d4d76a21c2cd7", null ],
+    [ "emplace", "classdi_1_1vocab_1_1Expected.html#a56524cd328a6b3573e6d0191f7bd3bf5", null ],
+    [ "has_value", "classdi_1_1vocab_1_1Expected.html#abd411edaf2868ddc351dcaca0f1c3577", null ],
+    [ "operator bool", "classdi_1_1vocab_1_1Expected.html#a0d6ada3ef5af390dec829ea2b66786c5", null ],
+    [ "operator*", "classdi_1_1vocab_1_1Expected.html#ac61312ba8e5baa02d77528e36429ce3d", null ],
+    [ "operator*", "classdi_1_1vocab_1_1Expected.html#a4dd55af260cb39bb0898c2dfc90375e0", null ],
+    [ "operator=", "classdi_1_1vocab_1_1Expected.html#a3bef5733edc53ebcff1e9421703dcb4e", null ],
+    [ "operator=", "classdi_1_1vocab_1_1Expected.html#a29de33044d230f9aecd4528ab5a6c0df", null ],
+    [ "value", "classdi_1_1vocab_1_1Expected.html#ae661504a80a8c46290899bf859ef0ebc", null ],
+    [ "value", "classdi_1_1vocab_1_1Expected.html#aabb64a088e4ecba486504549cea9641b", null ],
+    [ "operator==", "classdi_1_1vocab_1_1Expected.html#a2cb63877f36556adae3765fc533914cc", null ],
+    [ "operator==", "classdi_1_1vocab_1_1Expected.html#a407a36d679d2716261423359d2fd302e", null ],
+    [ "tag_invoke", "classdi_1_1vocab_1_1Expected.html#a487e7d55269dc216bb4eb7063424166b", null ],
+    [ "tag_invoke", "classdi_1_1vocab_1_1Expected.html#aef5585b11a6226c06013e61f2702ef96", null ],
+    [ "tag_invoke", "classdi_1_1vocab_1_1Expected.html#adc1ba3230bdce548878977db8648c0cc", null ],
+    [ "tag_invoke", "classdi_1_1vocab_1_1Expected.html#a052d848e0cfe97745be729a7d2acf6ce", null ]
+];

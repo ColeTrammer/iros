@@ -1,0 +1,27 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$structdi_1_1meta_1_1TypeConstant.html" title=" " alt="" coords="39,5,231,101"/>
+<area shape="rect" id="Node000001" href="$structdi_1_1meta_1_1detail_1_1ZipHelper.html" title=" " alt="" coords="328,30,520,92"/>
+<area shape="poly" id="edge862_Node000000_Node000001" title=" " alt="" coords="246,54,327,56,327,61,246,59"/>
+<area shape="rect" id="Node000006" href="$structdi_1_1meta_1_1TypeConstant.html" title=" " alt="" coords="49,126,221,170"/>
+<area shape="rect" id="Node000005" href="$structdi_1_1meta_1_1detail_1_1PopFrontHelper.html" title=" " alt="" coords="322,126,526,170"/>
+<area shape="poly" id="edge863_Node000006_Node000005" title=" " alt="" coords="236,145,321,145,321,150,236,150"/>
+<area shape="rect" id="Node000002" href="$structdi_1_1meta_1_1TypeConstant.html" title=" " alt="" coords="49,334,221,378"/>
+<area shape="poly" id="edge866_Node000002_Node000001" title=" " alt="" coords="196,323,232,298,263,266,275,246,281,226,284,189,289,151,296,132,311,111,335,90,339,95,315,115,301,134,294,153,290,189,286,227,279,248,267,269,235,302,199,328"/>
+<area shape="poly" id="edge865_Node000002_Node000005" title=" " alt="" coords="191,323,228,297,263,266,277,244,285,223,293,202,311,180,329,168,332,173,314,185,297,204,290,224,282,246,267,270,232,301,194,327"/>
+<area shape="rect" id="Node000003" href="$structdi_1_1meta_1_1detail_1_1PopBackHelper.html" title=" " alt="" coords="313,195,535,240"/>
+<area shape="poly" id="edge864_Node000002_Node000003" title=" " alt="" coords="181,323,242,285,312,249,342,238,343,243,314,254,244,290,184,327"/>
+<area shape="rect" id="Node000007" href="$structdi_1_1meta_1_1detail_1_1ConcatHelper.html" title=" " alt="" coords="337,472,510,517"/>
+<area shape="poly" id="edge867_Node000002_Node000007" title=" " alt="" coords="184,384,244,422,314,457,343,469,342,474,312,462,242,426,181,389"/>
+<area shape="rect" id="Node000008" href="$structdi_1_1meta_1_1detail_1_1GatherSignaturesHelper.html" title=" " alt="" coords="337,541,511,603"/>
+<area shape="poly" id="edge868_Node000002_Node000008" title=" " alt="" coords="166,388,230,458,270,494,314,527,338,540,335,545,311,531,267,498,226,461,162,392"/>
+<area shape="rect" id="Node000009" href="$structdi_1_1meta_1_1detail_1_1PopBackHelper.html" title=" " alt="" coords="332,627,516,672"/>
+<area shape="poly" id="edge869_Node000002_Node000009" title=" " alt="" coords="154,391,179,441,214,501,259,561,286,588,314,612,334,624,331,629,311,617,282,592,255,564,209,504,174,444,149,394"/>
+<area shape="rect" id="Node000010" href="$structdi_1_1meta_1_1detail_1_1PopFrontHelper.html" title=" " alt="" coords="331,264,516,309"/>
+<area shape="poly" id="edge870_Node000002_Node000010" title=" " alt="" coords="235,329,330,306,331,311,236,334"/>
+<area shape="rect" id="Node000011" href="$structdi_1_1meta_1_1detail_1_1RepeatHelper.html" title=" " alt="" coords="337,334,511,378"/>
+<area shape="poly" id="edge871_Node000002_Node000011" title=" " alt="" coords="236,353,336,353,336,358,236,358"/>
+<area shape="rect" id="Node000012" href="$structdi_1_1meta_1_1detail_1_1ZipHelper.html" title=" " alt="" coords="328,403,520,448"/>
+<area shape="poly" id="edge872_Node000002_Node000012" title=" " alt="" coords="237,377,329,400,327,405,235,383"/>
+<area shape="rect" id="Node000004" href="$structdi_1_1meta_1_1TypeConstant.html" title=" " alt="" coords="5,194,265,256"/>
+<area shape="poly" id="edge873_Node000004_Node000003" title=" " alt="" coords="280,218,312,218,312,223,280,224"/>
+</map>

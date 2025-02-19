@@ -1,0 +1,5 @@
+<map id="di::execution::ipc_binary_ns::SenderT&lt; Proto, Read, Write, TxFun, RxFun, Alloc, ClientOrServer &gt;::Type" name="di::execution::ipc_binary_ns::SenderT&lt; Proto, Read, Write, TxFun, RxFun, Alloc, ClientOrServer &gt;::Type">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,81,179,177"/>
+<area shape="rect" id="Node000002" href="$structdi_1_1util_1_1NonCopyable.html" title=" " alt="" coords="13,5,171,33"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="95,49,95,81,89,81,89,49"/>
+</map>

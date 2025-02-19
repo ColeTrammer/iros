@@ -1,0 +1,7 @@
+<map id="iris::mm::PageStructurePhysicalPage" name="iris::mm::PageStructurePhysicalPage">
+<area shape="rect" id="Node000001" title="A physical page of memory used for the page tables themselves." alt="" coords="5,174,264,201"/>
+<area shape="rect" id="Node000002" href="$classdi_1_1container_1_1IntrusiveListNode.html" title=" " alt="" coords="51,81,218,126"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="137,141,137,173,132,173,132,141"/>
+<area shape="rect" id="Node000003" href="$structdi_1_1util_1_1Immovable.html" title=" " alt="" coords="62,5,207,33"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="137,49,137,80,132,80,132,49"/>
+</map>

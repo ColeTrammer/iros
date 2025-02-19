@@ -1,0 +1,9 @@
+<map id="di::sync::Synchronized&lt; Value, Lock &gt;" name="di::sync::Synchronized&lt; Value, Lock &gt;">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,99,172,144"/>
+<area shape="rect" id="Node000002" href="$classiris_1_1TaskNamespace.html" title=" " alt="" coords="220,5,411,67"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="163,91,230,65,232,70,165,96"/>
+<area shape="rect" id="Node000003" href="$classiris_1_1mm_1_1AddressSpace.html" title=" " alt="" coords="227,91,404,152"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="187,119,227,119,227,124,187,124"/>
+<area shape="rect" id="Node000004" href="$classiris_1_1mm_1_1BackingObject.html" title=" " alt="" coords="226,176,405,238"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="165,147,232,173,230,178,163,152"/>
+</map>

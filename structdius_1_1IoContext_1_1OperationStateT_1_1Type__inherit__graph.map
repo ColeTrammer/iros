@@ -1,0 +1,9 @@
+<map id="dius::IoContext::OperationStateT&lt; Receiver &gt;::Type" name="dius::IoContext::OperationStateT&lt; Receiver &gt;::Type">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,266,197,311"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,174,197,218"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="104,234,104,266,98,266,98,234"/>
+<area shape="rect" id="Node000003" href="$classdi_1_1container_1_1IntrusiveForwardListNode.html" title=" " alt="" coords="10,81,192,126"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="104,141,104,173,98,173,98,141"/>
+<area shape="rect" id="Node000004" href="$structdi_1_1util_1_1Immovable.html" title=" " alt="" coords="29,5,173,33"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="104,49,104,80,98,80,98,49"/>
+</map>

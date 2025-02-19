@@ -1,0 +1,9 @@
+<map id="di::container::DefaultIntrusiveHashSetTag" name="di::container::DefaultIntrusiveHashSetTag">
+<area shape="rect" id="Node000001" title=" " alt="" coords="886,14,1102,58"/>
+<area shape="rect" id="Node000002" href="$structdi_1_1container_1_1IntrusiveHashSetTag.html" title=" " alt="" coords="621,5,838,67"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="854,34,886,34,886,39,854,39"/>
+<area shape="rect" id="Node000003" href="$structdi_1_1container_1_1IntrusiveForwardListTag.html" title=" " alt="" coords="335,5,573,67"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="589,34,621,34,621,39,589,39"/>
+<area shape="rect" id="Node000004" href="$structdi_1_1container_1_1IntrusiveTagBase.html" title=" " alt="" coords="5,5,287,67"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="302,34,334,34,334,39,302,39"/>
+</map>
