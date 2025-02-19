@@ -42,6 +42,7 @@ jobs:
         uses: tj-actions/changed-files@v45
         with:
           base_sha: ${{ env.BASE_SHA }}
+          fetch_depth: 100
           files: |
             meta/docker/**
             meta/toolchain/**
