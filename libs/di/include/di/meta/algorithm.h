@@ -252,6 +252,40 @@ namespace detail {
 template<concepts::TypeList... Types>
 using CartesianProduct = Type<detail::CartesianProductHelper<Types...>>;
 
+namespace detail {
+    template<typename...>
+    struct ConcatVHelper {};
+
+    template<auto... ts, auto... us, typename... Rest>
+    struct ConcatVHelper<ListV<ts...>, ListV<us...>, Rest...> : ConcatVHelper<ListV<ts..., us...>, Rest...> {};
+
+    template<typename T>
+    struct ConcatVHelper<T> : TypeConstant<T> {};
+
+    template<>
+    struct ConcatVHelper<> : TypeConstant<ListV<>> {};
+}
+
+template<concepts::InstanceOfV<ListV>... Lists>
+using ConcatV = Type<detail::ConcatVHelper<Lists...>>;
+
+namespace detail {
+    template<typename T>
+    struct ReverseVHelper {};
+
+    template<>
+    struct ReverseVHelper<ListV<>> : TypeConstant<ListV<>> {};
+
+    template<auto v>
+    struct ReverseVHelper<ListV<v>> : TypeConstant<ListV<v>> {};
+
+    template<auto v, auto... vs>
+    struct ReverseVHelper<ListV<v, vs...>> : TypeConstant<ConcatV<Type<ReverseVHelper<ListV<vs...>>>, ListV<v>>> {};
+}
+
+template<concepts::InstanceOfV<ListV> List>
+using ReverseV = Type<detail::ReverseVHelper<List>>;
+
 // To produce an integer sequence using a minimal number of template
 // instantiations, we partition the problem into halves, and construct
 // the correcct sequence using the Concat helper.
@@ -283,6 +317,9 @@ using MakeIntegerSequence = Type<detail::MakeIntegerSequenceHelper<T, count>>;
 
 template<usize count>
 using MakeIndexSequence = MakeIntegerSequence<usize, count>;
+
+template<usize count>
+using MakeReverseIndexSequence = ReverseV<MakeIntegerSequence<usize, count>>;
 
 template<typename... Types>
 using IndexSequenceFor = MakeIndexSequence<sizeof...(Types)>;

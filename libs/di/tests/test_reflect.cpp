@@ -1,5 +1,7 @@
 #include "di/container/hash/prelude.h"
 #include "di/reflect/prelude.h"
+#include "di/reflect/valid_enum_value.h"
+#include "di/util/bitwise_enum.h"
 #include "dius/test/prelude.h"
 
 namespace reflect {
@@ -106,8 +108,48 @@ constexpr static void enum_() {
     ASSERT(!di::parse<MyEnum>("Blah"_sv));
 }
 
+enum class MyFlags {
+    None = 0,
+    A = 1,
+    B = 2,
+    C = 4,
+    BC = B | C,
+};
+
+DI_DEFINE_ENUM_BITWISE_OPERATIONS(MyFlags)
+
+constexpr static auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyFlags>) {
+    using enum MyFlags;
+    return di::make_enumerators<"MyFlags">(di::enumerator<"None", None>, di::enumerator<"A", A>, di::enumerator<"B", B>,
+                                           di::enumerator<"C", C>, di::enumerator<"BC", BC>);
+}
+
+constexpr static void flags() {
+    ASSERT_EQ(di::enum_to_string(MyFlags::None), "None"_sv);
+    ASSERT_EQ(di::enum_to_string(MyFlags::A), "A"_sv);
+    ASSERT_EQ(di::enum_to_string(MyFlags::BC), "BC"_sv);
+    ASSERT_EQ(di::enum_to_string(MyFlags::A | MyFlags::B | MyFlags::C), "A|BC"_sv);
+    ASSERT_EQ(di::enum_to_string(MyFlags(-1)), "[<Invalid Enum Value>]"_sv);
+
+    ASSERT_EQ(di::to_string(MyFlags::A), "A"_sv);
+    ASSERT_EQ(di::to_string(MyFlags::A | MyFlags::B | MyFlags::C), "A|BC"_sv);
+
+    ASSERT(di::valid_enum_value(MyFlags::None));
+    ASSERT(di::valid_enum_value(MyFlags::A));
+    ASSERT(di::valid_enum_value(MyFlags::A | MyFlags::B));
+    ASSERT(!di::valid_enum_value(MyFlags(-1)));
+
+    ASSERT_EQ(di::parse<MyFlags>("A"_sv), MyFlags::A);
+    ASSERT_EQ(di::parse<MyFlags>("B"_sv), MyFlags::B);
+    ASSERT_EQ(di::parse<MyFlags>("A|B"_sv), MyFlags::A | MyFlags::B);
+    ASSERT_EQ(di::parse<MyFlags>("BC"_sv), MyFlags::BC);
+    ASSERT(!di::parse<MyFlags>("Blah"_sv));
+    ASSERT(!di::parse<MyFlags>("A|Blah"_sv));
+}
+
 TESTC(reflect, basic)
 TESTC(reflect, private_fields)
 TESTC(reflect, format)
 TESTC(reflect, enum_)
+TESTC(reflect, flags)
 }

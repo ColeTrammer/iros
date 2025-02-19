@@ -47,11 +47,11 @@ constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<T>, Format
 template<concepts::ReflectableToEnumerators T, concepts::Encoding Enc>
 constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<T>, FormatParseContext<Enc>& parse_context,
                           bool debug) {
-    return format::formatter<container::StringView, Enc>(parse_context, debug) %
-           [](concepts::CopyConstructible auto formatter) {
-               return [=](concepts::FormatContext auto& context, T value) {
-                   return formatter(context, reflection::enum_to_string(value));
-               };
-           };
+    using R = decltype(reflection::enum_to_string(di::declval<T>()));
+    return format::formatter<R, Enc>(parse_context, debug) % [](concepts::CopyConstructible auto formatter) {
+        return [=](concepts::FormatContext auto& context, T value) {
+            return formatter(context, reflection::enum_to_string(value));
+        };
+    };
 }
 }

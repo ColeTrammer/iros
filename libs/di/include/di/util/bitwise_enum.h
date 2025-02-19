@@ -1,6 +1,21 @@
 #pragma once
 
+#include "di/meta/core.h"
+#include "di/meta/language.h"
 #include "di/util/to_underlying.h"
+
+namespace di::concepts {
+template<typename T>
+concept BitwiseEnum = concepts::Enum<T> && requires(T& lvalue, T a) {
+    { ~a } -> di::SameAs<T>;
+    { a | a } -> di::SameAs<T>;
+    { a& a } -> di::SameAs<T>;
+    { a ^ a } -> di::SameAs<T>;
+    { lvalue |= a } -> di::SameAs<T&>;
+    { lvalue &= a } -> di::SameAs<T&>;
+    { lvalue ^= a } -> di::SameAs<T&>;
+};
+}
 
 #define DI_DEFINE_ENUM_BITWISE_OPERATIONS(Type)                                                \
     static_assert(::di::concepts::Enum<Type>);                                                 \

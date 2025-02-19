@@ -25,8 +25,17 @@ constexpr auto apply(F&& f, Tup&& tuple)
     return detail::apply_impl(meta::MakeIndexSequence<meta::TupleSize<Tup>> {}, util::forward<F>(f),
                               util::forward<Tup>(tuple));
 }
+
+template<typename F, concepts::TupleLike Tup>
+constexpr auto apply_reverse(F&& f, Tup&& tuple)
+    -> decltype(detail::apply_impl(meta::MakeReverseIndexSequence<meta::TupleSize<Tup>> {}, util::forward<F>(f),
+                                   util::forward<Tup>(tuple))) {
+    return detail::apply_impl(meta::MakeReverseIndexSequence<meta::TupleSize<Tup>> {}, util::forward<F>(f),
+                              util::forward<Tup>(tuple));
+}
 }
 
 namespace di {
 using vocab::apply;
+using vocab::apply_reverse;
 }

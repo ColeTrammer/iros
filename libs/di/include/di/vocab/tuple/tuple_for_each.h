@@ -26,8 +26,19 @@ constexpr void tuple_for_each(F&& function, Tup&& tuple) {
         },
         util::forward<Tup>(tuple));
 }
+
+template<typename F, concepts::TupleLike Tup>
+requires(detail::TupleForEachValid<F, Tup, meta::MakeIndexSequence<meta::TupleSize<Tup>>>::value)
+constexpr void tuple_for_each_reverse(F&& function, Tup&& tuple) {
+    return apply_reverse(
+        [&]<typename... Types>(Types&&... values) {
+            (void) (function::invoke(function, util::forward<Types>(values)), ...);
+        },
+        util::forward<Tup>(tuple));
+}
 }
 
 namespace di {
 using vocab::tuple_for_each;
+using vocab::tuple_for_each_reverse;
 }
