@@ -35,6 +35,7 @@ public:
     auto event(PasteEvent const& event) -> bool;
 
     void resize(dius::tty::WindowSize const& size);
+    void exit();
 
     // Application controlled callback when the internal process exits.
     di::Function<void()> did_exit;

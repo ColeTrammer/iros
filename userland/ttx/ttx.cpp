@@ -7,7 +7,6 @@
 #include "di/math/rational/rational.h"
 #include "di/sync/synchronized.h"
 #include "dius/main.h"
-#include "dius/print.h"
 #include "dius/sync_file.h"
 #include "dius/system/process.h"
 #include "dius/thread.h"
@@ -20,12 +19,10 @@
 namespace ttx {
 struct Args {
     di::Vector<di::TransparentStringView> command;
-    usize panes { 1 };
     bool help { false };
 
     constexpr static auto get_cli_parser() {
         return di::cli_parser<Args>("ttx"_sv, "Terminal multiplexer"_sv)
-            .option<&Args::panes>('p', "panes"_tsv, "Number of panes to start with"_sv)
             .argument<&Args::command>("COMMAND"_sv, "Program to run in terminal"_sv, true)
             .help();
     }
@@ -53,11 +50,6 @@ struct LayoutState {
 };
 
 static auto main(Args& args) -> di::Result<void> {
-    if (args.panes == 0) {
-        dius::eprintln("error: ttx needs to start with at least one pane"_sv);
-        return {};
-    }
-
     auto done = di::Atomic<bool>(false);
 
     auto set_done = [&] {
@@ -195,10 +187,8 @@ static auto main(Args& args) -> di::Result<void> {
         });
     };
 
-    // Initial panes.
-    for (auto _ : di::range(args.panes)) {
-        TRY(add_pane(di::clone(args.command)));
-    }
+    // Initial pane.
+    TRY(add_pane(di::clone(args.command)));
 
     // Setup - raw mode
     auto _ = TRY(dius::stdin.enter_raw_mode());
@@ -248,6 +238,9 @@ static auto main(Args& args) -> di::Result<void> {
             set_done();
         });
 
+        constexpr auto prefix_key = Key::B;
+        auto got_prefix = false;
+
         auto buffer = di::Vector<byte> {};
         buffer.resize(4096);
 
@@ -263,35 +256,60 @@ static auto main(Args& args) -> di::Result<void> {
             auto events = parser.parse(utf8_string);
             for (auto const& event : events) {
                 if (auto ev = di::get_if<KeyEvent>(event)) {
-                    if (ev->key() == Key::Q && !!(ev->modifiers() & Modifiers::Control)) {
-                        set_done();
-                        break;
-                    }
-
-                    if (ev->type() == KeyEventType::Press && ev->key() == Key::H &&
-                        !!(ev->modifiers() & Modifiers::Control)) {
-                        layout_state.with_lock([&](LayoutState& state) {
-                            auto cycled = di::cycle(state.panes);
-                            auto it = di::find(cycled, state.active, &di::Box<Pane>::get);
-                            if (it != cycled.end()) {
-                                --it;
-                                set_active(state, (*it).get());
-                            }
+                    if (ev->type() == KeyEventType::Press &&
+                        !(ev->key() > Key::ModifiersBegin && ev->key() < Key::ModifiersEnd)) {
+                        auto reset_got_prefix = di::ScopeExit([&] {
+                            got_prefix = false;
                         });
-                        continue;
-                    }
 
-                    if (ev->type() == KeyEventType::Press && ev->key() == Key::L &&
-                        !!(ev->modifiers() & Modifiers::Control)) {
-                        layout_state.with_lock([&](LayoutState& state) {
-                            auto cycled = di::cycle(state.panes);
-                            auto it = di::find(cycled, state.active, &di::Box<Pane>::get);
-                            if (it != cycled.end()) {
-                                ++it;
-                                set_active(state, (*it).get());
-                            }
-                        });
-                        continue;
+                        if (!got_prefix && ev->key() == prefix_key && !!(ev->modifiers() & Modifiers::Control)) {
+                            got_prefix = true;
+                            reset_got_prefix.release();
+                            continue;
+                        }
+
+                        if (got_prefix && ev->key() == Key::H && !!(ev->modifiers() & Modifiers::Control)) {
+                            layout_state.with_lock([&](LayoutState& state) {
+                                auto cycled = di::cycle(state.panes);
+                                auto it = di::find(cycled, state.active, &di::Box<Pane>::get);
+                                if (it != cycled.end()) {
+                                    --it;
+                                    set_active(state, (*it).get());
+                                }
+                            });
+                            continue;
+                        }
+
+                        if (got_prefix && ev->key() == Key::L && !!(ev->modifiers() & Modifiers::Control)) {
+                            layout_state.with_lock([&](LayoutState& state) {
+                                auto cycled = di::cycle(state.panes);
+                                auto it = di::find(cycled, state.active, &di::Box<Pane>::get);
+                                if (it != cycled.end()) {
+                                    ++it;
+                                    set_active(state, (*it).get());
+                                }
+                            });
+                            continue;
+                        }
+
+                        if (got_prefix && ev->key() == Key::D) {
+                            set_done();
+                            break;
+                        }
+
+                        if (got_prefix && ev->key() == Key::X) {
+                            layout_state.with_lock([&](LayoutState& state) {
+                                if (auto* pane = state.active) {
+                                    pane->exit();
+                                }
+                            });
+                            continue;
+                        }
+
+                        if (got_prefix && ev->key() == Key::BackSlash && !!(Modifiers::Shift)) {
+                            (void) add_pane(di::clone(args.command));
+                            continue;
+                        }
                     }
 
                     // NOTE: we need to hold the layout state lock the entire time

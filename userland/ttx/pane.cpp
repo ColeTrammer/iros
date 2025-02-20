@@ -177,4 +177,8 @@ void Pane::resize(dius::tty::WindowSize const& size) {
         terminal.set_visible_size(size);
     });
 }
+
+void Pane::exit() {
+    (void) m_process.signal(dius::Signal::Hangup);
+}
 }
