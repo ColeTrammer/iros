@@ -35,6 +35,22 @@ private:
     bool m_signaled { false };
 };
 
+class ProcessHandle {
+public:
+    static auto self() -> ProcessHandle;
+
+    constexpr explicit ProcessHandle(ProcessId id) : m_id(id) {}
+
+    constexpr auto id() const -> ProcessId { return m_id; }
+
+    auto wait() -> di::Result<ProcessResult>;
+
+    auto signal(Signal signal) -> di::Result<>;
+
+private:
+    ProcessId m_id { -1 };
+};
+
 class Process {
     struct FileAction {
         enum class Type {
@@ -74,7 +90,12 @@ public:
         return di::move(*this);
     }
 
-    auto spawn_and_wait() && -> di::Result<ProcessResult>;
+    auto spawn() && -> di::Result<ProcessHandle>;
+
+    auto spawn_and_wait() && -> di::Result<ProcessResult> {
+        auto handle = TRY(di::move(*this).spawn());
+        return handle.wait();
+    }
 
 private:
     di::Vector<di::TransparentString> m_arguments;
@@ -82,9 +103,7 @@ private:
     bool m_new_session { false };
 };
 
-auto get_process_id() -> ProcessId;
 auto mask_signal(Signal signal) -> di::Result<void>;
-auto send_signal(ProcessId id, Signal signal) -> di::Result<void>;
 auto wait_for_signal(Signal signal) -> di::Result<Signal>;
 
 /// @brief Exit the currently executing thread.

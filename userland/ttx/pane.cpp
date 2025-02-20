@@ -15,42 +15,37 @@
 #include "ttx/utf8_stream_decoder.h"
 
 namespace ttx {
-static auto spawn_child(di::Vector<di::TransparentStringView> command, dius::SyncFile& pty) -> di::Result<void> {
+static auto spawn_child(di::Vector<di::TransparentStringView> command, dius::SyncFile& pty)
+    -> di::Result<dius::system::ProcessHandle> {
     auto tty_path = TRY(pty.get_psuedo_terminal_path());
 
-    auto child_result = TRY(dius::system::Process(command | di::transform(di::to_owned) | di::to<di::Vector>())
-                                .with_new_session()
-                                .with_file_open(0, di::move(tty_path), dius::OpenMode::ReadWrite)
-                                .with_file_dup(0, 1)
-                                .with_file_dup(0, 2)
-                                .with_file_close(pty.file_descriptor())
-                                .spawn_and_wait());
-    if (child_result.exit_code() != 0) {
-        dius::eprintln("Exited with code: {}"_sv, child_result.exit_code());
-    }
-    return {};
+    return dius::system::Process(command | di::transform(di::to_owned) | di::to<di::Vector>())
+        .with_new_session()
+        .with_file_open(0, di::move(tty_path), dius::OpenMode::ReadWrite)
+        .with_file_dup(0, 1)
+        .with_file_dup(0, 2)
+        .with_file_close(pty.file_descriptor())
+        .spawn();
 }
 
 auto Pane::create(di::Vector<di::TransparentStringView> command, dius::tty::WindowSize size)
     -> di::Result<di::Box<Pane>> {
     auto pty_controller = TRY(dius::open_psuedo_terminal_controller(dius::OpenMode::ReadWrite, size));
-    auto pane = di::make_box<Pane>(di::move(pty_controller));
+    auto process = TRY(spawn_child(di::move(command), pty_controller));
+    auto pane = di::make_box<Pane>(di::move(pty_controller), process);
     pane->m_terminal.get_assuming_no_concurrent_accesses().set_visible_size(size);
 
-    pane->m_process_thread =
-        TRY(dius::Thread::create(di::make_function<void()>([&pane = *pane, command = di::move(command)] mutable {
-            auto guard = di::ScopeExit([&] {
-                pane.m_done.store(true, di::MemoryOrder::Release);
+    pane->m_process_thread = TRY(dius::Thread::create([&pane = *pane] mutable {
+        auto guard = di::ScopeExit([&] {
+            pane.m_done.store(true, di::MemoryOrder::Release);
 
-                if (pane.did_exit) {
-                    pane.did_exit();
-                }
-            });
-            auto result = spawn_child(di::move(command), pane.m_pty_controller);
-            if (!result.has_value()) {
-                return dius::eprintln("Failed to spawn process: {}"_sv, result.error().message());
+            if (pane.did_exit) {
+                pane.did_exit();
             }
-        })));
+        });
+
+        (void) pane.m_process.wait();
+    }));
 
     pane->m_reader_thread = TRY(dius::Thread::create([&pane = *pane] -> void {
         auto parser = EscapeSequenceParser();
@@ -78,6 +73,7 @@ auto Pane::create(di::Vector<di::TransparentStringView> command, dius::tty::Wind
 }
 
 Pane::~Pane() {
+    (void) m_process.signal(dius::Signal::Hangup);
     (void) m_reader_thread.join();
     (void) m_process_thread.join();
 }

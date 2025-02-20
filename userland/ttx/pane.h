@@ -8,6 +8,7 @@
 #include "di/vocab/error/result.h"
 #include "di/vocab/pointer/box.h"
 #include "dius/sync_file.h"
+#include "dius/system/process.h"
 #include "dius/thread.h"
 #include "dius/tty.h"
 #include "renderer.h"
@@ -22,8 +23,8 @@ public:
     static auto create(di::Vector<di::TransparentStringView> command, dius::tty::WindowSize size)
         -> di::Result<di::Box<Pane>>;
 
-    explicit Pane(dius::SyncFile pty_controller)
-        : m_pty_controller(di::move(pty_controller)), m_terminal(m_pty_controller) {}
+    explicit Pane(dius::SyncFile pty_controller, dius::system::ProcessHandle process)
+        : m_pty_controller(di::move(pty_controller)), m_terminal(m_pty_controller), m_process(process) {}
     ~Pane();
 
     auto draw(Renderer& renderer) -> RenderedCursor;
@@ -43,6 +44,7 @@ private:
     di::Optional<MousePosition> m_last_mouse_position;
     dius::SyncFile m_pty_controller;
     di::Synchronized<Terminal> m_terminal;
+    dius::system::ProcessHandle m_process;
     dius::Thread m_process_thread;
     dius::Thread m_reader_thread;
 };

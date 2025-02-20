@@ -16,6 +16,26 @@ static auto s_envp = static_cast<char**>(nullptr);
     s_envp = envp;
 }
 
+// I'm not sure why this isn't a u128.
+using kernel_sigset_t = u64;
+
+static auto sys_rt_sigprocmask(int how, kernel_sigset_t const* set, kernel_sigset_t* old) -> di::Result<void> {
+    return system::system_call<int>(system::Number::rt_sigprocmask, how, set, old, sizeof(kernel_sigset_t)) %
+           di::into_void;
+}
+
+static auto sys_rt_sigtimedwait(kernel_sigset_t const* set, void* info, void* timeout) -> di::Result<Signal> {
+    return system::system_call<Signal>(system::Number::rt_sigtimedwait, set, info, timeout, sizeof(kernel_sigset_t));
+}
+
+static auto sys_kill(ProcessId id, int signal) -> di::Result<void> {
+    return system::system_call<int>(system::Number::kill, id, signal) % di::into_void;
+}
+
+static auto sys_getpid() -> di::Result<ProcessId> {
+    return system::system_call<ProcessId>(system::Number::getpid);
+}
+
 static auto file_open_mode_flags(OpenMode open_mode) -> int {
     switch (open_mode) {
         case OpenMode::Readonly:
@@ -37,7 +57,38 @@ static auto file_open_mode_flags(OpenMode open_mode) -> int {
     }
 }
 
-auto Process::spawn_and_wait() && -> di::Result<ProcessResult> {
+auto ProcessHandle::self() -> ProcessHandle {
+    // This really shouldn't fail...
+    return ProcessHandle(sys_getpid().value());
+}
+
+auto ProcessHandle::wait() -> di::Result<ProcessResult> {
+    if (id() == -1) {
+        return di::Unexpected(di::BasicError::NoSuchProcess);
+    }
+
+    int status;
+    TRY(system_call<ProcessId>(Number::wait4, id(), &status, 0, nullptr));
+
+    // NOTE: Linux's wait.h header does not define WIFEXITED, WEXITSTATUS, WIFSIGNALED, and WTERMSIG, so it is done
+    //       manually here. In the future, it would be nice to take these definitions from libccpp's headers.
+    auto const signal = (status & 0x7F);
+    if (signal == 0) {
+        // Exited.
+        return ProcessResult { (status & 0xFF00) >> 8, false };
+    }
+    // Signaled.
+    return ProcessResult { (status & 0x7F), true };
+}
+
+auto ProcessHandle::signal(Signal signal) -> di::Result<> {
+    if (id() == -1) {
+        return di::Unexpected(di::BasicError::NoSuchProcess);
+    }
+    return sys_kill(id(), int(signal));
+}
+
+auto Process::spawn() && -> di::Result<ProcessHandle> {
     // NOTE: TransparentString objects are guaranteed to be null-terminated on Linux.
     auto null_terminated_args =
         di::concat(m_arguments | di::transform(di::cdata), di::single(nullptr)) | di::to<di::Vector>();
@@ -122,53 +173,12 @@ auto Process::spawn_and_wait() && -> di::Result<ProcessResult> {
         exit_process(127);
     }
 
-    // Parent
-    int status;
-    TRY(system_call<ProcessId>(Number::wait4, pid, &status, 0, nullptr));
-
-    // NOTE: Linux's wait.h header does not define WIFEXITED, WEXITSTATUS, WIFSIGNALED, and WTERMSIG, so it is done
-    //       manually here. In the future, it would be nice to take these definitions from libccpp's headers.
-    auto const signal = (status & 0x7F);
-    if (signal == 0) {
-        // Exited.
-        return ProcessResult { (status & 0xFF00) >> 8, false };
-    }
-    // Signaled.
-    return ProcessResult { (status & 0x7F), true };
-}
-
-// I'm not sure why this isn't a u128.
-using kernel_sigset_t = u64;
-
-static auto sys_rt_sigprocmask(int how, kernel_sigset_t const* set, kernel_sigset_t* old) -> di::Result<void> {
-    return system::system_call<int>(system::Number::rt_sigprocmask, how, set, old, sizeof(kernel_sigset_t)) %
-           di::into_void;
-}
-
-static auto sys_rt_sigtimedwait(kernel_sigset_t const* set, void* info, void* timeout) -> di::Result<Signal> {
-    return system::system_call<Signal>(system::Number::rt_sigtimedwait, set, info, timeout, sizeof(kernel_sigset_t));
-}
-
-static auto sys_kill(ProcessId id, int signal) -> di::Result<void> {
-    return system::system_call<int>(system::Number::kill, id, signal) % di::into_void;
-}
-
-static auto sys_getpid() -> di::Result<ProcessId> {
-    return system::system_call<ProcessId>(system::Number::getpid);
-}
-
-auto get_process_id() -> ProcessId {
-    // This really shouldn't fail...
-    return sys_getpid().value();
+    return ProcessHandle(pid);
 }
 
 auto mask_signal(Signal signal) -> di::Result<void> {
     auto mask = kernel_sigset_t(1) << (kernel_sigset_t(signal) - 1);
     return sys_rt_sigprocmask(SIG_BLOCK, &mask, nullptr);
-}
-
-auto send_signal(ProcessId id, Signal signal) -> di::Result<void> {
-    return sys_kill(id, int(signal));
 }
 
 auto wait_for_signal(Signal signal) -> di::Result<Signal> {

@@ -11,6 +11,38 @@
 #include "di/util/scope_exit.h"
 
 namespace dius::system {
+auto ProcessHandle::self() -> ProcessHandle {
+    return ProcessHandle(getpid());
+}
+
+auto ProcessHandle::wait() -> di::Result<ProcessResult> {
+    if (id() == -1) {
+        return di::Unexpected(di::BasicError::NoSuchProcess);
+    }
+
+    auto status = 0;
+    auto wait_result = waitpid(id(), &status, 0);
+    if (wait_result == -1) {
+        return di::Unexpected(di::BasicError(errno));
+    }
+    if (WIFEXITED(status)) {
+        return ProcessResult { WEXITSTATUS(status), false };
+    }
+    return ProcessResult { WTERMSIG(status), true };
+}
+
+auto ProcessHandle::signal(Signal signal) -> di::Result<> {
+    if (id() == -1) {
+        return di::Unexpected(di::BasicError::NoSuchProcess);
+    }
+
+    auto res = kill(id(), int(signal));
+    if (res < 0) {
+        return di::Unexpected(di::BasicError(errno));
+    }
+    return {};
+}
+
 static auto file_open_mode_flags(OpenMode open_mode) -> int {
     switch (open_mode) {
         case OpenMode::Readonly:
@@ -32,7 +64,7 @@ static auto file_open_mode_flags(OpenMode open_mode) -> int {
     }
 }
 
-auto Process::spawn_and_wait() && -> di::Result<ProcessResult> {
+auto Process::spawn() && -> di::Result<ProcessHandle> {
     // NOTE: TransparentString objects are guaranteed to be null-terminated on Linux.
     auto null_terminated_args =
         di::concat(m_arguments | di::transform(di::cdata), di::single(nullptr)) | di::to<di::Vector>();
@@ -73,20 +105,7 @@ auto Process::spawn_and_wait() && -> di::Result<ProcessResult> {
     if (result != 0) {
         return di::Unexpected(di::BasicError(result));
     }
-
-    auto status = 0;
-    auto wait_result = waitpid(pid, &status, 0);
-    if (wait_result == -1) {
-        return di::Unexpected(di::BasicError(errno));
-    }
-    if (WIFEXITED(status)) {
-        return ProcessResult { WEXITSTATUS(status), false };
-    }
-    return ProcessResult { WTERMSIG(status), true };
-}
-
-auto get_process_id() -> ProcessId {
-    return getpid();
+    return ProcessHandle(pid);
 }
 
 auto mask_signal(Signal signal) -> di::Result<void> {
@@ -96,14 +115,6 @@ auto mask_signal(Signal signal) -> di::Result<void> {
     int res = pthread_sigmask(SIG_BLOCK, &set, nullptr);
     if (res < 0) {
         return di::Unexpected(di::BasicError(-res));
-    }
-    return {};
-}
-
-auto send_signal(ProcessId id, Signal signal) -> di::Result<void> {
-    auto res = kill(id, int(signal));
-    if (res < 0) {
-        return di::Unexpected(di::BasicError(errno));
     }
     return {};
 }

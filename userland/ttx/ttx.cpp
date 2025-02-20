@@ -61,11 +61,10 @@ static auto main(Args& args) -> di::Result<void> {
     auto done = di::Atomic<bool>(false);
 
     auto set_done = [&] {
-        // TODO: send kill signals (SIGHUP) to all remaining panes.
         // TODO: timeout/skip waiting for processes to die after sending SIGHUP.
         if (!done.exchange(true, di::MemoryOrder::Release)) {
             // Ensure the SIGWINCH thread exits.
-            (void) dius::system::send_signal(dius::system::get_process_id(), dius::Signal::WindowChange);
+            (void) dius::system::ProcessHandle::self().signal(dius::Signal::WindowChange);
             // Ensure the input thread exits. (By requesting device attributes, thus waking up the input thread).
             (void) dius::stdin.write_exactly(di::as_bytes("\033[c"_sv.span()));
         }

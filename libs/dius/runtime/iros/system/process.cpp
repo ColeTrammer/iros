@@ -3,7 +3,20 @@
 #include "dius/system/system_call.h"
 
 namespace dius::system {
-auto Process::spawn_and_wait() && -> di::Result<ProcessResult> {
+auto ProcessHandle::self() -> ProcessHandle {
+    return ProcessHandle(ProcessId(0));
+}
+
+auto ProcessHandle::signal(Signal) -> di::Result<> {
+    return di::Unexpected(di::BasicError::NotSupported);
+}
+
+auto ProcessHandle::wait() -> di::Result<ProcessResult> {
+    auto exit_code = TRY(system_call<i32>(Number::start_task_and_block, id()));
+    return ProcessResult { exit_code, false };
+}
+
+auto Process::spawn() && -> di::Result<ProcessHandle> {
     auto arguments_as_view = m_arguments | di::transform([](di::TransparentString const& arg) {
                                  return arg.view();
                              }) |
@@ -13,13 +26,10 @@ auto Process::spawn_and_wait() && -> di::Result<ProcessResult> {
     TRY(system_call<i32>(Number::set_task_arguments, tid, arguments_as_view.data(), arguments_as_view.size(), nullptr,
                          0));
     TRY(system_call<i32>(Number::load_executable, tid, m_arguments[0].data(), m_arguments[0].size()));
-    auto exit_code = TRY(system_call<i32>(Number::start_task_and_block, tid));
 
-    return ProcessResult { exit_code, false };
-}
-
-auto get_process_id() -> ProcessId {
-    return ProcessId(0);
+    // TODO: this should actually start the process before returning. This requires the start_task_and_block system call
+    // to be separated out somehow.
+    return ProcessHandle(tid);
 }
 
 auto mask_signal(Signal) -> di::Result<void> {
