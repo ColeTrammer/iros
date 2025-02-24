@@ -1,18 +1,17 @@
 #include "di/cli/parser.h"
-#include "di/container/interface/erase.h"
 #include "di/container/queue/queue.h"
+#include "di/container/ring/ring.h"
 #include "di/container/string/string_view.h"
-#include "di/function/not_equal.h"
 #include "di/io/writer_print.h"
-#include "di/math/rational/rational.h"
 #include "di/sync/synchronized.h"
 #include "dius/main.h"
 #include "dius/sync_file.h"
 #include "dius/system/process.h"
 #include "dius/thread.h"
 #include "dius/tty.h"
-#include "pane.h"
 #include "ttx/focus_event.h"
+#include "ttx/layout.h"
+#include "ttx/pane.h"
 #include "ttx/terminal_input.h"
 #include "ttx/utf8_stream_decoder.h"
 
@@ -34,22 +33,18 @@ struct PaneExited {
 
 using RenderEvent = di::Variant<dius::tty::WindowSize, PaneExited>;
 
-struct LayoutEntry {
-    u32 row { 0 };
-    u32 col { 0 };
-    dius::tty::WindowSize size;
-    Pane* pane { nullptr };
-};
-
 struct LayoutState {
-    di::Vector<di::Box<Pane>> panes {};
-    di::Vector<LayoutEntry> layout {};
+    dius::tty::WindowSize size;
+    LayoutGroup layout_root {};
+    di::Box<LayoutNode> layout_tree {};
+    di::Ring<Pane*> panes_ordered_by_recency {};
     di::Queue<RenderEvent> events {};
     Pane* active { nullptr };
-    dius::tty::WindowSize size;
 };
 
 static auto main(Args& args) -> di::Result<void> {
+    [[maybe_unused]] auto& log = dius::stderr = TRY(dius::open_sync("/tmp/ttx.log"_pv, dius::OpenMode::WriteClobber));
+
     auto done = di::Atomic<bool>(false);
 
     auto set_done = [&] {
@@ -67,55 +62,9 @@ static auto main(Args& args) -> di::Result<void> {
     });
 
     auto do_layout = [&](LayoutState& state, dius::tty::WindowSize size) {
-        state.layout = {};
         state.size = size;
 
-        if (size.rows <= 1 || state.panes.empty() || size.cols <= state.panes.size() - 1) {
-            return;
-        }
-
-        // Allocate the first row to the status bar.
-        auto available_size = size;
-        available_size.pixel_height -= size.pixel_height / size.rows;
-        available_size.rows--;
-
-        // Allocate 1 column for padding in between panes.
-        available_size.pixel_width -= (state.panes.size() - 1) * size.pixel_width / size.cols;
-        available_size.cols -= state.panes.size() - 1;
-
-        auto target_cols = di::Rational(i32(size.cols), i32(state.panes.size()));
-        auto target_xpixels = di::Rational(i32(size.pixel_width), i32(state.panes.size()));
-        auto leftover_cols = di::Rational(i32(0));
-        auto leftover_xpixels = di::Rational(i32(0));
-        auto x = 0_u32;
-        for (auto const& pane : state.panes) {
-            leftover_cols += target_cols;
-            leftover_xpixels += target_xpixels;
-
-            auto cols = leftover_cols.round();
-            auto xpixels = leftover_xpixels.round();
-
-            auto size =
-                dius::tty::WindowSize { available_size.rows, (u32) cols, (u32) xpixels, available_size.pixel_height };
-            state.layout.push_back({
-                1,
-                x,
-                size,
-                pane.get(),
-            });
-
-            // NOTE: pane is null when determining what the initial size for the pane should be.
-            if (pane) {
-                pane->resize(size);
-            }
-
-            leftover_cols -= cols;
-            leftover_xpixels -= xpixels;
-            x += cols;
-
-            // Account for horizontal padding.
-            x++;
-        }
+        state.layout_tree = state.layout_root.layout(state.size, 0, 0);
     };
 
     auto set_active = [&](LayoutState& state, Pane* pane) {
@@ -128,6 +77,10 @@ static auto main(Args& args) -> di::Result<void> {
             state.active->event(FocusEvent::focus_out());
         }
         state.active = pane;
+        if (pane) {
+            di::erase(state.panes_ordered_by_recency, pane);
+            state.panes_ordered_by_recency.push_front(pane);
+        }
         if (state.active) {
             state.active->event(FocusEvent::focus_in());
         }
@@ -136,46 +89,45 @@ static auto main(Args& args) -> di::Result<void> {
     auto remove_pane = [&](LayoutState& state, Pane* pane) {
         // Clear active pane.
         if (state.active == pane) {
-            // TODO: use a better algorithm. Last used?
-            auto candidates = state.panes | di::transform(&di::Box<Pane>::get) | di::filter(di::not_equal(pane));
+            if (pane) {
+                di::erase(state.panes_ordered_by_recency, pane);
+            }
+            auto candidates = state.panes_ordered_by_recency | di::transform([](Pane* pane) {
+                                  return pane;
+                              });
             set_active(state, candidates.front().value_or(nullptr));
         }
 
-        di::erase_if(state.panes, [&](di::Box<Pane> const& pointer) {
-            return pointer.get() == pane;
-        });
+        state.layout_root.remove_pane(pane);
         do_layout(state, state.size);
 
         // Exit when there are no panes left.
-        if (state.panes.empty()) {
+        if (state.layout_root.empty()) {
             set_done();
         }
     };
 
-    auto add_pane = [&](di::Vector<di::TransparentStringView> command) -> di::Result<> {
+    auto add_pane = [&](di::Vector<di::TransparentStringView> command, Direction direction) -> di::Result<> {
         return layout_state.with_lock([&](LayoutState& state) -> di::Result<> {
-            // Dummy state for initial layout.
-            state.panes.push_back(nullptr);
+            auto [new_layout, pane_layout, pane_out] =
+                state.layout_root.split(state.size, 0, 0, state.active, direction);
 
-            do_layout(state, state.size);
-
-            auto node = state.layout.back();
-            if (!node || node.value().pane != nullptr) {
+            if (!pane_layout || !pane_out || pane_layout->size == dius::tty::WindowSize {}) {
                 // NOTE: this happens when the visible terminal size is too small.
-                state.panes.pop_back();
-                do_layout(state, state.size);
+                state.layout_root.remove_pane(nullptr);
                 return di::Unexpected(di::BasicError::InvalidArgument);
             }
 
-            auto maybe_pane = Pane::create(di::move(command), state.layout.back().value().size);
+            auto maybe_pane = Pane::create(di::move(command), pane_layout->size);
             if (!maybe_pane) {
-                state.panes.pop_back();
-                do_layout(state, state.size);
+                state.layout_root.remove_pane(nullptr);
                 return di::Unexpected(di::move(maybe_pane).error());
             }
 
-            auto& pane = state.panes.back().value() = di::move(maybe_pane).value();
-            state.layout.back().value().pane = pane.get();
+            auto& pane = *pane_out = di::move(maybe_pane).value();
+            pane_layout->pane = pane.get();
+            state.layout_tree = di::move(new_layout);
+
             pane->did_exit = [&layout_state, pane = pane.get()] {
                 layout_state.with_lock([&](LayoutState& state) {
                     state.events.push(PaneExited(pane));
@@ -188,7 +140,7 @@ static auto main(Args& args) -> di::Result<void> {
     };
 
     // Initial pane.
-    TRY(add_pane(di::clone(args.command)));
+    TRY(add_pane(di::clone(args.command), Direction::None));
 
     // Setup - raw mode
     auto _ = TRY(dius::stdin.enter_raw_mode());
@@ -229,8 +181,6 @@ static auto main(Args& args) -> di::Result<void> {
         di::writer_print<di::String::Encoding>(dius::stdin, "\033[?2004l"_sv);
     });
 
-    [[maybe_unused]] auto& log = dius::stderr = TRY(dius::open_sync("/tmp/ttx.log"_pv, dius::OpenMode::WriteClobber));
-
     TRY(dius::system::mask_signal(dius::Signal::WindowChange));
 
     auto input_thread = TRY(dius::Thread::create([&] -> void {
@@ -269,26 +219,26 @@ static auto main(Args& args) -> di::Result<void> {
                         }
 
                         if (got_prefix && ev->key() == Key::H && !!(ev->modifiers() & Modifiers::Control)) {
-                            layout_state.with_lock([&](LayoutState& state) {
-                                auto cycled = di::cycle(state.panes);
-                                auto it = di::find(cycled, state.active, &di::Box<Pane>::get);
-                                if (it != cycled.end()) {
-                                    --it;
-                                    set_active(state, (*it).get());
-                                }
-                            });
+                            // layout_state.with_lock([&](LayoutState& state) {
+                            //     auto cycled = di::cycle(state.panes);
+                            //     auto it = di::find(cycled, state.active, &di::Box<Pane>::get);
+                            //     if (it != cycled.end()) {
+                            //         --it;
+                            //         set_active(state, (*it).get());
+                            //     }
+                            // });
                             continue;
                         }
 
                         if (got_prefix && ev->key() == Key::L && !!(ev->modifiers() & Modifiers::Control)) {
-                            layout_state.with_lock([&](LayoutState& state) {
-                                auto cycled = di::cycle(state.panes);
-                                auto it = di::find(cycled, state.active, &di::Box<Pane>::get);
-                                if (it != cycled.end()) {
-                                    ++it;
-                                    set_active(state, (*it).get());
-                                }
-                            });
+                            // layout_state.with_lock([&](LayoutState& state) {
+                            //     auto cycled = di::cycle(state.panes);
+                            //     auto it = di::find(cycled, state.active, &di::Box<Pane>::get);
+                            //     if (it != cycled.end()) {
+                            //         ++it;
+                            //         set_active(state, (*it).get());
+                            //     }
+                            // });
                             continue;
                         }
 
@@ -307,7 +257,12 @@ static auto main(Args& args) -> di::Result<void> {
                         }
 
                         if (got_prefix && ev->key() == Key::BackSlash && !!(Modifiers::Shift)) {
-                            (void) add_pane(di::clone(args.command));
+                            (void) add_pane(di::clone(args.command), Direction::Horizontal);
+                            continue;
+                        }
+
+                        if (got_prefix && ev->key() == Key::Minus) {
+                            (void) add_pane(di::clone(args.command), Direction::Vertical);
                             continue;
                         }
                     }
@@ -320,18 +275,10 @@ static auto main(Args& args) -> di::Result<void> {
                         }
                     });
                 } else if (auto ev = di::get_if<MouseEvent>(event)) {
-                    // TODO: change focus, simluate focus events, and validate mouse coordinates are in bounds.
-                    // TODO: translate coordinates.
                     layout_state.with_lock([&](LayoutState& state) {
                         // Check if the event interests with any pane.
-                        for (auto const& entry : state.layout) {
-                            if (ev->position().in_cells().x() < entry.col ||
-                                ev->position().in_cells().y() < entry.row ||
-                                ev->position().in_cells().x() >= entry.col + entry.size.cols ||
-                                ev->position().in_cells().y() >= entry.row + entry.size.rows) {
-                                continue;
-                            }
-
+                        for (auto const& entry : state.layout_tree->hit_test(ev->position().in_cells().y(),
+                                                                             ev->position().in_cells().x())) {
                             if (ev->type() != MouseEventType::Move) {
                                 set_active(state, entry.pane);
                             }
@@ -365,50 +312,90 @@ static auto main(Args& args) -> di::Result<void> {
 
         auto deadline = dius::SteadyClock::now();
         while (!done.load(di::MemoryOrder::Acquire)) {
-            auto cursor = layout_state.with_lock([&](LayoutState& state) {
-                // Process any pending events.
-                for (auto event : state.events) {
-                    di::visit(di::overload(
-                                  [&](dius::tty::WindowSize const& size) {
-                                      do_layout(state, size);
-                                  },
-                                  [&](PaneExited const& pane) {
-                                      remove_pane(state, pane.pane);
-                                  }),
-                              event);
-                }
-
-                // Do the render.
-                renderer.start(state.size);
-
-                // Status bar.
-                static int i = 0;
-                renderer.put_text(di::present("[{}]"_sv, ++i)->view(), 0, 0,
-                                  GraphicsRendition {
-                                      .font_weight = FontWeight::Bold,
-                                      .inverted = true,
-                                  });
-
-                auto cursor = di::Optional<RenderedCursor> {};
-                for (auto [i, entry] : di::enumerate(state.layout)) {
-                    // Draw horizontal line between panes.
-                    renderer.set_bound(0, 0, state.size.cols, state.size.rows);
-                    for (auto row : di::range(entry.row, entry.row + entry.size.rows)) {
-                        renderer.put_text(U'│', row, entry.col - 1);
+            auto [did_render, cursor] =
+                layout_state.with_lock([&](LayoutState& state) -> di::Tuple<bool, di::Optional<RenderedCursor>> {
+                    // Process any pending events.
+                    for (auto event : state.events) {
+                        di::visit(di::overload(
+                                      [&](dius::tty::WindowSize const& size) {
+                                          do_layout(state, size);
+                                      },
+                                      [&](PaneExited const& pane) {
+                                          remove_pane(state, pane.pane);
+                                      }),
+                                  event);
                     }
 
-                    renderer.set_bound(entry.row, entry.col, entry.size.cols, entry.size.rows);
-                    auto pane_cursor = entry.pane->draw(renderer);
-                    if (entry.pane == state.active) {
-                        pane_cursor.cursor_row += entry.row;
-                        pane_cursor.cursor_col += entry.col;
-                        cursor = pane_cursor;
+                    // Ignore if there is no layout.
+                    if (!state.layout_tree) {
+                        return { false, {} };
                     }
-                }
-                return cursor;
-            });
 
-            (void) renderer.finish(dius::stdin, cursor.value_or({ .hidden = true }));
+                    // Do the render.
+                    renderer.start(state.size);
+
+                    auto cursor = di::Optional<RenderedCursor> {};
+
+                    struct PositionAndSize {
+                        static auto operator()(di::Box<LayoutNode> const& node)
+                            -> di::Tuple<u32, u32, dius::tty::WindowSize> {
+                            return { node->row, node->col, node->size };
+                        }
+
+                        static auto operator()(LayoutEntry const& entry) -> di::Tuple<u32, u32, dius::tty::WindowSize> {
+                            return { entry.row, entry.col, entry.size };
+                        }
+                    };
+
+                    struct Render {
+                        Renderer& renderer;
+                        di::Optional<RenderedCursor>& cursor;
+                        LayoutState& state;
+
+                        void operator()(di::Box<LayoutNode> const& node) {
+                            auto first = true;
+                            for (auto const& child : node->children) {
+                                if (!first) {
+                                    // Draw a border around the pane.
+                                    auto [row, col, size] = di::visit(PositionAndSize {}, child);
+                                    renderer.set_bound(0, 0, state.size.cols, state.size.rows);
+                                    if (node->direction == Direction::Horizontal) {
+                                        for (auto r : di::range(row, row + size.rows)) {
+                                            auto code_point = U'│';
+                                            renderer.put_text(code_point, r, col - 1);
+                                        }
+                                    } else if (node->direction == Direction::Vertical) {
+                                        for (auto c : di::range(col, col + size.cols)) {
+                                            auto code_point = U'─';
+                                            renderer.put_text(code_point, row - 1, c);
+                                        }
+                                    }
+                                }
+                                first = false;
+
+                                di::visit(*this, child);
+                            }
+                        }
+
+                        void operator()(LayoutEntry const& entry) {
+                            renderer.set_bound(entry.row, entry.col, entry.size.cols, entry.size.rows);
+                            auto pane_cursor = entry.pane->draw(renderer);
+                            if (entry.pane == state.active) {
+                                pane_cursor.cursor_row += entry.row;
+                                pane_cursor.cursor_col += entry.col;
+                                cursor = pane_cursor;
+                            }
+                        }
+                    };
+
+                    Render(renderer, cursor, state)(state.layout_tree);
+
+                    return { true, cursor };
+                });
+
+            if (did_render) {
+                (void) renderer.finish(dius::stdin, cursor.value_or({ .hidden = true }));
+            }
 
             while (deadline < dius::SteadyClock::now()) {
                 deadline += di::Milliseconds(25); // 50 FPS

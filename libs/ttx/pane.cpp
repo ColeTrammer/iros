@@ -1,4 +1,4 @@
-#include "pane.h"
+#include "ttx/pane.h"
 
 #include "di/container/string/string_view.h"
 #include "di/container/vector/vector.h"
@@ -6,11 +6,11 @@
 #include "di/sync/atomic.h"
 #include "di/sync/memory_order.h"
 #include "di/vocab/pointer/box.h"
-#include "dius/print.h"
+#include "dius/sync_file.h"
 #include "dius/system/process.h"
 #include "dius/tty.h"
-#include "renderer.h"
 #include "ttx/paste_event.h"
+#include "ttx/renderer.h"
 #include "ttx/terminal.h"
 #include "ttx/utf8_stream_decoder.h"
 
@@ -70,6 +70,11 @@ auto Pane::create(di::Vector<di::TransparentStringView> command, dius::tty::Wind
     }));
 
     return pane;
+}
+
+auto Pane::create_mock() -> di::Box<Pane> {
+    auto fake_psuedo_terminal = dius::SyncFile();
+    return di::make_box<Pane>(di::move(fake_psuedo_terminal), dius::system::ProcessHandle());
 }
 
 Pane::~Pane() {

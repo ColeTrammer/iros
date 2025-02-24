@@ -39,6 +39,7 @@ class ProcessHandle {
 public:
     static auto self() -> ProcessHandle;
 
+    ProcessHandle() = default;
     constexpr explicit ProcessHandle(ProcessId id) : m_id(id) {}
 
     constexpr auto id() const -> ProcessId { return m_id; }

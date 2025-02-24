@@ -11,10 +11,10 @@
 #include "dius/system/process.h"
 #include "dius/thread.h"
 #include "dius/tty.h"
-#include "renderer.h"
 #include "ttx/key_event.h"
 #include "ttx/mouse.h"
 #include "ttx/paste_event.h"
+#include "ttx/renderer.h"
 #include "ttx/terminal.h"
 
 namespace ttx {
@@ -22,6 +22,9 @@ class Pane {
 public:
     static auto create(di::Vector<di::TransparentStringView> command, dius::tty::WindowSize size)
         -> di::Result<di::Box<Pane>>;
+
+    // For testing, create a mock pane. This doesn't actually create a psuedo terminal or a subprocess.
+    static auto create_mock() -> di::Box<Pane>;
 
     explicit Pane(dius::SyncFile pty_controller, dius::system::ProcessHandle process)
         : m_pty_controller(di::move(pty_controller)), m_terminal(m_pty_controller), m_process(process) {}
