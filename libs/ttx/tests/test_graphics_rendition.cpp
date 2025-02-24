@@ -1,6 +1,5 @@
 #include "di/container/view/cartesian_product.h"
 #include "di/container/view/join_with.h"
-#include "dius/print.h"
 #include "dius/test/prelude.h"
 #include "ttx/graphics_rendition.h"
 #include "ttx/params.h"
@@ -58,6 +57,10 @@ static void parse() {
     // index color
     rendition.update_with_csi_params({ { 58, 5, 5 } });
     ASSERT_EQ(auto(rendition.underline_color), ttx::Color(ttx::Color::Palette::Magenta));
+
+    // legacy indexed color
+    rendition.update_with_csi_params({ { 38 }, { 5 }, { 9 } });
+    ASSERT_EQ(auto(rendition.fg), ttx::Color::Palette::LightRed);
 
     // clear
     rendition.update_with_csi_params({ { 39 }, { 49 }, { 59 } });

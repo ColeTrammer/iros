@@ -2,7 +2,6 @@
 
 #include "di/container/vector/vector.h"
 #include "di/parser/integral.h"
-#include "di/util/clamp.h"
 #include "di/vocab/tuple/prelude.h"
 #include "ttx/params.h"
 
@@ -11,14 +10,27 @@ namespace ttx {
 //   38;2;R;G;B   -- legacy form used for backwards compatability.
 //   38:2:R:G:B   -- normal form with subparameters but without color space.
 //   38:2:X:R:G:B -- subparameters with color space argument, which is ignored.
+//   38;5;I       -- lagecy index form used for backwards compatability.
 //   38:5:I       -- index form, specifices an index into color palette. For now, only 16 colors are supported.
 // This returns both the number of parameters consumed as well as the parsed color.
 static auto parse_complex_color(Params const& params, usize start_index) -> di::Tuple<usize, Color> {
     auto subparams = params.subparams(start_index);
     if (subparams.size() == 1) {
         // If there are no subparameters, use the legacy form.
-        if (params.size() - start_index < 5 || params.get(start_index + 1) != 2) {
-            return { 1, {} };
+        switch (params.get(start_index + 1)) {
+            case 2:
+                if (params.size() - start_index < 5) {
+                    return { 1, {} };
+                }
+                return { 5,
+                         Color(params.get(start_index + 2), params.get(start_index + 3), params.get(start_index + 4)) };
+            case 5:
+                if (params.size() - start_index < 3) {
+                    return { 1, {} };
+                }
+                return { 3, Color(Color::Palette(Color::Palette::Black + params.get(start_index + 2))) };
+            default:
+                return { 1, {} };
         }
         return { 5, Color(params.get(start_index + 2), params.get(start_index + 3), params.get(start_index + 4)) };
     }
