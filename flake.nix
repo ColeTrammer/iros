@@ -28,6 +28,20 @@
           lldb = pkgs."lldb_${llvmVersion}";
 
           stdenv = pkgs."gcc${gccVersion}Stdenv";
+
+          ttx = pkgs.stdenv.mkDerivation {
+            name = "ttx-0.0.1";
+            src = ./.;
+            version = "0.0.1";
+
+            buildInputs = [
+              pkgs.cmake
+            ];
+
+            cmakeFlags = [
+              "-DIROS_BuildTtx=ON"
+            ];
+          };
         in
         {
           treefmt = {
@@ -81,6 +95,12 @@
               ".prettierignore"
               "LICENSE"
             ];
+          };
+
+          packages.ttx = ttx;
+          apps.ttx = {
+            type = "app";
+            program = "${ttx}/bin/ttx";
           };
 
           devShells.default = pkgs.mkShell.override { inherit stdenv; } {
