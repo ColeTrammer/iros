@@ -134,7 +134,7 @@ private:
         auto [first, last] = remove_if(self, di::forward<F>(function));
         auto const count = usize(last - first);
 
-        ring::erase(self, first, last);
+        self.erase(first, last);
         return count;
     }
 };
