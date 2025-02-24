@@ -110,6 +110,14 @@ public:
         return get();
     }
 
+    constexpr auto begin() const -> T* { return get(); }
+    constexpr auto end() const -> T* {
+        if (get()) {
+            return get() + 1;
+        }
+        return nullptr;
+    }
+
 private:
     template<typename U>
     constexpr friend auto operator==(Box const& a, Box<U> const& b) -> bool {
