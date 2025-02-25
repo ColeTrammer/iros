@@ -1,5 +1,6 @@
 #pragma once
 
+#include "di/container/tree/tree_set.h"
 #include "di/reflect/prelude.h"
 #include "di/vocab/pointer/box.h"
 #include "dius/tty.h"
@@ -53,6 +54,9 @@ struct LayoutNode {
 
     auto find_pane(Pane* pane) -> di::Optional<LayoutEntry&>;
     auto hit_test(u32 row, u32 col) -> di::Optional<LayoutEntry&>;
+
+    auto hit_test_horizontal_line(u32 row, u32 col_start, u32 col_end) -> di::TreeSet<LayoutEntry*>;
+    auto hit_test_vertical_line(u32 col, u32 row_start, u32 row_end) -> di::TreeSet<LayoutEntry*>;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<LayoutNode>) {
         return di::make_fields<"LayoutNode">(

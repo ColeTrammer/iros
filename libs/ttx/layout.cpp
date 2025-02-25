@@ -78,6 +78,48 @@ auto LayoutNode::hit_test(u32 row, u32 col) -> di::Optional<LayoutEntry&> {
     return {};
 }
 
+auto LayoutNode::hit_test_vertical_line(u32 col, u32 row_start, u32 row_end) -> di::TreeSet<LayoutEntry*> {
+    auto result = di::TreeSet<LayoutEntry*> {};
+    for (auto& child : children) {
+        auto res = di::visit(di::overload(
+                                 [&](LayoutEntry& entry) -> di::TreeSet<LayoutEntry*> {
+                                     auto line_intersects =
+                                         !(row_end < entry.row || row_start >= entry.row + entry.size.rows);
+                                     if (line_intersects && col >= entry.col && col < entry.col + entry.size.cols) {
+                                         return di::single(&entry) | di::to<di::TreeSet>();
+                                     }
+                                     return {};
+                                 },
+                                 [&](di::Box<LayoutNode>& node) -> di::TreeSet<LayoutEntry*> {
+                                     return node->hit_test_vertical_line(col, row_start, row_end);
+                                 }),
+                             child);
+        result.insert_container(di::move(res));
+    }
+    return result;
+}
+
+auto LayoutNode::hit_test_horizontal_line(u32 row, u32 col_start, u32 col_end) -> di::TreeSet<LayoutEntry*> {
+    auto result = di::TreeSet<LayoutEntry*> {};
+    for (auto& child : children) {
+        auto res = di::visit(di::overload(
+                                 [&](LayoutEntry& entry) -> di::TreeSet<LayoutEntry*> {
+                                     auto line_intersects =
+                                         !(col_end < entry.col || col_start >= entry.col + entry.size.cols);
+                                     if (line_intersects && row >= entry.row && row < entry.row + entry.size.rows) {
+                                         return di::single(&entry) | di::to<di::TreeSet>();
+                                     }
+                                     return {};
+                                 },
+                                 [&](di::Box<LayoutNode>& node) -> di::TreeSet<LayoutEntry*> {
+                                     return node->hit_test_horizontal_line(row, col_start, col_end);
+                                 }),
+                             child);
+        result.insert_container(di::move(res));
+    }
+    return result;
+}
+
 auto LayoutGroup::split(dius::tty::WindowSize const& size, u32 row_offset, u32 col_offset, Pane* reference,
                         Direction direction)
     -> di::Tuple<di::Box<LayoutNode>, di::Optional<LayoutEntry&>, di::Optional<di::Box<Pane>&>> {
@@ -168,36 +210,23 @@ void LayoutGroup::remove_pane(Pane* pane) {
             continue;
         }
 
-        // If single, we need to move the grand child up a level. If the child
-        // is a layout group in the same direction as us, we need to fully
-        // absorb the grandchild's children at this layer.
-        if (group.value()->single()) {
-            auto& grandchild = group.value()->m_children[0];
+        // If our child is a layout group with the same direction as us, we need to
+        // absorb all its children.
+        if (group.value()->direction() == this->direction()) {
+            // First erase the child and then insert all its children.
+            auto save = di::get<di::Box<LayoutGroup>>(di::move(*it));
+            advance.release();
+            it = m_children.erase(it);
 
-            if (di::holds_alternative<di::Box<Pane>>(grandchild)) {
-                auto save = di::get<di::Box<Pane>>(di::move(grandchild));
-                *it = di::move(save);
-            } else if (auto child_node = di::get_if<di::Box<LayoutGroup>>(grandchild)) {
-                // We must have multiple children to end up here, because we should've
-                // resursively handled this child otherwise.
-                ASSERT(child_node.value()->m_children.size() >= 1);
-
-                // If this group is splitting in a different direction, just move up the chain.
-                if (child_node.value()->m_direction != m_direction) {
-                    auto save = di::get<di::Box<LayoutGroup>>(di::move(grandchild));
-                    *it = di::move(save);
-                } else {
-                    // We need to absorb all the children into our current level. First erase the
-                    // grand child and then insert all its children.
-                    auto save = di::get<di::Box<LayoutGroup>>(di::move(grandchild));
-                    advance.release();
-                    it = m_children.erase(it);
-
-                    it = m_children.insert_container(it, di::move(save->m_children) | di::as_rvalue).end();
-                }
-            }
+            it = m_children.insert_container(it, di::move(save->m_children) | di::as_rvalue).end();
             continue;
         }
+    }
+
+    // If we're single, and our sole child is a layout group, we need to replace ourselves with our child.
+    if (single() && di::holds_alternative<di::Box<LayoutGroup>>(m_children[0])) {
+        auto save = di::move(m_children[0]);
+        *this = di::move(*di::get<di::Box<LayoutGroup>>(save));
     }
 
     // Clear our direction if don't have multiple children.

@@ -63,6 +63,79 @@ static void splits() {
 static void remove_pane() {
     constexpr auto size = dius::tty::WindowSize(64, 128, 1280, 640);
 
+    {
+        auto root = LayoutGroup {};
+
+        // Initial pane
+        auto [pane0, _] = add_pane(root, size, nullptr, Direction::None);
+
+        // Vertical split
+        auto [pane1, _] = add_pane(root, size, &pane0, Direction::Vertical);
+
+        // Horitzontal split above
+        auto [pane2, _] = add_pane(root, size, &pane0, Direction::Horizontal);
+
+        // 2 Veritcal splits under pane 2.
+        auto [pane4, _] = add_pane(root, size, &pane2, Direction::Vertical);
+        auto [pane3, _] = add_pane(root, size, &pane2, Direction::Vertical);
+
+        // Now the layout looks something like this:
+        // |---------|--------|
+        // |0        |2       |
+        // |         |--------|
+        // |         |3       |
+        // |         |--------|
+        // |         |4       |
+        // |---------|--------|
+        // |1                 |
+        // |                  |
+        // |                  |
+        // |                  |
+        // |                  |
+        // |------------------|
+
+        // When we remove pane 0, we need to collapse panes 2-4, into the same vertical layout
+        // group with pane 1.
+        root.remove_pane(&pane0);
+
+        auto l0 = root.layout(size, 0, 0);
+        validate_layout_for_pane(pane2, *l0, 0, 0, { 15, 128 });
+        validate_layout_for_pane(pane3, *l0, 16, 0, { 16, 128 });
+        validate_layout_for_pane(pane4, *l0, 33, 0, { 15, 128 });
+        validate_layout_for_pane(pane1, *l0, 49, 0, { 15, 128 });
+    }
+
+    {
+        auto root = LayoutGroup {};
+
+        // Initial pane
+        auto [pane0, _] = add_pane(root, size, nullptr, Direction::None);
+
+        // Horizontal split
+        auto [pane1, _] = add_pane(root, size, &pane0, Direction::Horizontal);
+
+        // Vertical Split
+        auto [pane2, _] = add_pane(root, size, &pane1, Direction::Vertical);
+
+        // Now the layout looks something like this:
+        // |---------|--------|
+        // |0        |1       |
+        // |         |--------|
+        // |         |2       |
+        // |---------|--------|
+
+        // When we remove pane 0, we need need to replace the root layout group with its direct child.
+        root.remove_pane(&pane0);
+
+        auto l0 = root.layout(size, 0, 0);
+        validate_layout_for_pane(pane1, *l0, 0, 0, { 32, 128 });
+        validate_layout_for_pane(pane2, *l0, 33, 0, { 31, 128 });
+    }
+}
+
+static void hit_test() {
+    constexpr auto size = dius::tty::WindowSize(64, 128, 1280, 640);
+
     auto root = LayoutGroup {};
 
     // Initial pane
@@ -76,34 +149,39 @@ static void remove_pane() {
 
     // 2 Veritcal splits under pane 2.
     auto [pane4, _] = add_pane(root, size, &pane2, Direction::Vertical);
-    auto [pane3, _] = add_pane(root, size, &pane2, Direction::Vertical);
+    auto [pane3, l0] = add_pane(root, size, &pane2, Direction::Vertical);
 
-    // Now the layout looks something like this:
-    // |---------|--------|
-    // |0        |2       |
-    // |         |--------|
-    // |         |3       |
-    // |         |--------|
-    // |         |4       |
-    // |---------|--------|
-    // |1                 |
-    // |                  |
-    // |                  |
-    // |                  |
-    // |                  |
-    // |------------------|
+    auto p0 = l0->find_pane(&pane0);
+    auto p1 = l0->find_pane(&pane1);
+    auto p2 = l0->find_pane(&pane2);
+    auto p3 = l0->find_pane(&pane3);
+    auto p4 = l0->find_pane(&pane4);
+    ASSERT(p0.has_value());
+    ASSERT(p1.has_value());
+    ASSERT(p2.has_value());
+    ASSERT(p3.has_value());
+    ASSERT(p4.has_value());
 
-    // When we remove pane 0, we need to collapse panes 2-4, into the same vertical layout
-    // group with pane 1.
-    root.remove_pane(&pane0);
+    auto res = l0->hit_test_vertical_line(p0->col + p0->size.cols + 1, p0->row, p0->row + p0->size.rows);
+    auto expected = di::TreeSet<LayoutEntry*> {};
+    expected.insert(p2.data());
+    expected.insert(p3.data());
+    expected.insert(p4.data());
+    ASSERT_EQ(res, expected);
 
-    auto l0 = root.layout(size, 0, 0);
-    validate_layout_for_pane(pane2, *l0, 0, 0, { 15, 128 });
-    validate_layout_for_pane(pane3, *l0, 16, 0, { 16, 128 });
-    validate_layout_for_pane(pane4, *l0, 33, 0, { 15, 128 });
-    validate_layout_for_pane(pane1, *l0, 49, 0, { 15, 128 });
+    res = l0->hit_test_vertical_line(p3->col - 2, p3->row, p3->row + p3->size.rows);
+    expected = di::TreeSet<LayoutEntry*> {};
+    expected.insert(p0.data());
+    ASSERT_EQ(res, expected);
+
+    res = l0->hit_test_horizontal_line(p1->row - 2, p1->col, p1->col + p1->size.cols);
+    expected = di::TreeSet<LayoutEntry*> {};
+    expected.insert(p0.data());
+    expected.insert(p4.data());
+    ASSERT_EQ(res, expected);
 }
 
 TEST(layout, splits)
 TEST(layout, remove_pane)
+TEST(layout, hit_test)
 }

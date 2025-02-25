@@ -148,7 +148,7 @@ static auto main(Args& args) -> di::Result<void> {
     // Setup - alternate screen buffer.
     di::writer_print<di::String::Encoding>(dius::stdin, "\033[?1049h\033[H\033[2J"_sv);
     auto _ = di::ScopeExit([&] {
-        di::writer_print<di::String::Encoding>(dius::stdin, "\033[?1049l"_sv);
+        di::writer_print<di::String::Encoding>(dius::stdin, "\033[?1049l\033[?25h"_sv);
     });
 
     // Setup - disable autowrap.
@@ -219,26 +219,112 @@ static auto main(Args& args) -> di::Result<void> {
                         }
 
                         if (got_prefix && ev->key() == Key::H && !!(ev->modifiers() & Modifiers::Control)) {
-                            // layout_state.with_lock([&](LayoutState& state) {
-                            //     auto cycled = di::cycle(state.panes);
-                            //     auto it = di::find(cycled, state.active, &di::Box<Pane>::get);
-                            //     if (it != cycled.end()) {
-                            //         --it;
-                            //         set_active(state, (*it).get());
-                            //     }
-                            // });
+                            layout_state.with_lock([&](LayoutState& state) {
+                                auto layout_entry = state.layout_tree->find_pane(state.active);
+                                if (!layout_entry) {
+                                    return;
+                                }
+
+                                // Handle wrap.
+                                auto col = layout_entry->col <= 1 ? state.size.cols - 1 : layout_entry->col - 2;
+
+                                auto candidates =
+                                    state.layout_tree->hit_test_vertical_line(
+                                        col, layout_entry->row, layout_entry->row + layout_entry->size.rows) |
+                                    di::transform(&LayoutEntry::pane) | di::to<di::TreeSet>();
+
+                                for (auto* candidate : state.panes_ordered_by_recency) {
+                                    if (candidate != state.active && candidates.contains(candidate)) {
+                                        set_active(state, candidate);
+                                        break;
+                                    }
+                                }
+                                reset_got_prefix.release();
+                            });
                             continue;
                         }
 
                         if (got_prefix && ev->key() == Key::L && !!(ev->modifiers() & Modifiers::Control)) {
-                            // layout_state.with_lock([&](LayoutState& state) {
-                            //     auto cycled = di::cycle(state.panes);
-                            //     auto it = di::find(cycled, state.active, &di::Box<Pane>::get);
-                            //     if (it != cycled.end()) {
-                            //         ++it;
-                            //         set_active(state, (*it).get());
-                            //     }
-                            // });
+                            layout_state.with_lock([&](LayoutState& state) {
+                                auto layout_entry = state.layout_tree->find_pane(state.active);
+                                if (!layout_entry) {
+                                    return;
+                                }
+
+                                // Handle wrap.
+                                auto col = (state.size.cols < 2 ||
+                                            layout_entry->col + layout_entry->size.cols >= state.size.cols - 2)
+                                               ? 0
+                                               : layout_entry->col + layout_entry->size.cols + 1;
+
+                                auto candidates =
+                                    state.layout_tree->hit_test_vertical_line(
+                                        col, layout_entry->row, layout_entry->row + layout_entry->size.rows) |
+                                    di::transform(&LayoutEntry::pane) | di::to<di::TreeSet>();
+
+                                for (auto* candidate : state.panes_ordered_by_recency) {
+                                    if (candidate != state.active && candidates.contains(candidate)) {
+                                        set_active(state, candidate);
+                                        break;
+                                    }
+                                }
+                                reset_got_prefix.release();
+                            });
+                            continue;
+                        }
+
+                        if (got_prefix && ev->key() == Key::K && !!(ev->modifiers() & Modifiers::Control)) {
+                            layout_state.with_lock([&](LayoutState& state) {
+                                auto layout_entry = state.layout_tree->find_pane(state.active);
+                                if (!layout_entry) {
+                                    return;
+                                }
+
+                                // Handle wrap.
+                                auto row = layout_entry->row <= 1 ? state.size.rows - 1 : layout_entry->row - 2;
+
+                                auto candidates =
+                                    state.layout_tree->hit_test_horizontal_line(
+                                        row, layout_entry->col, layout_entry->col + layout_entry->size.cols) |
+                                    di::transform(&LayoutEntry::pane) | di::to<di::TreeSet>();
+
+                                for (auto* candidate : state.panes_ordered_by_recency) {
+                                    if (candidate != state.active && candidates.contains(candidate)) {
+                                        set_active(state, candidate);
+                                        break;
+                                    }
+                                }
+                                reset_got_prefix.release();
+                            });
+                            continue;
+                        }
+
+                        if (got_prefix && ev->key() == Key::J && !!(ev->modifiers() & Modifiers::Control)) {
+                            layout_state.with_lock([&](LayoutState& state) {
+                                auto layout_entry = state.layout_tree->find_pane(state.active);
+                                if (!layout_entry) {
+                                    return;
+                                }
+
+                                // Handle wrap.
+                                auto row = (state.size.rows < 2 ||
+                                            layout_entry->row + layout_entry->size.rows >= state.size.rows - 2)
+                                               ? 0
+                                               : layout_entry->row + layout_entry->size.rows + 1;
+
+                                auto candidates =
+                                    state.layout_tree->hit_test_horizontal_line(
+                                        row, layout_entry->col, layout_entry->col + layout_entry->size.cols) |
+                                    di::transform(&LayoutEntry::pane) | di::to<di::TreeSet>();
+
+                                for (auto* candidate : state.panes_ordered_by_recency) {
+                                    if (candidate != state.active && candidates.contains(candidate)) {
+                                        set_active(state, candidate);
+                                        break;
+                                    }
+                                }
+                                reset_got_prefix.release();
+                            });
                             continue;
                         }
 
