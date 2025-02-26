@@ -23,6 +23,8 @@ public:
     void put_text(di::StringView text, u32 row, u32 col, GraphicsRendition const& graphics_rendition = {});
     void put_text(c32 text, u32 row, u32 col, GraphicsRendition const& graphics_rendition = {});
 
+    void clear_row(u32 row, GraphicsRendition const& graphics_rendition = {});
+
     void set_bound(u32 row, u32 col, u32 width, u32 height);
 
 private:

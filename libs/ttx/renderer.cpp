@@ -81,6 +81,16 @@ void Renderer::put_text(c32 text, u32 row, u32 col, GraphicsRendition const& ren
     put_text(string.view(), row, col, rendition);
 }
 
+void Renderer::clear_row(u32 row, GraphicsRendition const& rendition) {
+    if (row >= m_bound_height) {
+        return;
+    }
+
+    for (auto c : di::range(m_bound_width)) {
+        put_text(U' ', row, c, rendition);
+    }
+}
+
 void Renderer::set_bound(u32 row, u32 col, u32 width, u32 height) {
     m_row_offset = row;
     m_col_offset = col;

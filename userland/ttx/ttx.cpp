@@ -27,19 +27,29 @@ struct Args {
     }
 };
 
+struct Tab;
+
 struct PaneExited {
+    Tab* tab = nullptr;
     Pane* pane = nullptr;
 };
 
 using RenderEvent = di::Variant<dius::tty::WindowSize, PaneExited>;
 
-struct LayoutState {
-    dius::tty::WindowSize size;
+// Corresponds to tmux window.
+struct Tab {
+    di::String name;
     LayoutGroup layout_root {};
     di::Box<LayoutNode> layout_tree {};
     di::Ring<Pane*> panes_ordered_by_recency {};
-    di::Queue<RenderEvent> events {};
     Pane* active { nullptr };
+};
+
+struct LayoutState {
+    dius::tty::WindowSize size;
+    di::Vector<di::Box<Tab>> tabs {};
+    Tab* active_tab { nullptr };
+    di::Queue<RenderEvent> events {};
 };
 
 static auto main(Args& args) -> di::Result<void> {
@@ -64,83 +74,146 @@ static auto main(Args& args) -> di::Result<void> {
     auto do_layout = [&](LayoutState& state, dius::tty::WindowSize size) {
         state.size = size;
 
-        state.layout_tree = state.layout_root.layout(state.size, 0, 0);
+        if (!state.active_tab) {
+            return;
+        }
+        state.active_tab->layout_tree = state.active_tab->layout_root.layout(state.size, 1, 0);
     };
 
-    auto set_active = [&](LayoutState& state, Pane* pane) {
-        if (state.active == pane) {
+    auto set_active = [&](LayoutState& state, Tab& tab, Pane* pane) {
+        if (tab.active == pane) {
             return;
         }
 
         // Unfocus the old pane, and focus the new pane.
-        if (state.active) {
-            state.active->event(FocusEvent::focus_out());
+        if (state.active_tab == &tab && tab.active) {
+            tab.active->event(FocusEvent::focus_out());
         }
-        state.active = pane;
+        tab.active = pane;
         if (pane) {
-            di::erase(state.panes_ordered_by_recency, pane);
-            state.panes_ordered_by_recency.push_front(pane);
+            di::erase(tab.panes_ordered_by_recency, pane);
+            tab.panes_ordered_by_recency.push_front(pane);
         }
-        if (state.active) {
-            state.active->event(FocusEvent::focus_in());
+        if (state.active_tab == &tab && tab.active) {
+            tab.active->event(FocusEvent::focus_in());
         }
     };
 
-    auto remove_pane = [&](LayoutState& state, Pane* pane) {
-        // Clear active pane.
-        if (state.active == pane) {
-            if (pane) {
-                di::erase(state.panes_ordered_by_recency, pane);
-            }
-            auto candidates = state.panes_ordered_by_recency | di::transform([](Pane* pane) {
-                                  return pane;
-                              });
-            set_active(state, candidates.front().value_or(nullptr));
+    auto set_active_tab = [&](LayoutState& state, Tab* tab) {
+        if (state.active_tab == tab) {
+            return;
         }
 
-        state.layout_root.remove_pane(pane);
-        do_layout(state, state.size);
+        // Unfocus the old pane, and focus the new pane.
+        if (state.active_tab) {
+            if (auto* pane = state.active_tab->active) {
+                pane->event(FocusEvent::focus_out());
+            }
+        }
+        state.active_tab = tab;
+        if (state.active_tab) {
+            if (auto* pane = state.active_tab->active) {
+                pane->event(FocusEvent::focus_in());
+            }
+        }
+    };
 
-        // Exit when there are no panes left.
-        if (state.layout_root.empty()) {
+    auto remove_tab = [&](LayoutState& state, Tab& tab) {
+        // Clear active tab.
+        if (state.active_tab == &tab) {
+            auto it = di::find(state.tabs, &tab, &di::Box<Tab>::get);
+            if (it == state.tabs.end()) {
+                set_active_tab(state, state.tabs.at(0).transform(&di::Box<Tab>::get).value_or(nullptr));
+            } else if (state.tabs.size() == 1) {
+                set_active_tab(state, nullptr);
+            } else {
+                auto index = usize(it - state.tabs.begin());
+                if (index == state.tabs.size() - 1) {
+                    set_active_tab(state, state.tabs[index - 1].get());
+                } else {
+                    set_active_tab(state, state.tabs[index + 1].get());
+                }
+            }
+        }
+
+        // Delete tab.
+        di::erase_if(state.tabs, [&](di::Box<Tab> const& pointer) {
+            return pointer.get() == &tab;
+        });
+
+        // Exit when no tabs are left.
+        if (state.tabs.empty()) {
             set_done();
         }
     };
 
-    auto add_pane = [&](di::Vector<di::TransparentStringView> command, Direction direction) -> di::Result<> {
-        return layout_state.with_lock([&](LayoutState& state) -> di::Result<> {
-            auto [new_layout, pane_layout, pane_out] =
-                state.layout_root.split(state.size, 0, 0, state.active, direction);
-
-            if (!pane_layout || !pane_out || pane_layout->size == dius::tty::WindowSize {}) {
-                // NOTE: this happens when the visible terminal size is too small.
-                state.layout_root.remove_pane(nullptr);
-                return di::Unexpected(di::BasicError::InvalidArgument);
+    auto remove_pane = [&](LayoutState& state, Tab& tab, Pane* pane) {
+        // Clear active pane.
+        if (tab.active == pane) {
+            if (pane) {
+                di::erase(tab.panes_ordered_by_recency, pane);
             }
+            auto candidates = tab.panes_ordered_by_recency | di::transform([](Pane* pane) {
+                                  return pane;
+                              });
+            set_active(state, tab, candidates.front().value_or(nullptr));
+        }
 
-            auto maybe_pane = Pane::create(di::move(command), pane_layout->size);
-            if (!maybe_pane) {
-                state.layout_root.remove_pane(nullptr);
-                return di::Unexpected(di::move(maybe_pane).error());
-            }
+        tab.layout_root.remove_pane(pane);
+        do_layout(state, state.size);
 
-            auto& pane = *pane_out = di::move(maybe_pane).value();
-            pane_layout->pane = pane.get();
-            state.layout_tree = di::move(new_layout);
-
-            pane->did_exit = [&layout_state, pane = pane.get()] {
-                layout_state.with_lock([&](LayoutState& state) {
-                    state.events.push(PaneExited(pane));
-                });
-            };
-
-            set_active(state, pane.get());
-            return {};
-        });
+        // Exit tab when there are no panes left.
+        if (tab.layout_root.empty()) {
+            remove_tab(state, tab);
+        }
     };
 
-    // Initial pane.
-    TRY(add_pane(di::clone(args.command), Direction::None));
+    auto add_pane = [&](LayoutState& state, Tab& tab, di::Vector<di::TransparentStringView> command,
+                        Direction direction) -> di::Result<> {
+        auto [new_layout, pane_layout, pane_out] = tab.layout_root.split(state.size, 1, 0, tab.active, direction);
+
+        if (!pane_layout || !pane_out || pane_layout->size == dius::tty::WindowSize {}) {
+            // NOTE: this happens when the visible terminal size is too small.
+            tab.layout_root.remove_pane(nullptr);
+            return di::Unexpected(di::BasicError::InvalidArgument);
+        }
+
+        auto maybe_pane = Pane::create(di::move(command), pane_layout->size);
+        if (!maybe_pane) {
+            tab.layout_root.remove_pane(nullptr);
+            return di::Unexpected(di::move(maybe_pane).error());
+        }
+
+        auto& pane = *pane_out = di::move(maybe_pane).value();
+        pane_layout->pane = pane.get();
+        tab.layout_tree = di::move(new_layout);
+
+        pane->did_exit = di::make_function<void()>([&layout_state, &tab, pane = pane.get()] {
+            layout_state.with_lock([&](LayoutState& state) {
+                state.events.push(PaneExited(&tab, pane));
+            });
+        });
+
+        set_active(state, tab, pane.get());
+        return {};
+    };
+
+    auto add_tab = [&](LayoutState& state, di::Vector<di::TransparentStringView> command) -> di::Result<> {
+        auto tab = di::make_box<Tab>();
+        tab->name = command[0].to_owned() | di::transform([](char c) {
+                        return c32(c);
+                    }) |
+                    di::to<di::String>();
+        TRY(add_pane(state, *tab, di::move(command), Direction::None));
+
+        set_active_tab(state, tab.get());
+        state.tabs.push_back(di::move(tab));
+
+        return {};
+    };
+
+    // Initial tab.
+    TRY(add_tab(layout_state.get_assuming_no_concurrent_accesses(), di::clone(args.command)));
 
     // Setup - raw mode
     auto _ = TRY(dius::stdin.enter_raw_mode());
@@ -220,7 +293,11 @@ static auto main(Args& args) -> di::Result<void> {
 
                         if (got_prefix && ev->key() == Key::H && !!(ev->modifiers() & Modifiers::Control)) {
                             layout_state.with_lock([&](LayoutState& state) {
-                                auto layout_entry = state.layout_tree->find_pane(state.active);
+                                if (!state.active_tab) {
+                                    return;
+                                }
+                                auto& tab = *state.active_tab;
+                                auto layout_entry = tab.layout_tree->find_pane(tab.active);
                                 if (!layout_entry) {
                                     return;
                                 }
@@ -229,13 +306,13 @@ static auto main(Args& args) -> di::Result<void> {
                                 auto col = layout_entry->col <= 1 ? state.size.cols - 1 : layout_entry->col - 2;
 
                                 auto candidates =
-                                    state.layout_tree->hit_test_vertical_line(
+                                    tab.layout_tree->hit_test_vertical_line(
                                         col, layout_entry->row, layout_entry->row + layout_entry->size.rows) |
                                     di::transform(&LayoutEntry::pane) | di::to<di::TreeSet>();
 
-                                for (auto* candidate : state.panes_ordered_by_recency) {
-                                    if (candidate != state.active && candidates.contains(candidate)) {
-                                        set_active(state, candidate);
+                                for (auto* candidate : tab.panes_ordered_by_recency) {
+                                    if (candidate != tab.active && candidates.contains(candidate)) {
+                                        set_active(state, tab, candidate);
                                         break;
                                     }
                                 }
@@ -246,7 +323,11 @@ static auto main(Args& args) -> di::Result<void> {
 
                         if (got_prefix && ev->key() == Key::L && !!(ev->modifiers() & Modifiers::Control)) {
                             layout_state.with_lock([&](LayoutState& state) {
-                                auto layout_entry = state.layout_tree->find_pane(state.active);
+                                if (!state.active_tab) {
+                                    return;
+                                }
+                                auto& tab = *state.active_tab;
+                                auto layout_entry = tab.layout_tree->find_pane(tab.active);
                                 if (!layout_entry) {
                                     return;
                                 }
@@ -258,13 +339,13 @@ static auto main(Args& args) -> di::Result<void> {
                                                : layout_entry->col + layout_entry->size.cols + 1;
 
                                 auto candidates =
-                                    state.layout_tree->hit_test_vertical_line(
+                                    tab.layout_tree->hit_test_vertical_line(
                                         col, layout_entry->row, layout_entry->row + layout_entry->size.rows) |
                                     di::transform(&LayoutEntry::pane) | di::to<di::TreeSet>();
 
-                                for (auto* candidate : state.panes_ordered_by_recency) {
-                                    if (candidate != state.active && candidates.contains(candidate)) {
-                                        set_active(state, candidate);
+                                for (auto* candidate : tab.panes_ordered_by_recency) {
+                                    if (candidate != tab.active && candidates.contains(candidate)) {
+                                        set_active(state, tab, candidate);
                                         break;
                                     }
                                 }
@@ -275,7 +356,11 @@ static auto main(Args& args) -> di::Result<void> {
 
                         if (got_prefix && ev->key() == Key::K && !!(ev->modifiers() & Modifiers::Control)) {
                             layout_state.with_lock([&](LayoutState& state) {
-                                auto layout_entry = state.layout_tree->find_pane(state.active);
+                                if (!state.active_tab) {
+                                    return;
+                                }
+                                auto& tab = *state.active_tab;
+                                auto layout_entry = tab.layout_tree->find_pane(tab.active);
                                 if (!layout_entry) {
                                     return;
                                 }
@@ -284,13 +369,13 @@ static auto main(Args& args) -> di::Result<void> {
                                 auto row = layout_entry->row <= 1 ? state.size.rows - 1 : layout_entry->row - 2;
 
                                 auto candidates =
-                                    state.layout_tree->hit_test_horizontal_line(
+                                    tab.layout_tree->hit_test_horizontal_line(
                                         row, layout_entry->col, layout_entry->col + layout_entry->size.cols) |
                                     di::transform(&LayoutEntry::pane) | di::to<di::TreeSet>();
 
-                                for (auto* candidate : state.panes_ordered_by_recency) {
-                                    if (candidate != state.active && candidates.contains(candidate)) {
-                                        set_active(state, candidate);
+                                for (auto* candidate : tab.panes_ordered_by_recency) {
+                                    if (candidate != tab.active && candidates.contains(candidate)) {
+                                        set_active(state, tab, candidate);
                                         break;
                                     }
                                 }
@@ -301,7 +386,11 @@ static auto main(Args& args) -> di::Result<void> {
 
                         if (got_prefix && ev->key() == Key::J && !!(ev->modifiers() & Modifiers::Control)) {
                             layout_state.with_lock([&](LayoutState& state) {
-                                auto layout_entry = state.layout_tree->find_pane(state.active);
+                                if (!state.active_tab) {
+                                    return;
+                                }
+                                auto& tab = *state.active_tab;
+                                auto layout_entry = tab.layout_tree->find_pane(tab.active);
                                 if (!layout_entry) {
                                     return;
                                 }
@@ -313,19 +402,26 @@ static auto main(Args& args) -> di::Result<void> {
                                                : layout_entry->row + layout_entry->size.rows + 1;
 
                                 auto candidates =
-                                    state.layout_tree->hit_test_horizontal_line(
+                                    tab.layout_tree->hit_test_horizontal_line(
                                         row, layout_entry->col, layout_entry->col + layout_entry->size.cols) |
                                     di::transform(&LayoutEntry::pane) | di::to<di::TreeSet>();
 
-                                for (auto* candidate : state.panes_ordered_by_recency) {
-                                    if (candidate != state.active && candidates.contains(candidate)) {
-                                        set_active(state, candidate);
+                                for (auto* candidate : tab.panes_ordered_by_recency) {
+                                    if (candidate != tab.active && candidates.contains(candidate)) {
+                                        set_active(state, tab, candidate);
                                         break;
                                     }
                                 }
                                 reset_got_prefix.release();
                             });
                             continue;
+                        }
+
+                        if (got_prefix && ev->key() == Key::C) {
+                            layout_state.with_lock([&](LayoutState& state) {
+                                (void) add_tab(state, di::clone(args.command));
+                            });
+                            break;
                         }
 
                         if (got_prefix && ev->key() == Key::D) {
@@ -335,7 +431,11 @@ static auto main(Args& args) -> di::Result<void> {
 
                         if (got_prefix && ev->key() == Key::X) {
                             layout_state.with_lock([&](LayoutState& state) {
-                                if (auto* pane = state.active) {
+                                if (!state.active_tab) {
+                                    return;
+                                }
+                                auto& tab = *state.active_tab;
+                                if (auto* pane = tab.active) {
                                     pane->exit();
                                 }
                             });
@@ -343,12 +443,24 @@ static auto main(Args& args) -> di::Result<void> {
                         }
 
                         if (got_prefix && ev->key() == Key::BackSlash && !!(Modifiers::Shift)) {
-                            (void) add_pane(di::clone(args.command), Direction::Horizontal);
+                            layout_state.with_lock([&](LayoutState& state) {
+                                if (!state.active_tab) {
+                                    return;
+                                }
+                                auto& tab = *state.active_tab;
+                                (void) add_pane(state, tab, di::clone(args.command), Direction::Horizontal);
+                            });
                             continue;
                         }
 
                         if (got_prefix && ev->key() == Key::Minus) {
-                            (void) add_pane(di::clone(args.command), Direction::Vertical);
+                            layout_state.with_lock([&](LayoutState& state) {
+                                if (!state.active_tab) {
+                                    return;
+                                }
+                                auto& tab = *state.active_tab;
+                                (void) add_pane(state, tab, di::clone(args.command), Direction::Vertical);
+                            });
                             continue;
                         }
                     }
@@ -356,32 +468,49 @@ static auto main(Args& args) -> di::Result<void> {
                     // NOTE: we need to hold the layout state lock the entire time
                     // to prevent the Pane object from being prematurely destroyed.
                     layout_state.with_lock([&](LayoutState& state) {
-                        if (auto* pane = state.active) {
+                        if (!state.active_tab) {
+                            return;
+                        }
+                        auto& tab = *state.active_tab;
+                        if (auto* pane = tab.active) {
                             pane->event(*ev);
                         }
                     });
                 } else if (auto ev = di::get_if<MouseEvent>(event)) {
                     layout_state.with_lock([&](LayoutState& state) {
+                        if (!state.active_tab) {
+                            return;
+                        }
+                        auto& tab = *state.active_tab;
+
                         // Check if the event interests with any pane.
-                        for (auto const& entry : state.layout_tree->hit_test(ev->position().in_cells().y(),
-                                                                             ev->position().in_cells().x())) {
+                        for (auto const& entry :
+                             tab.layout_tree->hit_test(ev->position().in_cells().y(), ev->position().in_cells().x())) {
                             if (ev->type() != MouseEventType::Move) {
-                                set_active(state, entry.pane);
+                                set_active(state, tab, entry.pane);
                             }
-                            if (entry.pane == state.active) {
+                            if (entry.pane == tab.active) {
                                 entry.pane->event(ev->translate({ -entry.col, -entry.row }, state.size));
                             }
                         }
                     });
                 } else if (auto ev = di::get_if<FocusEvent>(event)) {
                     layout_state.with_lock([&](LayoutState& state) {
-                        if (auto* pane = state.active) {
+                        if (!state.active_tab) {
+                            return;
+                        }
+                        auto& tab = *state.active_tab;
+                        if (auto* pane = tab.active) {
                             pane->event(*ev);
                         }
                     });
                 } else if (auto ev = di::get_if<PasteEvent>(event)) {
                     layout_state.with_lock([&](LayoutState& state) {
-                        if (auto* pane = state.active) {
+                        if (!state.active_tab) {
+                            return;
+                        }
+                        auto& tab = *state.active_tab;
+                        if (auto* pane = tab.active) {
                             pane->event(*ev);
                         }
                     });
@@ -407,18 +536,32 @@ static auto main(Args& args) -> di::Result<void> {
                                           do_layout(state, size);
                                       },
                                       [&](PaneExited const& pane) {
-                                          remove_pane(state, pane.pane);
+                                          remove_pane(state, *pane.tab, pane.pane);
                                       }),
                                   event);
                     }
 
                     // Ignore if there is no layout.
-                    if (!state.layout_tree) {
+                    if (!state.active_tab) {
+                        return { false, {} };
+                    }
+                    auto& tab = *state.active_tab;
+                    if (!tab.layout_tree) {
                         return { false, {} };
                     }
 
                     // Do the render.
                     renderer.start(state.size);
+
+                    // Status bar.
+                    auto text = di::enumerate(state.tabs) |
+                                di::transform(di::uncurry([&](usize i, di::Box<Tab> const& tab) {
+                                    return *di::present("[{}{} {}]"_sv, tab.get() == state.active_tab ? U'*' : U' ', i,
+                                                        tab->name);
+                                })) |
+                                di::join_with(U' ') | di::to<di::String>();
+                    renderer.clear_row(0);
+                    renderer.put_text(text.view(), 0, 0);
 
                     auto cursor = di::Optional<RenderedCursor> {};
 
@@ -436,6 +579,7 @@ static auto main(Args& args) -> di::Result<void> {
                     struct Render {
                         Renderer& renderer;
                         di::Optional<RenderedCursor>& cursor;
+                        Tab& tab;
                         LayoutState& state;
 
                         void operator()(di::Box<LayoutNode> const& node) {
@@ -466,7 +610,7 @@ static auto main(Args& args) -> di::Result<void> {
                         void operator()(LayoutEntry const& entry) {
                             renderer.set_bound(entry.row, entry.col, entry.size.cols, entry.size.rows);
                             auto pane_cursor = entry.pane->draw(renderer);
-                            if (entry.pane == state.active) {
+                            if (entry.pane == tab.active) {
                                 pane_cursor.cursor_row += entry.row;
                                 pane_cursor.cursor_col += entry.col;
                                 cursor = pane_cursor;
@@ -474,7 +618,7 @@ static auto main(Args& args) -> di::Result<void> {
                         }
                     };
 
-                    Render(renderer, cursor, state)(state.layout_tree);
+                    Render(renderer, cursor, tab, state)(tab.layout_tree);
 
                     return { true, cursor };
                 });
