@@ -3,7 +3,6 @@
 #include "di/container/string/string_view.h"
 #include "di/container/vector/vector.h"
 #include "di/function/container/function.h"
-#include "di/io/writer_println.h"
 #include "di/sync/atomic.h"
 #include "di/sync/memory_order.h"
 #include "di/vocab/pointer/box.h"
@@ -22,6 +21,8 @@ static auto spawn_child(di::Vector<di::TransparentStringView> command, dius::Syn
 
     return dius::system::Process(command | di::transform(di::to_owned) | di::to<di::Vector>())
         .with_new_session()
+        .with_env("TERM"_ts, "xterm-256color"_ts)
+        .with_env("COLORTERM"_ts, "truecolor"_ts)
         .with_file_open(0, di::move(tty_path), dius::OpenMode::ReadWrite)
         .with_file_dup(0, 1)
         .with_file_dup(0, 2)
