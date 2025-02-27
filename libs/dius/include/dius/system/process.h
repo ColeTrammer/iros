@@ -3,6 +3,7 @@
 #include "di/assert/prelude.h"
 #include "di/container/path/path.h"
 #include "di/container/string/prelude.h"
+#include "di/container/tree/tree_map.h"
 #include "di/container/vector/prelude.h"
 #include "di/util/prelude.h"
 #include "dius/config.h"
@@ -91,6 +92,11 @@ public:
         return di::move(*this);
     }
 
+    auto with_env(di::TransparentString key, di::TransparentString value) && -> Process {
+        m_extra_env_vars.insert_or_assign(di::move(key), di::move(value));
+        return di::move(*this);
+    }
+
     auto spawn() && -> di::Result<ProcessHandle>;
 
     auto spawn_and_wait() && -> di::Result<ProcessResult> {
@@ -101,6 +107,7 @@ public:
 private:
     di::Vector<di::TransparentString> m_arguments;
     di::Vector<FileAction> m_file_actions;
+    di::TreeMap<di::TransparentString, di::TransparentString> m_extra_env_vars;
     bool m_new_session { false };
 };
 

@@ -25,6 +25,7 @@ private:
 
 public:
     constexpr explicit ZStringImpl(T* data) : m_data(data) {}
+    constexpr explicit ZStringImpl(Iterator data) : m_data(&*data) {}
 
     constexpr auto data() const -> T* { return m_data; }
 

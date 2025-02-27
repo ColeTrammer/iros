@@ -8,6 +8,12 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include "di/container/algorithm/find.h"
+#include "di/container/iterator/next.h"
+#include "di/container/string/string.h"
+#include "di/container/string/string_view.h"
+#include "di/container/string/zstring.h"
+#include "di/container/tree/tree_set.h"
 #include "di/util/scope_exit.h"
 
 namespace dius::system {
@@ -64,6 +70,33 @@ static auto file_open_mode_flags(OpenMode open_mode) -> int {
     }
 }
 
+static auto make_env(char** environ, di::TreeMap<di::TransparentString, di::TransparentString> const& extra_vars)
+    -> di::Tuple<di::TreeSet<di::Box<di::TransparentString>>, di::Vector<char*>> {
+    auto result = di::Vector<char*> {};
+    for (auto* env_var = environ; *env_var; env_var++) {
+        auto zstring = di::ZString(*env_var);
+        auto it = di::find(zstring, '=');
+        if (it == zstring.end()) {
+            continue;
+        }
+        auto key = di::TransparentStringView(*env_var, &*it);
+        if (extra_vars.contains(key)) {
+            continue;
+        }
+        result.push_back(*env_var);
+    }
+    auto storage = di::TreeSet<di::Box<di::TransparentString>> {};
+    for (auto const& [key, value] : extra_vars) {
+        auto string = di::clone(key);
+        string.push_back('=');
+        string += value;
+        auto [it, _] = storage.insert(di::make_box<di::TransparentString>(di::move(string)));
+        result.push_back(const_cast<char*>((*it)->c_str()));
+    }
+    result.push_back(nullptr);
+    return { di::move(storage), di::move(result) };
+}
+
 auto Process::spawn() && -> di::Result<ProcessHandle> {
     // NOTE: TransparentString objects are guaranteed to be null-terminated on Linux.
     auto null_terminated_args =
@@ -100,8 +133,9 @@ auto Process::spawn() && -> di::Result<ProcessHandle> {
     posix_spawnattr_setflags(&attrs, attr_flags);
 
     auto pid = pid_t(-1);
+    auto [_, env] = make_env(environ, m_extra_env_vars);
     auto result = posix_spawnp(&pid, null_terminated_args[0], &file_actions, &attrs,
-                               const_cast<char**>(null_terminated_args.data()), environ);
+                               const_cast<char**>(null_terminated_args.data()), env.data());
     if (result != 0) {
         return di::Unexpected(di::BasicError(result));
     }

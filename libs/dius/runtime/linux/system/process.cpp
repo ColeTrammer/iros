@@ -5,6 +5,7 @@
 #include <linux/wait.h>
 
 #include "di/container/string/zstring.h"
+#include "di/container/tree/tree_set.h"
 #include "dius/linux/system_call.h"
 #include "dius/print.h"
 #include "dius/system/system_call.h"
@@ -88,10 +89,38 @@ auto ProcessHandle::signal(Signal signal) -> di::Result<> {
     return sys_kill(id(), int(signal));
 }
 
+static auto make_env(char** environ, di::TreeMap<di::TransparentString, di::TransparentString> const& extra_vars)
+    -> di::Tuple<di::TreeSet<di::Box<di::TransparentString>>, di::Vector<char*>> {
+    auto result = di::Vector<char*> {};
+    for (auto* env_var = environ; *env_var; env_var++) {
+        auto zstring = di::ZString(*env_var);
+        auto it = di::find(zstring, '=');
+        if (it == zstring.end()) {
+            continue;
+        }
+        auto key = di::TransparentStringView(*env_var, &*it);
+        if (extra_vars.contains(key)) {
+            continue;
+        }
+        result.push_back(*env_var);
+    }
+    auto storage = di::TreeSet<di::Box<di::TransparentString>> {};
+    for (auto const& [key, value] : extra_vars) {
+        auto string = di::clone(key);
+        string.push_back('=');
+        string += value;
+        auto [it, _] = storage.insert(di::make_box<di::TransparentString>(di::move(string)));
+        result.push_back(const_cast<char*>((*it)->c_str()));
+    }
+    result.push_back(nullptr);
+    return { di::move(storage), di::move(result) };
+}
+
 auto Process::spawn() && -> di::Result<ProcessHandle> {
     // NOTE: TransparentString objects are guaranteed to be null-terminated on Linux.
     auto null_terminated_args =
         di::concat(m_arguments | di::transform(di::cdata), di::single(nullptr)) | di::to<di::Vector>();
+    auto [_, env] = make_env(s_envp, m_extra_env_vars);
 
     auto args = ::clone_args {
         .flags = CLONE_CLEAR_SIGHAND,
@@ -144,7 +173,7 @@ auto Process::spawn() && -> di::Result<ProcessHandle> {
             }
 
             if (m_arguments[0].contains(U'/')) {
-                TRY(system_call<int>(Number::execve, null_terminated_args[0], null_terminated_args.data(), s_envp));
+                TRY(system_call<int>(Number::execve, null_terminated_args[0], null_terminated_args.data(), env.data()));
             } else {
                 // Read PATH env variable, and use it.
                 auto path = "/bin:/usr/bin"_ts;
@@ -165,7 +194,7 @@ auto Process::spawn() && -> di::Result<ProcessHandle> {
                     }
                     absolute_program += m_arguments[0];
                     (void) system_call<int>(Number::execve, absolute_program.c_str(), null_terminated_args.data(),
-                                            s_envp);
+                                            env.data());
                 }
             }
             return {};
