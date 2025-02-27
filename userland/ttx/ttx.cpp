@@ -84,7 +84,7 @@ static auto main(Args& args) -> di::Result<void> {
         if (!state.active_tab) {
             return;
         }
-        state.active_tab->layout_tree = state.active_tab->layout_root.layout(state.size, 1, 0);
+        state.active_tab->layout_tree = state.active_tab->layout_root.layout(state.size.rows_shrinked(1), 1, 0);
 
         invalidate_tab(*state.active_tab);
     };
@@ -180,7 +180,8 @@ static auto main(Args& args) -> di::Result<void> {
 
     auto add_pane = [&](LayoutState& state, Tab& tab, di::Vector<di::TransparentStringView> command,
                         Direction direction) -> di::Result<> {
-        auto [new_layout, pane_layout, pane_out] = tab.layout_root.split(state.size, 1, 0, tab.active, direction);
+        auto [new_layout, pane_layout, pane_out] =
+            tab.layout_root.split(state.size.rows_shrinked(1), 1, 0, tab.active, direction);
 
         if (!pane_layout || !pane_out || pane_layout->size == dius::tty::WindowSize {}) {
             // NOTE: this happens when the visible terminal size is too small.
