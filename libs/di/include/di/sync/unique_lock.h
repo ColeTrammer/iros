@@ -75,7 +75,7 @@ public:
 
     constexpr auto mutex() const -> Lock* { return m_mutex; }
 
-    constexpr auto owns_lock() const -> bool { return m_owned; }
+    constexpr auto owns_lock() const -> bool { return bool(m_mutex) && m_owned; }
     constexpr explicit operator bool() const { return owns_lock(); }
 
 private:
