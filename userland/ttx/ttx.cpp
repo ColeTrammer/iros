@@ -4,6 +4,7 @@
 #include "di/container/string/string_view.h"
 #include "di/io/writer_print.h"
 #include "di/sync/synchronized.h"
+#include "di/util/construct.h"
 #include "dius/main.h"
 #include "dius/sync_file.h"
 #include "dius/system/process.h"
@@ -71,6 +72,12 @@ static auto main(Args& args) -> di::Result<void> {
         .size = TRY(dius::stdin.get_tty_window_size()),
     });
 
+    auto invalidate_tab = [&](Tab& tab) {
+        for (auto* pane : tab.panes_ordered_by_recency) {
+            pane->invalidate_all();
+        }
+    };
+
     auto do_layout = [&](LayoutState& state, dius::tty::WindowSize size) {
         state.size = size;
 
@@ -78,6 +85,8 @@ static auto main(Args& args) -> di::Result<void> {
             return;
         }
         state.active_tab->layout_tree = state.active_tab->layout_root.layout(state.size, 1, 0);
+
+        invalidate_tab(*state.active_tab);
     };
 
     auto set_active = [&](LayoutState& state, Tab& tab, Pane* pane) {
@@ -115,6 +124,7 @@ static auto main(Args& args) -> di::Result<void> {
             if (auto* pane = state.active_tab->active) {
                 pane->event(FocusEvent::focus_in());
             }
+            invalidate_tab(*state.active_tab);
         }
     };
 
@@ -421,7 +431,19 @@ static auto main(Args& args) -> di::Result<void> {
                             layout_state.with_lock([&](LayoutState& state) {
                                 (void) add_tab(state, di::clone(args.command));
                             });
-                            break;
+                            continue;
+                        }
+
+                        auto window_nav_keys =
+                            di::range(i32(Key::_1), i32(Key::_9) + 1) | di::transform(di::construct<Key>);
+                        if (got_prefix && di::contains(window_nav_keys, ev->key())) {
+                            layout_state.with_lock([&](LayoutState& state) {
+                                auto index = usize(ev->key()) - usize(Key::_1);
+                                if (auto tab = state.tabs.at(index)) {
+                                    set_active_tab(state, tab->get());
+                                }
+                            });
+                            continue;
                         }
 
                         if (got_prefix && ev->key() == Key::D) {
@@ -556,8 +578,8 @@ static auto main(Args& args) -> di::Result<void> {
                     // Status bar.
                     auto text = di::enumerate(state.tabs) |
                                 di::transform(di::uncurry([&](usize i, di::Box<Tab> const& tab) {
-                                    return *di::present("[{}{} {}]"_sv, tab.get() == state.active_tab ? U'*' : U' ', i,
-                                                        tab->name);
+                                    return *di::present("[{}{} {}]"_sv, tab.get() == state.active_tab ? U'*' : U' ',
+                                                        i + 1, tab->name);
                                 })) |
                                 di::join_with(U' ') | di::to<di::String>();
                     renderer.clear_row(0);

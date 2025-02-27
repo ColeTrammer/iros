@@ -37,6 +37,7 @@ public:
     auto event(FocusEvent const& event) -> bool;
     auto event(PasteEvent const& event) -> bool;
 
+    void invalidate_all();
     void resize(dius::tty::WindowSize const& size);
     void exit();
 

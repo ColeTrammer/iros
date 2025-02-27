@@ -90,6 +90,7 @@ auto Pane::draw(Renderer& renderer) -> RenderedCursor {
             for (auto const& [r, row] : di::enumerate(terminal.rows())) {
                 for (auto const& [c, cell] : di::enumerate(row)) {
                     if (cell.dirty) {
+                        cell.dirty = false;
                         renderer.put_text(cell.ch, r, c, cell.graphics_rendition);
                     }
                 }
@@ -176,6 +177,12 @@ auto Pane::event(PasteEvent const& event) -> bool {
     auto serialized_event = serialize_paste_event(event, bracketed_paste_mode);
     (void) m_pty_controller.write_exactly(di::as_bytes(serialized_event.span()));
     return true;
+}
+
+void Pane::invalidate_all() {
+    m_terminal.with_lock([&](Terminal& terminal) {
+        terminal.invalidate_all();
+    });
 }
 
 void Pane::resize(dius::tty::WindowSize const& size) {
