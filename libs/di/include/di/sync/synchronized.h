@@ -49,7 +49,7 @@ public:
         return m_value;
     }
 
-    auto get_lock() -> Lock& { return m_lock; }
+    constexpr auto get_lock() -> Lock& { return m_lock; }
 
 private:
     Value m_value {};

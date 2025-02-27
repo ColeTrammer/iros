@@ -16,6 +16,12 @@ constexpr inline struct SwapFunction {
     }
 
     template<typename T, typename U>
+    requires(requires(T& a, T& b) { a.swap(b); })
+    constexpr void operator()(T& a, T& b) {
+        a.swap(b);
+    }
+
+    template<typename T, typename U>
     requires(!concepts::TagInvocable<SwapFunction, T&, U&> && concepts::Movable<T> && concepts::Movable<U> &&
              concepts::ConstructibleFrom<T, U> && concepts::ConstructibleFrom<U, T>)
     constexpr void operator()(T& a, U& b) const {
