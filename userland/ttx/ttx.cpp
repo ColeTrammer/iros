@@ -20,10 +20,12 @@
 namespace ttx {
 struct Args {
     di::Vector<di::TransparentStringView> command;
+    Key prefix { Key::B };
     bool help { false };
 
     constexpr static auto get_cli_parser() {
         return di::cli_parser<Args>("ttx"_sv, "Terminal multiplexer"_sv)
+            .option<&Args::prefix>('p', "prefix"_tsv, "Prefix key for key bindings"_sv)
             .argument<&Args::command>("COMMAND"_sv, "Program to run in terminal"_sv, true)
             .help();
     }
@@ -301,7 +303,7 @@ static auto main(Args& args) -> di::Result<void> {
             set_done();
         });
 
-        constexpr auto prefix_key = Key::B;
+        auto prefix_key = args.prefix;
         auto got_prefix = false;
 
         auto buffer = di::Vector<byte> {};
