@@ -106,7 +106,7 @@ auto Pane::draw(Renderer& renderer) -> RenderedCursor {
             .cursor_row = terminal.cursor_row(),
             .cursor_col = terminal.cursor_col(),
             .style = terminal.cursor_style(),
-            .hidden = terminal.cursor_hidden(),
+            .hidden = terminal.cursor_hidden() || !terminal.allowed_to_draw(),
         };
     });
 }
