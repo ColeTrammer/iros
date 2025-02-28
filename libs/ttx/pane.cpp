@@ -30,19 +30,20 @@ static auto spawn_child(di::Vector<di::TransparentStringView> command, dius::Syn
         .spawn();
 }
 
-auto Pane::create(di::Vector<di::TransparentStringView> command, dius::tty::WindowSize size)
+auto Pane::create(di::Vector<di::TransparentStringView> command, dius::tty::WindowSize size,
+                  di::Function<void(Pane&)> did_exit, di::Function<void(Pane&)> did_update)
     -> di::Result<di::Box<Pane>> {
     auto pty_controller = TRY(dius::open_psuedo_terminal_controller(dius::OpenMode::ReadWrite, size));
     auto process = TRY(spawn_child(di::move(command), pty_controller));
-    auto pane = di::make_box<Pane>(di::move(pty_controller), process);
+    auto pane = di::make_box<Pane>(di::move(pty_controller), process, di::move(did_exit), di::move(did_update));
     pane->m_terminal.get_assuming_no_concurrent_accesses().set_visible_size(size);
 
     pane->m_process_thread = TRY(dius::Thread::create([&pane = *pane] mutable {
         auto guard = di::ScopeExit([&] {
             pane.m_done.store(true, di::MemoryOrder::Release);
 
-            if (pane.did_exit) {
-                pane.did_exit();
+            if (pane.m_did_exit) {
+                pane.m_did_exit(pane);
             }
         });
 
@@ -68,6 +69,10 @@ auto Pane::create(di::Vector<di::TransparentStringView> command, dius::tty::Wind
             pane.m_terminal.with_lock([&](Terminal& terminal) {
                 terminal.on_parser_results(parser_result.span());
             });
+
+            if (pane.m_did_update) {
+                pane.m_did_update(pane);
+            }
         }
     }));
 
@@ -76,7 +81,7 @@ auto Pane::create(di::Vector<di::TransparentStringView> command, dius::tty::Wind
 
 auto Pane::create_mock() -> di::Box<Pane> {
     auto fake_psuedo_terminal = dius::SyncFile();
-    return di::make_box<Pane>(di::move(fake_psuedo_terminal), dius::system::ProcessHandle());
+    return di::make_box<Pane>(di::move(fake_psuedo_terminal), dius::system::ProcessHandle(), nullptr, nullptr);
 }
 
 Pane::~Pane() {

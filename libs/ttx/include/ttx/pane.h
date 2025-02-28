@@ -20,14 +20,20 @@
 namespace ttx {
 class Pane {
 public:
-    static auto create(di::Vector<di::TransparentStringView> command, dius::tty::WindowSize size)
+    static auto create(di::Vector<di::TransparentStringView> command, dius::tty::WindowSize size,
+                       di::Function<void(Pane&)> did_exit, di::Function<void(Pane&)> did_update)
         -> di::Result<di::Box<Pane>>;
 
     // For testing, create a mock pane. This doesn't actually create a psuedo terminal or a subprocess.
     static auto create_mock() -> di::Box<Pane>;
 
-    explicit Pane(dius::SyncFile pty_controller, dius::system::ProcessHandle process)
-        : m_pty_controller(di::move(pty_controller)), m_terminal(m_pty_controller), m_process(process) {}
+    explicit Pane(dius::SyncFile pty_controller, dius::system::ProcessHandle process,
+                  di::Function<void(Pane&)> did_exit, di::Function<void(Pane&)> did_update)
+        : m_pty_controller(di::move(pty_controller))
+        , m_terminal(m_pty_controller)
+        , m_process(process)
+        , m_did_exit(di::move(did_exit))
+        , m_did_update(di::move(did_update)) {}
     ~Pane();
 
     auto draw(Renderer& renderer) -> RenderedCursor;
@@ -41,9 +47,6 @@ public:
     void resize(dius::tty::WindowSize const& size);
     void exit();
 
-    // Application controlled callback when the internal process exits.
-    di::Function<void()> did_exit;
-
 private:
     di::Atomic<bool> m_done { false };
     di::Optional<MousePosition> m_last_mouse_position;
@@ -52,5 +55,11 @@ private:
     dius::system::ProcessHandle m_process;
     dius::Thread m_process_thread;
     dius::Thread m_reader_thread;
+
+    // Application controlled callback when the internal process exits.
+    di::Function<void(Pane&)> m_did_exit;
+
+    // Application controlled callback when the terminal buffer has updated.
+    di::Function<void(Pane&)> m_did_update;
 };
 }
