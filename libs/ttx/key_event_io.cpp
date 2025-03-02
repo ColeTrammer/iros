@@ -16,15 +16,14 @@ struct CodePointMapping {
 // NOTE: this table is layed out such that the first entry maps
 // to the actual key event produced when parsing legacy keys.
 //
-// For control keys, the first entry is chosen based on the keys
-// visual representation. So control+space = ^@ will be reported
-// as control+shift+2 if the terminal we run in doesn't support
-// the kitty key protocol.
+// For control keys, the last entry is chosen based on the keys
+// visual representation. The first entry is chosen based on which
+// key is most useful. So the enter key will be preferred over ctrl+m;
 constexpr auto legacy_code_point_mappings = di::to_array<CodePointMapping>({
-    { 0x00, Key::_2, Modifiers::Control | Modifiers::Shift },
-    { 0x00, Key::_2, Modifiers::Control },
     { 0x00, Key::Space, Modifiers::Control },
     { 0x00, Key::Space, Modifiers::Control | Modifiers::Shift },
+    { 0x00, Key::_2, Modifiers::Control },
+    { 0x00, Key::_2, Modifiers::Control | Modifiers::Shift },
 
     { 0x01, Key::A, Modifiers::Control },
     { 0x02, Key::B, Modifiers::Control },
@@ -34,23 +33,23 @@ constexpr auto legacy_code_point_mappings = di::to_array<CodePointMapping>({
     { 0x06, Key::F, Modifiers::Control },
     { 0x07, Key::G, Modifiers::Control },
 
-    { 0x08, Key::H, Modifiers::Control },
     { 0x08, Key::Backspace, Modifiers::Control },
     { 0x08, Key::Backspace, Modifiers::Control | Modifiers::Shift },
+    { 0x08, Key::H, Modifiers::Control },
 
-    { 0x09, Key::I, Modifiers::Control },
     { 0x09, Key::Tab, Modifiers::None },
     { 0x09, Key::Tab, Modifiers::Control },
+    { 0x09, Key::I, Modifiers::Control },
 
     { 0x0a, Key::J, Modifiers::Control },
     { 0x0b, Key::K, Modifiers::Control },
     { 0x0c, Key::L, Modifiers::Control },
 
-    { 0x0d, Key::M, Modifiers::Control },
     { 0x0d, Key::Enter, Modifiers::None },
     { 0x0d, Key::Enter, Modifiers::Shift },
     { 0x0d, Key::Enter, Modifiers::Control },
     { 0x0d, Key::Enter, Modifiers::Control | Modifiers::Shift },
+    { 0x0d, Key::M, Modifiers::Control },
 
     { 0x0e, Key::N, Modifiers::Control },
     { 0x0f, Key::O, Modifiers::Control },
@@ -66,26 +65,28 @@ constexpr auto legacy_code_point_mappings = di::to_array<CodePointMapping>({
     { 0x19, Key::Y, Modifiers::Control },
     { 0x1a, Key::Z, Modifiers::Control },
 
-    { 0x1b, Key::LeftBracket, Modifiers::Control },
-    { 0x1b, Key::_3, Modifiers::Control },
     { 0x1b, Key::Escape, Modifiers::None },
     { 0x1b, Key::Escape, Modifiers::Control },
     { 0x1b, Key::Escape, Modifiers::Shift },
     { 0x1b, Key::Escape, Modifiers::Control | Modifiers::Shift },
+    { 0x1b, Key::_3, Modifiers::Control },
+    { 0x1b, Key::LeftBracket, Modifiers::Control },
 
     { 0x1c, Key::BackSlash, Modifiers::Control },
     { 0x1c, Key::_4, Modifiers::Control },
+    { 0x1c, Key::BackSlash, Modifiers::Control },
 
     { 0x1d, Key::RightBracket, Modifiers::Control },
     { 0x1d, Key::_5, Modifiers::Control },
+    { 0x1d, Key::RightBracket, Modifiers::Control },
 
-    { 0x1e, Key::_6, Modifiers::Control | Modifiers::Shift },
     { 0x1e, Key::_6, Modifiers::Control },
     { 0x1e, Key::Backtick, Modifiers::Control | Modifiers::Shift },
+    { 0x1e, Key::_6, Modifiers::Control | Modifiers::Shift },
 
-    { 0x1f, Key::Minus, Modifiers::Control | Modifiers::Shift },
     { 0x1f, Key::Slash, Modifiers::Control },
     { 0x1f, Key::_7, Modifiers::Control },
+    { 0x1f, Key::Minus, Modifiers::Control | Modifiers::Shift },
 
     { ' ', Key::Space, Modifiers::None },
     { ' ', Key::Space, Modifiers::Shift },
@@ -187,10 +188,10 @@ constexpr auto legacy_code_point_mappings = di::to_array<CodePointMapping>({
     { '}', Key::RightBracket, Modifiers::Shift },
     { '~', Key::Backtick, Modifiers::Shift },
 
-    { 0x7f, Key::Slash, Modifiers::Control | Modifiers::Shift },
-    { 0x7f, Key::_7, Modifiers::Control },
     { 0x7f, Key::Backspace, Modifiers::None },
     { 0x7f, Key::Backspace, Modifiers::Shift },
+    { 0x7f, Key::_7, Modifiers::Control },
+    { 0x7f, Key::Slash, Modifiers::Control | Modifiers::Shift },
 });
 
 constexpr auto ss3_mappings = di::to_array<CodePointMapping>({

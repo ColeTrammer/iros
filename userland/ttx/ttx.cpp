@@ -376,7 +376,9 @@ static auto main(Args& args) -> di::Result<void> {
             }
 
             auto utf8_string = utf8_decoder.decode(buffer | di::take(*nread));
+            di::writer_println<di::String::Encoding>(log, "input: {:?}"_sv, utf8_string);
             auto events = parser.parse(utf8_string);
+            di::writer_println<di::String::Encoding>(log, "events: {:?}"_sv, events);
             for (auto const& event : events) {
                 if (auto ev = di::get_if<KeyEvent>(event)) {
                     if (ev->type() == KeyEventType::Press &&
