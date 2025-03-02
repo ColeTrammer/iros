@@ -3,6 +3,7 @@
 #include "di/container/ring/ring.h"
 #include "di/container/string/string_view.h"
 #include "di/io/writer_print.h"
+#include "di/serialization/base64.h"
 #include "di/sync/synchronized.h"
 #include "di/util/construct.h"
 #include "dius/condition_variable.h"
@@ -56,6 +57,58 @@ struct LayoutState {
     di::Vector<di::Box<Tab>> tabs {};
     Tab* active_tab { nullptr };
     di::Queue<RenderEvent> events {};
+};
+
+struct PositionAndSize {
+    static auto operator()(di::Box<LayoutNode> const& node) -> di::Tuple<u32, u32, dius::tty::WindowSize> {
+        return { node->row, node->col, node->size };
+    }
+
+    static auto operator()(LayoutEntry const& entry) -> di::Tuple<u32, u32, dius::tty::WindowSize> {
+        return { entry.row, entry.col, entry.size };
+    }
+};
+
+struct Render {
+    Renderer& renderer;
+    di::Optional<RenderedCursor>& cursor;
+    Tab& tab;
+    LayoutState& state;
+
+    void operator()(di::Box<LayoutNode> const& node) {
+        auto first = true;
+        for (auto const& child : node->children) {
+            if (!first) {
+                // Draw a border around the pane.
+                auto [row, col, size] = di::visit(PositionAndSize {}, child);
+                renderer.set_bound(0, 0, state.size.cols, state.size.rows);
+                if (node->direction == Direction::Horizontal) {
+                    for (auto r : di::range(row, row + size.rows)) {
+                        auto code_point = U'│';
+                        renderer.put_text(code_point, r, col - 1);
+                    }
+                } else if (node->direction == Direction::Vertical) {
+                    for (auto c : di::range(col, col + size.cols)) {
+                        auto code_point = U'─';
+                        renderer.put_text(code_point, row - 1, c);
+                    }
+                }
+            }
+            first = false;
+
+            di::visit(*this, child);
+        }
+    }
+
+    void operator()(LayoutEntry const& entry) {
+        renderer.set_bound(entry.row, entry.col, entry.size.cols, entry.size.rows);
+        auto pane_cursor = entry.pane->draw(renderer);
+        if (entry.pane == tab.active) {
+            pane_cursor.cursor_row += entry.row;
+            pane_cursor.cursor_col += entry.col;
+            cursor = pane_cursor;
+        }
+    }
 };
 
 static auto main(Args& args) -> di::Result<void> {
@@ -224,7 +277,13 @@ static auto main(Args& args) -> di::Result<void> {
                                                    request_render(state);
                                                }
                                            });
-                                       }));
+                                       }),
+                                       [&log](di::String text) {
+                                           auto base64 = di::Base64View(di::as_bytes(text.span()));
+                                           (void) di::writer_println<di::String::Encoding>(log, "copy: {}"_sv, base64);
+                                           (void) di::writer_println<di::String::Encoding>(
+                                               dius::stdin, "\033]52;;{}\033\\"_sv, base64);
+                                       });
         if (!maybe_pane) {
             tab.layout_root.remove_pane(nullptr);
             return di::Unexpected(di::move(maybe_pane).error());
@@ -544,7 +603,9 @@ static auto main(Args& args) -> di::Result<void> {
                                 set_active(state, tab, entry.pane);
                             }
                             if (entry.pane == tab.active) {
-                                entry.pane->event(ev->translate({ -entry.col, -entry.row }, state.size));
+                                if (entry.pane->event(ev->translate({ -entry.col, -entry.row }, state.size))) {
+                                    request_render(state);
+                                }
                             }
                         }
                     });
@@ -630,58 +691,6 @@ static auto main(Args& args) -> di::Result<void> {
             renderer.put_text(text.view(), 0, 0);
 
             auto cursor = di::Optional<RenderedCursor> {};
-
-            struct PositionAndSize {
-                static auto operator()(di::Box<LayoutNode> const& node) -> di::Tuple<u32, u32, dius::tty::WindowSize> {
-                    return { node->row, node->col, node->size };
-                }
-
-                static auto operator()(LayoutEntry const& entry) -> di::Tuple<u32, u32, dius::tty::WindowSize> {
-                    return { entry.row, entry.col, entry.size };
-                }
-            };
-
-            struct Render {
-                Renderer& renderer;
-                di::Optional<RenderedCursor>& cursor;
-                Tab& tab;
-                LayoutState& state;
-
-                void operator()(di::Box<LayoutNode> const& node) {
-                    auto first = true;
-                    for (auto const& child : node->children) {
-                        if (!first) {
-                            // Draw a border around the pane.
-                            auto [row, col, size] = di::visit(PositionAndSize {}, child);
-                            renderer.set_bound(0, 0, state.size.cols, state.size.rows);
-                            if (node->direction == Direction::Horizontal) {
-                                for (auto r : di::range(row, row + size.rows)) {
-                                    auto code_point = U'│';
-                                    renderer.put_text(code_point, r, col - 1);
-                                }
-                            } else if (node->direction == Direction::Vertical) {
-                                for (auto c : di::range(col, col + size.cols)) {
-                                    auto code_point = U'─';
-                                    renderer.put_text(code_point, row - 1, c);
-                                }
-                            }
-                        }
-                        first = false;
-
-                        di::visit(*this, child);
-                    }
-                }
-
-                void operator()(LayoutEntry const& entry) {
-                    renderer.set_bound(entry.row, entry.col, entry.size.cols, entry.size.rows);
-                    auto pane_cursor = entry.pane->draw(renderer);
-                    if (entry.pane == tab.active) {
-                        pane_cursor.cursor_row += entry.row;
-                        pane_cursor.cursor_col += entry.col;
-                        cursor = pane_cursor;
-                    }
-                }
-            };
 
             Render(renderer, cursor, tab, state)(tab.layout_tree);
 

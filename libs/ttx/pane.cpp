@@ -9,6 +9,8 @@
 #include "dius/sync_file.h"
 #include "dius/system/process.h"
 #include "dius/tty.h"
+#include "ttx/mouse.h"
+#include "ttx/mouse_event.h"
 #include "ttx/paste_event.h"
 #include "ttx/renderer.h"
 #include "ttx/terminal.h"
@@ -31,11 +33,12 @@ static auto spawn_child(di::Vector<di::TransparentStringView> command, dius::Syn
 }
 
 auto Pane::create(di::Vector<di::TransparentStringView> command, dius::tty::WindowSize size,
-                  di::Function<void(Pane&)> did_exit, di::Function<void(Pane&)> did_update)
-    -> di::Result<di::Box<Pane>> {
+                  di::Function<void(Pane&)> did_exit, di::Function<void(Pane&)> did_update,
+                  di::Function<void(di::String)> did_selection) -> di::Result<di::Box<Pane>> {
     auto pty_controller = TRY(dius::open_psuedo_terminal_controller(dius::OpenMode::ReadWrite, size));
     auto process = TRY(spawn_child(di::move(command), pty_controller));
-    auto pane = di::make_box<Pane>(di::move(pty_controller), process, di::move(did_exit), di::move(did_update));
+    auto pane = di::make_box<Pane>(di::move(pty_controller), process, di::move(did_exit), di::move(did_update),
+                                   di::move(did_selection));
     pane->m_terminal.get_assuming_no_concurrent_accesses().set_visible_size(size);
 
     pane->m_process_thread = TRY(dius::Thread::create([&pane = *pane] mutable {
@@ -81,7 +84,7 @@ auto Pane::create(di::Vector<di::TransparentStringView> command, dius::tty::Wind
 
 auto Pane::create_mock() -> di::Box<Pane> {
     auto fake_psuedo_terminal = dius::SyncFile();
-    return di::make_box<Pane>(di::move(fake_psuedo_terminal), dius::system::ProcessHandle(), nullptr, nullptr);
+    return di::make_box<Pane>(di::move(fake_psuedo_terminal), dius::system::ProcessHandle(), nullptr, nullptr, nullptr);
 }
 
 Pane::~Pane() {
@@ -95,9 +98,15 @@ auto Pane::draw(Renderer& renderer) -> RenderedCursor {
         if (terminal.allowed_to_draw()) {
             for (auto const& [r, row] : di::enumerate(terminal.rows())) {
                 for (auto const& [c, cell] : di::enumerate(row)) {
-                    if (cell.dirty) {
-                        cell.dirty = false;
-                        renderer.put_text(cell.ch, r, c, cell.graphics_rendition);
+                    auto selected = in_selection({ u32(c), u32(r) });
+                    if (cell.dirty || selected) {
+                        cell.dirty = selected;
+
+                        auto sgr = cell.graphics_rendition;
+                        if (selected) {
+                            sgr.inverted = !sgr.inverted;
+                        }
+                        renderer.put_text(cell.ch, r, c, sgr);
                     }
                 }
             }
@@ -112,6 +121,11 @@ auto Pane::draw(Renderer& renderer) -> RenderedCursor {
 }
 
 auto Pane::event(KeyEvent const& event) -> bool {
+    // Clear the selection on key presses that send text.
+    if (!event.text().empty()) {
+        clear_selection();
+    }
+
     auto [application_cursor_keys_mode, key_reporting_flags] = m_terminal.with_lock([&](Terminal& terminal) {
         return di::Tuple { terminal.application_cursor_keys_mode(), terminal.key_reporting_flags() };
     });
@@ -159,6 +173,31 @@ auto Pane::event(MouseEvent const& event) -> bool {
         });
         return true;
     }
+
+    // Selection logic.
+    if (event.button() == MouseButton::Left && event.type() == MouseEventType::Press) {
+        // Start selection.
+        m_selection_start = m_selection_end = event.position().in_cells();
+        return true;
+    }
+
+    if (m_selection_start.has_value() && event.button() == MouseButton::Left && event.type() == MouseEventType::Move) {
+        m_selection_end = event.position().in_cells();
+        return true;
+    }
+
+    if (m_selection_start.has_value() && event.button() == MouseButton::Left &&
+        event.type() == MouseEventType::Release) {
+        auto text = selection_text();
+        if (!text.empty() && m_did_selection) {
+            m_did_selection(di::move(text));
+        }
+        clear_selection();
+        return true;
+    }
+
+    // Clear selection by default on other events.
+    clear_selection();
     return false;
 }
 
@@ -176,6 +215,8 @@ auto Pane::event(FocusEvent const& event) -> bool {
 }
 
 auto Pane::event(PasteEvent const& event) -> bool {
+    clear_selection();
+
     auto [bracketed_paste_mode] = m_terminal.with_lock([&](Terminal& terminal) {
         return di::Tuple { terminal.bracked_paste_mode() };
     });
@@ -199,5 +240,68 @@ void Pane::resize(dius::tty::WindowSize const& size) {
 
 void Pane::exit() {
     (void) m_process.signal(dius::Signal::Hangup);
+}
+
+auto Pane::in_selection(MouseCoordinate coordinate) -> bool {
+    if (!m_selection_start || !m_selection_end || m_selection_start == m_selection_end) {
+        return false;
+    }
+
+    auto comparator = [](MouseCoordinate const& a, MouseCoordinate const& b) {
+        return di::Tuple { a.y(), a.x() } <=> di::Tuple { b.y(), b.x() };
+    };
+    auto start = di::min({ *m_selection_start, *m_selection_end }, comparator);
+    auto end = di::max({ *m_selection_start, *m_selection_end }, comparator);
+
+    auto row = coordinate.y();
+    auto col = coordinate.x();
+    if (row > start.y() && row < end.y()) {
+        return true;
+    }
+
+    if (row == start.y()) {
+        return col >= start.x() && (row == end.y() ? col < end.x() : true);
+    }
+
+    return row == end.y() && col < end.x();
+}
+
+auto Pane::selection_text() -> di::String {
+    if (!m_selection_start || !m_selection_end || m_selection_start == m_selection_end) {
+        return {};
+    }
+
+    auto comparator = [](MouseCoordinate const& a, MouseCoordinate const& b) {
+        return di::Tuple { a.y(), a.x() } <=> di::Tuple { b.y(), b.x() };
+    };
+    auto start = di::min({ *m_selection_start, *m_selection_end }, comparator);
+    auto end = di::max({ *m_selection_start, *m_selection_end }, comparator);
+
+    return m_terminal.with_lock([&](Terminal& terminal) -> di::String {
+        auto text = ""_s;
+        for (auto r = start.y(); r <= end.y(); r++) {
+            auto row_text = ""_s;
+            auto iter_start_col = r == start.y() ? start.x() : 0;
+            auto iter_end_col = r == end.y() ? end.x() : terminal.col_count();
+
+            for (auto c = iter_start_col; c < iter_end_col; c++) {
+                row_text.push_back(terminal.row_at_scroll_relative_offset(r)[c].ch);
+            }
+
+            while (!row_text.empty() && *row_text.back() == ' ') {
+                row_text.pop_back();
+            }
+
+            text += row_text;
+            if (iter_end_col == terminal.col_count()) {
+                text.push_back('\n');
+            }
+        }
+        return text;
+    });
+}
+
+void Pane::clear_selection() {
+    m_selection_start = m_selection_end = {};
 }
 }
