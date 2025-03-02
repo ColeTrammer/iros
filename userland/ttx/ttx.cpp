@@ -278,9 +278,8 @@ static auto main(Args& args) -> di::Result<void> {
                                                }
                                            });
                                        }),
-                                       [&log](di::String text) {
-                                           auto base64 = di::Base64View(di::as_bytes(text.span()));
-                                           (void) di::writer_println<di::String::Encoding>(log, "copy: {}"_sv, base64);
+                                       [&log](di::Span<byte const> data) {
+                                           auto base64 = di::Base64View(data);
                                            (void) di::writer_println<di::String::Encoding>(
                                                dius::stdin, "\033]52;;{}\033\\"_sv, base64);
                                        });

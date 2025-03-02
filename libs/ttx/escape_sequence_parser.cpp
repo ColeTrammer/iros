@@ -428,6 +428,7 @@ STATE(osc_string) {
     }
 
     if (is_string_terminator(code_point)) {
+        m_saw_legacy_string_terminator = true;
         transition(State::Ground);
         return;
     }
@@ -533,14 +534,20 @@ void EscapeSequenceParser::unhook() {
 }
 
 void EscapeSequenceParser::osc_start() {
+    m_saw_legacy_string_terminator = false;
     m_on_state_exit = [this] {
         osc_end();
     };
 }
 
-void EscapeSequenceParser::osc_put(c32) {}
+void EscapeSequenceParser::osc_put(c32 code_point) {
+    m_data.push_back(code_point);
+}
 
-void EscapeSequenceParser::osc_end() {}
+void EscapeSequenceParser::osc_end() {
+    auto terminator = m_saw_legacy_string_terminator ? "\a"_sv : "\033\\"_sv;
+    m_result.push_back(OSC(di::move(m_data), terminator));
+}
 
 void EscapeSequenceParser::output_ss3(c32 code_point) {
     // SS3 A gets mapped to CSI A, with no intermediate or parameters. This

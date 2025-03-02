@@ -2,6 +2,7 @@
 
 #include "di/container/algorithm/contains.h"
 #include "di/container/algorithm/rotate.h"
+#include "di/serialization/base64.h"
 #include "dius/tty.h"
 #include "ttx/cursor_style.h"
 #include "ttx/escape_sequence_parser.h"
@@ -34,6 +35,20 @@ void Terminal::on_parser_result(DCS const& dcs) {
         dcs_decrqss(dcs.params, dcs.data);
         return;
     }
+}
+
+void Terminal::on_parser_result(OSC const& osc) {
+    auto ps_end = osc.data.find(';');
+    if (!ps_end) {
+        return;
+    }
+
+    auto ps = osc.data.substr(osc.data.begin(), ps_end.begin());
+    if (ps == "52"_sv) {
+        osc_52(osc.data.substr(ps_end.end()));
+        return;
+    }
+    return;
 }
 
 void Terminal::on_parser_result(ControlCharacter const& control_character) {
@@ -400,6 +415,29 @@ void Terminal::dcs_decrqss(Params const&, di::StringView data) {
     } else {
         (void) m_psuedo_terminal.write_exactly(di::as_bytes("\033P0$r\033\\"_sv.span()));
     }
+}
+
+// OSC 52 - https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Operating-System-Commands
+void Terminal::osc_52(di::StringView data) {
+    // Data is of the form: Pc ; Pd
+    auto pc_end = data.find(';');
+    if (!pc_end) {
+        return;
+    }
+
+    // For now, just ignore which selection is asked for (the Pc field).
+    auto pd = data.substr(pc_end.end());
+    if (pd == "?"_sv) {
+        // TODO: respond with the actual clipboard contents.
+        return;
+    }
+
+    auto clipboard_data = di::parse<di::Base64<>>(pd);
+    if (!clipboard_data) {
+        return;
+    }
+
+    m_outgoing_events.emplace_back(SetClipboard(di::move(clipboard_data).value().container()));
 }
 
 // DEC Screen Alignment Pattern - https://vt100.net/docs/vt510-rm/DECALN.html

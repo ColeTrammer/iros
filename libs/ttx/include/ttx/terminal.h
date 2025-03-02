@@ -13,6 +13,12 @@
 #include "ttx/paste_event_io.h"
 
 namespace ttx {
+struct SetClipboard {
+    di::Vector<byte> data;
+};
+
+using TerminalEvent = di::Variant<SetClipboard>;
+
 class Terminal {
 public:
     struct Cell {
@@ -119,9 +125,12 @@ public:
 
     void invalidate_all();
 
+    auto outgoing_events() -> di::Vector<TerminalEvent> { return di::move(m_outgoing_events); }
+
 private:
     void on_parser_result(PrintableCharacter const& printable_character);
     void on_parser_result(DCS const& dcs);
+    void on_parser_result(OSC const& osc);
     void on_parser_result(CSI const& csi);
     void on_parser_result(Escape const& escape);
     void on_parser_result(ControlCharacter const& control);
@@ -192,6 +201,8 @@ private:
     void c1_ri();
 
     void dcs_decrqss(Params const& params, di::StringView data);
+
+    void osc_52(di::StringView data);
 
     void csi_ich(Params const& params);
     void csi_cuu(Params const& params);
@@ -272,6 +283,8 @@ private:
     di::Vector<Row> m_rows_above;
     u32 m_scroll_start { 0 };
     u32 m_scroll_end { 0 };
+
+    di::Vector<TerminalEvent> m_outgoing_events;
 
     di::Box<Terminal> m_save_state;
 

@@ -50,6 +50,23 @@ static void empty_params() {
     ASSERT_EQ(expected.size(), actual.size());
 }
 
+static void osc() {
+    constexpr auto input = "\033]52;;asdf\a\033]52;;asdf\033\\"_sv;
+
+    auto expected = di::Array {
+        ttx::ParserResult { ttx::OSC { "52;;asdf"_s, "\a"_sv } },
+        ttx::ParserResult { ttx::OSC { "52;;asdf"_s, "\033\\"_sv } },
+    };
+
+    auto parser = ttx::EscapeSequenceParser {};
+    auto actual = parser.parse_application_escape_sequences(input);
+
+    for (auto const& [ex, ac] : di::zip(expected, actual)) {
+        ASSERT_EQ(ex, ac);
+    }
+    ASSERT_EQ(expected.size(), actual.size());
+}
+
 static void input() {
     using namespace ttx;
 
@@ -80,5 +97,6 @@ static void input() {
 
 TEST(escape_sequence_parser, nvim_startup)
 TEST(escape_sequence_parser, empty_params)
+TEST(escape_sequence_parser, osc)
 TEST(escape_sequence_parser, input)
 }

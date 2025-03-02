@@ -31,6 +31,17 @@ struct DCS {
     }
 };
 
+struct OSC {
+    di::String data;
+    di::StringView terminator; // Either BEL (\a) or ST (ESC \)
+
+    auto operator==(OSC const&) const -> bool = default;
+
+    constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<OSC>) {
+        return di::make_fields<"OSC">(di::field<"data", &OSC::data>, di::field<"terminator", &OSC::terminator>);
+    }
+};
+
 struct CSI {
     di::String intermediate;
     Params params;
@@ -68,7 +79,7 @@ struct ControlCharacter {
     }
 };
 
-using ParserResult = di::Variant<PrintableCharacter, DCS, CSI, Escape, ControlCharacter>;
+using ParserResult = di::Variant<PrintableCharacter, DCS, OSC, CSI, Escape, ControlCharacter>;
 
 class EscapeSequenceParser {
 public:
@@ -144,6 +155,7 @@ private:
     di::String m_data;
     Params m_params;
     bool m_last_separator_was_colon { false };
+    bool m_saw_legacy_string_terminator { false };
     Mode m_mode { Mode::Application };
     di::Vector<ParserResult> m_result;
 };

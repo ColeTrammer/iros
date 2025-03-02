@@ -46,6 +46,8 @@ void TerminalInputParser::handle(PrintableCharacter const& printable_character) 
 
 void TerminalInputParser::handle(DCS const&) {}
 
+void TerminalInputParser::handle(OSC const&) {}
+
 void TerminalInputParser::handle(CSI const& csi) {
     if (auto key_event = key_event_from_csi(csi)) {
         m_events.emplace_back(di::move(key_event).value());

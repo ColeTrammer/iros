@@ -34,7 +34,7 @@ static auto spawn_child(di::Vector<di::TransparentStringView> command, dius::Syn
 
 auto Pane::create(di::Vector<di::TransparentStringView> command, dius::tty::WindowSize size,
                   di::Function<void(Pane&)> did_exit, di::Function<void(Pane&)> did_update,
-                  di::Function<void(di::String)> did_selection) -> di::Result<di::Box<Pane>> {
+                  di::Function<void(di::Span<byte const>)> did_selection) -> di::Result<di::Box<Pane>> {
     auto pty_controller = TRY(dius::open_psuedo_terminal_controller(dius::OpenMode::ReadWrite, size));
     auto process = TRY(spawn_child(di::move(command), pty_controller));
     auto pane = di::make_box<Pane>(di::move(pty_controller), process, di::move(did_exit), di::move(did_update),
@@ -69,9 +69,19 @@ auto Pane::create(di::Vector<di::TransparentStringView> command, dius::tty::Wind
             auto utf8_string = utf8_decoder.decode(buffer | di::take(*nread));
 
             auto parser_result = parser.parse_application_escape_sequences(utf8_string);
-            pane.m_terminal.with_lock([&](Terminal& terminal) {
+            auto events = pane.m_terminal.with_lock([&](Terminal& terminal) {
                 terminal.on_parser_results(parser_result.span());
+                return terminal.outgoing_events();
             });
+
+            for (auto&& event : events) {
+                di::visit(di::overload([&](SetClipboard&& ev) {
+                              if (pane.m_did_selection) {
+                                  pane.m_did_selection(ev.data.span());
+                              }
+                          }),
+                          di::move(event));
+            }
 
             if (pane.m_did_update) {
                 pane.m_did_update(pane);
@@ -190,7 +200,7 @@ auto Pane::event(MouseEvent const& event) -> bool {
         event.type() == MouseEventType::Release) {
         auto text = selection_text();
         if (!text.empty() && m_did_selection) {
-            m_did_selection(di::move(text));
+            m_did_selection(di::as_bytes(text.span()));
         }
         clear_selection();
         return true;
