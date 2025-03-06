@@ -105,7 +105,7 @@ constexpr auto legacy_code_point_mappings = di::to_array<CodePointMapping>({
     { '+', Key::Plus, Modifiers::None },
     { ',', Key::Comma, Modifiers::None },
     { '-', Key::Minus, Modifiers::None },
-    { '.', Key::D, Modifiers::None },
+    { '.', Key::Period, Modifiers::None },
     { '/', Key::Slash, Modifiers::None },
     { '0', Key::_0, Modifiers::None },
     { '1', Key::_1, Modifiers::None },
