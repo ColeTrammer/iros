@@ -24,7 +24,7 @@ jobs:
           container: iros_toolchain
           prune-untagged: true
       - name: Checkout source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Cleanup GitHub actions cache
         run: |
           gh extension install actions/gh-actions-cache

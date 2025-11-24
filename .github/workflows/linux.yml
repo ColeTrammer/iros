@@ -19,7 +19,7 @@ jobs:
         preset: [clang_debug_ubasan, gcc_release_default, gcc_debug_coverage, clang_release_dius_runtime]
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install nix
         uses: cachix/install-nix-action@v31
         with:
